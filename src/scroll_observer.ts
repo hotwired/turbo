@@ -1,14 +1,14 @@
 import { Position } from "./types"
 
-export interface ScrollManagerDelegate {
+export interface ScrollObserverDelegate {
   scrollPositionChanged(position: Position): void
 }
 
-export class ScrollManager {
-  readonly delegate: ScrollManagerDelegate
+export class ScrollObserver {
+  readonly delegate: ScrollObserverDelegate
   started = false
 
-  constructor(delegate: ScrollManagerDelegate) {
+  constructor(delegate: ScrollObserverDelegate) {
     this.delegate = delegate
   }
 
@@ -25,14 +25,6 @@ export class ScrollManager {
       removeEventListener("scroll", this.onScroll, false)
       this.started = false
     }
-  }
-
-  scrollToElement(element: Element) {
-    element.scrollIntoView()
-  }
-
-  scrollToPosition({ x, y }: Position) {
-    window.scrollTo(x, y)
   }
 
   onScroll = () => {

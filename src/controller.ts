@@ -3,7 +3,7 @@ import { BrowserAdapter } from "./browser_adapter"
 import { History } from "./history"
 import { Location, Locatable } from "./location"
 import { RenderCallback } from "./renderer"
-import { ScrollManager } from "./scroll_manager"
+import { ScrollObserver } from "./scroll_observer"
 import { SnapshotCache } from "./snapshot_cache"
 import { Action, Position, isAction } from "./types"
 import { closest, defer, dispatch, uuid } from "./util"
@@ -26,7 +26,7 @@ export class Controller {
   readonly adapter: Adapter = new BrowserAdapter(this)
   readonly history = new History(this)
   readonly restorationData: RestorationDataMap = {}
-  readonly scrollManager = new ScrollManager(this)
+  readonly scrollObserver = new ScrollObserver(this)
   readonly view = new View(this)
 
   cache = new SnapshotCache(10)
@@ -42,7 +42,7 @@ export class Controller {
     if (Controller.supported && !this.started) {
       addEventListener("click", this.clickCaptured, true)
       addEventListener("DOMContentLoaded", this.pageLoaded, false)
-      this.scrollManager.start()
+      this.scrollObserver.start()
       this.startHistory()
       this.started = true
       this.enabled = true
@@ -57,7 +57,7 @@ export class Controller {
     if (this.started) {
       removeEventListener("click", this.clickCaptured, true)
       removeEventListener("DOMContentLoaded", this.pageLoaded, false)
-      this.scrollManager.stop()
+      this.scrollObserver.stop()
       this.stopHistory()
       this.started = false
     }
@@ -162,14 +162,14 @@ export class Controller {
   }
 
   scrollToElement(element: Element) {
-    this.scrollManager.scrollToElement(element)
+    element.scrollIntoView()
   }
 
-  scrollToPosition(position: Position) {
-    this.scrollManager.scrollToPosition(position)
+  scrollToPosition({ x, y }: Position) {
+    window.scrollTo(x, y)
   }
 
-  // Scroll manager delegate
+  // Scroll observer delegate
 
   scrollPositionChanged(position: Position) {
     const restorationData = this.getCurrentRestorationData()
