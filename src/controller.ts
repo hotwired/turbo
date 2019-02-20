@@ -1,6 +1,7 @@
 import { Adapter } from "./adapter"
 import { BrowserAdapter } from "./browser_adapter"
 import { History } from "./history"
+import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
 import { RenderCallback } from "./renderer"
 import { ScrollObserver } from "./scroll_observer"
@@ -26,8 +27,10 @@ export class Controller {
   readonly adapter: Adapter = new BrowserAdapter(this)
   readonly history = new History(this)
   readonly restorationData: RestorationDataMap = {}
-  readonly scrollObserver = new ScrollObserver(this)
   readonly view = new View(this)
+
+  readonly linkClickObserver = new LinkClickObserver(this)
+  readonly scrollObserver = new ScrollObserver(this)
 
   cache = new SnapshotCache(10)
   currentVisit?: Visit
@@ -40,8 +43,8 @@ export class Controller {
 
   start() {
     if (Controller.supported && !this.started) {
-      addEventListener("click", this.clickCaptured, true)
       addEventListener("DOMContentLoaded", this.pageLoaded, false)
+      this.linkClickObserver.start()
       this.scrollObserver.start()
       this.startHistory()
       this.started = true
@@ -55,8 +58,8 @@ export class Controller {
 
   stop() {
     if (this.started) {
-      removeEventListener("click", this.clickCaptured, true)
       removeEventListener("DOMContentLoaded", this.pageLoaded, false)
+      this.linkClickObserver.stop()
       this.scrollObserver.stop()
       this.stopHistory()
       this.started = false
@@ -176,6 +179,19 @@ export class Controller {
     restorationData.scrollPosition = position
   }
 
+  // Link click observer delegate
+
+  willFollowLinkToLocation(link: Element, location: Location) {
+    return this.linkIsVisitable(link)
+      && this.locationIsVisitable(location)
+      && this.applicationAllowsFollowingLinkToLocation(link, location)
+  }
+
+  didFollowLinkToLocation(link: Element, location: Location) {
+    const action = this.getActionForLink(link)
+    this.visit(location, { action })
+  }
+
   // View
 
   render(options: Partial<RenderOptions>, callback: RenderCallback) {
@@ -200,25 +216,6 @@ export class Controller {
   pageLoaded = () => {
     this.lastRenderedLocation = this.location
     this.notifyApplicationAfterPageLoad()
-  }
-
-  clickCaptured = () => {
-    removeEventListener("click", this.clickBubbled, false)
-    addEventListener("click", this.clickBubbled, false)
-  }
-
-  clickBubbled = (event: MouseEvent) => {
-    if (this.enabled && this.clickEventIsSignificant(event)) {
-      const link = this.getVisitableLinkForTarget(event.target)
-      if (link) {
-        const location = this.getVisitableLocationForLink(link)
-        if (location && this.applicationAllowsFollowingLinkToLocation(link, location)) {
-          event.preventDefault()
-          const action = this.getActionForLink(link)
-          this.visit(location, { action })
-        }
-      }
-    }
   }
 
   // Application events
@@ -284,38 +281,13 @@ export class Controller {
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
-  clickEventIsSignificant(event: MouseEvent) {
-    return !(
-      (event.target && (event.target as any).isContentEditable)
-      || event.defaultPrevented
-      || event.which > 1
-      || event.altKey
-      || event.ctrlKey
-      || event.metaKey
-      || event.shiftKey
-    )
-  }
-
-  getVisitableLinkForTarget(target: EventTarget | null) {
-    if (target instanceof Element && this.elementIsVisitable(target)) {
-      return closest(target, "a[href]:not([target]):not([download])")
-    }
-  }
-
-  getVisitableLocationForLink(link: Element) {
-    const location = new Location(link.getAttribute("href") || "")
-    if (this.locationIsVisitable(location)) {
-      return location
-    }
-  }
-
   getActionForLink(link: Element): Action {
     const action = link.getAttribute("data-turbolinks-action")
     return isAction(action) ? action : "advance"
   }
 
-  elementIsVisitable(element: Element) {
-    const container = closest(element, "[data-turbolinks]")
+  linkIsVisitable(link: Element) {
+    const container = closest(link, "[data-turbolinks]")
     if (container) {
       return container.getAttribute("data-turbolinks") != "false"
     } else {

@@ -55,7 +55,7 @@ export class Location {
   }
 
   isHTML() {
-    return this.getExtension().match(/^(?:|\.(?:htm|html|xhtml))$/)
+    return !!this.getExtension().match(/^(?:|\.(?:htm|html|xhtml))$/)
   }
 
   isPrefixedBy(location: Location): boolean {
