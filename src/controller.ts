@@ -3,6 +3,7 @@ import { BrowserAdapter } from "./browser_adapter"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
+import { PageObserver } from "./page_observer"
 import { RenderCallback } from "./renderer"
 import { ScrollObserver } from "./scroll_observer"
 import { SnapshotCache } from "./snapshot_cache"
@@ -29,6 +30,7 @@ export class Controller {
   readonly restorationData: RestorationDataMap = {}
   readonly view = new View(this)
 
+  readonly pageObserver = new PageObserver(this)
   readonly linkClickObserver = new LinkClickObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
 
@@ -43,7 +45,7 @@ export class Controller {
 
   start() {
     if (Controller.supported && !this.started) {
-      addEventListener("DOMContentLoaded", this.pageLoaded, false)
+      this.pageObserver.start()
       this.linkClickObserver.start()
       this.scrollObserver.start()
       this.startHistory()
@@ -58,7 +60,7 @@ export class Controller {
 
   stop() {
     if (this.started) {
-      removeEventListener("DOMContentLoaded", this.pageLoaded, false)
+      this.pageObserver.stop()
       this.linkClickObserver.stop()
       this.scrollObserver.stop()
       this.stopHistory()
@@ -192,14 +194,25 @@ export class Controller {
     this.visit(location, { action })
   }
 
+  // Page observer delegate
+
+  pageBecameInteractive() {
+    this.lastRenderedLocation = this.location
+    this.notifyApplicationAfterPageLoad()
+  }
+
+  pageLoaded() {
+
+  }
+
+  pageInvalidated() {
+    this.adapter.pageInvalidated()
+  }
+
   // View
 
   render(options: Partial<RenderOptions>, callback: RenderCallback) {
     this.view.render(options, callback)
-  }
-
-  viewInvalidated() {
-    this.adapter.pageInvalidated()
   }
 
   viewWillRender(newBody: HTMLBodyElement) {
@@ -211,11 +224,8 @@ export class Controller {
     this.notifyApplicationAfterRender()
   }
 
-  // Event handlers
-
-  pageLoaded = () => {
-    this.lastRenderedLocation = this.location
-    this.notifyApplicationAfterPageLoad()
+  viewInvalidated() {
+    this.pageObserver.invalidate()
   }
 
   // Application events
