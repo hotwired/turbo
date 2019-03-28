@@ -1,5 +1,6 @@
 import { Adapter } from "./adapter"
 import { BrowserAdapter } from "./browser_adapter"
+import { FormSubmitObserver } from "./form_submit_observer"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
@@ -32,6 +33,7 @@ export class Controller {
 
   readonly pageObserver = new PageObserver(this)
   readonly linkClickObserver = new LinkClickObserver(this)
+  readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
 
   cache = new SnapshotCache(10)
@@ -47,6 +49,7 @@ export class Controller {
     if (Controller.supported && !this.started) {
       this.pageObserver.start()
       this.linkClickObserver.start()
+      this.formSubmitObserver.start()
       this.scrollObserver.start()
       this.startHistory()
       this.started = true
@@ -62,6 +65,7 @@ export class Controller {
     if (this.started) {
       this.pageObserver.stop()
       this.linkClickObserver.stop()
+      this.formSubmitObserver.stop()
       this.scrollObserver.stop()
       this.stopHistory()
       this.started = false
@@ -192,6 +196,16 @@ export class Controller {
   didFollowLinkToLocation(link: Element, location: Location) {
     const action = this.getActionForLink(link)
     this.visit(location, { action })
+  }
+
+  // Form submit observer delegate
+
+  willSubmitForm(form: HTMLFormElement) {
+    return true
+  }
+
+  formSubmitted(form: HTMLFormElement) {
+    console.log("formSubmitted:", form)
   }
 
   // Page observer delegate
