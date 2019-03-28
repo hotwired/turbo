@@ -12,6 +12,7 @@ import { Action, Position, isAction } from "./types"
 import { closest, defer, dispatch, uuid } from "./util"
 import { RenderOptions, View } from "./view"
 import { Visit } from "./visit"
+import { FormSubmission } from "./form_submission";
 
 export type RestorationData = { scrollPosition?: Position }
 export type RestorationDataMap = { [uuid: string]: RestorationData }
@@ -205,7 +206,8 @@ export class Controller {
   }
 
   formSubmitted(form: HTMLFormElement) {
-    console.log("formSubmitted:", form)
+    const submission = new FormSubmission(form)
+    console.log("submission.params =", submission.params.toString())
   }
 
   // Page observer delegate
