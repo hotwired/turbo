@@ -207,8 +207,7 @@ export class Controller {
   }
 
   formSubmitted(form: HTMLFormElement) {
-    const submission = new FormSubmission(form)
-    console.log("submission.params =", submission.params.toString())
+    this.navigator.submit(form)
   }
 
   // Page observer delegate
