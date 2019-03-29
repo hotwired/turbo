@@ -1,11 +1,23 @@
 import { Adapter } from "./adapter"
 import { Controller, RestorationData } from "./controller"
 import { HttpRequest } from "./http_request"
-import { Location } from "./location"
+import { Locatable, Location } from "./location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
-import { Action } from "./types"
+import { Action, Position } from "./types"
 import { uuid } from "./util"
+import { RenderOptions } from "./view"
+
+export interface VisitDelegate {
+  getCachedSnapshotForLocation(location: Location): Snapshot | undefined
+  cacheSnapshot(): void
+  render(options: Partial<RenderOptions>, callback: RenderCallback): void
+  pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
+  replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
+  scrollToAnchor(anchor: string): void
+  scrollToPosition({ x, y }: Position): void
+  visitCompleted(visit: Visit): void
+}
 
 export enum TimingMetric {
   visitStart = "visitStart",
@@ -25,7 +37,7 @@ export enum VisitState {
 }
 
 export class Visit {
-  readonly controller: Controller
+  readonly delegate: VisitDelegate
   readonly action: Action
   readonly adapter: Adapter
   readonly identifier = uuid()
@@ -47,7 +59,7 @@ export class Visit {
   state = VisitState.initialized
 
   constructor(controller: Controller, location: Location, action: Action, restorationIdentifier: string = uuid()) {
-    this.controller = controller
+    this.delegate = controller
     this.location = location
     this.action = action
     this.adapter = controller.adapter
@@ -77,7 +89,7 @@ export class Visit {
       this.recordTimingMetric(TimingMetric.visitEnd)
       this.state = VisitState.completed
       this.adapter.visitCompleted(this)
-      this.controller.visitCompleted(this)
+      this.delegate.visitCompleted(this)
     }
   }
 
@@ -92,7 +104,7 @@ export class Visit {
     if (!this.historyChanged) {
       const actionForHistory = this.location.isEqualTo(this.referrer) ? "replace" : this.action
       const method = this.getHistoryMethodForAction(actionForHistory)
-      method.call(this.controller, this.location, this.restorationIdentifier)
+      method.call(this.delegate, this.location, this.restorationIdentifier)
       this.historyChanged = true
     }
   }
@@ -106,7 +118,7 @@ export class Visit {
   }
 
   getCachedSnapshot() {
-    const snapshot = this.controller.getCachedSnapshotForLocation(this.location)
+    const snapshot = this.delegate.getCachedSnapshotForLocation(this.location)
     if (snapshot && (!this.location.anchor || snapshot.hasAnchor(this.location.anchor))) {
       if (this.action == "restore" || snapshot.isPreviewable()) {
         return snapshot
@@ -124,7 +136,7 @@ export class Visit {
       const isPreview = this.shouldIssueRequest()
       this.render(() => {
         this.cacheSnapshot()
-        this.controller.render({ snapshot, isPreview }, this.performScroll)
+        this.delegate.render({ snapshot, isPreview }, this.performScroll)
         this.adapter.visitRendered(this)
         if (!isPreview) {
           this.complete()
@@ -139,11 +151,11 @@ export class Visit {
       this.render(() => {
         this.cacheSnapshot()
         if (request.failed) {
-          this.controller.render({ error: this.response }, this.performScroll)
+          this.delegate.render({ error: this.response }, this.performScroll)
           this.adapter.visitRendered(this)
           this.fail()
         } else {
-          this.controller.render({ snapshot: Snapshot.fromHTMLString(response) }, this.performScroll)
+          this.delegate.render({ snapshot: Snapshot.fromHTMLString(response) }, this.performScroll)
           this.adapter.visitRendered(this)
           this.complete()
         }
@@ -154,7 +166,7 @@ export class Visit {
   followRedirect() {
     if (this.redirectedToLocation && !this.followedRedirect) {
       this.location = this.redirectedToLocation
-      this.controller.replaceHistoryWithLocationAndRestorationIdentifier(this.redirectedToLocation, this.restorationIdentifier)
+      this.delegate.replaceHistoryWithLocationAndRestorationIdentifier(this.redirectedToLocation, this.restorationIdentifier)
       this.followedRedirect = true
     }
   }
@@ -205,20 +217,20 @@ export class Visit {
   scrollToRestoredPosition() {
     const position = this.restorationData ? this.restorationData.scrollPosition : undefined
     if (position) {
-      this.controller.scrollToPosition(position)
+      this.delegate.scrollToPosition(position)
       return true
     }
   }
 
   scrollToAnchor() {
     if (this.location.anchor != null) {
-      this.controller.scrollToAnchor(this.location.anchor)
+      this.delegate.scrollToAnchor(this.location.anchor)
       return true
     }
   }
 
   scrollToTop() {
-    this.controller.scrollToPosition({ x: 0, y: 0 })
+    this.delegate.scrollToPosition({ x: 0, y: 0 })
   }
 
   // Instrumentation
@@ -235,9 +247,9 @@ export class Visit {
 
   getHistoryMethodForAction(action: Action) {
     switch (action) {
-      case "replace": return this.controller.replaceHistoryWithLocationAndRestorationIdentifier
+      case "replace": return this.delegate.replaceHistoryWithLocationAndRestorationIdentifier
       case "advance":
-      case "restore": return this.controller.pushHistoryWithLocationAndRestorationIdentifier
+      case "restore": return this.delegate.pushHistoryWithLocationAndRestorationIdentifier
     }
   }
     shouldIssueRequest() {
@@ -248,7 +260,7 @@ export class Visit {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.controller.cacheSnapshot()
+      this.delegate.cacheSnapshot()
       this.snapshotCached = true
     }
   }
