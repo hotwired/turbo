@@ -4,6 +4,7 @@ import { FormSubmitObserver } from "./form_submit_observer"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
+import { Navigator } from "./navigator"
 import { PageObserver } from "./page_observer"
 import { RenderCallback } from "./renderer"
 import { ScrollObserver } from "./scroll_observer"
@@ -12,7 +13,6 @@ import { Action, Position, isAction } from "./types"
 import { closest, defer, dispatch, uuid } from "./util"
 import { RenderOptions, View } from "./view"
 import { Visit } from "./visit"
-import { FormSubmission } from "./form_submission";
 
 export type RestorationData = { scrollPosition?: Position }
 export type RestorationDataMap = { [uuid: string]: RestorationData }
@@ -27,6 +27,7 @@ export class Controller {
     window.addEventListener
   )
 
+  readonly navigator = new Navigator(this)
   readonly adapter: Adapter = new BrowserAdapter(this)
   readonly history = new History(this)
   readonly restorationData: RestorationDataMap = {}

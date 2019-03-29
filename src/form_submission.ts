@@ -3,20 +3,29 @@ import { FetchResponse } from "./fetch_response"
 import { Location } from "./location"
 
 export interface FormSubmissionDelegate {
-
+  formSubmissionStarted(formSubmission: FormSubmission): void
+  formSubmissionProgressed(formSubmission: FormSubmission, progress: number): void
+  formSubmissionWillRedirectToLocation(formSubmission: FormSubmission, location: Location): boolean
+  formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse): void
+  formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse): void
+  formSubmissionErrored(formSubmission: FormSubmission, error: Error): void
+  formSubmissionFinished(formSubmission: FormSubmission): void
 }
 
 export enum FormSubmissionState {
-  initialized
+  initialized,
+  started,
 }
 
 export class FormSubmission {
+  readonly delegate: FormSubmissionDelegate
   readonly formElement: HTMLFormElement
   readonly formData: FormData
   readonly fetchRequest: FetchRequest
   state = FormSubmissionState.initialized
 
-  constructor(formElement: HTMLFormElement) {
+  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement) {
+    this.delegate = delegate
     this.formElement = formElement
     this.formData = new FormData(formElement)
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
@@ -53,6 +62,10 @@ export class FormSubmission {
     if (this.state == FormSubmissionState.initialized) {
 
     }
+  }
+
+  stop() {
+
   }
 
   // Fetch request delegate
