@@ -6,11 +6,10 @@ import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
 import { Navigator } from "./navigator"
 import { PageObserver } from "./page_observer"
-import { RenderCallback } from "./renderer"
 import { ScrollObserver } from "./scroll_observer"
 import { Action, Position, isAction } from "./types"
 import { closest, dispatch, uuid } from "./util"
-import { RenderOptions, View } from "./view"
+import { View } from "./view"
 import { Visit } from "./visit"
 
 export type RestorationData = { scrollPosition?: Position }
@@ -183,11 +182,7 @@ export class Controller {
     this.adapter.pageInvalidated()
   }
 
-  // View
-
-  render(options: Partial<RenderOptions>, callback: RenderCallback) {
-    this.view.render(options, callback)
-  }
+  // View delegate
 
   viewWillRender(newBody: HTMLBodyElement) {
     this.notifyApplicationBeforeRender(newBody)

@@ -1,8 +1,7 @@
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Location, Locatable } from "./location"
-import { RenderCallback } from "./renderer"
-import { RenderOptions, View } from "./view"
+import { View } from "./view"
 import { Visit } from "./visit"
 
 export interface NavigatorDelegate {
@@ -96,10 +95,6 @@ export class Navigator {
   }
 
   // Visit delegate
-
-  render(options: Partial<RenderOptions>, callback: RenderCallback) {
-
-  }
 
   pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
 

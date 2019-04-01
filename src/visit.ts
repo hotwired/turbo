@@ -6,13 +6,12 @@ import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Action } from "./types"
 import { uuid } from "./util"
-import { RenderOptions, View } from "./view"
+import { View } from "./view"
 
 export interface VisitDelegate {
   readonly adapter: Adapter
   readonly view: View
 
-  render(options: Partial<RenderOptions>, callback: RenderCallback): void
   pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
   replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
   visitCompleted(visit: Visit): void
@@ -141,7 +140,7 @@ export class Visit {
       const isPreview = this.shouldIssueRequest()
       this.render(() => {
         this.cacheSnapshot()
-        this.delegate.render({ snapshot, isPreview }, this.performScroll)
+        this.view.render({ snapshot, isPreview }, this.performScroll)
         this.adapter.visitRendered(this)
         if (!isPreview) {
           this.complete()
@@ -156,11 +155,11 @@ export class Visit {
       this.render(() => {
         this.cacheSnapshot()
         if (request.failed) {
-          this.delegate.render({ error: this.response }, this.performScroll)
+          this.view.render({ error: this.response }, this.performScroll)
           this.adapter.visitRendered(this)
           this.fail()
         } else {
-          this.delegate.render({ snapshot: Snapshot.fromHTMLString(response) }, this.performScroll)
+          this.view.render({ snapshot: Snapshot.fromHTMLString(response) }, this.performScroll)
           this.adapter.visitRendered(this)
           this.complete()
         }
