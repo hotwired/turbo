@@ -3,6 +3,7 @@ import { Location } from "./location"
 import { Snapshot } from "./snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { RenderCallback, RenderDelegate, SnapshotRenderer } from "./snapshot_renderer"
+import { Position } from "./types"
 import { defer } from "./util"
 
 export type RenderOptions = { snapshot: Snapshot, error: string, isPreview: boolean }
@@ -61,6 +62,25 @@ export class View {
     } else {
       this.renderError(error, callback)
     }
+  }
+
+  // Scrolling
+
+  scrollToAnchor(anchor: string) {
+    const element = this.getElementForAnchor(anchor)
+    if (element) {
+      this.scrollToElement(element)
+    } else {
+      this.scrollToPosition({ x: 0, y: 0 })
+    }
+  }
+
+  scrollToElement(element: Element) {
+    element.scrollIntoView()
+  }
+
+  scrollToPosition({ x, y }: Position) {
+    window.scrollTo(x, y)
   }
 
   // Private

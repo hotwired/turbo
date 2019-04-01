@@ -138,25 +138,6 @@ export class Controller {
     }
   }
 
-  // Scrolling
-
-  scrollToAnchor(anchor: string) {
-    const element = this.view.getElementForAnchor(anchor)
-    if (element) {
-      this.scrollToElement(element)
-    } else {
-      this.scrollToPosition({ x: 0, y: 0 })
-    }
-  }
-
-  scrollToElement(element: Element) {
-    element.scrollIntoView()
-  }
-
-  scrollToPosition({ x, y }: Position) {
-    window.scrollTo(x, y)
-  }
-
   // Scroll observer delegate
 
   scrollPositionChanged(position: Position) {

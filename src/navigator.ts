@@ -2,7 +2,6 @@ import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Location, Locatable } from "./location"
 import { RenderCallback } from "./renderer"
-import { Position } from "./types"
 import { RenderOptions, View } from "./view"
 import { Visit } from "./visit"
 
@@ -107,14 +106,6 @@ export class Navigator {
   }
 
   replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
-
-  }
-
-  scrollToAnchor(anchor: string) {
-
-  }
-
-  scrollToPosition({ x, y }: Position) {
 
   }
 

@@ -4,7 +4,7 @@ import { HttpRequest } from "./http_request"
 import { Locatable, Location } from "./location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
-import { Action, Position } from "./types"
+import { Action } from "./types"
 import { uuid } from "./util"
 import { RenderOptions, View } from "./view"
 
@@ -15,8 +15,6 @@ export interface VisitDelegate {
   render(options: Partial<RenderOptions>, callback: RenderCallback): void
   pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
   replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
-  scrollToAnchor(anchor: string): void
-  scrollToPosition({ x, y }: Position): void
   visitCompleted(visit: Visit): void
 }
 
@@ -224,20 +222,20 @@ export class Visit {
   scrollToRestoredPosition() {
     const position = this.restorationData ? this.restorationData.scrollPosition : undefined
     if (position) {
-      this.delegate.scrollToPosition(position)
+      this.view.scrollToPosition(position)
       return true
     }
   }
 
   scrollToAnchor() {
     if (this.location.anchor != null) {
-      this.delegate.scrollToAnchor(this.location.anchor)
+      this.view.scrollToAnchor(this.location.anchor)
       return true
     }
   }
 
   scrollToTop() {
-    this.delegate.scrollToPosition({ x: 0, y: 0 })
+    this.view.scrollToPosition({ x: 0, y: 0 })
   }
 
   // Instrumentation
