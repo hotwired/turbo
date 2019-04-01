@@ -1,16 +1,17 @@
 import { Adapter } from "./adapter"
-import { Controller, RestorationData } from "./controller"
+import { RestorationData } from "./controller"
 import { HttpRequest } from "./http_request"
 import { Locatable, Location } from "./location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Action, Position } from "./types"
 import { uuid } from "./util"
-import { RenderOptions } from "./view"
+import { RenderOptions, View } from "./view"
 
 export interface VisitDelegate {
-  getCachedSnapshotForLocation(location: Location): Snapshot | undefined
-  cacheSnapshot(): void
+  readonly adapter: Adapter
+  readonly view: View
+
   render(options: Partial<RenderOptions>, callback: RenderCallback): void
   pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
   replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
@@ -39,7 +40,6 @@ export enum VisitState {
 export class Visit {
   readonly delegate: VisitDelegate
   readonly action: Action
-  readonly adapter: Adapter
   readonly identifier = uuid()
   readonly restorationIdentifier: string
   readonly timingMetrics: TimingMetrics = {}
@@ -58,12 +58,19 @@ export class Visit {
   snapshotCached = false
   state = VisitState.initialized
 
-  constructor(controller: Controller, location: Location, action: Action, restorationIdentifier: string = uuid()) {
-    this.delegate = controller
+  constructor(delegate: VisitDelegate, location: Location, action: Action, restorationIdentifier: string = uuid()) {
+    this.delegate = delegate
     this.location = location
     this.action = action
-    this.adapter = controller.adapter
     this.restorationIdentifier = restorationIdentifier
+  }
+
+  get adapter() {
+    return this.delegate.adapter
+  }
+
+  get view() {
+    return this.delegate.view
   }
 
   start() {
@@ -118,7 +125,7 @@ export class Visit {
   }
 
   getCachedSnapshot() {
-    const snapshot = this.delegate.getCachedSnapshotForLocation(this.location)
+    const snapshot = this.view.getCachedSnapshotForLocation(this.location)
     if (snapshot && (!this.location.anchor || snapshot.hasAnchor(this.location.anchor))) {
       if (this.action == "restore" || snapshot.isPreviewable()) {
         return snapshot
@@ -252,7 +259,8 @@ export class Visit {
       case "restore": return this.delegate.pushHistoryWithLocationAndRestorationIdentifier
     }
   }
-    shouldIssueRequest() {
+
+  shouldIssueRequest() {
     return this.action == "restore"
       ? !this.hasCachedSnapshot()
       : true
@@ -260,7 +268,7 @@ export class Visit {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.delegate.cacheSnapshot()
+      this.view.cacheSnapshot()
       this.snapshotCached = true
     }
   }

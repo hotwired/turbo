@@ -8,9 +8,8 @@ import { Navigator } from "./navigator"
 import { PageObserver } from "./page_observer"
 import { RenderCallback } from "./renderer"
 import { ScrollObserver } from "./scroll_observer"
-import { SnapshotCache } from "./snapshot_cache"
 import { Action, Position, isAction } from "./types"
-import { closest, defer, dispatch, uuid } from "./util"
+import { closest, dispatch, uuid } from "./util"
 import { RenderOptions, View } from "./view"
 import { Visit } from "./visit"
 
@@ -38,10 +37,8 @@ export class Controller {
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
 
-  cache = new SnapshotCache(10)
   currentVisit?: Visit
   enabled = true
-  lastRenderedLocation?: Location
   location!: Location
   progressBarDelay = 500
   restorationIdentifier!: string
@@ -75,7 +72,7 @@ export class Controller {
   }
 
   clearCache() {
-    this.cache = new SnapshotCache(10)
+    this.view.clearSnapshotCache()
   }
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}) {
@@ -141,26 +138,6 @@ export class Controller {
     }
   }
 
-  // Snapshot cache
-
-  getCachedSnapshotForLocation(location: Location) {
-    const snapshot = this.cache.get(location)
-    return snapshot ? snapshot.clone() : snapshot
-  }
-
-  shouldCacheSnapshot() {
-    return this.view.getSnapshot().isCacheable()
-  }
-
-  cacheSnapshot() {
-    if (this.shouldCacheSnapshot()) {
-      this.notifyApplicationBeforeCachingSnapshot()
-      const snapshot = this.view.getSnapshot()
-      const location = this.lastRenderedLocation || Location.currentLocation
-      defer(() => this.cache.put(location, snapshot.clone()))
-    }
-  }
-
   // Scrolling
 
   scrollToAnchor(anchor: string) {
@@ -213,7 +190,7 @@ export class Controller {
   // Page observer delegate
 
   pageBecameInteractive() {
-    this.lastRenderedLocation = this.location
+    this.view.lastRenderedLocation = this.location
     this.notifyApplicationAfterPageLoad()
   }
 
@@ -236,12 +213,16 @@ export class Controller {
   }
 
   viewRendered() {
-    this.lastRenderedLocation = this.currentVisit!.location
+    this.view.lastRenderedLocation = this.currentVisit!.location
     this.notifyApplicationAfterRender()
   }
 
   viewInvalidated() {
     this.pageObserver.invalidate()
+  }
+
+  viewWillCacheSnapshot() {
+    this.notifyApplicationBeforeCachingSnapshot()
   }
 
   // Application events

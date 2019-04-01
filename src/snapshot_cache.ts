@@ -3,8 +3,8 @@ import { Snapshot } from "./snapshot"
 
 export class SnapshotCache {
   readonly keys: string[] = []
-  readonly snapshots: { [url: string]: Snapshot } = {}
   readonly size: number
+  snapshots: { [url: string]: Snapshot } = {}
 
   constructor(size: number) {
     this.size = size
@@ -26,6 +26,10 @@ export class SnapshotCache {
     this.write(location, snapshot)
     this.touch(location)
     return snapshot
+  }
+
+  clear() {
+    this.snapshots = {}
   }
 
   // Private

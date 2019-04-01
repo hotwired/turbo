@@ -1,9 +1,13 @@
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
-import { Location } from "./location"
+import { Location, Locatable } from "./location"
+import { RenderCallback } from "./renderer"
+import { Position } from "./types"
+import { RenderOptions, View } from "./view"
+import { Visit } from "./visit"
 
 export interface NavigatorDelegate {
-
+  readonly view: View
 }
 
 export enum NavigationTarget {
@@ -23,6 +27,10 @@ export class Navigator {
 
   constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
+  }
+
+  get view() {
+    return this.delegate.view
   }
 
   visit(location: Location, options: Partial<NavigationOptions> = {}) {
@@ -85,6 +93,32 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
+
+  }
+
+  // Visit delegate
+
+  render(options: Partial<RenderOptions>, callback: RenderCallback) {
+
+  }
+
+  pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
+
+  }
+
+  replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
+
+  }
+
+  scrollToAnchor(anchor: string) {
+
+  }
+
+  scrollToPosition({ x, y }: Position) {
+
+  }
+
+  visitCompleted(visit: Visit) {
 
   }
 }
