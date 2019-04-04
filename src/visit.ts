@@ -1,7 +1,7 @@
 import { Adapter } from "./adapter"
-import { RestorationData } from "./controller"
+import { History } from "./history"
 import { HttpRequest } from "./http_request"
-import { Locatable, Location } from "./location"
+import { Location } from "./location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Action } from "./types"
@@ -11,9 +11,7 @@ import { View } from "./view"
 export interface VisitDelegate {
   readonly adapter: Adapter
   readonly view: View
-
-  pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
-  replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string): void
+  readonly history: History
   visitCompleted(visit: Visit): void
 }
 
@@ -50,7 +48,6 @@ export class Visit {
   redirectedToLocation?: Location
   request?: HttpRequest
   response?: string
-  restorationData?: RestorationData
   scrolled = false
   snapshotCached = false
   state = VisitState.initialized
@@ -68,6 +65,14 @@ export class Visit {
 
   get view() {
     return this.delegate.view
+  }
+
+  get history() {
+    return this.delegate.history
+  }
+
+  get restorationData() {
+    return this.history.getRestorationDataForIdentifier(this.restorationIdentifier)
   }
 
   start() {
@@ -108,7 +113,7 @@ export class Visit {
     if (!this.historyChanged) {
       const actionForHistory = this.location.isEqualTo(this.referrer) ? "replace" : this.action
       const method = this.getHistoryMethodForAction(actionForHistory)
-      method.call(this.delegate, this.location, this.restorationIdentifier)
+      this.history.update(method, this.location, this.restorationIdentifier)
       this.historyChanged = true
     }
   }
@@ -170,7 +175,7 @@ export class Visit {
   followRedirect() {
     if (this.redirectedToLocation && !this.followedRedirect) {
       this.location = this.redirectedToLocation
-      this.delegate.replaceHistoryWithLocationAndRestorationIdentifier(this.redirectedToLocation, this.restorationIdentifier)
+      this.history.replace(this.redirectedToLocation, this.restorationIdentifier)
       this.followedRedirect = true
     }
   }
@@ -219,9 +224,9 @@ export class Visit {
   }
 
   scrollToRestoredPosition() {
-    const position = this.restorationData ? this.restorationData.scrollPosition : undefined
-    if (position) {
-      this.view.scrollToPosition(position)
+    const { scrollPosition } = this.restorationData
+    if (scrollPosition) {
+      this.view.scrollToPosition(scrollPosition)
       return true
     }
   }
@@ -251,9 +256,9 @@ export class Visit {
 
   getHistoryMethodForAction(action: Action) {
     switch (action) {
-      case "replace": return this.delegate.replaceHistoryWithLocationAndRestorationIdentifier
+      case "replace": return history.replaceState
       case "advance":
-      case "restore": return this.delegate.pushHistoryWithLocationAndRestorationIdentifier
+      case "restore": return history.pushState
     }
   }
 

@@ -8,15 +8,12 @@ import { Navigator } from "./navigator"
 import { PageObserver } from "./page_observer"
 import { ScrollObserver } from "./scroll_observer"
 import { Action, Position, isAction } from "./types"
-import { closest, dispatch, uuid } from "./util"
+import { closest, dispatch } from "./util"
 import { View } from "./view"
 import { Visit } from "./visit"
 
-export type RestorationData = { scrollPosition?: Position }
-export type RestorationDataMap = { [uuid: string]: RestorationData }
 export type TimingData = {}
 export type VisitOptions = { action: Action }
-export type VisitProperties = { restorationIdentifier: string, restorationData: RestorationData, historyChanged: boolean }
 
 export class Controller {
   static supported = !!(
@@ -28,7 +25,6 @@ export class Controller {
   readonly navigator = new Navigator(this)
   readonly adapter: Adapter = new BrowserAdapter(this)
   readonly history = new History(this)
-  readonly restorationData: RestorationDataMap = {}
   readonly view = new View(this)
 
   readonly pageObserver = new PageObserver(this)
@@ -38,9 +34,7 @@ export class Controller {
 
   currentVisit?: Visit
   enabled = true
-  location!: Location
   progressBarDelay = 500
-  restorationIdentifier!: string
   started = false
 
   start() {
@@ -49,7 +43,7 @@ export class Controller {
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
       this.scrollObserver.start()
-      this.startHistory()
+      this.history.start()
       this.started = true
       this.enabled = true
     }
@@ -65,7 +59,7 @@ export class Controller {
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
       this.scrollObserver.stop()
-      this.stopHistory()
+      this.history.stop()
       this.started = false
     }
   }
@@ -88,8 +82,7 @@ export class Controller {
 
   startVisitToLocationWithAction(location: Locatable, action: Action, restorationIdentifier: string) {
     if (Controller.supported) {
-      const restorationData = this.getRestorationDataForIdentifier(restorationIdentifier)
-      this.startVisit(Location.wrap(location), action, { restorationData })
+      this.startVisit(Location.wrap(location), action, restorationIdentifier)
     } else {
       window.location.href = location.toString()
     }
@@ -99,39 +92,15 @@ export class Controller {
     this.progressBarDelay = delay
   }
 
-  // History
-
-  startHistory() {
-    this.location = Location.currentLocation
-    this.restorationIdentifier = uuid()
-    this.history.start()
-    this.history.replace(this.location, this.restorationIdentifier)
-  }
-
-  stopHistory() {
-    this.history.stop()
-  }
-
-  pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
-    this.location = Location.wrap(locatable)
-    this.restorationIdentifier = restorationIdentifier
-    this.history.push(this.location, this.restorationIdentifier)
-  }
-
-  replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
-    this.location = Location.wrap(locatable)
-    this.restorationIdentifier = restorationIdentifier
-    this.history.replace(this.location, this.restorationIdentifier)
+  get location() {
+    return this.history.location
   }
 
   // History delegate
 
   historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string) {
     if (this.enabled) {
-      this.location = location
-      this.restorationIdentifier = restorationIdentifier
-      const restorationData = this.getRestorationDataForIdentifier(restorationIdentifier)
-      this.startVisit(location, "restore", { restorationIdentifier, restorationData, historyChanged: true })
+      this.startVisit(location, "restore", restorationIdentifier, true)
     } else {
       this.adapter.pageInvalidated()
     }
@@ -140,8 +109,7 @@ export class Controller {
   // Scroll observer delegate
 
   scrollPositionChanged(position: Position) {
-    const restorationData = this.getCurrentRestorationData()
-    restorationData.scrollPosition = position
+    this.history.updateRestorationData({ scrollPosition: position })
   }
 
   // Link click observer delegate
@@ -243,19 +211,18 @@ export class Controller {
 
   // Private
 
-  startVisit(location: Location, action: Action, properties: Partial<VisitProperties>) {
+  startVisit(location: Location, action: Action, restorationIdentifier: string, historyChanged?: boolean) {
     if (this.currentVisit) {
       this.currentVisit.cancel()
     }
-    this.currentVisit = this.createVisit(location, action, properties)
+    this.currentVisit = this.createVisit(location, action, restorationIdentifier, historyChanged)
     this.currentVisit.start()
     this.notifyApplicationAfterVisitingLocation(location)
   }
 
-  createVisit(location: Location, action: Action, properties: Partial<VisitProperties>): Visit {
-    const visit = new Visit(this, location, action, properties.restorationIdentifier)
-    visit.restorationData = { ...(properties.restorationData || {}) }
-    visit.historyChanged = !!properties.historyChanged
+  createVisit(location: Location, action: Action, restorationIdentifier: string, historyChanged = false): Visit {
+    const visit = new Visit(this, location, action, restorationIdentifier)
+    visit.historyChanged = historyChanged
     visit.referrer = this.location
     return visit
   }
@@ -280,16 +247,5 @@ export class Controller {
 
   locationIsVisitable(location: Location) {
     return location.isPrefixedBy(this.view.getRootLocation()) && location.isHTML()
-  }
-
-  getCurrentRestorationData(): RestorationData {
-    return this.getRestorationDataForIdentifier(this.restorationIdentifier)
-  }
-
-  getRestorationDataForIdentifier(identifier: string): RestorationData {
-    if (!(identifier in this.restorationData)) {
-      this.restorationData[identifier] = {}
-    }
-    return this.restorationData[identifier]
   }
 }

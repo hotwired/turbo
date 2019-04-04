@@ -1,14 +1,22 @@
 import { Location } from "./location"
-import { defer } from "./util"
+import { Position } from "./types"
+import { defer, uuid } from "./util"
 
 export interface HistoryDelegate {
   historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string): void
 }
 
-type HistoryMethod = (state: any, title: string, url?: string | null | undefined) => void
+type HistoryMethod = (this: typeof history, state: any, title: string, url?: string | null | undefined) => void
+
+export type RestorationData = { scrollPosition?: Position }
+
+export type RestorationDataMap = { [restorationIdentifier: string]: RestorationData }
 
 export class History {
   readonly delegate: HistoryDelegate
+  location!: Location
+  restorationIdentifier!: string
+  restorationData: RestorationDataMap = {}
   started = false
   pageLoaded = false
 
@@ -21,6 +29,7 @@ export class History {
       addEventListener("popstate", this.onPopState, false)
       addEventListener("load", this.onPageLoad, false)
       this.started = true
+      this.replace(Location.currentLocation)
     }
   }
 
@@ -32,12 +41,31 @@ export class History {
     }
   }
 
-  push(location: Location, restorationIdentifier: string) {
+  push(location: Location, restorationIdentifier?: string) {
     this.update(history.pushState, location, restorationIdentifier)
   }
 
-  replace(location: Location, restorationIdentifier: string) {
+  replace(location: Location, restorationIdentifier?: string) {
     this.update(history.replaceState, location, restorationIdentifier)
+  }
+
+  update(method: HistoryMethod, location: Location, restorationIdentifier = uuid()) {
+    const state = { turbolinks: { restorationIdentifier } }
+    method.call(history, state, "", location.absoluteURL)
+    this.location = location
+    this.restorationIdentifier = restorationIdentifier
+  }
+
+  // Restoration data
+
+  getRestorationDataForIdentifier(restorationIdentifier: string): RestorationData {
+    return this.restorationData[restorationIdentifier] || {}
+  }
+
+  updateRestorationData(additionalData: Partial<RestorationData>) {
+    const { restorationIdentifier } = this
+    const restorationData = this.restorationData[restorationIdentifier]
+    this.restorationData[restorationIdentifier] = { ...restorationData, ...additionalData }
   }
 
   // Event handlers
@@ -47,7 +75,9 @@ export class History {
       const { turbolinks } = event.state
       if (turbolinks) {
         const location = Location.currentLocation
+        this.location = location
         const { restorationIdentifier } = turbolinks
+        this.restorationIdentifier = restorationIdentifier
         this.delegate.historyPoppedToLocationWithRestorationIdentifier(location, restorationIdentifier)
       }
     }
@@ -68,10 +98,5 @@ export class History {
 
   pageIsLoaded() {
     return this.pageLoaded || document.readyState == "complete"
-  }
-
-  update(method: HistoryMethod, location: Location, restorationIdentifier: string) {
-    const state = { turbolinks: { restorationIdentifier } }
-    method.call(history, state, "", location.absoluteURL)
   }
 }
