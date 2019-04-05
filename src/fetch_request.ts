@@ -41,6 +41,7 @@ export class FetchRequest {
   readonly method: FetchMethod
   readonly location: Location
   readonly body?: FetchRequestBody
+  readonly abortController = new AbortController
 
   constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: Location, body?: FetchRequestBody) {
     this.delegate = delegate
@@ -51,6 +52,10 @@ export class FetchRequest {
 
   get url() {
     return this.location.absoluteURL
+  }
+
+  abort() {
+    this.abortController.abort()
   }
 
   async perform(): Promise<FetchResponse> {
@@ -82,7 +87,8 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.body
+      body: this.body,
+      signal: this.abortSignal
     }
   }
 
@@ -106,5 +112,9 @@ export class FetchRequest {
     if (this.body instanceof FormData) {
       return "application/x-www-form-urlencoded"
     }
+  }
+
+  get abortSignal() {
+    return this.abortController.signal
   }
 }

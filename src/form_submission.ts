@@ -15,6 +15,8 @@ export interface FormSubmissionDelegate {
 export enum FormSubmissionState {
   initialized,
   started,
+  stopping,
+  stopped,
 }
 
 export class FormSubmission {
@@ -58,14 +60,21 @@ export class FormSubmission {
 
   // The submission process
 
-  start() {
-    if (this.state == FormSubmissionState.initialized) {
-
+  async start() {
+    const { initialized, started } = FormSubmissionState
+    if (this.state == initialized) {
+      this.state = started
+      return this.fetchRequest.perform()
     }
   }
 
   stop() {
-
+    const { stopping, stopped } = FormSubmissionState
+    if (this.state != stopping && this.state != stopped) {
+      this.state = stopping
+      this.fetchRequest.abort()
+      return true
+    }
   }
 
   // Fetch request delegate
@@ -91,6 +100,6 @@ export class FormSubmission {
   }
 
   requestFinished(request: FetchRequest) {
-
+    this.state = FormSubmissionState.stopped
   }
 }
