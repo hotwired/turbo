@@ -1,11 +1,15 @@
+import { Adapter } from "./adapter"
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
-import { Location, Locatable } from "./location"
+import { History } from "./history"
+import { Location } from "./location"
 import { View } from "./view"
 import { Visit } from "./visit"
 
 export interface NavigatorDelegate {
+  readonly adapter: Adapter
   readonly view: View
+  readonly history: History
 }
 
 export enum NavigationTarget {
@@ -25,10 +29,6 @@ export class Navigator {
 
   constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
-  }
-
-  get view() {
-    return this.delegate.view
   }
 
   visit(location: Location, options: Partial<NavigationOptions> = {}) {
@@ -64,6 +64,18 @@ export class Navigator {
 
   }
 
+  get adapter() {
+    return this.delegate.adapter
+  }
+
+  get view() {
+    return this.delegate.view
+  }
+
+  get history() {
+    return this.delegate.history
+  }
+
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
@@ -95,14 +107,6 @@ export class Navigator {
   }
 
   // Visit delegate
-
-  pushHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
-
-  }
-
-  replaceHistoryWithLocationAndRestorationIdentifier(locatable: Locatable, restorationIdentifier: string) {
-
-  }
 
   visitCompleted(visit: Visit) {
 
