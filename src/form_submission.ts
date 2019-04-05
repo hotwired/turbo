@@ -14,7 +14,9 @@ export interface FormSubmissionDelegate {
 
 export enum FormSubmissionState {
   initialized,
-  started,
+  requesting,
+  waiting,
+  receiving,
   stopping,
   stopped,
 }
@@ -61,9 +63,9 @@ export class FormSubmission {
   // The submission process
 
   async start() {
-    const { initialized, started } = FormSubmissionState
+    const { initialized, requesting } = FormSubmissionState
     if (this.state == initialized) {
-      this.state = started
+      this.state = requesting
       return this.fetchRequest.perform()
     }
   }
@@ -80,26 +82,31 @@ export class FormSubmission {
   // Fetch request delegate
 
   additionalHeadersForRequest(request: FetchRequest) {
+    // TODO: Send CSRF tokens
     return {}
   }
 
   requestStarted(request: FetchRequest) {
-
+    this.state = FormSubmissionState.waiting
+    this.delegate.formSubmissionStarted(this)
   }
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-
+    // TODO: Handle form redirection
+    this.state = FormSubmissionState.receiving
+    this.delegate.formSubmissionSucceededWithResponse(this, response)
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
-
+    this.delegate.formSubmissionFailedWithResponse(this, response)
   }
 
   requestErrored(request: FetchRequest, error: Error) {
-
+    this.delegate.formSubmissionErrored(this, error)
   }
 
   requestFinished(request: FetchRequest) {
     this.state = FormSubmissionState.stopped
+    this.delegate.formSubmissionFinished(this)
   }
 }
