@@ -4,7 +4,7 @@ import { FormSubmitObserver } from "./form_submit_observer"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
-import { Navigator } from "./navigator"
+import { Navigator, NavigationOptions } from "./navigator"
 import { PageObserver } from "./page_observer"
 import { ScrollObserver } from "./scroll_observer"
 import { Action, Position, isAction } from "./types"
@@ -13,7 +13,6 @@ import { View } from "./view"
 import { Visit } from "./visit"
 
 export type TimingData = {}
-export type VisitOptions = { action: Action }
 
 export class Controller {
   static supported = !!(
@@ -67,7 +66,7 @@ export class Controller {
     this.view.clearSnapshotCache()
   }
 
-  visit(location: Locatable, options: Partial<VisitOptions> = {}) {
+  visit(location: Locatable, options: Partial<NavigationOptions> = {}) {
     location = Location.wrap(location)
     if (this.applicationAllowsVisitingLocation(location)) {
       if (this.locationIsVisitable(location)) {
