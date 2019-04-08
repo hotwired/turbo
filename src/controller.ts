@@ -32,7 +32,6 @@ export class Controller {
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
 
-  currentVisit?: Visit
   enabled = true
   progressBarDelay = 500
   started = false
@@ -82,7 +81,7 @@ export class Controller {
 
   startVisitToLocationWithAction(location: Locatable, action: Action, restorationIdentifier: string) {
     if (Controller.supported) {
-      this.startVisit(Location.wrap(location), action, restorationIdentifier)
+      this.navigator.visit(Location.wrap(location), restorationIdentifier, { action })
     } else {
       window.location.href = location.toString()
     }
@@ -100,7 +99,7 @@ export class Controller {
 
   historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string) {
     if (this.enabled) {
-      this.startVisit(location, "restore", restorationIdentifier, true)
+      this.navigator.visit(location, restorationIdentifier, { action: "restore", historyChanged: true })
     } else {
       this.adapter.pageInvalidated()
     }
@@ -123,6 +122,16 @@ export class Controller {
   didFollowLinkToLocation(link: Element, location: Location) {
     const action = this.getActionForLink(link)
     this.visit(location, { action })
+  }
+
+  // Navigator delegate
+
+  visitStarted(visit: Visit) {
+    this.notifyApplicationAfterVisitingLocation(visit.location)
+  }
+
+  visitCompleted(visit: Visit) {
+    this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
   // Form submit observer delegate
@@ -157,7 +166,7 @@ export class Controller {
   }
 
   viewRendered() {
-    this.view.lastRenderedLocation = this.currentVisit!.location
+    this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender()
   }
 
@@ -210,26 +219,6 @@ export class Controller {
   }
 
   // Private
-
-  startVisit(location: Location, action: Action, restorationIdentifier: string, historyChanged?: boolean) {
-    if (this.currentVisit) {
-      this.currentVisit.cancel()
-    }
-    this.currentVisit = this.createVisit(location, action, restorationIdentifier, historyChanged)
-    this.currentVisit.start()
-    this.notifyApplicationAfterVisitingLocation(location)
-  }
-
-  createVisit(location: Location, action: Action, restorationIdentifier: string, historyChanged = false): Visit {
-    const visit = new Visit(this, location, action, restorationIdentifier)
-    visit.historyChanged = historyChanged
-    visit.referrer = this.location
-    return visit
-  }
-
-  visitCompleted(visit: Visit) {
-    this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
-  }
 
   getActionForLink(link: Element): Action {
     const action = link.getAttribute("data-turbolinks-action")

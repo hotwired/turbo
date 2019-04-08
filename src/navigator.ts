@@ -1,16 +1,9 @@
-import { Adapter } from "./adapter"
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
-import { History } from "./history"
 import { Location } from "./location"
-import { View } from "./view"
-import { Visit } from "./visit"
+import { Visit, VisitDelegate, VisitOptions } from "./visit"
 
-export interface NavigatorDelegate {
-  readonly adapter: Adapter
-  readonly view: View
-  readonly history: History
-}
+export type NavigatorDelegate = VisitDelegate
 
 export enum NavigationTarget {
   background,
@@ -18,7 +11,7 @@ export enum NavigationTarget {
   modal
 }
 
-export type NavigationOptions = {
+export type NavigationOptions = VisitOptions & {
   target: NavigationTarget
 }
 
@@ -26,14 +19,14 @@ export class Navigator {
   readonly delegate: NavigatorDelegate
   foregroundFormSubmission?: FormSubmission
   backgroundFormSubmissions: Set<FormSubmission> = new Set
+  currentVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
   }
 
-  visit(location: Location, options: Partial<NavigationOptions> = {}) {
-    const form = formForLocation(location)
-    this.submit(form, options)
+  visit(location: Location, restorationIdentifier: string, options: Partial<NavigationOptions> = {}) {
+    this.startVisit(location, restorationIdentifier, options)
   }
 
   submit(form: HTMLFormElement, options: Partial<NavigationOptions> = {}) {
@@ -53,6 +46,11 @@ export class Navigator {
     if (this.foregroundFormSubmission) {
       this.foregroundFormSubmission.stop()
       delete this.foregroundFormSubmission
+    }
+
+    if (this.currentVisit) {
+      this.currentVisit.cancel()
+      delete this.currentVisit
     }
   }
 
@@ -90,8 +88,11 @@ export class Navigator {
     return true
   }
 
-  formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-
+  async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
+    const responseHTML = await fetchResponse.responseHTML
+    if (responseHTML && this.currentVisit) {
+      this.currentVisit.loadResponse({ responseHTML })
+    }
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -108,13 +109,23 @@ export class Navigator {
 
   // Visit delegate
 
-  visitCompleted(visit: Visit) {
-
+  visitStarted(visit: Visit) {
+    this.delegate.visitStarted(visit)
   }
-}
 
-function formForLocation(location: Location) {
-  const form = document.createElement("form")
-  form.action = location.absoluteURL
-  return form
+  visitCompleted(visit: Visit) {
+    this.delegate.visitCompleted(visit)
+  }
+
+  // Visits
+
+  startVisit(location: Location, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+    this.stop()
+    this.currentVisit = new Visit(this, location, restorationIdentifier, { ...options, referrer: this.location })
+    this.currentVisit.start()
+  }
+
+  get location() {
+    return this.history.location
+  }
 }

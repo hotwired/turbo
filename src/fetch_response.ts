@@ -33,6 +33,14 @@ export class FetchResponse {
     return this.response.text()
   }
 
+  get responseHTML(): Promise<string | undefined> {
+    if (this.isHTML) {
+      return this.response.text()
+    } else {
+      return Promise.resolve(undefined)
+    }
+  }
+
   header(name: string) {
     return this.response.headers.get(name)
   }

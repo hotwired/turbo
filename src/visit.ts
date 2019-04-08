@@ -5,13 +5,14 @@ import { Location } from "./location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Action } from "./types"
-import { uuid } from "./util"
 import { View } from "./view"
 
 export interface VisitDelegate {
   readonly adapter: Adapter
   readonly view: View
   readonly history: History
+
+  visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
 }
 
@@ -32,11 +33,27 @@ export enum VisitState {
   completed = "completed"
 }
 
+export type VisitOptions = {
+  action: Action,
+  historyChanged: boolean,
+  referrer?: Location
+}
+
+const defaultOptions: VisitOptions = {
+  action: "advance",
+  historyChanged: false
+}
+
+export type VisitResponse = {
+  requestFailed?: boolean,
+  responseHTML: string
+}
+
 export class Visit {
   readonly delegate: VisitDelegate
-  readonly action: Action
-  readonly identifier = uuid()
   readonly restorationIdentifier: string
+  readonly action: Action
+  readonly referrer?: Location
   readonly timingMetrics: TimingMetrics = {}
 
   followedRedirect = false
@@ -44,19 +61,22 @@ export class Visit {
   historyChanged = false
   location: Location
   progress = 0
-  referrer?: Location
   redirectedToLocation?: Location
   request?: HttpRequest
-  response?: string
+  response?: VisitResponse
   scrolled = false
   snapshotCached = false
   state = VisitState.initialized
 
-  constructor(delegate: VisitDelegate, location: Location, action: Action, restorationIdentifier: string = uuid()) {
+  constructor(delegate: VisitDelegate, location: Location, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
     this.delegate = delegate
     this.location = location
-    this.action = action
     this.restorationIdentifier = restorationIdentifier
+
+    const { action, historyChanged, referrer } = { ...defaultOptions, ...options }
+    this.action = action
+    this.historyChanged = historyChanged
+    this.referrer = referrer
   }
 
   get adapter() {
@@ -80,6 +100,7 @@ export class Visit {
       this.recordTimingMetric(TimingMetric.visitStart)
       this.state = VisitState.started
       this.adapter.visitStarted(this)
+      this.delegate.visitStarted(this)
     }
   }
 
@@ -154,17 +175,17 @@ export class Visit {
     }
   }
 
-  loadResponse() {
-    const { request, response } = this
-    if (request && response) {
+  loadResponse(response = this.response) {
+    if (response) {
+      const { requestFailed, responseHTML } = response
       this.render(() => {
         this.cacheSnapshot()
-        if (request.failed) {
-          this.view.render({ error: this.response }, this.performScroll)
+        if (requestFailed) {
+          this.view.render({ error: responseHTML }, this.performScroll)
           this.adapter.visitRendered(this)
           this.fail()
         } else {
-          this.view.render({ snapshot: Snapshot.fromHTMLString(response) }, this.performScroll)
+          this.view.render({ snapshot: Snapshot.fromHTMLString(responseHTML) }, this.performScroll)
           this.adapter.visitRendered(this)
           this.complete()
         }
@@ -194,14 +215,14 @@ export class Visit {
     }
   }
 
-  requestCompletedWithResponse(response: string, redirectedToLocation?: Location) {
-    this.response = response
+  requestCompletedWithResponse(responseHTML: string, redirectedToLocation?: Location) {
+    this.response = { requestFailed: false, responseHTML }
     this.redirectedToLocation = redirectedToLocation
     this.adapter.visitRequestCompleted(this)
   }
 
-  requestFailedWithStatusCode(statusCode: number, response?: string) {
-    this.response = response
+  requestFailedWithStatusCode(statusCode: number, responseHTML: string) {
+    this.response = { requestFailed: true, responseHTML }
     this.adapter.visitRequestFailedWithStatusCode(this, statusCode)
   }
 
