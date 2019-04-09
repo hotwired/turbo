@@ -110,7 +110,7 @@ export class FetchRequest {
 
   get contentType() {
     if (this.body instanceof FormData) {
-      return "application/x-www-form-urlencoded"
+      return "multipart/form-data"
     }
   }
 
