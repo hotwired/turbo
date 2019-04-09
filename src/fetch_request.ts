@@ -95,7 +95,6 @@ export class FetchRequest {
   get headers() {
     return {
       "Accept": "text/html, application/xhtml+xml",
-      ...(this.contentType ? { "Content-Type": this.contentType } : {}),
       ...this.additionalHeaders
     }
   }
@@ -105,12 +104,6 @@ export class FetchRequest {
       return this.delegate.additionalHeadersForRequest(this)
     } else {
       return {}
-    }
-  }
-
-  get contentType() {
-    if (this.body instanceof FormData) {
-      return "multipart/form-data"
     }
   }
 
