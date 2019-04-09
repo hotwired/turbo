@@ -1,5 +1,6 @@
-import { Controller, VisitOptions } from "./controller"
+import { Controller } from "./controller"
 import { Locatable } from "./location"
+import { VisitOptions } from "./visit"
 
 const controller = new Controller
 

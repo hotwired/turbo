@@ -36,7 +36,8 @@ export enum VisitState {
 export type VisitOptions = {
   action: Action,
   historyChanged: boolean,
-  referrer?: Location
+  referrer?: Location,
+  response?: VisitResponse
 }
 
 const defaultOptions: VisitOptions = {
@@ -73,10 +74,11 @@ export class Visit {
     this.location = location
     this.restorationIdentifier = restorationIdentifier
 
-    const { action, historyChanged, referrer } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, response } = { ...defaultOptions, ...options }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
+    this.response = response
   }
 
   get adapter() {
@@ -140,10 +142,20 @@ export class Visit {
   }
 
   issueRequest() {
-    if (this.shouldIssueRequest() && !this.request) {
+    if (this.hasPreloadedResponse()) {
+      this.simulateRequest()
+    } else if (this.shouldIssueRequest() && !this.request) {
       this.progress = 0
       this.request = new HttpRequest(this, this.location, this.referrer)
       this.request.send()
+    }
+  }
+
+  simulateRequest() {
+    if (this.response) {
+      this.requestStarted()
+      this.requestCompletedWithResponse(this.response.responseHTML)
+      this.requestFinished()
     }
   }
 
@@ -281,6 +293,10 @@ export class Visit {
       case "advance":
       case "restore": return history.pushState
     }
+  }
+
+  hasPreloadedResponse() {
+    return typeof this.response == "object"
   }
 
   shouldIssueRequest() {

@@ -1,3 +1,5 @@
+import { Location } from "./location"
+
 export class FetchResponse {
   readonly response: Response
 
@@ -15,6 +17,10 @@ export class FetchResponse {
 
   get redirected() {
     return this.response.redirected
+  }
+
+  get location() {
+    return Location.wrap(this.response.url)
   }
 
   get isHTML() {

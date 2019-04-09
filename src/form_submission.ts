@@ -4,8 +4,6 @@ import { Location } from "./location"
 
 export interface FormSubmissionDelegate {
   formSubmissionStarted(formSubmission: FormSubmission): void
-  formSubmissionProgressed(formSubmission: FormSubmission, progress: number): void
-  formSubmissionWillRedirectToLocation(formSubmission: FormSubmission, location: Location): boolean
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse): void
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse): void
   formSubmissionErrored(formSubmission: FormSubmission, error: Error): void
@@ -92,9 +90,13 @@ export class FormSubmission {
   }
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-    // TODO: Handle form redirection
-    this.state = FormSubmissionState.receiving
-    this.delegate.formSubmissionSucceededWithResponse(this, response)
+    if (response.redirected) {
+      this.state = FormSubmissionState.receiving
+      this.delegate.formSubmissionSucceededWithResponse(this, response)
+    } else {
+      const error = new Error("Form responses must redirect to another location")
+      this.delegate.formSubmissionErrored(this, error)
+    }
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {

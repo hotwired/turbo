@@ -1,6 +1,7 @@
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Location } from "./location"
+import { uuid } from "./util"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 
 export type NavigatorDelegate = VisitDelegate
@@ -80,27 +81,22 @@ export class Navigator {
 
   }
 
-  formSubmissionProgressed(formSubmission: FormSubmission, progress: number) {
-
-  }
-
-  formSubmissionWillRedirectToLocation(formSubmission: FormSubmission, location: Location) {
-    return true
-  }
-
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-    const responseHTML = await fetchResponse.responseHTML
-    if (responseHTML && this.currentVisit) {
-      this.currentVisit.loadResponse({ responseHTML })
+    if (formSubmission == this.foregroundFormSubmission) {
+      const responseHTML = await fetchResponse.responseHTML
+      if (responseHTML) {
+        const visitOptions = { response: { responseHTML } }
+        this.startVisit(fetchResponse.location, uuid(), visitOptions)
+      }
     }
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-
+    console.error("Form submission failed:", formSubmission, fetchResponse)
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-
+    console.error("Form submission failed:", formSubmission, error)
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
