@@ -19,7 +19,7 @@ export type NavigationOptions = VisitOptions & {
 export class Navigator {
   readonly delegate: NavigatorDelegate
   foregroundFormSubmission?: FormSubmission
-  backgroundFormSubmissions: Set<FormSubmission> = new Set
+  formSubmissions: Set<FormSubmission> = new Set
   currentVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
@@ -32,10 +32,9 @@ export class Navigator {
 
   submit(form: HTMLFormElement, options: Partial<NavigationOptions> = {}) {
     const formSubmission = new FormSubmission(this, form)
+    const { target } = { ...navigationOptionsForForm(form), ...options }
 
-    if (options.target == NavigationTarget.background) {
-      this.backgroundFormSubmissions.add(formSubmission)
-    } else {
+    if (target != NavigationTarget.background) {
       this.stop()
       this.foregroundFormSubmission = formSubmission
     }
@@ -78,29 +77,31 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    this.formSubmissions.add(formSubmission)
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
+    console.log("Form submission succeeded", formSubmission)
     if (formSubmission == this.foregroundFormSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
         const visitOptions = { response: { responseHTML } }
+        console.log("Visiting", fetchResponse.location, visitOptions)
         this.startVisit(fetchResponse.location, uuid(), visitOptions)
       }
     }
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-    console.error("Form submission failed:", formSubmission, fetchResponse)
+    console.error("Form submission failed", formSubmission, fetchResponse)
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-    console.error("Form submission failed:", formSubmission, error)
+    console.error("Form submission failed", formSubmission, error)
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    this.formSubmissions.delete(formSubmission)
   }
 
   // Visit delegate
@@ -123,5 +124,21 @@ export class Navigator {
 
   get location() {
     return this.history.location
+  }
+}
+
+function navigationOptionsForForm(form: HTMLFormElement) {
+  const target = navigationTarget(form.getAttribute("target"))
+  return { target }
+}
+
+function navigationTarget(target: string | null) {
+  switch (target) {
+    case "background":
+      return NavigationTarget.background
+    case "modal":
+      return NavigationTarget.modal
+    default:
+      return NavigationTarget.foreground
   }
 }
