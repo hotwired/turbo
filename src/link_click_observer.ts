@@ -3,7 +3,7 @@ import { closest } from "./util"
 
 export interface LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: Location): boolean
-  didFollowLinkToLocation(link: Element, location: Location): void
+  followedLinkToLocation(link: Element, location: Location): void
 }
 
 export class LinkClickObserver {
@@ -40,7 +40,7 @@ export class LinkClickObserver {
         const location = this.getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location)) {
           event.preventDefault()
-          this.delegate.didFollowLinkToLocation(link, location)
+          this.delegate.followedLinkToLocation(link, location)
         }
       }
     }

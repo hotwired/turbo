@@ -118,7 +118,7 @@ export class Controller {
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
 
-  didFollowLinkToLocation(link: Element, location: Location) {
+  followedLinkToLocation(link: Element, location: Location) {
     const action = this.getActionForLink(link)
     this.visit(location, { action })
   }
