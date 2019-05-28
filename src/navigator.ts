@@ -128,17 +128,14 @@ export class Navigator {
 }
 
 function navigationOptionsForForm(form: HTMLFormElement) {
-  const target = navigationTarget(form.getAttribute("target"))
+  const target = navigationTargetFromString(form.getAttribute("target"))
   return { target }
 }
 
-function navigationTarget(target: string | null) {
+function navigationTargetFromString(target: string | null) {
   switch (target) {
-    case "background":
-      return NavigationTarget.background
-    case "modal":
-      return NavigationTarget.modal
-    default:
-      return NavigationTarget.foreground
+    case "background": return NavigationTarget.background
+    case "modal":      return NavigationTarget.modal
+    default:           return NavigationTarget.foreground
   }
 }
