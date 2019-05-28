@@ -60,7 +60,7 @@ export class LinkClickObserver {
 
   findLinkFromClickTarget(target: EventTarget | null) {
     if (target instanceof Element) {
-      return closest(target, "a[href]:not([target]):not([download])")
+      return closest(target, "a[href]:not([target^=_]):not([download])")
     }
   }
 
