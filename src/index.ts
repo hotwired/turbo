@@ -1,21 +1,30 @@
-import namespace from "./namespace"
-import "./script_warning"
+import { Controller } from "./controller"
+import { Locatable } from "./location"
+import { VisitOptions } from "./visit"
 
-export default namespace
+export * from "./adapter"
+export * from "./controller"
+export * from "./fetch_request"
+export * from "./fetch_response"
+export * from "./location"
+export * from "./visit"
 
-if (!window.Turbolinks) {
-  window.Turbolinks = namespace
-  if (!isAMD() && !isCommonJS()) {
-    namespace.start()
-  }
+export const controller = new Controller
+
+export const supported = Controller.supported
+
+export function visit(location: Locatable, options?: Partial<VisitOptions>) {
+  controller.visit(location, options)
 }
 
-declare var define: (() => any) & { amd: any }
-
-function isAMD() {
-  return typeof define == "function" && define.amd
+export function clearCache() {
+  controller.clearCache()
 }
 
-function isCommonJS() {
-  return typeof exports == "object" && typeof module != "undefined"
+export function setProgressBarDelay(delay: number) {
+  controller.setProgressBarDelay(delay)
+}
+
+export function start() {
+  controller.start()
 }
