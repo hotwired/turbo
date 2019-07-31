@@ -6,6 +6,7 @@ export * from "./adapter"
 export * from "./controller"
 export * from "./fetch_request"
 export * from "./fetch_response"
+export * from "./form_submission"
 export * from "./location"
 export * from "./visit"
 
