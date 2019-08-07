@@ -24,13 +24,15 @@ export class FormSubmission {
   readonly formElement: HTMLFormElement
   readonly formData: FormData
   readonly fetchRequest: FetchRequest
+  readonly mustRedirect: boolean
   state = FormSubmissionState.initialized
 
-  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement) {
+  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, mustRedirect = false) {
     this.delegate = delegate
     this.formElement = formElement
     this.formData = new FormData(formElement)
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
+    this.mustRedirect = mustRedirect
   }
 
   get method(): FetchMethod {
@@ -91,7 +93,7 @@ export class FormSubmission {
   }
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-    if (response.redirected) {
+    if (response.redirected || !this.mustRedirect) {
       this.state = FormSubmissionState.receiving
       this.delegate.formSubmissionSucceededWithResponse(this, response)
     } else {

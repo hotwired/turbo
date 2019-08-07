@@ -31,7 +31,7 @@ export class Navigator {
   }
 
   submit(form: HTMLFormElement, options: Partial<NavigationOptions> = {}) {
-    const formSubmission = new FormSubmission(this, form)
+    const formSubmission = new FormSubmission(this, form, true)
     const { target } = { ...navigationOptionsForForm(form), ...options }
 
     if (target != NavigationTarget.background) {
