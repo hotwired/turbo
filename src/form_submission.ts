@@ -1,4 +1,4 @@
-import { FetchRequest, FetchMethod, fetchMethodFromString } from "./fetch_request"
+import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "./fetch_request"
 import { FetchResponse } from "./fetch_response"
 import { Location } from "./location"
 
@@ -83,8 +83,14 @@ export class FormSubmission {
   // Fetch request delegate
 
   additionalHeadersForRequest(request: FetchRequest) {
-    // TODO: Send CSRF tokens
-    return {}
+    const headers: FetchRequestHeaders = {}
+    if (this.method != FetchMethod.get) {
+      const token = getMetaContent("csrf-token")
+      if (token) {
+        headers["X-CSRF-Token"] = token
+      }
+    }
+    return headers
   }
 
   requestStarted(request: FetchRequest) {
@@ -114,4 +120,9 @@ export class FormSubmission {
     this.state = FormSubmissionState.stopped
     this.delegate.formSubmissionFinished(this)
   }
+}
+
+function getMetaContent(name: string) {
+  const element: HTMLMetaElement | null = document.querySelector(`meta[name="${name}"]`)
+  return element && element.content
 }

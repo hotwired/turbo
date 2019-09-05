@@ -30,8 +30,10 @@ export function fetchMethodFromString(method: string) {
 
 export type FetchRequestBody = FormData
 
+export type FetchRequestHeaders = { [header: string]: string }
+
 export interface FetchRequestOptions {
-  headers: { [header: string]: string }
+  headers: FetchRequestHeaders
   body: FetchRequestBody
   followRedirects: boolean
 }
