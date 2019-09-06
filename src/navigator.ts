@@ -1,3 +1,4 @@
+import { FetchMethod } from "./fetch_request"
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Location } from "./location"
@@ -85,6 +86,11 @@ export class Navigator {
     if (formSubmission == this.foregroundFormSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
+        if (formSubmission.method != FetchMethod.get) {
+          console.log("Clearing snapshot cache after successful form submission")
+          this.view.clearSnapshotCache()
+        }
+
         const visitOptions = { response: { responseHTML } }
         console.log("Visiting", fetchResponse.location, visitOptions)
         this.startVisit(fetchResponse.location, uuid(), visitOptions)
