@@ -94,6 +94,10 @@ export class Controller {
     return this.history.location
   }
 
+  get restorationIdentifier() {
+    return this.history.restorationIdentifier
+  }
+
   // History delegate
 
   historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string) {

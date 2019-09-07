@@ -5,6 +5,7 @@ import { Location } from "./location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Action } from "./types"
+import { uuid } from "./util"
 import { View } from "./view"
 
 export interface VisitDelegate {
@@ -52,6 +53,7 @@ export type VisitResponse = {
 
 export class Visit {
   readonly delegate: VisitDelegate
+  readonly identifier = uuid()
   readonly restorationIdentifier: string
   readonly action: Action
   readonly referrer?: Location
@@ -69,10 +71,10 @@ export class Visit {
   snapshotCached = false
   state = VisitState.initialized
 
-  constructor(delegate: VisitDelegate, location: Location, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+  constructor(delegate: VisitDelegate, location: Location, restorationIdentifier: string | undefined, options: Partial<VisitOptions> = {}) {
     this.delegate = delegate
     this.location = location
-    this.restorationIdentifier = restorationIdentifier
+    this.restorationIdentifier = restorationIdentifier || uuid()
 
     const { action, historyChanged, referrer, response } = { ...defaultOptions, ...options }
     this.action = action
