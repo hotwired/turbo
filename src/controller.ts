@@ -4,13 +4,13 @@ import { FormSubmitObserver } from "./form_submit_observer"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
-import { Navigator, NavigationOptions } from "./navigator"
+import { Navigator } from "./navigator"
 import { PageObserver } from "./page_observer"
 import { ScrollObserver } from "./scroll_observer"
 import { Action, Position, isAction } from "./types"
 import { closest, dispatch } from "./util"
 import { View } from "./view"
-import { Visit } from "./visit"
+import { Visit, VisitOptions } from "./visit"
 
 export type TimingData = {}
 
@@ -66,24 +66,12 @@ export class Controller {
     this.view.clearSnapshotCache()
   }
 
-  visit(location: Locatable, options: Partial<NavigationOptions> = {}) {
-    location = Location.wrap(location)
-    if (this.applicationAllowsVisitingLocation(location)) {
-      if (this.locationIsVisitable(location)) {
-        const action = options.action || "advance"
-        this.adapter.visitProposedToLocationWithAction(location, action)
-      } else {
-        window.location.href = location.toString()
-      }
-    }
+  visit(location: Locatable, options: Partial<VisitOptions> = {}) {
+    this.navigator.proposeVisit(Location.wrap(location), options)
   }
 
   startVisitToLocationWithAction(location: Locatable, action: Action, restorationIdentifier: string) {
-    if (Controller.supported) {
-      this.navigator.visit(Location.wrap(location), restorationIdentifier, { action })
-    } else {
-      window.location.href = location.toString()
-    }
+    this.navigator.startVisit(Location.wrap(location), restorationIdentifier, { action })
   }
 
   setProgressBarDelay(delay: number) {
@@ -102,7 +90,7 @@ export class Controller {
 
   historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string) {
     if (this.enabled) {
-      this.navigator.visit(location, restorationIdentifier, { action: "restore", historyChanged: true })
+      this.navigator.proposeVisit(location, { action: "restore", historyChanged: true })
     } else {
       this.adapter.pageInvalidated()
     }
@@ -129,6 +117,14 @@ export class Controller {
 
   // Navigator delegate
 
+  allowsVisitingLocation(location: Location) {
+    return this.applicationAllowsVisitingLocation(location)
+  }
+
+  visitProposed(location: Location, action: Action) {
+    this.adapter.visitProposedToLocationWithAction(location, action)
+  }
+
   visitStarted(visit: Visit) {
     this.notifyApplicationAfterVisitingLocation(visit.location)
   }
@@ -144,7 +140,7 @@ export class Controller {
   }
 
   formSubmitted(form: HTMLFormElement) {
-    this.navigator.submit(form)
+    this.navigator.submitForm(form)
   }
 
   // Page observer delegate

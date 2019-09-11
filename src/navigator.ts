@@ -2,51 +2,46 @@ import { FetchMethod } from "./fetch_request"
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Location } from "./location"
+import { Action } from "./types"
 import { uuid } from "./util"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 
-export type NavigatorDelegate = VisitDelegate
-
-export enum NavigationTarget {
-  background,
-  foreground,
-  modal
-}
-
-export type NavigationOptions = VisitOptions & {
-  target: NavigationTarget
+export type NavigatorDelegate = VisitDelegate & {
+  allowsVisitingLocation(location: Location): boolean
+  visitProposed(location: Location, action: Action): void
 }
 
 export class Navigator {
   readonly delegate: NavigatorDelegate
-  foregroundFormSubmission?: FormSubmission
-  formSubmissions: Set<FormSubmission> = new Set
+  formSubmission?: FormSubmission
   currentVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
   }
 
-  visit(location: Location, restorationIdentifier: string, options: Partial<NavigationOptions> = {}) {
-    this.startVisit(location, restorationIdentifier, options)
+  proposeVisit(location: Location, options: Partial<VisitOptions> = {}) {
+    if (this.delegate.allowsVisitingLocation(location)) {
+      this.delegate.visitProposed(location, options.action || "advance")
+    }
   }
 
-  submit(form: HTMLFormElement, options: Partial<NavigationOptions> = {}) {
-    const formSubmission = new FormSubmission(this, form, true)
-    const { target } = { ...navigationOptionsForForm(form), ...options }
+  startVisit(location: Location, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+    this.stop()
+    this.currentVisit = new Visit(this, location, restorationIdentifier, { ...options, referrer: this.location })
+    this.currentVisit.start()
+  }
 
-    if (target != NavigationTarget.background) {
-      this.stop()
-      this.foregroundFormSubmission = formSubmission
-    }
-
-    formSubmission.start()
+  submitForm(form: HTMLFormElement) {
+    this.stop()
+    this.formSubmission = new FormSubmission(this, form, true)
+    this.formSubmission.start()
   }
 
   stop() {
-    if (this.foregroundFormSubmission) {
-      this.foregroundFormSubmission.stop()
-      delete this.foregroundFormSubmission
+    if (this.formSubmission) {
+      this.formSubmission.stop()
+      delete this.formSubmission
     }
 
     if (this.currentVisit) {
@@ -78,12 +73,12 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-    this.formSubmissions.add(formSubmission)
+
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
     console.log("Form submission succeeded", formSubmission)
-    if (formSubmission == this.foregroundFormSubmission) {
+    if (formSubmission == this.formSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
         if (formSubmission.method != FetchMethod.get) {
@@ -107,7 +102,7 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-    this.formSubmissions.delete(formSubmission)
+
   }
 
   // Visit delegate
@@ -122,26 +117,7 @@ export class Navigator {
 
   // Visits
 
-  startVisit(location: Location, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
-    this.stop()
-    this.currentVisit = new Visit(this, location, restorationIdentifier, { ...options, referrer: this.location })
-    this.currentVisit.start()
-  }
-
   get location() {
     return this.history.location
-  }
-}
-
-function navigationOptionsForForm(form: HTMLFormElement) {
-  const target = navigationTargetFromString(form.getAttribute("target"))
-  return { target }
-}
-
-function navigationTargetFromString(target: string | null) {
-  switch (target) {
-    case "background": return NavigationTarget.background
-    case "modal":      return NavigationTarget.modal
-    default:           return NavigationTarget.foreground
   }
 }
