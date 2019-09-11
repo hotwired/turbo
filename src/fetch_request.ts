@@ -53,7 +53,24 @@ export class FetchRequest {
   }
 
   get url() {
-    return this.location.absoluteURL
+    const url = this.location.absoluteURL
+    const query = this.params.toString()
+    if (this.isIdempotent && query.length) {
+      return [url, query].join(url.includes("?") ? "&" : "?")
+    } else {
+      return url
+    }
+  }
+
+  get params() {
+    return this.entries.reduce((params, [name, value]) => {
+      params.append(name, value.toString())
+      return params
+    }, new URLSearchParams)
+  }
+
+  get entries() {
+    return this.body ? Array.from(this.body.entries()) : []
   }
 
   abort() {
@@ -89,9 +106,13 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.body,
+      body: this.isIdempotent ? undefined : this.body,
       signal: this.abortSignal
     }
+  }
+
+  get isIdempotent() {
+    return this.method == FetchMethod.get
   }
 
   get headers() {

@@ -31,7 +31,7 @@ export class FormSubmission {
     this.delegate = delegate
     this.formElement = formElement
     this.formData = new FormData(formElement)
-    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
+    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.formData)
     this.mustRedirect = mustRedirect
   }
 
@@ -42,23 +42,6 @@ export class FormSubmission {
 
   get location() {
     return Location.wrap(this.formElement.action)
-  }
-
-  get params() {
-    return this.entries.reduce((params, [name, value]) => {
-      params.append(name, value.toString())
-      return params
-    }, new URLSearchParams)
-  }
-
-  get body() {
-    if (this.method != FetchMethod.get) {
-      return this.formData
-    }
-  }
-
-  get entries() {
-    return Array.from(this.formData.entries())
   }
 
   // The submission process
@@ -99,12 +82,12 @@ export class FormSubmission {
   }
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-    if (response.redirected || !this.mustRedirect) {
-      this.state = FormSubmissionState.receiving
-      this.delegate.formSubmissionSucceededWithResponse(this, response)
-    } else {
+    if (this.requestMustRedirect(request) && !response.redirected) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
+    } else {
+      this.state = FormSubmissionState.receiving
+      this.delegate.formSubmissionSucceededWithResponse(this, response)
     }
   }
 
@@ -119,6 +102,10 @@ export class FormSubmission {
   requestFinished(request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.delegate.formSubmissionFinished(this)
+  }
+
+  requestMustRedirect(request: FetchRequest) {
+    return !request.isIdempotent && this.mustRedirect
   }
 }
 
