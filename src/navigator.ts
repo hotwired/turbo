@@ -3,8 +3,7 @@ import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Location } from "./location"
 import { Action } from "./types"
-import { uuid } from "./util"
-import { Visit, VisitDelegate, VisitOptions } from "./visit"
+import { Visit, VisitDelegate, VisitOptions, VisitResponse } from "./visit"
 
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocation(location: Location): boolean
@@ -14,6 +13,7 @@ export type NavigatorDelegate = VisitDelegate & {
 export class Navigator {
   readonly delegate: NavigatorDelegate
   formSubmission?: FormSubmission
+  proposedResponse?: VisitResponse
   currentVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
@@ -22,13 +22,21 @@ export class Navigator {
 
   proposeVisit(location: Location, options: Partial<VisitOptions> = {}) {
     if (this.delegate.allowsVisitingLocation(location)) {
+      this.proposedResponse = options.response
       this.delegate.visitProposed(location, options.action || "advance")
+    } else {
+      delete this.proposedResponse
     }
   }
 
   startVisit(location: Location, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
     this.stop()
-    this.currentVisit = new Visit(this, location, restorationIdentifier, { ...options, referrer: this.location })
+    this.currentVisit = new Visit(this, location, restorationIdentifier, {
+      referrer: this.location,
+      response: this.proposedResponse,
+      ...options
+    })
+    delete this.proposedResponse
     this.currentVisit.start()
   }
 
@@ -88,7 +96,7 @@ export class Navigator {
 
         const visitOptions = { response: { responseHTML } }
         console.log("Visiting", fetchResponse.location, visitOptions)
-        this.startVisit(fetchResponse.location, uuid(), visitOptions)
+        this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
   }
