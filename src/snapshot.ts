@@ -14,9 +14,8 @@ export class Snapshot {
   }
 
   static fromHTMLString(html: string) {
-    const element = document.createElement("html")
-    element.innerHTML = html
-    return this.fromHTMLElement(element)
+    const { documentElement } = new DOMParser().parseFromString(html, "text/html")
+    return this.fromHTMLElement(documentElement as HTMLHtmlElement)
   }
 
   static fromHTMLElement(htmlElement: HTMLHtmlElement) {
@@ -35,7 +34,8 @@ export class Snapshot {
   }
 
   clone(): Snapshot {
-    return new Snapshot(this.headDetails, this.bodyElement.cloneNode(true))
+    const { bodyElement } = Snapshot.fromHTMLString(this.bodyElement.outerHTML)
+    return new Snapshot(this.headDetails, bodyElement)
   }
 
   getRootLocation() {
