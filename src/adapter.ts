@@ -1,9 +1,8 @@
 import { Locatable } from "./location"
-import { Action } from "./types"
-import { Visit } from "./visit"
+import { Visit, VisitOptions } from "./visit"
 
 export interface Adapter {
-  visitProposedToLocationWithAction(location: Locatable, action: Action): void
+  visitProposedToLocation(location: Locatable, options?: Partial<VisitOptions>): void
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
   visitFailed(visit: Visit): void

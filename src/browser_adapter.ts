@@ -2,8 +2,7 @@ import { Adapter } from "./adapter"
 import { Controller } from "./controller"
 import { Locatable } from "./location"
 import { ProgressBar } from "./progress_bar"
-import { Action } from "./types"
-import { SystemStatusCode, Visit } from "./visit"
+import { SystemStatusCode, Visit, VisitOptions } from "./visit"
 import { uuid } from "./util"
 
 export class BrowserAdapter implements Adapter {
@@ -16,9 +15,9 @@ export class BrowserAdapter implements Adapter {
     this.controller = controller
   }
 
-  visitProposedToLocationWithAction(location: Locatable, action: Action) {
+  visitProposedToLocation(location: Locatable, options?: Partial<VisitOptions>) {
     const restorationIdentifier = uuid()
-    this.controller.startVisitToLocationWithAction(location, action, restorationIdentifier)
+    this.controller.startVisitToLocation(location, restorationIdentifier, options)
   }
 
   visitStarted(visit: Visit) {

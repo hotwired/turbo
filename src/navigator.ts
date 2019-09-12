@@ -2,18 +2,16 @@ import { FetchMethod } from "./fetch_request"
 import { FetchResponse } from "./fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Location } from "./location"
-import { Action } from "./types"
-import { Visit, VisitDelegate, VisitOptions, VisitResponse } from "./visit"
+import { Visit, VisitDelegate, VisitOptions } from "./visit"
 
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocation(location: Location): boolean
-  visitProposed(location: Location, action: Action): void
+  visitProposedToLocation(location: Location, options: Partial<VisitOptions>): void
 }
 
 export class Navigator {
   readonly delegate: NavigatorDelegate
   formSubmission?: FormSubmission
-  proposedResponse?: VisitResponse
   currentVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
@@ -22,10 +20,7 @@ export class Navigator {
 
   proposeVisit(location: Location, options: Partial<VisitOptions> = {}) {
     if (this.delegate.allowsVisitingLocation(location)) {
-      this.proposedResponse = options.response
-      this.delegate.visitProposed(location, options.action || "advance")
-    } else {
-      delete this.proposedResponse
+      this.delegate.visitProposedToLocation(location, options)
     }
   }
 
@@ -33,10 +28,8 @@ export class Navigator {
     this.stop()
     this.currentVisit = new Visit(this, location, restorationIdentifier, {
       referrer: this.location,
-      response: this.proposedResponse,
       ...options
     })
-    delete this.proposedResponse
     this.currentVisit.start()
   }
 

@@ -70,8 +70,8 @@ export class Controller {
     this.navigator.proposeVisit(Location.wrap(location), options)
   }
 
-  startVisitToLocationWithAction(location: Locatable, action: Action, restorationIdentifier: string) {
-    this.navigator.startVisit(Location.wrap(location), restorationIdentifier, { action })
+  startVisitToLocation(location: Locatable, restorationIdentifier: string, options?: Partial<VisitOptions>) {
+    this.navigator.startVisit(Location.wrap(location), restorationIdentifier, options)
   }
 
   setProgressBarDelay(delay: number) {
@@ -121,8 +121,8 @@ export class Controller {
     return this.applicationAllowsVisitingLocation(location)
   }
 
-  visitProposed(location: Location, action: Action) {
-    this.adapter.visitProposedToLocationWithAction(location, action)
+  visitProposedToLocation(location: Location, options: Partial<VisitOptions>) {
+    this.adapter.visitProposedToLocation(location, options)
   }
 
   visitStarted(visit: Visit) {
