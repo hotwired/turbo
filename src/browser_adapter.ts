@@ -37,10 +37,6 @@ export class BrowserAdapter implements Adapter {
     }
   }
 
-  visitRequestProgressed(visit: Visit) {
-    this.progressBar.setValue(visit.progress)
-  }
-
   visitRequestCompleted(visit: Visit) {
     visit.loadResponse()
   }
@@ -57,6 +53,7 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitRequestFinished(visit: Visit) {
+    this.progressBar.setValue(1)
     this.hideProgressBar()
   }
 

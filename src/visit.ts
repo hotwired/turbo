@@ -63,7 +63,6 @@ export class Visit {
   frame?: number
   historyChanged = false
   location: Location
-  progress = 0
   redirectedToLocation?: Location
   request?: HttpRequest
   response?: VisitResponse
@@ -147,7 +146,6 @@ export class Visit {
     if (this.hasPreloadedResponse()) {
       this.simulateRequest()
     } else if (this.shouldIssueRequest() && !this.request) {
-      this.progress = 0
       this.request = new HttpRequest(this, this.location, this.referrer)
       this.request.send()
     }
@@ -220,13 +218,6 @@ export class Visit {
   requestStarted() {
     this.recordTimingMetric(TimingMetric.requestStart)
     this.adapter.visitRequestStarted(this)
-  }
-
-  requestProgressed(progress: number) {
-    this.progress = progress
-    if (this.adapter.visitRequestProgressed) {
-      this.adapter.visitRequestProgressed(this)
-    }
   }
 
   requestCompletedWithResponse(responseHTML: string, redirectedToLocation?: Location) {
