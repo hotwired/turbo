@@ -1,5 +1,6 @@
 import { FetchResponse } from "./fetch_response"
 import { Location } from "./location"
+import { dispatch } from "./util"
 
 export interface FetchRequestDelegate {
   additionalHeadersForRequest?(request: FetchRequest): { [header: string]: string }
@@ -78,10 +79,12 @@ export class FetchRequest {
   }
 
   async perform(): Promise<FetchResponse> {
+    const { fetchOptions } = this
+    dispatch("turbolinks:before-fetch-request", { data: { fetchOptions } })
     try {
       this.delegate.requestStarted(this)
-      const fetchResponse = await fetch(this.url, this.fetchOptions)
-      return await this.receive(fetchResponse)
+      const response = await fetch(this.url, fetchOptions)
+      return await this.receive(response)
     } catch (error) {
       this.delegate.requestErrored(this, error)
       throw error
@@ -90,14 +93,17 @@ export class FetchRequest {
     }
   }
 
-  async receive(fetchResponse: Response): Promise<FetchResponse> {
-    const response = new FetchResponse(fetchResponse)
-    if (response.succeeded) {
-      this.delegate.requestSucceededWithResponse(this, response)
-    } else {
-      this.delegate.requestFailedWithResponse(this, response)
+  async receive(response: Response): Promise<FetchResponse> {
+    const fetchResponse = new FetchResponse(response)
+    const event = dispatch("turbolinks:before-fetch-response", { cancelable: true, data: { fetchResponse } })
+    if (!event.defaultPrevented) {
+      if (fetchResponse.succeeded) {
+        this.delegate.requestSucceededWithResponse(this, fetchResponse)
+      } else {
+        this.delegate.requestFailedWithResponse(this, fetchResponse)
+      }
     }
-    return response
+    return fetchResponse
   }
 
   get fetchOptions(): RequestInit {
