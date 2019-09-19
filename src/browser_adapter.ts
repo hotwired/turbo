@@ -1,10 +1,9 @@
 import { Adapter } from "./adapter"
 import { Controller } from "./controller"
-import { SystemStatusCode } from "./http_request"
 import { Locatable } from "./location"
 import { ProgressBar } from "./progress_bar"
 import { Action } from "./types"
-import { Visit } from "./visit"
+import { SystemStatusCode, Visit } from "./visit"
 import { uuid } from "./util"
 
 export class BrowserAdapter implements Adapter {

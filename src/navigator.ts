@@ -94,7 +94,8 @@ export class Navigator {
           this.view.clearSnapshotCache()
         }
 
-        const visitOptions = { response: { responseHTML } }
+        const { statusCode } = fetchResponse
+        const visitOptions = { response: { statusCode, responseHTML } }
         console.log("Visiting", fetchResponse.location, visitOptions)
         this.proposeVisit(fetchResponse.location, visitOptions)
       }

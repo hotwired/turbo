@@ -1,6 +1,7 @@
 import { Adapter } from "./adapter"
+import { FetchMethod, FetchRequest, FetchRequestDelegate } from "./fetch_request"
+import { FetchResponse } from "./fetch_response"
 import { History } from "./history"
-import { HttpRequest } from "./http_request"
 import { Location } from "./location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
@@ -47,11 +48,17 @@ const defaultOptions: VisitOptions = {
 }
 
 export type VisitResponse = {
-  requestFailed?: boolean,
-  responseHTML: string
+  statusCode: number,
+  responseHTML?: string
 }
 
-export class Visit {
+export enum SystemStatusCode {
+  networkFailure = 0,
+  timeoutFailure = -1,
+  contentTypeMismatch = -2
+}
+
+export class Visit implements FetchRequestDelegate {
   readonly delegate: VisitDelegate
   readonly identifier = uuid()
   readonly restorationIdentifier: string
@@ -64,7 +71,7 @@ export class Visit {
   historyChanged = false
   location: Location
   redirectedToLocation?: Location
-  request?: HttpRequest
+  request?: FetchRequest
   response?: VisitResponse
   scrolled = false
   snapshotCached = false
@@ -146,16 +153,56 @@ export class Visit {
     if (this.hasPreloadedResponse()) {
       this.simulateRequest()
     } else if (this.shouldIssueRequest() && !this.request) {
-      this.request = new HttpRequest(this, this.location, this.referrer)
-      this.request.send()
+      this.request = new FetchRequest(this, FetchMethod.get, this.location)
+      this.request.perform()
     }
   }
 
   simulateRequest() {
     if (this.response) {
-      this.requestStarted()
-      this.requestCompletedWithResponse(this.response.responseHTML)
-      this.requestFinished()
+      this.startRequest()
+      this.recordResponse()
+      this.finishRequest()
+    }
+  }
+
+  startRequest() {
+    this.recordTimingMetric(TimingMetric.requestStart)
+    this.adapter.visitRequestStarted(this)
+  }
+
+  recordResponse(response = this.response) {
+    this.response = response
+    if (response) {
+      const { statusCode } = response
+      if (isSuccessful(statusCode)) {
+        this.adapter.visitRequestCompleted(this)
+      } else {
+        this.adapter.visitRequestFailedWithStatusCode(this, statusCode)
+      }
+    }
+  }
+
+  finishRequest() {
+    this.recordTimingMetric(TimingMetric.requestEnd)
+    this.adapter.visitRequestFinished(this)
+  }
+
+  loadResponse() {
+    if (this.response) {
+      const { statusCode, responseHTML } = this.response
+      this.render(() => {
+        this.cacheSnapshot()
+        if (isSuccessful(statusCode) && responseHTML != null) {
+          this.view.render({ snapshot: Snapshot.fromHTMLString(responseHTML) }, this.performScroll)
+          this.adapter.visitRendered(this)
+          this.complete()
+        } else {
+          this.view.render({ error: responseHTML }, this.performScroll)
+          this.adapter.visitRendered(this)
+          this.fail()
+        }
+      })
     }
   }
 
@@ -187,24 +234,6 @@ export class Visit {
     }
   }
 
-  loadResponse(response = this.response) {
-    if (response) {
-      const { requestFailed, responseHTML } = response
-      this.render(() => {
-        this.cacheSnapshot()
-        if (requestFailed) {
-          this.view.render({ error: responseHTML }, this.performScroll)
-          this.adapter.visitRendered(this)
-          this.fail()
-        } else {
-          this.view.render({ snapshot: Snapshot.fromHTMLString(responseHTML) }, this.performScroll)
-          this.adapter.visitRendered(this)
-          this.complete()
-        }
-      })
-    }
-  }
-
   followRedirect() {
     if (this.redirectedToLocation && !this.followedRedirect) {
       this.location = this.redirectedToLocation
@@ -213,27 +242,41 @@ export class Visit {
     }
   }
 
-  // HTTP request delegate
+  // Fetch request delegate
 
   requestStarted() {
-    this.recordTimingMetric(TimingMetric.requestStart)
-    this.adapter.visitRequestStarted(this)
+    this.startRequest()
   }
 
-  requestCompletedWithResponse(responseHTML: string, redirectedToLocation?: Location) {
-    this.response = { requestFailed: false, responseHTML }
-    this.redirectedToLocation = redirectedToLocation
-    this.adapter.visitRequestCompleted(this)
+  async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
+    const responseHTML = await response.responseHTML
+    if (responseHTML == undefined) {
+      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+    } else {
+      this.redirectedToLocation = response.redirected ? response.location : undefined
+      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+    }
   }
 
-  requestFailedWithStatusCode(statusCode: number, responseHTML: string) {
-    this.response = { requestFailed: true, responseHTML }
-    this.adapter.visitRequestFailedWithStatusCode(this, statusCode)
+  async requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
+    const responseHTML = await response.responseHTML
+    if (responseHTML == undefined) {
+      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+    } else {
+      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+    }
+  }
+
+  requestErrored(request: FetchRequest, error: Error) {
+    this.recordResponse({ statusCode: SystemStatusCode.networkFailure })
+  }
+
+  requestTimedOut(request: FetchRequest) {
+    this.recordResponse({ statusCode: SystemStatusCode.timeoutFailure })
   }
 
   requestFinished() {
-    this.recordTimingMetric(TimingMetric.requestEnd)
-    this.adapter.visitRequestFinished(this)
+    this.finishRequest()
   }
 
   // Scrolling
@@ -319,4 +362,8 @@ export class Visit {
       delete this.frame
     }
   }
+}
+
+function isSuccessful(statusCode: number) {
+  return statusCode >= 200 && statusCode < 300
 }
