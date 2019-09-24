@@ -271,10 +271,6 @@ export class Visit implements FetchRequestDelegate {
     this.recordResponse({ statusCode: SystemStatusCode.networkFailure })
   }
 
-  requestTimedOut(request: FetchRequest) {
-    this.recordResponse({ statusCode: SystemStatusCode.timeoutFailure })
-  }
-
   requestFinished() {
     this.finishRequest()
   }
