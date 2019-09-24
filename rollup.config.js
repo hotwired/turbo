@@ -20,7 +20,7 @@ const options = {
 
 export default [
   {
-    input: "src/index.ts",
+    input: "src/umd.ts",
     output: {
       banner: `/*\nTurbolinks ${version}\nCopyright © ${year} Basecamp, LLC\n */`,
       file: "dist/turbolinks.js",

@@ -1,13 +1,11 @@
-import * as namespace from "./index"
+import { start } from "./index"
+
 import "./script_warning"
 
-export default namespace
+export * from "./index"
 
-if (!window.Turbolinks) {
-  window.Turbolinks = namespace
-  if (!isAMD() && !isCommonJS()) {
-    namespace.start()
-  }
+if (!isAMD() && !isCommonJS()) {
+  start()
 }
 
 declare var define: (() => any) & { amd: any }
