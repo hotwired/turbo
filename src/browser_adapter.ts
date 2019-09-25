@@ -1,10 +1,9 @@
 import { Adapter } from "./adapter"
 import { Controller } from "./controller"
-import { SystemStatusCode } from "./http_request"
 import { Locatable } from "./location"
 import { ProgressBar } from "./progress_bar"
 import { Action } from "./types"
-import { Visit } from "./visit"
+import { SystemStatusCode, Visit } from "./visit"
 import { uuid } from "./util"
 
 export class BrowserAdapter implements Adapter {
@@ -37,10 +36,6 @@ export class BrowserAdapter implements Adapter {
     }
   }
 
-  visitRequestProgressed(visit: Visit) {
-    this.progressBar.setValue(visit.progress)
-  }
-
   visitRequestCompleted(visit: Visit) {
     visit.loadResponse()
   }
@@ -57,6 +52,7 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitRequestFinished(visit: Visit) {
+    this.progressBar.setValue(1)
     this.hideProgressBar()
   }
 

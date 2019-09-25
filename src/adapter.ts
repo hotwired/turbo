@@ -8,7 +8,6 @@ export interface Adapter {
   visitCompleted(visit: Visit): void
   visitFailed(visit: Visit): void
   visitRequestStarted(visit: Visit): void
-  visitRequestProgressed?(visit: Visit): void
   visitRequestCompleted(visit: Visit): void
   visitRequestFailedWithStatusCode(visit: Visit, statusCode: number): void
   visitRequestFinished(visit: Visit): void

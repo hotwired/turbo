@@ -74,7 +74,7 @@ export class FetchRequest {
     return this.body ? Array.from(this.body.entries()) : []
   }
 
-  abort() {
+  cancel() {
     this.abortController.abort()
   }
 

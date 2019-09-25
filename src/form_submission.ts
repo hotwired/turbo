@@ -58,7 +58,7 @@ export class FormSubmission {
     const { stopping, stopped } = FormSubmissionState
     if (this.state != stopping && this.state != stopped) {
       this.state = stopping
-      this.fetchRequest.abort()
+      this.fetchRequest.cancel()
       return true
     }
   }
