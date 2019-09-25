@@ -57,7 +57,7 @@ export class SnapshotRenderer extends Renderer {
 
   replaceBody() {
     const placeholders = this.relocateCurrentBodyPermanentElements()
-    this.activateNewBodyScriptElements()
+    this.activateNewBody()
     this.assignNewBody()
     this.replacePlaceholderElementsWithClonedPermanentElements(placeholders)
   }
@@ -113,6 +113,11 @@ export class SnapshotRenderer extends Renderer {
       const clonedElement = permanentElement.cloneNode(true)
       replaceElementWithElement(element, clonedElement)
     }
+  }
+
+  activateNewBody() {
+    document.adoptNode(this.newBody)
+    this.activateNewBodyScriptElements()
   }
 
   activateNewBodyScriptElements() {
