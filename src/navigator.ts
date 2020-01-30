@@ -7,6 +7,8 @@ import { Visit, VisitDelegate, VisitOptions } from "./visit"
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocation(location: Location): boolean
   visitProposedToLocation(location: Location, options: Partial<VisitOptions>): void
+  formSubmissionStarted(formSubmission: FormSubmission): void
+  formSubmissionFinished(formSubmission: FormSubmission): void
 }
 
 export class Navigator {
@@ -74,7 +76,7 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    this.delegate.formSubmissionStarted(formSubmission)
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -104,7 +106,7 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    this.delegate.formSubmissionFinished(formSubmission)
   }
 
   // Visit delegate

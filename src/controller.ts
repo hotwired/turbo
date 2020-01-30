@@ -1,10 +1,11 @@
 import { Adapter } from "./adapter"
 import { BrowserAdapter } from "./browser_adapter"
+import { FormSubmission } from "./form_submission"
 import { FormSubmitObserver } from "./form_submit_observer"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
-import { Navigator } from "./navigator"
+import { Navigator, NavigatorDelegate } from "./navigator"
 import { PageObserver } from "./page_observer"
 import { ScrollObserver } from "./scroll_observer"
 import { Action, Position, isAction } from "./types"
@@ -14,7 +15,7 @@ import { Visit, VisitOptions } from "./visit"
 
 export type TimingData = {}
 
-export class Controller {
+export class Controller implements NavigatorDelegate {
   static supported = !!(
     window.history.pushState &&
     window.requestAnimationFrame &&
@@ -133,6 +134,14 @@ export class Controller {
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
+  formSubmissionStarted(formSubmission: FormSubmission) {
+    this.notifyApplicationBeforeStartingFormSubmission(formSubmission)
+  }
+
+  formSubmissionFinished(formSubmission: FormSubmission) {
+    this.notifyApplicationAfterFinishingFormSubmission(formSubmission)
+  }
+
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement) {
@@ -215,6 +224,14 @@ export class Controller {
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
     return dispatch("turbolinks:load", { data: { url: this.location.absoluteURL, timing }})
+  }
+
+  notifyApplicationBeforeStartingFormSubmission({ formElement, formData }: FormSubmission) {
+    return dispatch("turbolinks:submit-start", { target: formElement, data: { formData } })
+  }
+
+  notifyApplicationAfterFinishingFormSubmission({ formElement, formData }: FormSubmission) {
+    return dispatch("turbolinks:submit-end", { target: formElement, data: { formData }})
   }
 
   // Private
