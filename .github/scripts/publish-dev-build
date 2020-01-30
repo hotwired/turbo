@@ -8,7 +8,7 @@ cd "$GITHUB_WORKSPACE"
 package_name="$(jq -r .name package.json)"
 package_files=( dist package.json )
 
-origin_url="https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+origin_url="https://${1}:${1}@github.com/${GITHUB_REPOSITORY}.git"
 tag="dev-builds/${GITHUB_SHA:0:7}"
 
 name="$(git log -n 1 --format=format:%cn)"
