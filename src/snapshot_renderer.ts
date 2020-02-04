@@ -128,7 +128,11 @@ export class SnapshotRenderer extends Renderer {
   }
 
   assignNewBody() {
-    replaceElementWithElement(document.body, this.newBody)
+    if (document.body) {
+      replaceElementWithElement(document.body, this.newBody)
+    } else {
+      document.documentElement.appendChild(this.newBody)
+    }
   }
 
   focusFirstAutofocusableElement() {
