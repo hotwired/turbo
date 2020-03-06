@@ -12,7 +12,7 @@ export interface FormSubmissionDelegate {
 }
 
 export type FormSubmissionResult
-  = { success: boolean, response: FetchResponse }
+  = { success: boolean, fetchResponse: FetchResponse }
   | { success: false, error: Error }
 
 export enum FormSubmissionState {
@@ -89,7 +89,7 @@ export class FormSubmission {
   }
 
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
-    this.result = { success: response.succeeded, response }
+    this.result = { success: response.succeeded, fetchResponse: response }
   }
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
@@ -98,13 +98,13 @@ export class FormSubmission {
       this.delegate.formSubmissionErrored(this, error)
     } else {
       this.state = FormSubmissionState.receiving
-      this.result = { success: true, response }
+      this.result = { success: true, fetchResponse: response }
       this.delegate.formSubmissionSucceededWithResponse(this, response)
     }
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
-    this.result = { success: false, response }
+    this.result = { success: false, fetchResponse: response }
     this.delegate.formSubmissionFailedWithResponse(this, response)
   }
 
