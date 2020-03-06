@@ -1,6 +1,5 @@
 import { Adapter } from "./adapter"
 import { BrowserAdapter } from "./browser_adapter"
-import { FormSubmission } from "./form_submission"
 import { FormSubmitObserver } from "./form_submit_observer"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
@@ -134,14 +133,6 @@ export class Controller implements NavigatorDelegate {
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
-  formSubmissionStarted(formSubmission: FormSubmission) {
-    this.notifyApplicationBeforeStartingFormSubmission(formSubmission)
-  }
-
-  formSubmissionFinished(formSubmission: FormSubmission) {
-    this.notifyApplicationAfterFinishingFormSubmission(formSubmission)
-  }
-
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement) {
@@ -224,14 +215,6 @@ export class Controller implements NavigatorDelegate {
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
     return dispatch("turbolinks:load", { data: { url: this.location.absoluteURL, timing }})
-  }
-
-  notifyApplicationBeforeStartingFormSubmission({ formElement, formData }: FormSubmission) {
-    return dispatch("turbolinks:submit-start", { target: formElement, data: { formData } })
-  }
-
-  notifyApplicationAfterFinishingFormSubmission({ formElement, formData }: FormSubmission) {
-    return dispatch("turbolinks:submit-end", { target: formElement, data: { formData }})
   }
 
   // Private

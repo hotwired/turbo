@@ -1,6 +1,7 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "./fetch_request"
 import { FetchResponse } from "./fetch_response"
 import { Location } from "./location"
+import { dispatch } from "./util"
 
 export interface FormSubmissionDelegate {
   formSubmissionStarted(formSubmission: FormSubmission): void
@@ -83,6 +84,7 @@ export class FormSubmission {
 
   requestStarted(request: FetchRequest) {
     this.state = FormSubmissionState.waiting
+    dispatch("turbolinks:submit-start", { target: this.formElement, data: { formSubmission: this } })
     this.delegate.formSubmissionStarted(this)
   }
 
@@ -109,6 +111,7 @@ export class FormSubmission {
 
   requestFinished(request: FetchRequest) {
     this.state = FormSubmissionState.stopped
+    dispatch("turbolinks:submit-end", { target: this.formElement, data: { formSubmission: this, ...this.result }})
     this.delegate.formSubmissionFinished(this)
   }
 
