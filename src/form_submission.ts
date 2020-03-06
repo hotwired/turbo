@@ -10,6 +10,10 @@ export interface FormSubmissionDelegate {
   formSubmissionFinished(formSubmission: FormSubmission): void
 }
 
+export type FormSubmissionResult
+  = { success: boolean, response: FetchResponse }
+  | { success: false, error: Error }
+
 export enum FormSubmissionState {
   initialized,
   requesting,
@@ -26,6 +30,7 @@ export class FormSubmission {
   readonly fetchRequest: FetchRequest
   readonly mustRedirect: boolean
   state = FormSubmissionState.initialized
+  result?: FormSubmissionResult
 
   constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, mustRedirect = false) {
     this.delegate = delegate
@@ -87,15 +92,18 @@ export class FormSubmission {
       this.delegate.formSubmissionErrored(this, error)
     } else {
       this.state = FormSubmissionState.receiving
+      this.result = { success: true, response }
       this.delegate.formSubmissionSucceededWithResponse(this, response)
     }
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
+    this.result = { success: false, response }
     this.delegate.formSubmissionFailedWithResponse(this, response)
   }
 
   requestErrored(request: FetchRequest, error: Error) {
+    this.result = { success: false, error }
     this.delegate.formSubmissionErrored(this, error)
   }
 
