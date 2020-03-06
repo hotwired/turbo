@@ -5,6 +5,7 @@ import { dispatch } from "./util"
 export interface FetchRequestDelegate {
   additionalHeadersForRequest?(request: FetchRequest): { [header: string]: string }
   requestStarted(request: FetchRequest): void
+  requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): void
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse): void
   requestErrored(request: FetchRequest, error: Error): void
@@ -96,12 +97,12 @@ export class FetchRequest {
   async receive(response: Response): Promise<FetchResponse> {
     const fetchResponse = new FetchResponse(response)
     const event = dispatch("turbolinks:before-fetch-response", { cancelable: true, data: { fetchResponse } })
-    if (!event.defaultPrevented) {
-      if (fetchResponse.succeeded) {
-        this.delegate.requestSucceededWithResponse(this, fetchResponse)
-      } else {
-        this.delegate.requestFailedWithResponse(this, fetchResponse)
-      }
+    if (event.defaultPrevented) {
+      this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
+    } else if (fetchResponse.succeeded) {
+      this.delegate.requestSucceededWithResponse(this, fetchResponse)
+    } else {
+      this.delegate.requestFailedWithResponse(this, fetchResponse)
     }
     return fetchResponse
   }

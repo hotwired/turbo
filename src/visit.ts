@@ -248,6 +248,10 @@ export class Visit implements FetchRequestDelegate {
     this.startRequest()
   }
 
+  requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
+
+  }
+
   async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     const responseHTML = await response.responseHTML
     if (responseHTML == undefined) {

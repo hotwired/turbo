@@ -88,6 +88,10 @@ export class FormSubmission {
     this.delegate.formSubmissionStarted(this)
   }
 
+  requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
+    this.result = { success: response.succeeded, response }
+  }
+
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     if (this.requestMustRedirect(request) && !response.redirected) {
       const error = new Error("Form responses must redirect to another location")
