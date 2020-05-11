@@ -24,11 +24,11 @@
   },
   "homepage": "https://github.com/turbolinks/turbolinks#readme",
   "devDependencies": {
-    "intern": "^4.4.1",
+    "intern": "^4.8.4",
     "leadfoot": "^1.7.6",
-    "rollup": "^1.1.2",
-    "rollup-plugin-typescript2": "^0.19.2",
-    "typescript": "^3.3.1"
+    "rollup": "^2.9.1",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "typescript": "^3.8.3"
   },
   "scripts": {
     "clean": "rm -fr dist",
