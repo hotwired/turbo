@@ -19,6 +19,7 @@ export class History {
   restorationData: RestorationDataMap = {}
   started = false
   pageLoaded = false
+  previousScrollRestoration?: ScrollRestoration
 
   constructor(delegate: HistoryDelegate) {
     this.delegate = delegate
@@ -26,6 +27,8 @@ export class History {
 
   start() {
     if (!this.started) {
+      this.previousScrollRestoration = history.scrollRestoration
+      history.scrollRestoration = "manual"
       addEventListener("popstate", this.onPopState, false)
       addEventListener("load", this.onPageLoad, false)
       this.started = true
@@ -35,6 +38,7 @@ export class History {
 
   stop() {
     if (this.started) {
+      history.scrollRestoration = this.previousScrollRestoration ?? "auto"
       removeEventListener("popstate", this.onPopState, false)
       removeEventListener("load", this.onPageLoad, false)
       this.started = false
