@@ -21,18 +21,24 @@ export class ProgressBar {
     `
   }
 
-  readonly stylesheetElement = this.createStylesheetElement()
-  readonly progressElement = this.createProgressElement()
+  readonly stylesheetElement: HTMLStyleElement
+  readonly progressElement: HTMLDivElement
 
   hiding = false
   trickleInterval?: number
   value = 0
   visible = false
 
+  constructor() {
+    this.stylesheetElement = this.createStylesheetElement()
+    this.progressElement = this.createProgressElement()
+    this.installStylesheetElement()
+    this.setValue(0)
+  }
+
   show() {
     if (!this.visible) {
       this.visible = true
-      this.installStylesheetElement()
       this.installProgressElement()
       this.startTrickling()
     }
