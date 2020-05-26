@@ -74,7 +74,7 @@ export class FormSubmission {
   additionalHeadersForRequest(request: FetchRequest) {
     const headers: FetchRequestHeaders = {}
     if (this.method != FetchMethod.get) {
-      const token = getMetaContent("csrf-token")
+      const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
         headers["X-CSRF-Token"] = token
       }
@@ -121,6 +121,17 @@ export class FormSubmission {
 
   requestMustRedirect(request: FetchRequest) {
     return !request.isIdempotent && this.mustRedirect
+  }
+}
+
+function getCookieValue(cookieName: string | null) {
+  if (cookieName != null) {
+    const cookies = document.cookie ? document.cookie.split("; ") : []
+    const cookie = cookies.find((cookie) => cookie.startsWith(cookieName))
+    if (cookie) {
+      const value = cookie.split("=").slice(1).join("=")
+      return value ? decodeURIComponent(value) : undefined
+    }
   }
 }
 
