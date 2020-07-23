@@ -39,6 +39,7 @@ export type VisitOptions = {
   action: Action,
   historyChanged: boolean,
   referrer?: Location,
+  snapshotHTML?: string,
   response?: VisitResponse
 }
 
@@ -74,6 +75,7 @@ export class Visit implements FetchRequestDelegate {
   request?: FetchRequest
   response?: VisitResponse
   scrolled = false
+  snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
 
@@ -82,10 +84,11 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, response } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, snapshotHTML, response } = { ...defaultOptions, ...options }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
+    this.snapshotHTML = snapshotHTML
     this.response = response
   }
 
@@ -207,11 +210,18 @@ export class Visit implements FetchRequestDelegate {
   }
 
   getCachedSnapshot() {
-    const snapshot = this.view.getCachedSnapshotForLocation(this.location)
+    const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
+
     if (snapshot && (!this.location.anchor || snapshot.hasAnchor(this.location.anchor))) {
       if (this.action == "restore" || snapshot.isPreviewable()) {
         return snapshot
       }
+    }
+  }
+
+  getPreloadedSnapshot() {
+    if (this.snapshotHTML) {
+      return Snapshot.wrap(this.snapshotHTML)
     }
   }
 
