@@ -31,11 +31,13 @@ export class FormSubmitObserver {
   }
 
   submitBubbled = (event: Event) => {
-    const form = event.target instanceof HTMLFormElement ? event.target : undefined
-    if (form) {
-      if (this.delegate.willSubmitForm(form)) {
-        event.preventDefault()
-        this.delegate.formSubmitted(form)
+    if (!event.defaultPrevented) {
+      const form = event.target instanceof HTMLFormElement ? event.target : undefined
+      if (form) {
+        if (this.delegate.willSubmitForm(form)) {
+          event.preventDefault()
+          this.delegate.formSubmitted(form)
+        }
       }
     }
   }
