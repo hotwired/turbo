@@ -76,7 +76,7 @@ export class History {
 
   onPopState = (event: PopStateEvent) => {
     if (this.shouldHandlePopState()) {
-      const { turbolinks } = event.state
+      const { turbolinks } = event.state || {}
       if (turbolinks) {
         const location = Location.currentLocation
         this.location = location
