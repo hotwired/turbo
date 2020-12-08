@@ -24,10 +24,10 @@
   },
   "homepage": "https://github.com/turbolinks/turbolinks#readme",
   "devDependencies": {
-    "intern": "^4.8.4",
-    "leadfoot": "^1.7.6",
+    "intern": "^4.9.0",
     "rollup": "^2.9.1",
-    "rollup-plugin-typescript2": "^0.27.0",
+    "rollup-plugin-typescript2": "^0.29.0",
+    "tslib": "^2.0.3",
     "typescript": "^3.8.3"
   },
   "scripts": {
