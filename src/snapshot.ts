@@ -56,11 +56,11 @@ export class Snapshot {
   }
 
   getPermanentElements() {
-    return array(this.bodyElement.querySelectorAll("[id][data-turbolinks-permanent]"))
+    return array(this.bodyElement.querySelectorAll("[id][data-turbo-permanent]"))
   }
 
   getPermanentElementById(id: string) {
-    return this.bodyElement.querySelector(`#${id}[data-turbolinks-permanent]`)
+    return this.bodyElement.querySelector(`#${id}[data-turbo-permanent]`)
   }
 
   getPermanentElementsPresentInSnapshot(snapshot: Snapshot) {
@@ -92,7 +92,7 @@ export class Snapshot {
   getSetting(name: string): string | undefined
   getSetting(name: string, defaultValue: string): string
   getSetting(name: string, defaultValue?: string) {
-    const value = this.headDetails.getMetaValue(`turbolinks-${name}`)
+    const value = this.headDetails.getMetaValue(`turbo-${name}`)
     return value == null ? defaultValue : value
   }
 }

@@ -11,11 +11,11 @@
   }
 
 })([
-  "turbolinks:before-cache",
-  "turbolinks:before-render",
-  "turbolinks:before-visit",
-  "turbolinks:load",
-  "turbolinks:render",
-  "turbolinks:request-end",
-  "turbolinks:visit"
+  "turbo:before-cache",
+  "turbo:before-render",
+  "turbo:before-visit",
+  "turbo:load",
+  "turbo:render",
+  "turbo:request-end",
+  "turbo:visit"
 ])

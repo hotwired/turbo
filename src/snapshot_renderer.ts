@@ -169,7 +169,7 @@ export class SnapshotRenderer extends Renderer {
 
 function createPlaceholderForPermanentElement(permanentElement: PermanentElement) {
   const element = document.createElement("meta")
-  element.setAttribute("name", "turbolinks-permanent-placeholder")
+  element.setAttribute("name", "turbo-permanent-placeholder")
   element.setAttribute("content", permanentElement.id)
   return { element, permanentElement }
 }

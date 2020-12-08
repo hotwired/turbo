@@ -2,13 +2,13 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>data-turbolinks-eval=false script</title>
-    <script src="/fixtures/turbolinks.js" data-turbolinks-track="reload"></script>
+    <title>data-turbo-eval=false script</title>
+    <script src="/fixtures/turbo.js" data-turbo-track="reload"></script>
     <script src="/fixtures/test.js"></script>
   </head>
   <body>
-    <h1>data-turbolinks-eval=false script</h1>
-    <script data-turbolinks-eval="false">
+    <h1>data-turbo-eval=false script</h1>
+    <script data-turbo-eval="false">
       if ("bodyScriptEvaluationCount" in window) {
         window.bodyScriptEvaluationCount++
       } else {

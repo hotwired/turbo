@@ -4,7 +4,7 @@ import { Element } from "@theintern/leadfoot"
 
 type EventLog = [string, any]
 
-export class TurbolinksTestCase extends BrowserTestCase {
+export class TurboTestCase extends BrowserTestCase {
   eventLogChannel: RemoteChannel<EventLog> = new RemoteChannel(this.remote, "eventLogs")
   lastBody?: Element
 
@@ -58,7 +58,7 @@ export class TurbolinksTestCase extends BrowserTestCase {
   get visitAction(): Promise<string> {
     return this.evaluate(() => {
       try {
-        return window.Turbolinks.controller.navigator.currentVisit.action
+        return window.Turbo.controller.navigator.currentVisit.action
       } catch (error) {
         return "load"
       }

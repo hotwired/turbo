@@ -54,7 +54,7 @@ export class History {
   }
 
   update(method: HistoryMethod, location: Location, restorationIdentifier = uuid()) {
-    const state = { turbolinks: { restorationIdentifier } }
+    const state = { turbo: { restorationIdentifier } }
     method.call(history, state, "", location.absoluteURL)
     this.location = location
     this.restorationIdentifier = restorationIdentifier
@@ -76,11 +76,11 @@ export class History {
 
   onPopState = (event: PopStateEvent) => {
     if (this.shouldHandlePopState()) {
-      const { turbolinks } = event.state || {}
-      if (turbolinks) {
+      const { turbo } = event.state || {}
+      if (turbo) {
         const location = Location.currentLocation
         this.location = location
-        const { restorationIdentifier } = turbolinks
+        const { restorationIdentifier } = turbo
         this.restorationIdentifier = restorationIdentifier
         this.delegate.historyPoppedToLocationWithRestorationIdentifier(location, restorationIdentifier)
       }

@@ -1,11 +1,11 @@
-import { TurbolinksTestCase } from "./helpers/turbolinks_test_case"
+import { TurboTestCase } from "./helpers/turbo_test_case"
 
-export class AsyncScriptTests extends TurbolinksTestCase {
+export class AsyncScriptTests extends TurboTestCase {
   async setup() {
     await this.goToLocation("/fixtures/async_script.html")
   }
 
-  async "test does not emit turbolinks:load when loaded asynchronously after DOMContentLoaded"() {
+  async "test does not emit turbo:load when loaded asynchronously after DOMContentLoaded"() {
     const events = await this.eventLogChannel.read()
     this.assert.deepEqual(events, [])
   }

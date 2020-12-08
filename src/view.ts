@@ -87,9 +87,9 @@ export class View {
 
   markAsPreview(isPreview: boolean | undefined) {
     if (isPreview) {
-      this.htmlElement.setAttribute("data-turbolinks-preview", "")
+      this.htmlElement.setAttribute("data-turbo-preview", "")
     } else {
-      this.htmlElement.removeAttribute("data-turbolinks-preview")
+      this.htmlElement.removeAttribute("data-turbo-preview")
     }
   }
 

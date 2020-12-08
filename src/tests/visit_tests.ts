@@ -1,7 +1,9 @@
-import { TurbolinksTestCase } from "./helpers/turbolinks_test_case"
+import { TurboTestCase } from "./helpers/turbo_test_case"
 import { get } from "http"
 
-export class VisitTests extends TurbolinksTestCase {
+declare const Turbo: any
+
+export class VisitTests extends TurboTestCase {
   async setup() {
     this.goToLocation("/fixtures/visit.html")
   }
@@ -14,13 +16,13 @@ export class VisitTests extends TurbolinksTestCase {
     this.assert.notEqual(urlBeforeVisit, urlAfterVisit)
     this.assert.equal(await this.visitAction, "advance")
 
-    const { url: urlFromBeforeVisitEvent } = await this.nextEventNamed("turbolinks:before-visit")
+    const { url: urlFromBeforeVisitEvent } = await this.nextEventNamed("turbo:before-visit")
     this.assert.equal(urlFromBeforeVisitEvent, urlAfterVisit)
 
-    const { url: urlFromVisitEvent } = await this.nextEventNamed("turbolinks:visit")
+    const { url: urlFromVisitEvent } = await this.nextEventNamed("turbo:visit")
     this.assert.equal(urlFromVisitEvent, urlAfterVisit)
 
-    const { timing } = await this.nextEventNamed("turbolinks:load")
+    const { timing } = await this.nextEventNamed("turbo:load")
     this.assert.ok(timing)
   }
 
@@ -68,12 +70,12 @@ export class VisitTests extends TurbolinksTestCase {
   }
 
   async visitLocation(location: string) {
-    this.remote.execute((location: string) => window.Turbolinks.visit(location), [location])
+    this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }
 
   async cancelNextVisit() {
-    this.remote.execute(() => addEventListener("turbolinks:before-visit", function eventListener(event) {
-      removeEventListener("turbolinks:before-visit", eventListener, false)
+    this.remote.execute(() => addEventListener("turbo:before-visit", function eventListener(event) {
+      removeEventListener("turbo:before-visit", eventListener, false)
       event.preventDefault()
     }, false))
   }

@@ -22,10 +22,10 @@ export default [
   {
     input: "src/umd.ts",
     output: {
-      banner: `/*\nTurbolinks ${version}\nCopyright © ${year} Basecamp, LLC\n */`,
-      file: "dist/turbolinks.js",
+      banner: `/*\nTurbo ${version}\nCopyright © ${year} Basecamp, LLC\n */`,
+      file: "dist/turbo.js",
       format: "umd",
-      name: "Turbolinks",
+      name: "Turbo",
       sourcemap: true
     },
     ...options

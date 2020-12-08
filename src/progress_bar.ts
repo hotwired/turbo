@@ -5,7 +5,7 @@ export class ProgressBar {
 
   static get defaultCSS() {
     return unindent`
-      .turbolinks-progress-bar {
+      .turbo-progress-bar {
         position: fixed;
         display: block;
         top: 0;
@@ -115,7 +115,7 @@ export class ProgressBar {
 
   createProgressElement() {
     const element = document.createElement("div")
-    element.className = "turbolinks-progress-bar"
+    element.className = "turbo-progress-bar"
     return element
   }
 }

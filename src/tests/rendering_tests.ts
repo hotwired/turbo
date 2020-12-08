@@ -1,29 +1,29 @@
-import { TurbolinksTestCase } from "./helpers/turbolinks_test_case"
+import { TurboTestCase } from "./helpers/turbo_test_case"
 import { Element } from "@theintern/leadfoot"
 
-export class RenderingTests extends TurbolinksTestCase {
+export class RenderingTests extends TurboTestCase {
   async setup() {
     await this.goToLocation("/fixtures/rendering.html")
   }
 
   async "test triggers before-render and render events"() {
     this.clickSelector("#same-origin-link")
-    const { newBody } = await this.nextEventNamed("turbolinks:before-render")
+    const { newBody } = await this.nextEventNamed("turbo:before-render")
 
     const h1 = await this.querySelector("h1")
     this.assert.equal(await h1.getVisibleText(), "One")
 
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert(await newBody.equals(await this.body))
   }
 
   async "test triggers before-render and render events for error pages"() {
     this.clickSelector("#nonexistent-link")
-    const { newBody } = await this.nextEventNamed("turbolinks:before-render")
+    const { newBody } = await this.nextEventNamed("turbo:before-render")
 
     this.assert.equal(await newBody.getVisibleText(), "404 Not Found: /nonexistent")
 
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert(await newBody.equals(await this.body))
   }
 
@@ -34,7 +34,7 @@ export class RenderingTests extends TurbolinksTestCase {
     this.assert.equal(await this.visitAction, "load")
   }
 
-  async "test reloads when turbolinks-visit-control setting is reload"() {
+  async "test reloads when turbo-visit-control setting is reload"() {
     this.clickSelector("#visit-control-reload-link")
     await this.nextBody
     this.assert.equal(await this.pathname, "/fixtures/visit_control_reload.html")
@@ -76,15 +76,15 @@ export class RenderingTests extends TurbolinksTestCase {
     this.assert.equal(await this.headScriptEvaluationCount, undefined)
 
     this.clickSelector("#head-script-link")
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert.equal(await this.headScriptEvaluationCount, 1)
 
     this.goBack()
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert.equal(await this.headScriptEvaluationCount, 1)
 
     this.clickSelector("#head-script-link")
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert.equal(await this.headScriptEvaluationCount, 1)
   }
 
@@ -92,21 +92,21 @@ export class RenderingTests extends TurbolinksTestCase {
     this.assert.equal(await this.bodyScriptEvaluationCount, undefined)
 
     this.clickSelector("#body-script-link")
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert.equal(await this.bodyScriptEvaluationCount, 1)
 
     this.goBack()
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert.equal(await this.bodyScriptEvaluationCount, 1)
 
     this.clickSelector("#body-script-link")
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert.equal(await this.bodyScriptEvaluationCount, 2)
   }
 
-  async "test does not evaluate data-turbolinks-eval=false scripts"() {
+  async "test does not evaluate data-turbo-eval=false scripts"() {
     this.clickSelector("#eval-false-script-link")
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert.equal(await this.bodyScriptEvaluationCount, undefined)
   }
 
@@ -115,12 +115,12 @@ export class RenderingTests extends TurbolinksTestCase {
     this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
 
     this.clickSelector("#permanent-element-link")
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert(await permanentElement.equals(await this.permanentElement))
     this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
 
     this.goBack()
-    await this.nextEventNamed("turbolinks:render")
+    await this.nextEventNamed("turbo:render")
     this.assert(await permanentElement.equals(await this.permanentElement))
   }
 
@@ -174,16 +174,16 @@ export class RenderingTests extends TurbolinksTestCase {
   }
 
   async modifyBodyBeforeCaching() {
-    return this.remote.execute(() => addEventListener("turbolinks:before-cache", function eventListener(event) {
-      removeEventListener("turbolinks:before-cache", eventListener, false)
+    return this.remote.execute(() => addEventListener("turbo:before-cache", function eventListener(event) {
+      removeEventListener("turbo:before-cache", eventListener, false)
       document.body.innerHTML = "Modified"
     }, false))
   }
 
   async beforeCache(callback: (body: HTMLElement) => void) {
     return this.remote.execute((callback: (body: HTMLElement) => void) => {
-      addEventListener("turbolinks:before-cache", function eventListener(event) {
-        removeEventListener("turbolinks:before-cache", eventListener, false)
+      addEventListener("turbo:before-cache", function eventListener(event) {
+        removeEventListener("turbo:before-cache", eventListener, false)
         callback(document.body)
       }, false)
     }, [callback])

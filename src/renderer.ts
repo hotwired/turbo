@@ -23,7 +23,7 @@ export abstract class Renderer {
   }
 
   createScriptElement(element: Element) {
-    if (element.getAttribute("data-turbolinks-eval") == "false") {
+    if (element.getAttribute("data-turbo-eval") == "false") {
       return element
     } else {
       const createdScriptElement = document.createElement("script")

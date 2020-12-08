@@ -190,44 +190,44 @@ export class Controller implements NavigatorDelegate {
   }
 
   notifyApplicationAfterClickingLinkToLocation(link: Element, location: Location) {
-    return dispatch("turbolinks:click", { target: link, data: { url: location.absoluteURL }, cancelable: true })
+    return dispatch("turbo:click", { target: link, data: { url: location.absoluteURL }, cancelable: true })
   }
 
   notifyApplicationBeforeVisitingLocation(location: Location) {
-    return dispatch("turbolinks:before-visit", { data: { url: location.absoluteURL }, cancelable: true })
+    return dispatch("turbo:before-visit", { data: { url: location.absoluteURL }, cancelable: true })
   }
 
   notifyApplicationAfterVisitingLocation(location: Location) {
-    return dispatch("turbolinks:visit", { data: { url: location.absoluteURL } })
+    return dispatch("turbo:visit", { data: { url: location.absoluteURL } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
-    return dispatch("turbolinks:before-cache")
+    return dispatch("turbo:before-cache")
   }
 
   notifyApplicationBeforeRender(newBody: HTMLBodyElement) {
-    return dispatch("turbolinks:before-render", { data: { newBody }})
+    return dispatch("turbo:before-render", { data: { newBody }})
   }
 
   notifyApplicationAfterRender() {
-    return dispatch("turbolinks:render")
+    return dispatch("turbo:render")
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
-    return dispatch("turbolinks:load", { data: { url: this.location.absoluteURL, timing }})
+    return dispatch("turbo:load", { data: { url: this.location.absoluteURL, timing }})
   }
 
   // Private
 
   getActionForLink(link: Element): Action {
-    const action = link.getAttribute("data-turbolinks-action")
+    const action = link.getAttribute("data-turbo-action")
     return isAction(action) ? action : "advance"
   }
 
   linkIsVisitable(link: Element) {
-    const container = closest(link, "[data-turbolinks]")
+    const container = closest(link, "[data-turbo]")
     if (container) {
-      return container.getAttribute("data-turbolinks") != "false"
+      return container.getAttribute("data-turbo") != "false"
     } else {
       return true
     }

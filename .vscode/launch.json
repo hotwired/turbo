@@ -7,7 +7,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Turbolinks: Debug browser tests",
+      "name": "Turbo: Debug browser tests",
       "cwd": "${workspaceFolder}",
       "port": 9229,
       "outputCapture": "std",

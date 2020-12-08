@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Turbolinks: Build dist directory",
+      "label": "Turbo: Build dist directory",
       "type": "shell",
       "command": "yarn build",
       "group": {
@@ -16,9 +16,9 @@
       ]
     },
     {
-      "label": "Turbolinks: Run tests",
+      "label": "Turbo: Run tests",
       "type": "shell",
-      "dependsOn": "Turbolinks: Build dist directory",
+      "dependsOn": "Turbo: Build dist directory",
       "command": "yarn test",
       "group": {
         "kind": "test",
@@ -26,9 +26,9 @@
       }
     },
     {
-      "label": "Turbolinks: Start dev server",
+      "label": "Turbo: Start dev server",
       "type": "shell",
-      "dependsOn": "Turbolinks: Build dist directory",
+      "dependsOn": "Turbo: Build dist directory",
       "command": "yarn start",
       "problemMatcher": []
     }

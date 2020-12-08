@@ -4,5 +4,5 @@ interface Node {
 }
 
 interface Window {
-  Turbolinks: any
+  Turbo: any
 }

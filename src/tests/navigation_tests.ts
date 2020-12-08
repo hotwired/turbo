@@ -1,6 +1,6 @@
-import { TurbolinksTestCase } from "./helpers/turbolinks_test_case"
+import { TurboTestCase } from "./helpers/turbo_test_case"
 
-export class NavigationTests extends TurbolinksTestCase {
+export class NavigationTests extends TurboTestCase {
   async setup() {
     await this.goToLocation("/fixtures/navigation.html")
   }
@@ -17,28 +17,28 @@ export class NavigationTests extends TurbolinksTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
-  async "test following a same-origin data-turbolinks-action=replace link"() {
+  async "test following a same-origin data-turbo-action=replace link"() {
     this.clickSelector("#same-origin-replace-link")
     await this.nextBody
     this.assert.equal(await this.pathname, "/fixtures/one.html")
     this.assert.equal(await this.visitAction, "replace")
   }
 
-  async "test following a same-origin data-turbolinks=false link"() {
+  async "test following a same-origin data-turbo=false link"() {
     this.clickSelector("#same-origin-false-link")
     await this.nextBody
     this.assert.equal(await this.pathname, "/fixtures/one.html")
     this.assert.equal(await this.visitAction, "load")
   }
 
-  async "test following a same-origin unannotated link inside a data-turbolinks=false container"() {
+  async "test following a same-origin unannotated link inside a data-turbo=false container"() {
     this.clickSelector("#same-origin-unannotated-link-inside-false-container")
     await this.nextBody
     this.assert.equal(await this.pathname, "/fixtures/one.html")
     this.assert.equal(await this.visitAction, "load")
   }
 
-  async "test following a same-origin data-turbolinks=true link inside a data-turbolinks=false container"() {
+  async "test following a same-origin data-turbo=true link inside a data-turbo=false container"() {
     this.clickSelector("#same-origin-true-link-inside-false-container")
     await this.nextBody
     this.assert.equal(await this.pathname, "/fixtures/one.html")
