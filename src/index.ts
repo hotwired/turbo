@@ -1,3 +1,5 @@
+import "./polyfills/custom-elements-native-shim"
+
 import { Controller } from "./controller"
 import { Locatable } from "./location"
 import { VisitOptions } from "./visit"

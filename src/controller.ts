@@ -1,6 +1,7 @@
 import { Adapter } from "./adapter"
 import { BrowserAdapter } from "./browser_adapter"
 import { FormSubmitObserver } from "./form_submit_observer"
+import { FrameRedirector } from "./frame_redirector"
 import { History } from "./history"
 import { LinkClickObserver } from "./link_click_observer"
 import { Location, Locatable } from "./location"
@@ -31,6 +32,8 @@ export class Controller implements NavigatorDelegate {
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
 
+  readonly frameRedirector = new FrameRedirector(document.documentElement)
+
   enabled = true
   progressBarDelay = 500
   started = false
@@ -41,6 +44,7 @@ export class Controller implements NavigatorDelegate {
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
       this.scrollObserver.start()
+      this.frameRedirector.start()
       this.history.start()
       this.started = true
       this.enabled = true
@@ -57,6 +61,7 @@ export class Controller implements NavigatorDelegate {
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
       this.scrollObserver.stop()
+      this.frameRedirector.stop()
       this.history.stop()
       this.started = false
     }

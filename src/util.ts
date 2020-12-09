@@ -55,6 +55,10 @@ export function dispatch(eventName: string, { target, cancelable, data }: Partia
   return event
 }
 
+export function nextAnimationFrame() {
+  return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+}
+
 const preventDefaultSupported = (() => {
   const event = document.createEvent("Events")
   event.initEvent("test", true, true)
