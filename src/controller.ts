@@ -16,8 +16,8 @@ import { Visit, VisitOptions } from "./visit"
 export type TimingData = {}
 
 export class Controller implements NavigatorDelegate {
+  adapter: Adapter = new BrowserAdapter(this)
   readonly navigator = new Navigator(this)
-  readonly adapter: Adapter = new BrowserAdapter(this)
   readonly history = new History(this)
   readonly view = new View(this)
 
@@ -61,8 +61,8 @@ export class Controller implements NavigatorDelegate {
     }
   }
 
-  clearCache() {
-    this.view.clearSnapshotCache()
+  registerAdapter(adapter: Adapter) {
+    this.adapter = adapter
   }
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}) {
@@ -71,6 +71,10 @@ export class Controller implements NavigatorDelegate {
 
   startVisitToLocation(location: Locatable, restorationIdentifier: string, options?: Partial<VisitOptions>) {
     this.navigator.startVisit(Location.wrap(location), restorationIdentifier, options)
+  }
+
+  clearCache() {
+    this.view.clearSnapshotCache()
   }
 
   setProgressBarDelay(delay: number) {

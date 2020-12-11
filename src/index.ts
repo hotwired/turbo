@@ -1,5 +1,6 @@
 import "./polyfills/custom-elements-native-shim"
 
+import { Adapter } from "./adapter"
 import { Controller } from "./controller"
 import { Locatable } from "./location"
 import { VisitOptions } from "./visit"
@@ -18,6 +19,10 @@ const controller = new Controller
 
 export function start() {
   controller.start()
+}
+
+export function registerAdapter(adapter: Adapter) {
+  controller.registerAdapter(adapter)
 }
 
 export function visit(location: Locatable, options?: Partial<VisitOptions>) {
