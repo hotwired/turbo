@@ -87,7 +87,7 @@ export class Controller implements NavigatorDelegate {
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string) {
+  historyPoppedToLocationWithRestorationIdentifier(location: Location) {
     if (this.enabled) {
       this.navigator.proposeVisit(location, { action: "restore", historyChanged: true })
     } else {
