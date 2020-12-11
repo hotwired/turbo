@@ -6,6 +6,7 @@ import { VisitOptions } from "./visit"
 
 export * from "./adapter"
 export * from "./controller"
+export * from "./elements"
 export * from "./fetch_request"
 export * from "./fetch_response"
 export * from "./form_submission"

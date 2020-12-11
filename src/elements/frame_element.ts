@@ -1,5 +1,5 @@
-import { FetchResponse } from "./fetch_response"
-import { FrameController } from "./frame_controller"
+import { FetchResponse } from "../fetch_response"
+import { FrameController } from "../frame_controller"
 
 export class FrameElement extends HTMLElement {
   readonly controller: FrameController

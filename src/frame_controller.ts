@@ -2,7 +2,7 @@ import { FetchMethod, FetchRequest, FetchRequestDelegate } from "./fetch_request
 import { FetchResponse } from "./fetch_response"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FormSubmission, FormSubmissionDelegate } from "./form_submission"
-import { FrameElement } from "./frame_element"
+import { FrameElement } from "./elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { Locatable, Location } from "./location"
 import { nextAnimationFrame } from "./util"
