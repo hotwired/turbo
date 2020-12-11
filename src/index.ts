@@ -12,8 +12,12 @@ export * from "./form_submission"
 export * from "./location"
 export * from "./visit"
 
-export const controller = new Controller
 
+const controller = new Controller
+
+export function start() {
+  controller.start()
+}
 
 export function visit(location: Locatable, options?: Partial<VisitOptions>) {
   controller.visit(location, options)
@@ -27,6 +31,3 @@ export function setProgressBarDelay(delay: number) {
   controller.setProgressBarDelay(delay)
 }
 
-export function start() {
-  controller.start()
-}
