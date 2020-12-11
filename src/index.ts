@@ -3,6 +3,8 @@ import "./polyfills/custom-elements-native-shim"
 import { Adapter } from "./adapter"
 import { Controller } from "./controller"
 import { Locatable } from "./location"
+import { StreamMessage } from "./stream_message"
+import { StreamSource } from "./types"
 import { VisitOptions } from "./visit"
 
 export * from "./adapter"
@@ -13,7 +15,6 @@ export * from "./fetch_response"
 export * from "./form_submission"
 export * from "./location"
 export * from "./visit"
-
 
 const controller = new Controller
 
@@ -31,6 +32,18 @@ export function registerAdapter(adapter: Adapter) {
 
 export function visit(location: Locatable, options?: Partial<VisitOptions>) {
   controller.visit(location, options)
+}
+
+export function connectStreamSource(source: StreamSource) {
+  controller.connectStreamSource(source)
+}
+
+export function disconnectStreamSource(source: StreamSource) {
+  controller.disconnectStreamSource(source)
+}
+
+export function renderStreamMessage(message: StreamMessage | string) {
+  controller.renderStreamMessage(message)
 }
 
 export function clearCache() {

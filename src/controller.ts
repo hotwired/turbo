@@ -8,7 +8,9 @@ import { Location, Locatable } from "./location"
 import { Navigator, NavigatorDelegate } from "./navigator"
 import { PageObserver } from "./page_observer"
 import { ScrollObserver } from "./scroll_observer"
-import { Action, Position, isAction } from "./types"
+import { StreamMessage } from "./stream_message"
+import { StreamObserver } from "./stream_observer"
+import { Action, Position, StreamSource, isAction } from "./types"
 import { closest, dispatch } from "./util"
 import { View } from "./view"
 import { Visit, VisitOptions } from "./visit"
@@ -25,6 +27,7 @@ export class Controller implements NavigatorDelegate {
   readonly linkClickObserver = new LinkClickObserver(this)
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
+  readonly streamObserver = new StreamObserver(this)
 
   readonly frameRedirector = new FrameRedirector(document.documentElement)
 
@@ -38,6 +41,7 @@ export class Controller implements NavigatorDelegate {
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
       this.scrollObserver.start()
+      this.streamObserver.start()
       this.frameRedirector.start()
       this.history.start()
       this.started = true
@@ -55,6 +59,7 @@ export class Controller implements NavigatorDelegate {
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
       this.scrollObserver.stop()
+      this.streamObserver.stop()
       this.frameRedirector.stop()
       this.history.stop()
       this.started = false
@@ -71,6 +76,18 @@ export class Controller implements NavigatorDelegate {
 
   startVisitToLocation(location: Locatable, restorationIdentifier: string, options?: Partial<VisitOptions>) {
     this.navigator.startVisit(Location.wrap(location), restorationIdentifier, options)
+  }
+
+  connectStreamSource(source: StreamSource) {
+    this.streamObserver.connectStreamSource(source)
+  }
+
+  disconnectStreamSource(source: StreamSource) {
+    this.streamObserver.disconnectStreamSource(source)
+  }
+
+  renderStreamMessage(message: StreamMessage | string) {
+    document.documentElement.appendChild(StreamMessage.wrap(message).fragment)
   }
 
   clearCache() {
@@ -159,6 +176,12 @@ export class Controller implements NavigatorDelegate {
 
   pageInvalidated() {
     this.adapter.pageInvalidated()
+  }
+
+  // Stream observer delegate
+
+  receivedMessageFromStream(message: StreamMessage) {
+    this.renderStreamMessage(message)
   }
 
   // View delegate
