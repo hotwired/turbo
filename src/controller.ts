@@ -16,12 +16,6 @@ import { Visit, VisitOptions } from "./visit"
 export type TimingData = {}
 
 export class Controller implements NavigatorDelegate {
-  static supported = !!(
-    window.history.pushState &&
-    window.requestAnimationFrame &&
-    window.addEventListener
-  )
-
   readonly navigator = new Navigator(this)
   readonly adapter: Adapter = new BrowserAdapter(this)
   readonly history = new History(this)
@@ -39,7 +33,7 @@ export class Controller implements NavigatorDelegate {
   started = false
 
   start() {
-    if (Controller.supported && !this.started) {
+    if (!this.started) {
       this.pageObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()

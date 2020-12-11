@@ -14,7 +14,6 @@ export * from "./visit"
 
 export const controller = new Controller
 
-export const supported = Controller.supported
 
 export function visit(location: Locatable, options?: Partial<VisitOptions>) {
   controller.visit(location, options)
