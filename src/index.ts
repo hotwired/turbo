@@ -17,6 +17,10 @@ export * from "./visit"
 
 const controller = new Controller
 
+const { navigator } = controller
+
+export { StreamSource, navigator }
+
 export function start() {
   controller.start()
 }
@@ -36,4 +40,3 @@ export function clearCache() {
 export function setProgressBarDelay(delay: number) {
   controller.setProgressBarDelay(delay)
 }
-

@@ -58,7 +58,7 @@ export class TurboTestCase extends BrowserTestCase {
   get visitAction(): Promise<string> {
     return this.evaluate(() => {
       try {
-        return window.Turbo.controller.navigator.currentVisit.action
+        return window.Turbo.navigator.currentVisit.action
       } catch (error) {
         return "load"
       }
