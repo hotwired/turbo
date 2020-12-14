@@ -152,7 +152,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     this.reloadable = false
     this.formSubmission = new FormSubmission(this, element, submitter)
     if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
+      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href, submitter)
     } else {
       const { fetchRequest } = this.formSubmission
       this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
@@ -201,7 +201,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
-    const frame = this.findFrameElement(formSubmission.formElement)
+    const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
     frame.delegate.loadResponse(response)
   }
 
@@ -244,13 +244,13 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     })
   }
 
-  private navigateFrame(element: Element, url: string) {
-    const frame = this.findFrameElement(element)
+  private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
+    const frame = this.findFrameElement(element, submitter)
     frame.src = url
   }
 
-  private findFrameElement(element: Element) {
-    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+  private findFrameElement(element: Element, submitter?: HTMLElement) {
+    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
@@ -277,7 +277,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   private shouldInterceptNavigation(element: Element, submitter?: Element) {
-    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
 
     if (!this.enabled || id == "_top") {
       return false

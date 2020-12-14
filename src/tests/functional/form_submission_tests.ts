@@ -219,6 +219,62 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
   }
 
+  async "test submitter GET submission from submitter with data-turbo-frame"() {
+    await this.clickSelector("#submitter form[method=get] [type=submit][data-turbo-frame]")
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "Form")
+    this.assert.equal(await message.getVisibleText(), "Frame redirected")
+  }
+
+  async "test submitter POST submission from submitter with data-turbo-frame"() {
+    await this.clickSelector("#submitter form[method=post] [type=submit][data-turbo-frame]")
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "Form")
+    this.assert.equal(await message.getVisibleText(), "Frame redirected")
+  }
+
+  async "test frame form GET submission from submitter with data-turbo-frame=_top"() {
+    await this.clickSelector("#frame form[method=get] [type=submit][data-turbo-frame=_top]")
+    await this.nextBody
+
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "One")
+  }
+
+  async "test frame form POST submission from submitter with data-turbo-frame=_top"() {
+    await this.clickSelector("#frame form[method=post] [type=submit][data-turbo-frame=_top]")
+    await this.nextBody
+
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "One")
+  }
+
+  async "test frame form GET submission from submitter referencing another frame"() {
+    await this.clickSelector("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
+    await this.nextBeat
+
+    const title = await this.querySelector("h1")
+    const frameTitle = await this.querySelector("#hello h2")
+    this.assert.equal(await frameTitle.getVisibleText(), "Hello from a frame")
+    this.assert.equal(await title.getVisibleText(), "Form")
+  }
+
+  async "test frame form POST submission from submitter referencing another frame"() {
+    await this.clickSelector("#frame form[method=post] [type=submit][data-turbo-frame=hello]")
+    await this.nextBeat
+
+    const title = await this.querySelector("h1")
+    const frameTitle = await this.querySelector("#hello h2")
+    this.assert.equal(await frameTitle.getVisibleText(), "Hello from a frame")
+    this.assert.equal(await title.getVisibleText(), "Form")
+  }
+
   async "test frame form submission with redirect response"() {
     const path = await this.attributeForSelector("#frame form.redirect input[name=path]", "value") || ""
     const url = new URL(path, "http://localhost:9000")
