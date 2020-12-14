@@ -39,19 +39,19 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
   }
 
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
-    const frame = this.findFrameElement(element)
+    const frame = this.findFrameElement(element, submitter)
     if (frame) {
       frame.delegate.formSubmissionIntercepted(element, submitter)
     }
   }
 
   private shouldRedirect(element: Element, submitter?: HTMLElement) {
-    const frame = this.findFrameElement(element)
+    const frame = this.findFrameElement(element, submitter)
     return frame ? frame != element.closest("turbo-frame") : false
   }
 
-  private findFrameElement(element: Element) {
-    const id = element.getAttribute("data-turbo-frame")
+  private findFrameElement(element: Element, submitter?: HTMLElement) {
+    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame")
     if (id && id != "_top") {
       const frame = this.element.querySelector(`#${id}:not([disabled])`)
       if (frame instanceof FrameElement) {
