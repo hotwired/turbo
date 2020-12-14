@@ -1,0 +1,26 @@
+import "./polyfills/custom-elements-native-shim";
+import "./polyfills/submit-event";
+import { Adapter } from "./adapter";
+import { Locatable } from "./location";
+import { StreamMessage } from "./stream_message";
+import { StreamSource } from "./types";
+import { VisitOptions } from "./visit";
+export * from "./adapter";
+export * from "./controller";
+export * from "./elements";
+export * from "./fetch_request";
+export * from "./fetch_response";
+export * from "./form_submission";
+export * from "./location";
+export * from "./visit";
+declare const navigator: import("./navigator").Navigator;
+export { StreamSource, navigator };
+export declare function start(): void;
+export declare function registerAdapter(adapter: Adapter): void;
+export declare function visit(location: Locatable, options?: Partial<VisitOptions>): void;
+export declare function connectStreamSource(source: StreamSource): void;
+export declare function disconnectStreamSource(source: StreamSource): void;
+export declare function renderStreamMessage(message: StreamMessage | string): void;
+export declare function clearCache(): void;
+export declare function setProgressBarDelay(delay: number): void;
+//# sourceMappingURL=index.d.ts.map
