@@ -34,18 +34,18 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
     }
   }
 
-  shouldInterceptFormSubmission(element: HTMLFormElement) {
-    return this.shouldRedirect(element)
+  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: HTMLElement) {
+    return this.shouldRedirect(element, submitter)
   }
 
-  formSubmissionIntercepted(element: HTMLFormElement) {
+  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element)
     if (frame) {
-      frame.formSubmissionIntercepted(element)
+      frame.formSubmissionIntercepted(element, submitter)
     }
   }
 
-  private shouldRedirect(element: Element) {
+  private shouldRedirect(element: Element, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element)
     return frame ? frame != element.closest("turbo-frame") : false
   }

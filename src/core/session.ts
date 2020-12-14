@@ -151,12 +151,12 @@ export class Session implements NavigatorDelegate {
 
   // Form submit observer delegate
 
-  willSubmitForm(form: HTMLFormElement) {
+  willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement) {
     return true
   }
 
-  formSubmitted(form: HTMLFormElement) {
-    this.navigator.submitForm(form)
+  formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
+    this.navigator.submitForm(form, submitter)
   }
 
   // Page observer delegate

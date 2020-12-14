@@ -1,6 +1,6 @@
 export interface FormSubmitObserverDelegate {
-  willSubmitForm(form: HTMLFormElement): boolean
-  formSubmitted(form: HTMLFormElement): void
+  willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean
+  formSubmitted(form: HTMLFormElement, submitter?: HTMLElement): void
 }
 
 export class FormSubmitObserver {
@@ -30,15 +30,16 @@ export class FormSubmitObserver {
     addEventListener("submit", this.submitBubbled, false)
   }
 
-  submitBubbled = (event: Event) => {
+  submitBubbled = <EventListener>((event: SubmitEvent) => {
     if (!event.defaultPrevented) {
       const form = event.target instanceof HTMLFormElement ? event.target : undefined
+      const submitter = event.submitter || undefined
       if (form) {
-        if (this.delegate.willSubmitForm(form)) {
+        if (this.delegate.willSubmitForm(form, submitter)) {
           event.preventDefault()
-          this.delegate.formSubmitted(form)
+          this.delegate.formSubmitted(form, submitter)
         }
       }
     }
-  }
+  })
 }

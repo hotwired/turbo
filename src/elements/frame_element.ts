@@ -28,8 +28,8 @@ export class FrameElement extends HTMLElement {
     }
   }
 
-  formSubmissionIntercepted(element: HTMLFormElement) {
-    this.controller.formSubmissionIntercepted(element)
+  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
+    this.controller.formSubmissionIntercepted(element, submitter)
   }
 
   get src() {
