@@ -125,7 +125,7 @@ export class Controller implements NavigatorDelegate {
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: Location) {
-    return this.linkIsVisitable(link)
+    return this.turboDriveIsEnabled(link)
       && this.locationIsVisitable(location)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
@@ -250,10 +250,10 @@ export class Controller implements NavigatorDelegate {
     return isAction(action) ? action : "advance"
   }
 
-  linkIsVisitable(link: Element) {
-    const container = closest(link, "[data-turbo]")
+  turboDriveIsEnabled(link: Element) {
+    const container = closest(link, "[data-turbo-drive]")
     if (container) {
-      return container.getAttribute("data-turbo") != "false"
+      return container.getAttribute("data-turbo-drive") != "false"
     } else {
       return true
     }
