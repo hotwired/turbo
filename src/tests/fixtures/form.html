@@ -13,6 +13,8 @@
     </style>
   </head>
   <body>
+    <h1 id="forms">Forms</h1>
+
     <div id="standard">
       <form action="/__turbo/redirect" method="post" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
@@ -80,6 +82,15 @@
       <form action="/__turbo/redirect" method="post">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="submit" formenctype="multipart/form-data">
+      </form>
+
+      <form action="/src/tests/fixtures/frames/form.html" method="get">
+        <button type="submit" data-turbo-frame="frame">GET to Frame</button>
+      </form>
+
+      <form action="/__turbo/redirect" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/form.html">
+        <button type="submit" data-turbo-frame="frame">POST to Frame</button>
       </form>
     </div>
     <hr>
@@ -149,8 +160,24 @@
         <input type="hidden" name="content" value="Hello!">
         <input type="submit">
       </form>
+      <form action="/src/tests/fixtures/one.html" method="get">
+        <button type="submit" data-turbo-frame="_top">Break-out of Frame with GET</button>
+      </form>
+      <form action="/__turbo/redirect" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <button type="submit" data-turbo-frame="_top">Break-out of Frame with POST</button>
+      </form>
+      <form action="/src/tests/fixtures/frames/hello.html" method="get">
+        <button type="submit" data-turbo-frame="hello">Navigate other Frame with GET</button>
+      </form>
+      <form action="/__turbo/redirect" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/hello.html">
+        <button type="submit" data-turbo-frame="hello">Navigate other Frame with POST</button>
+      </form>
       <div id="messages">
       </div>
     </turbo-frame>
+    <hr>
+    <turbo-frame id="hello"></turbo-frame>
   </body>
 </html>
