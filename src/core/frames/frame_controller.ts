@@ -35,8 +35,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   }
 
   linkClickIntercepted(element: Element, url: string) {
-    const frame = this.findFrameElement(element)
-    frame.src = url
+    this.navigateFrame(element, url)
   }
 
   shouldInterceptFormSubmission(element: HTMLFormElement) {
@@ -49,7 +48,11 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     }
 
     this.formSubmission = new FormSubmission(this, element)
-    this.formSubmission.start()
+    if (this.formSubmission.fetchRequest.isIdempotent) {
+      this.navigateFrame(element, this.formSubmission.fetchRequest.url)
+    } else {
+      this.formSubmission.start()
+    }
   }
 
   async visit(url: Locatable) {
@@ -115,6 +118,11 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
 
   formSubmissionFinished(formSubmission: FormSubmission) {
 
+  }
+
+  private navigateFrame(element: Element, url: string) {
+    const frame = this.findFrameElement(element)
+    frame.src = url
   }
 
   private findFrameElement(element: Element) {
