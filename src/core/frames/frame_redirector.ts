@@ -51,7 +51,7 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
   }
 
   private findFrameElement(element: Element) {
-    const id = element.getAttribute("data-turbo-frame")
+    const id = element.getAttribute("target")
     if (id && id != "_top") {
       const frame = this.element.querySelector(`#${id}:not([disabled])`)
       if (frame instanceof FrameElement) {
