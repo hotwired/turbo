@@ -1,3 +1,5 @@
+import { FetchRequestOptions } from "./fetch_request"
+import { FetchResponse } from "./fetch_response"
 import { StreamMessage } from "./stream_message"
 import { StreamSource } from "./types"
 
@@ -15,24 +17,32 @@ export class StreamObserver {
   }
 
   start() {
-    this.started = true
+    if (!this.started) {
+      this.started = true
+      addEventListener("turbo:before-fetch-request", this.prepareFetchRequest, true)
+      addEventListener("turbo:before-fetch-response", this.inspectFetchResponse, false)
+    }
   }
 
   stop() {
-    this.started = false
+    if (this.started) {
+      this.started = false
+      removeEventListener("turbo:before-fetch-request", this.prepareFetchRequest, true)
+      removeEventListener("turbo:before-fetch-response", this.inspectFetchResponse, false)
+    }
   }
 
   connectStreamSource(source: StreamSource) {
     if (!this.streamSourceIsConnected(source)) {
       this.sources.add(source)
-      source.addEventListener("message", this.handleMessage, false)
+      source.addEventListener("message", this.receiveMessageEvent, false)
     }
   }
 
   disconnectStreamSource(source: StreamSource) {
     if (this.streamSourceIsConnected(source)) {
       this.sources.delete(source)
-      source.removeEventListener("message", this.handleMessage, false)
+      source.removeEventListener("message", this.receiveMessageEvent, false)
     }
   }
 
@@ -40,10 +50,42 @@ export class StreamObserver {
     return this.sources.has(source)
   }
 
-  handleMessage = (event: MessageEvent) => {
-    if (this.started && typeof event.data == "string") {
-      const message = new StreamMessage(event.data)
-      this.delegate.receivedMessageFromStream(message)
+  prepareFetchRequest = (event: Event) => {
+    const fetchOptions: FetchRequestOptions = (event as any).data?.fetchOptions
+    if (fetchOptions) {
+      const { headers } = fetchOptions
+      headers.Accept = [ StreamMessage.contentType, headers.Accept ].join(", ")
     }
+  }
+
+  inspectFetchResponse = (event: Event) => {
+    const fetchResponse = fetchResponseFromEvent(event)
+    if (fetchResponse?.contentType == StreamMessage.contentType) {
+      event.preventDefault()
+      this.receiveMessageResponse(fetchResponse)
+    }
+  }
+
+  receiveMessageEvent = (event: MessageEvent) => {
+    if (this.started && typeof event.data == "string") {
+      this.receiveMessageHTML(event.data)
+    }
+  }
+
+  async receiveMessageResponse(response: FetchResponse) {
+    const html = await response.responseHTML
+    if (html) {
+      this.receiveMessageHTML(html)
+    }
+  }
+
+  receiveMessageHTML(html: string) {
+    this.delegate.receivedMessageFromStream(new StreamMessage(html))
+  }
+}
+
+function fetchResponseFromEvent(event: any): FetchResponse | undefined {
+  if (event.data?.fetchResponse instanceof FetchResponse) {
+    return event.data.fetchResponse
   }
 }
