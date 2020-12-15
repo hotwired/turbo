@@ -66,7 +66,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   }
 
   additionalHeadersForRequest(request: FetchRequest) {
-    return { "X-Turbo-Frame": this.id }
+    return { "Turbo-Frame": this.id }
   }
 
   requestStarted(request: FetchRequest) {
