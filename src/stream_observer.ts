@@ -60,7 +60,7 @@ export class StreamObserver {
 
   inspectFetchResponse = (event: Event) => {
     const fetchResponse = fetchResponseFromEvent(event)
-    if (fetchResponse?.contentType == StreamMessage.contentType) {
+    if (fetchResponse?.contentType == StreamMessage.contentType + "; charset=utf-8") {
       event.preventDefault()
       this.receiveMessageResponse(fetchResponse)
     }
