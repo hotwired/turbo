@@ -1,0 +1,41 @@
+{
+  "name": "@hotwired/turbo",
+  "version": "7.0.0-beta.1",
+  "description": "Turbo makes navigating your web application faster",
+  "module": "dist/index.js",
+  "main": "dist/turbo.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hotwired/turbo.git"
+  },
+  "keywords": [
+    "hotwire",
+    "turbo",
+    "browser",
+    "pushstate"
+  ],
+  "author": "javan, packagethief, sstephenson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hotwired/turbo/issues"
+  },
+  "homepage": "https://turbo.hotwire.dev",
+  "devDependencies": {
+    "intern": "^4.9.0",
+    "rollup": "^2.9.1",
+    "rollup-plugin-typescript2": "^0.29.0",
+    "tslib": "^2.0.3",
+    "typescript": "^3.8.3"
+  },
+  "scripts": {
+    "clean": "rm -fr dist",
+    "build": "tsc -b && rollup -c",
+    "watch": "rollup -wc",
+    "start": "intern serveOnly",
+    "test": "NODE_OPTIONS=--inspect intern"
+  }
+}
