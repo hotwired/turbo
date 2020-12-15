@@ -26,11 +26,7 @@ export class StreamElement extends HTMLElement {
 
   get targetElement() {
     if (this.target) {
-      const targetElement = this.ownerDocument?.getElementById(this.target)
-      if (targetElement) {
-        return targetElement
-      }
-      this.raise("can't find target element")
+      return this.ownerDocument?.getElementById(this.target)
     }
     this.raise("target attribute is missing")
   }
