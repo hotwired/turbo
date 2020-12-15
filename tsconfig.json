@@ -1,17 +1,15 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
     "esModuleInterop": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [ "dom", "dom.iterable", "esnext" ],
     "module": "es2015",
     "moduleResolution": "node",
     "noUnusedLocals": true,
-    "outDir": "dist",
     "rootDir": "src",
-    "sourceMap": true,
     "strict": true,
-    "target": "es5",
-    "types": []
-  }
+    "target": "es2017",
+    "noEmit": true,
+    "removeComments": true,
+  },
+  "exclude": [ "dist" ]
 }
