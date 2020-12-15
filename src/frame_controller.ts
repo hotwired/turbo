@@ -184,7 +184,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   }
 
   private shouldInterceptNavigation(element: Element) {
-    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("links-target")
+    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
 
     if (!this.enabled || id == "top") {
       return false
