@@ -1,16 +1,22 @@
 import { StreamActions } from "../stream_actions"
+import { nextAnimationFrame } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
 export class StreamElement extends HTMLElement {
-  connectedCallback() {
+  async connectedCallback() {
     try {
-      this.actionFunction.call(this)
+      await this.render()
     } catch (error) {
       console.error(error)
     } finally {
       try { this.remove() } catch {}
     }
+  }
+
+  async render() {
+    await nextAnimationFrame()
+    this.actionFunction.call(this)
   }
 
   get actionFunction() {
