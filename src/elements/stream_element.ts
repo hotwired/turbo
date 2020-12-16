@@ -20,7 +20,7 @@ export class StreamElement extends HTMLElement {
     if (!this.renderPromise) {
       this.renderPromise = (async () => {
         await nextAnimationFrame()
-        this.actionFunction.call(this)
+        this.performAction()
       })()
     }
     return this.renderPromise
@@ -30,7 +30,7 @@ export class StreamElement extends HTMLElement {
     try { this.remove() } catch {}
   }
 
-  get actionFunction() {
+  get performAction() {
     if (this.action) {
       const actionFunction = StreamActions[this.action]
       if (actionFunction) {
