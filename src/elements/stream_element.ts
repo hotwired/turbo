@@ -10,7 +10,7 @@ export class StreamElement extends HTMLElement {
     } catch (error) {
       console.error(error)
     } finally {
-      try { this.remove() } catch {}
+      this.disconnect()
     }
   }
 
@@ -24,6 +24,10 @@ export class StreamElement extends HTMLElement {
       })()
     }
     return this.renderPromise
+  }
+
+  disconnect() {
+    try { this.remove() } catch {}
   }
 
   get actionFunction() {
