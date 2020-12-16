@@ -14,9 +14,16 @@ export class StreamElement extends HTMLElement {
     }
   }
 
+  private renderPromise?: Promise<void>
+
   async render() {
-    await nextAnimationFrame()
-    this.actionFunction.call(this)
+    if (!this.renderPromise) {
+      this.renderPromise = (async () => {
+        await nextAnimationFrame()
+        this.actionFunction.call(this)
+      })()
+    }
+    return this.renderPromise
   }
 
   get actionFunction() {
