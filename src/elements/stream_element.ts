@@ -18,8 +18,10 @@ export class StreamElement extends HTMLElement {
 
   async render() {
     return this.renderPromise ??= (async () => {
-      await nextAnimationFrame()
-      this.performAction()
+      if (this.dispatchEvent(this.beforeRenderEvent)) {
+        await nextAnimationFrame()
+        this.performAction()
+      }
     })()
   }
 
@@ -70,6 +72,10 @@ export class StreamElement extends HTMLElement {
 
   private get description() {
     return (this.outerHTML.match(/<[^>]+>/) ?? [])[0] ?? "<turbo-stream>"
+  }
+
+  private get beforeRenderEvent() {
+    return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
   }
 }
 
