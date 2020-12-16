@@ -56,7 +56,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     const location = Location.wrap(url)
     const request = new FetchRequest(this, FetchMethod.get, location)
 
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
         resolve()
