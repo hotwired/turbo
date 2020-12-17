@@ -1,6 +1,6 @@
 import { Location } from "../location"
 import { Position } from "../types"
-import { defer, uuid } from "../../util"
+import { nextMicrotask, uuid } from "../../util"
 
 export interface HistoryDelegate {
   historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string): void
@@ -87,10 +87,9 @@ export class History {
     }
   }
 
-  onPageLoad = (event: Event) => {
-    defer(() => {
-      this.pageLoaded = true
-    })
+  onPageLoad = async (event: Event) => {
+    await nextMicrotask()
+    this.pageLoaded = true
   }
 
   // Private

@@ -1,7 +1,3 @@
-export function defer(callback: () => any) {
-  setTimeout(callback, 1)
-}
-
 export type DispatchOptions = { target: EventTarget, cancelable: boolean, detail: any }
 
 export function dispatch(eventName: string, { target, cancelable, detail }: Partial<DispatchOptions> = {}) {
@@ -14,15 +10,15 @@ export function nextAnimationFrame() {
   return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 }
 
+export function nextMicrotask() {
+  return Promise.resolve()
+}
+
 export function unindent(strings: TemplateStringsArray, ...values: any[]): string {
-  const lines = trimLeft(interpolate(strings, values)).split("\n")
+  const lines = interpolate(strings, values).replace(/^\n/, "").split("\n")
   const match = lines[0].match(/^\s+/)
   const indent = match ? match[0].length : 0
   return lines.map(line => line.slice(indent)).join("\n")
-}
-
-function trimLeft(string: string) {
-  return string.replace(/^\n/, "")
 }
 
 function interpolate(strings: TemplateStringsArray, values: any[]) {

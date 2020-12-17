@@ -4,7 +4,7 @@ import { Snapshot } from "./snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { RenderCallback, RenderDelegate, SnapshotRenderer } from "./snapshot_renderer"
 import { Position } from "../types"
-import { defer } from "../../util"
+import { nextMicrotask } from "../../util"
 
 export type RenderOptions = { snapshot: Snapshot, error: string, isPreview: boolean }
 
@@ -42,12 +42,13 @@ export class View {
     return this.getSnapshot().isCacheable()
   }
 
-  cacheSnapshot() {
+  async cacheSnapshot() {
     if (this.shouldCacheSnapshot()) {
       this.delegate.viewWillCacheSnapshot()
       const snapshot = this.getSnapshot()
       const location = this.lastRenderedLocation || Location.currentLocation
-      defer(() => this.snapshotCache.put(location, snapshot.clone()))
+      await nextMicrotask()
+      this.snapshotCache.put(location, snapshot.clone())
     }
   }
 
