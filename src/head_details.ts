@@ -1,5 +1,3 @@
-import { array } from "./util"
-
 type ElementDetailMap = { [outerHTML: string]: ElementDetails }
 
 type ElementDetails = { type?: ElementType, tracked: boolean, elements: Element[] }
@@ -10,7 +8,7 @@ export class HeadDetails {
   readonly detailsByOuterHTML: ElementDetailMap
 
   static fromHeadElement(headElement: HTMLHeadElement | null): HeadDetails {
-    const children = headElement ? array(headElement.children) : []
+    const children = headElement ? [ ...headElement.children ] : []
     return new this(children)
   }
 
@@ -29,7 +27,7 @@ export class HeadDetails {
         ...result,
         [outerHTML]: {
           ...details,
-          elements: [...details.elements, element]
+          elements: [ ...details.elements, element ]
         }
       }
     }, {} as ElementDetailMap)
@@ -61,9 +59,9 @@ export class HeadDetails {
     return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
       const { type, tracked, elements } = this.detailsByOuterHTML[outerHTML]
       if (type == null && !tracked) {
-        return [...result, ...elements]
+        return [ ...result, ...elements ]
       } else if (elements.length > 1) {
-        return [...result, ...elements.slice(1)]
+        return [ ...result, ...elements.slice(1) ]
       } else {
         return result
       }

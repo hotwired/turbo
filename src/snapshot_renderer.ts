@@ -1,7 +1,6 @@
 import { HeadDetails } from "./head_details"
 import { RenderCallback, RenderDelegate, Renderer } from "./renderer"
 import { Snapshot } from "./snapshot"
-import { array } from "./util"
 
 export { RenderCallback, RenderDelegate } from "./renderer"
 
@@ -101,7 +100,7 @@ export class SnapshotRenderer extends Renderer {
         const placeholder = createPlaceholderForPermanentElement(permanentElement)
         replaceElementWithElement(permanentElement, placeholder.element)
         replaceElementWithElement(newElement, permanentElement)
-        return [...placeholders, placeholder]
+        return [ ...placeholders, placeholder ]
       } else {
         return placeholders
       }
@@ -163,7 +162,7 @@ export class SnapshotRenderer extends Renderer {
   }
 
   getNewBodyScriptElements() {
-    return array(this.newBody.querySelectorAll("script"))
+    return [ ...this.newBody.querySelectorAll("script") ]
   }
 }
 

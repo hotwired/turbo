@@ -1,5 +1,4 @@
 import { RenderCallback, RenderDelegate, Renderer } from "./renderer"
-import { array } from "./util"
 
 export class ErrorRenderer extends Renderer {
   readonly delegate: RenderDelegate
@@ -48,6 +47,6 @@ export class ErrorRenderer extends Renderer {
   }
 
   getScriptElements() {
-    return array(document.documentElement.querySelectorAll("script"))
+    return [ ...document.documentElement.querySelectorAll("script") ]
   }
 }

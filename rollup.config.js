@@ -19,7 +19,7 @@ export default [
     ],
     plugins: [
       resolve(),
-      typescript({ target: "es5" })
+      typescript({ target: "es5", downlevelIteration: true })
     ],
     watch: {
       include: "src/**"

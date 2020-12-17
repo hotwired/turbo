@@ -1,7 +1,3 @@
-export function array<T>(values: ArrayLike<T>): T[] {
-  return Array.prototype.slice.call(values)
-}
-
 export const closest = (() => {
   const html = document.documentElement
 

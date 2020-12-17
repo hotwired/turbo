@@ -1,5 +1,3 @@
-import { array } from "./util"
-
 export type RenderCallback = () => void
 
 export interface RenderDelegate {
@@ -36,7 +34,7 @@ export abstract class Renderer {
 }
 
 function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
-  for (const { name, value } of array(sourceElement.attributes)) {
+  for (const { name, value } of [ ...sourceElement.attributes ]) {
     destinationElement.setAttribute(name, value)
   }
 }

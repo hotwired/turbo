@@ -1,6 +1,5 @@
 import { HeadDetails } from "./head_details"
 import { Location } from "./location"
-import { array } from "./util"
 
 export class Snapshot {
   static wrap(value: Snapshot | string | HTMLHtmlElement) {
@@ -56,7 +55,7 @@ export class Snapshot {
   }
 
   getPermanentElements() {
-    return array(this.bodyElement.querySelectorAll("[id][data-turbo-permanent]"))
+    return [ ...this.bodyElement.querySelectorAll("[id][data-turbo-permanent]") ]
   }
 
   getPermanentElementById(id: string) {
