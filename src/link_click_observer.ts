@@ -1,5 +1,4 @@
 import { Location } from "./location"
-import { closest } from "./util"
 
 export interface LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: Location): boolean
@@ -60,7 +59,7 @@ export class LinkClickObserver {
 
   findLinkFromClickTarget(target: EventTarget | null) {
     if (target instanceof Element) {
-      return closest(target, "a[href]:not([target^=_]):not([download])")
+      return target.closest("a[href]:not([target^=_]):not([download])")
     }
   }
 

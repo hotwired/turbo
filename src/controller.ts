@@ -11,7 +11,7 @@ import { ScrollObserver } from "./scroll_observer"
 import { StreamMessage } from "./stream_message"
 import { StreamObserver } from "./stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
-import { closest, dispatch } from "./util"
+import { dispatch } from "./util"
 import { View } from "./view"
 import { Visit, VisitOptions } from "./visit"
 
@@ -251,7 +251,7 @@ export class Controller implements NavigatorDelegate {
   }
 
   linkIsVisitable(link: Element) {
-    const container = closest(link, "[data-turbo]")
+    const container = link.closest("[data-turbo]")
     if (container) {
       return container.getAttribute("data-turbo") != "false"
     } else {

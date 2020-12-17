@@ -1,29 +1,3 @@
-export const closest = (() => {
-  const html = document.documentElement
-
-  type MatchesSelector = (this: Element, selector: string) => boolean
-  const match: MatchesSelector = html.matches
-    || (html as any).webkitMatchesSelector
-    || (html as any).msMatchesSelector
-    || (html as any).mozMatchesSelector
-
-  type Closest = (this: Element, selector: string) => Element | null
-  const closest: Closest = html.closest || function(selector: string) {
-    let element: Element | null = this
-    while (element) {
-      if (match.call(element, selector)) {
-        return element
-      } else {
-        element = element.parentElement
-      }
-    }
-  }
-
-  return function(element: Element, selector: string) {
-    return closest.call(element, selector)
-  }
-})()
-
 export function defer(callback: () => any) {
   setTimeout(callback, 1)
 }
