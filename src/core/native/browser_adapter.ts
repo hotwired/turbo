@@ -1,23 +1,23 @@
 import { Adapter } from "./adapter"
-import { Controller } from "../drive/controller"
+import { Session } from "../session"
 import { Locatable } from "../location"
 import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
 import { uuid } from "../../util"
 
 export class BrowserAdapter implements Adapter {
-  readonly controller: Controller
+  readonly session: Session
   readonly progressBar = new ProgressBar
 
   progressBarTimeout?: number
 
-  constructor(controller: Controller) {
-    this.controller = controller
+  constructor(session: Session) {
+    this.session = session
   }
 
   visitProposedToLocation(location: Locatable, options?: Partial<VisitOptions>) {
     const restorationIdentifier = uuid()
-    this.controller.startVisitToLocation(location, restorationIdentifier, options)
+    this.session.startVisitToLocation(location, restorationIdentifier, options)
   }
 
   visitStarted(visit: Visit) {
@@ -74,7 +74,7 @@ export class BrowserAdapter implements Adapter {
   // Private
 
   showProgressBarAfterDelay() {
-    this.progressBarTimeout = window.setTimeout(this.showProgressBar, this.controller.progressBarDelay)
+    this.progressBarTimeout = window.setTimeout(this.showProgressBar, this.session.progressBarDelay)
   }
 
   showProgressBar = () => {

@@ -1,23 +1,23 @@
-import { Adapter } from "../native/adapter"
-import { BrowserAdapter } from "../native/browser_adapter"
-import { FormSubmitObserver } from "../../observers/form_submit_observer"
-import { FrameRedirector } from "../frames/frame_redirector"
-import { History } from "./history"
-import { LinkClickObserver } from "../../observers/link_click_observer"
-import { Location, Locatable } from "../location"
-import { Navigator, NavigatorDelegate } from "./navigator"
-import { PageObserver } from "../../observers/page_observer"
-import { ScrollObserver } from "../../observers/scroll_observer"
-import { StreamMessage } from "../streams/stream_message"
-import { StreamObserver } from "../../observers/stream_observer"
-import { Action, Position, StreamSource, isAction } from "../types"
-import { dispatch } from "../../util"
-import { View } from "./view"
-import { Visit, VisitOptions } from "./visit"
+import { Adapter } from "./native/adapter"
+import { BrowserAdapter } from "./native/browser_adapter"
+import { FormSubmitObserver } from "../observers/form_submit_observer"
+import { FrameRedirector } from "./frames/frame_redirector"
+import { History } from "./drive/history"
+import { LinkClickObserver } from "../observers/link_click_observer"
+import { Location, Locatable } from "./location"
+import { Navigator, NavigatorDelegate } from "./drive/navigator"
+import { PageObserver } from "../observers/page_observer"
+import { ScrollObserver } from "../observers/scroll_observer"
+import { StreamMessage } from "./streams/stream_message"
+import { StreamObserver } from "../observers/stream_observer"
+import { Action, Position, StreamSource, isAction } from "./types"
+import { dispatch } from "../util"
+import { View } from "./drive/view"
+import { Visit, VisitOptions } from "./drive/visit"
 
 export type TimingData = {}
 
-export class Controller implements NavigatorDelegate {
+export class Session implements NavigatorDelegate {
   adapter: Adapter = new BrowserAdapter(this)
   readonly navigator = new Navigator(this)
   readonly history = new History(this)

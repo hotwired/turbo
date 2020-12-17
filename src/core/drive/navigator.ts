@@ -51,14 +51,6 @@ export class Navigator {
     }
   }
 
-  reload() {
-
-  }
-
-  goBack() {
-
-  }
-
   get adapter() {
     return this.delegate.adapter
   }

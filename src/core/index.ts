@@ -1,42 +1,42 @@
 import { Adapter } from "./native/adapter"
-import { Controller } from "./drive/controller"
+import { Session } from "./session"
 import { Locatable } from "./location"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
 import { VisitOptions } from "./drive/visit"
 
-const controller = new Controller
-const { navigator } = controller
+const session = new Session
+const { navigator } = session
 export { navigator }
 
 export function start() {
-  controller.start()
+  session.start()
 }
 
 export function registerAdapter(adapter: Adapter) {
-  controller.registerAdapter(adapter)
+  session.registerAdapter(adapter)
 }
 
 export function visit(location: Locatable, options?: Partial<VisitOptions>) {
-  controller.visit(location, options)
+  session.visit(location, options)
 }
 
 export function connectStreamSource(source: StreamSource) {
-  controller.connectStreamSource(source)
+  session.connectStreamSource(source)
 }
 
 export function disconnectStreamSource(source: StreamSource) {
-  controller.disconnectStreamSource(source)
+  session.disconnectStreamSource(source)
 }
 
 export function renderStreamMessage(message: StreamMessage | string) {
-  controller.renderStreamMessage(message)
+  session.renderStreamMessage(message)
 }
 
 export function clearCache() {
-  controller.clearCache()
+  session.clearCache()
 }
 
 export function setProgressBarDelay(delay: number) {
-  controller.setProgressBarDelay(delay)
+  session.setProgressBarDelay(delay)
 }
