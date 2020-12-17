@@ -32,39 +32,17 @@ export function defer(callback: () => any) {
   setTimeout(callback, 1)
 }
 
-export type DispatchOptions = { target: EventTarget, cancelable: boolean, data: any }
+export type DispatchOptions = { target: EventTarget, cancelable: boolean, detail: any }
 
-export function dispatch(eventName: string, { target, cancelable, data }: Partial<DispatchOptions> = {}) {
-  const event = document.createEvent("Events") as Event & { data: any }
-  event.initEvent(eventName, true, cancelable == true)
-  event.data = data || {}
-
-  // Fix setting `defaultPrevented` when `preventDefault()` is called
-  // http://stackoverflow.com/questions/23349191/event-preventdefault-is-not-working-in-ie-11-for-custom-events
-  if (event.cancelable && !preventDefaultSupported) {
-    const { preventDefault } = event
-    event.preventDefault = function() {
-      if (!this.defaultPrevented) {
-        Object.defineProperty(this, "defaultPrevented", { get: () => true })
-      }
-      preventDefault.call(this)
-    }
-  }
-
-  (target || document).dispatchEvent(event)
+export function dispatch(eventName: string, { target, cancelable, detail }: Partial<DispatchOptions> = {}) {
+  const event = new CustomEvent(eventName, { cancelable, bubbles: true, detail })
+  void (target || document.documentElement).dispatchEvent(event)
   return event
 }
 
 export function nextAnimationFrame() {
   return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 }
-
-const preventDefaultSupported = (() => {
-  const event = document.createEvent("Events")
-  event.initEvent("test", true, true)
-  event.preventDefault()
-  return event.defaultPrevented
-})()
 
 export function unindent(strings: TemplateStringsArray, ...values: any[]): string {
   const lines = trimLeft(interpolate(strings, values)).split("\n")

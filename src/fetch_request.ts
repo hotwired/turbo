@@ -81,7 +81,7 @@ export class FetchRequest {
 
   async perform(): Promise<FetchResponse> {
     const { fetchOptions } = this
-    dispatch("turbo:before-fetch-request", { data: { fetchOptions } })
+    dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
     try {
       this.delegate.requestStarted(this)
       const response = await fetch(this.url, fetchOptions)
@@ -96,7 +96,7 @@ export class FetchRequest {
 
   async receive(response: Response): Promise<FetchResponse> {
     const fetchResponse = new FetchResponse(response)
-    const event = dispatch("turbo:before-fetch-response", { cancelable: true, data: { fetchResponse } })
+    const event = dispatch("turbo:before-fetch-response", { cancelable: true, detail: { fetchResponse } })
     if (event.defaultPrevented) {
       this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
     } else if (fetchResponse.succeeded) {

@@ -216,15 +216,15 @@ export class Controller implements NavigatorDelegate {
   }
 
   notifyApplicationAfterClickingLinkToLocation(link: Element, location: Location) {
-    return dispatch("turbo:click", { target: link, data: { url: location.absoluteURL }, cancelable: true })
+    return dispatch("turbo:click", { target: link, detail: { url: location.absoluteURL }, cancelable: true })
   }
 
   notifyApplicationBeforeVisitingLocation(location: Location) {
-    return dispatch("turbo:before-visit", { data: { url: location.absoluteURL }, cancelable: true })
+    return dispatch("turbo:before-visit", { detail: { url: location.absoluteURL }, cancelable: true })
   }
 
   notifyApplicationAfterVisitingLocation(location: Location) {
-    return dispatch("turbo:visit", { data: { url: location.absoluteURL } })
+    return dispatch("turbo:visit", { detail: { url: location.absoluteURL } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
@@ -232,7 +232,7 @@ export class Controller implements NavigatorDelegate {
   }
 
   notifyApplicationBeforeRender(newBody: HTMLBodyElement) {
-    return dispatch("turbo:before-render", { data: { newBody }})
+    return dispatch("turbo:before-render", { detail: { newBody }})
   }
 
   notifyApplicationAfterRender() {
@@ -240,7 +240,7 @@ export class Controller implements NavigatorDelegate {
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
-    return dispatch("turbo:load", { data: { url: this.location.absoluteURL, timing }})
+    return dispatch("turbo:load", { detail: { url: this.location.absoluteURL, timing }})
   }
 
   // Private

@@ -7,7 +7,7 @@
   }
 
   function eventListener(event) {
-    eventLogs.push([event.type, event.data])
+    eventLogs.push([event.type, event.detail])
   }
 
 })([
