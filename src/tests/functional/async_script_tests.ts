@@ -1,8 +1,8 @@
-import { TurboTestCase } from "./helpers/turbo_test_case"
+import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 
-export class AsyncScriptTests extends TurboTestCase {
+export class AsyncScriptTests extends TurboDriveTestCase {
   async setup() {
-    await this.goToLocation("/fixtures/async_script.html")
+    await this.goToLocation("/src/tests/fixtures/async_script.html")
   }
 
   async "test does not emit turbo:load when loaded asynchronously after DOMContentLoaded"() {

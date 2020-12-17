@@ -11,5 +11,5 @@
     "noEmit": true,
     "removeComments": true,
   },
-  "exclude": [ "dist" ]
+  "exclude": [ "dist", "src/tests/fixtures" ]
 }

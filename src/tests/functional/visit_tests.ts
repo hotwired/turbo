@@ -1,16 +1,16 @@
-import { TurboTestCase } from "./helpers/turbo_test_case"
+import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 import { get } from "http"
 
 declare const Turbo: any
 
-export class VisitTests extends TurboTestCase {
+export class VisitTests extends TurboDriveTestCase {
   async setup() {
-    this.goToLocation("/fixtures/visit.html")
+    this.goToLocation("/src/tests/fixtures/visit.html")
   }
 
   async "test programmatically visiting a same-origin location"() {
     const urlBeforeVisit = await this.location
-    await this.visitLocation("/fixtures/one.html")
+    await this.visitLocation("/src/tests/fixtures/one.html")
 
     const urlAfterVisit = await this.location
     this.assert.notEqual(urlBeforeVisit, urlAfterVisit)
@@ -37,7 +37,7 @@ export class VisitTests extends TurboTestCase {
 
   async "test visiting a location served with a non-HTML content type"() {
     const urlBeforeVisit = await this.location
-    await this.visitLocation("/fixtures/svg")
+    await this.visitLocation("/src/tests/fixtures/svg")
 
     const url = await this.remote.getCurrentUrl()
     const contentType = await contentTypeOfURL(url)

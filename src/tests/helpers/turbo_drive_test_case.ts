@@ -1,10 +1,10 @@
-import { BrowserTestCase } from "./browser_test_case"
+import { FunctionalTestCase } from "./functional_test_case"
 import { RemoteChannel } from "./remote_channel"
 import { Element } from "@theintern/leadfoot"
 
 type EventLog = [string, any]
 
-export class TurboTestCase extends BrowserTestCase {
+export class TurboDriveTestCase extends FunctionalTestCase {
   eventLogChannel: RemoteChannel<EventLog> = new RemoteChannel(this.remote, "eventLogs")
   lastBody?: Element
 

@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <title>Turbo</title>
-    <script src="/fixtures/test.js"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
     <script>
       addEventListener("DOMContentLoaded", function() {
         setTimeout(function() {
           var script = document.createElement("script")
-          script.src = "/fixtures/turbo.es2017-umd.js"
+          script.src = "/src/tests/fixtures/turbo.es2017-umd.js"
           script.setAttribute("async", "")
           document.head.appendChild(script)
         }, 1)

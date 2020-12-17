@@ -9,6 +9,10 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
     this.targetElement?.prepend(this.templateContent)
   },
 
+  remove() {
+    this.targetElement?.remove()
+  },
+
   replace() {
     this.targetElement?.replaceWith(this.templateContent)
   },
@@ -18,9 +22,5 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
       this.targetElement.innerHTML = ""
       this.targetElement.append(this.templateContent)
     }
-  },
-
-  remove() {
-    this.targetElement?.remove()
   }
 }
