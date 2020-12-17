@@ -1,7 +1,7 @@
-import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "./fetch_request"
-import { FetchResponse } from "./fetch_response"
-import { Location } from "./location"
-import { dispatch } from "./util"
+import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
+import { FetchResponse } from "../../http/fetch_response"
+import { Location } from "../location"
+import { dispatch } from "../../util"
 
 export interface FormSubmissionDelegate {
   formSubmissionStarted(formSubmission: FormSubmission): void

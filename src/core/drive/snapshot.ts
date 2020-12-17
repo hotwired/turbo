@@ -1,5 +1,5 @@
 import { HeadDetails } from "./head_details"
-import { Location } from "./location"
+import { Location } from "../location"
 
 export class Snapshot {
   static wrap(value: Snapshot | string | HTMLHtmlElement) {

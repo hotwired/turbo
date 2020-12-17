@@ -1,4 +1,4 @@
-import { StreamElement } from "./elements/stream_element"
+import { StreamElement } from "../../elements/stream_element"
 
 export const StreamActions: { [action: string]: (this: StreamElement) => void } = {
   append() {

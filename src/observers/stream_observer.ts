@@ -1,7 +1,7 @@
-import { FetchRequestOptions } from "./fetch_request"
-import { FetchResponse } from "./fetch_response"
-import { StreamMessage } from "./stream_message"
-import { StreamSource } from "./types"
+import { FetchRequestOptions } from "../http/fetch_request"
+import { FetchResponse } from "../http/fetch_response"
+import { StreamMessage } from "../core/streams/stream_message"
+import { StreamSource } from "../core/types"
 
 export interface StreamObserverDelegate {
   receivedMessageFromStream(message: StreamMessage): void

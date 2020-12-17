@@ -1,4 +1,4 @@
-import { unindent } from "./util"
+import { unindent } from "../../util"
 
 export class ProgressBar {
   static animationDuration = 300/*ms*/

@@ -1,11 +1,11 @@
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "./fetch_request"
-import { FetchResponse } from "./fetch_response"
+import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
+import { FetchResponse } from "../../http/fetch_response"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
-import { FormSubmission, FormSubmissionDelegate } from "./form_submission"
-import { FrameElement } from "./elements/frame_element"
+import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
+import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { Locatable, Location } from "./location"
-import { nextAnimationFrame } from "./util"
+import { Locatable, Location } from "../location"
+import { nextAnimationFrame } from "../../util"
 
 export class FrameController implements FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, LinkInterceptorDelegate {
   readonly element: FrameElement

@@ -1,4 +1,4 @@
-import { Location } from "./location"
+import { Location } from "../core/location"
 
 export interface LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: Location): boolean

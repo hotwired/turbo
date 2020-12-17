@@ -1,4 +1,4 @@
-import { Location } from "./location"
+import { Location } from "../core/location"
 
 export class FetchResponse {
   readonly response: Response

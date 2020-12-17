@@ -1,9 +1,9 @@
 import { Adapter } from "./adapter"
-import { Controller } from "./controller"
-import { Locatable } from "./location"
-import { ProgressBar } from "./progress_bar"
-import { SystemStatusCode, Visit, VisitOptions } from "./visit"
-import { uuid } from "./util"
+import { Controller } from "../drive/controller"
+import { Locatable } from "../location"
+import { ProgressBar } from "../drive/progress_bar"
+import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
+import { uuid } from "../../util"
 
 export class BrowserAdapter implements Adapter {
   readonly controller: Controller

@@ -1,6 +1,6 @@
-import { Location } from "./location"
-import { Position } from "./types"
-import { defer, uuid } from "./util"
+import { Location } from "../location"
+import { Position } from "../types"
+import { defer, uuid } from "../../util"
 
 export interface HistoryDelegate {
   historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string): void

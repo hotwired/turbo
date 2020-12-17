@@ -1,4 +1,4 @@
-import { Location } from "./location"
+import { Location } from "../location"
 import { Snapshot } from "./snapshot"
 
 export class SnapshotCache {

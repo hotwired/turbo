@@ -1,9 +1,9 @@
-import { Adapter } from "./adapter"
-import { Controller } from "./controller"
+import { Adapter } from "./native/adapter"
+import { Controller } from "./drive/controller"
 import { Locatable } from "./location"
-import { StreamMessage } from "./stream_message"
+import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
-import { VisitOptions } from "./visit"
+import { VisitOptions } from "./drive/visit"
 
 const controller = new Controller
 const { navigator } = controller

@@ -1,5 +1,5 @@
-import { Locatable } from "./location"
-import { Visit, VisitOptions } from "./visit"
+import { Locatable } from "../location"
+import { Visit, VisitOptions } from "../drive/visit"
 
 export interface Adapter {
   visitProposedToLocation(location: Locatable, options?: Partial<VisitOptions>): void

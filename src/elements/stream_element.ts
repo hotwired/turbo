@@ -1,4 +1,4 @@
-import { StreamActions } from "../stream_actions"
+import { StreamActions } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
 
 // <turbo-stream action=replace target=id><template>...

@@ -1,10 +1,10 @@
 import { ErrorRenderer } from "./error_renderer"
-import { Location } from "./location"
+import { Location } from "../location"
 import { Snapshot } from "./snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { RenderCallback, RenderDelegate, SnapshotRenderer } from "./snapshot_renderer"
-import { Position } from "./types"
-import { defer } from "./util"
+import { Position } from "../types"
+import { defer } from "../../util"
 
 export type RenderOptions = { snapshot: Snapshot, error: string, isPreview: boolean }
 

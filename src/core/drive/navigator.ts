@@ -1,7 +1,7 @@
-import { FetchMethod } from "./fetch_request"
-import { FetchResponse } from "./fetch_response"
+import { FetchMethod } from "../../http/fetch_request"
+import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
-import { Location } from "./location"
+import { Location } from "../location"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 
 export type NavigatorDelegate = VisitDelegate & {

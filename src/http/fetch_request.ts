@@ -1,6 +1,6 @@
 import { FetchResponse } from "./fetch_response"
-import { Location } from "./location"
-import { dispatch } from "./util"
+import { Location } from "../core/location"
+import { dispatch } from "../util"
 
 export interface FetchRequestDelegate {
   additionalHeadersForRequest?(request: FetchRequest): { [header: string]: string }

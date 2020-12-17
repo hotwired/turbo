@@ -1,4 +1,4 @@
-import { StreamElement } from "./elements/stream_element"
+import { StreamElement } from "../../elements/stream_element"
 
 export class StreamMessage {
   static readonly contentType = "text/html; turbo-stream"

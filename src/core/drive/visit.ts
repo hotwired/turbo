@@ -1,12 +1,12 @@
-import { Adapter } from "./adapter"
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "./fetch_request"
-import { FetchResponse } from "./fetch_response"
+import { Adapter } from "../native/adapter"
+import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
+import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
-import { Location } from "./location"
+import { Location } from "../location"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
-import { Action } from "./types"
-import { uuid } from "./util"
+import { Action } from "../types"
+import { uuid } from "../../util"
 import { View } from "./view"
 
 export interface VisitDelegate {

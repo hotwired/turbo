@@ -1,4 +1,4 @@
-import { Position } from "./types"
+import { Position } from "../core/types"
 
 export interface ScrollObserverDelegate {
   scrollPositionChanged(position: Position): void

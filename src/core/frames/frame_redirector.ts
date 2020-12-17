@@ -1,5 +1,5 @@
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
-import { FrameElement } from "./elements/frame_element"
+import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 
 export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptorDelegate {
