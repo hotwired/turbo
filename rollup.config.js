@@ -53,10 +53,10 @@ export default [
   },
 
   {
-    input: "src/tests/index.ts",
+    input: "src/tests/functional/index.ts",
     output: [
       {
-        file: "dist/tests.js",
+        file: "dist/tests/functional.js",
         format: "cjs",
         sourcemap: true
       }
@@ -67,6 +67,27 @@ export default [
     ],
     external: [
       "http",
+      "intern"
+    ],
+    watch: {
+      include: "src/tests/**"
+    }
+  },
+
+  {
+    input: "src/tests/unit/index.ts",
+    output: [
+      {
+        file: "dist/tests/unit.js",
+        format: "iife",
+        sourcemap: true
+      }
+    ],
+    plugins: [
+      resolve(),
+      typescript()
+    ],
+    external: [
       "intern"
     ],
     watch: {

@@ -1,10 +1,9 @@
 import intern from "intern"
-import { Remote } from "intern/lib/executors/Node"
+import Test from "intern/lib/Test"
 import { Tests } from "intern/lib/interfaces/object"
 
 export class InternTestCase {
-  readonly testName: string
-  readonly remote: Remote
+  readonly internTest: Test
 
   static registerSuite() {
     return intern.getInterface("object").registerSuite(this.name, { tests: this.tests })
@@ -12,7 +11,7 @@ export class InternTestCase {
 
   static get tests(): Tests {
     return this.testNames.reduce((tests, testName): Tests => {
-      return { ...tests, [testName]: ({ remote }) => this.runTest(testName, remote) }
+      return { ...tests, [testName]: internTest => this.runTest(internTest) }
     }, {} as Tests)
   }
 
@@ -24,14 +23,17 @@ export class InternTestCase {
     return Object.getOwnPropertyNames(this.prototype).filter(key => key.match(/^test /))
   }
 
-  static runTest(testName: string, remote: Remote): Promise<void> {
-    const testCase = new this(testName, remote)
+  static runTest(internTest: Test): Promise<void> {
+    const testCase = new this(internTest)
     return testCase.runTest()
   }
 
-  constructor(testName: string, remote: Remote) {
-    this.testName = testName
-    this.remote = remote
+  constructor(internTest: Test) {
+    this.internTest = internTest
+  }
+
+  get testName() {
+    return this.internTest.name
   }
 
   async runTest() {

@@ -1,19 +1,35 @@
 import { StreamActions } from "../stream_actions"
+import { nextAnimationFrame } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
 export class StreamElement extends HTMLElement {
-  connectedCallback() {
+  async connectedCallback() {
     try {
-      this.actionFunction.call(this)
+      await this.render()
     } catch (error) {
       console.error(error)
     } finally {
-      try { this.remove() } catch {}
+      this.disconnect()
     }
   }
 
-  get actionFunction() {
+  private renderPromise?: Promise<void>
+
+  async render() {
+    return this.renderPromise ??= (async () => {
+      if (this.dispatchEvent(this.beforeRenderEvent)) {
+        await nextAnimationFrame()
+        this.performAction()
+      }
+    })()
+  }
+
+  disconnect() {
+    try { this.remove() } catch {}
+  }
+
+  get performAction() {
     if (this.action) {
       const actionFunction = StreamActions[this.action]
       if (actionFunction) {
@@ -26,11 +42,7 @@ export class StreamElement extends HTMLElement {
 
   get targetElement() {
     if (this.target) {
-      const targetElement = this.ownerDocument?.getElementById(this.target)
-      if (targetElement) {
-        return targetElement
-      }
-      this.raise("can't find target element")
+      return this.ownerDocument?.getElementById(this.target)
     }
     this.raise("target attribute is missing")
   }
@@ -60,6 +72,10 @@ export class StreamElement extends HTMLElement {
 
   private get description() {
     return (this.outerHTML.match(/<[^>]+>/) ?? [])[0] ?? "<turbo-stream>"
+  }
+
+  private get beforeRenderEvent() {
+    return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
   }
 }
 

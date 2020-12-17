@@ -1,8 +1,15 @@
 {
-  "debug": true,
   "tunnel": "null",
-  "basePath": "src/tests",
-  "functionalSuites": "dist/tests.js",
-  "environments": "chrome",
+  "suites": "dist/tests/unit.js",
+  "functionalSuites": "dist/tests/functional.js",
+  "environments": [
+    {
+      "browserName": "chrome",
+      "fixSessionCapabilities": true,
+      "goog:chromeOptions": {
+        "args": [ "headless", "disable-gpu" ]
+      }
+    }
+  ],
   "defaultTimeout": 2500
 }

@@ -1,7 +1,11 @@
 import { InternTestCase } from "./intern_test_case"
 import { Element } from "@theintern/leadfoot"
 
-export class BrowserTestCase extends InternTestCase {
+export class FunctionalTestCase extends InternTestCase {
+  get remote() {
+    return this.internTest.remote
+  }
+
   async goToLocation(location: string): Promise<void> {
     const processedLocation = location.match(/^\//) ? location.slice(1) : location
     return this.remote.get(processedLocation)
