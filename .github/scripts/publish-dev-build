@@ -32,6 +32,7 @@ GIT_AUTHOR_EMAIL="$email" GIT_COMMITTER_EMAIL="$email" \
   git commit -m "$message"
 
 git tag "$tag"
+git tag -f "dev-builds/latest"
 git push -f --tags
 
 echo done
