@@ -15,7 +15,7 @@ export type RestorationDataMap = { [restorationIdentifier: string]: RestorationD
 export class History {
   readonly delegate: HistoryDelegate
   location!: Location
-  restorationIdentifier!: string
+  restorationIdentifier = uuid()
   restorationData: RestorationDataMap = {}
   started = false
   pageLoaded = false

@@ -18,10 +18,10 @@ import { Visit, VisitOptions } from "./drive/visit"
 export type TimingData = {}
 
 export class Session implements NavigatorDelegate {
-  adapter: Adapter = new BrowserAdapter(this)
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly view = new View(this)
+  adapter: Adapter = new BrowserAdapter(this)
 
   readonly pageObserver = new PageObserver(this)
   readonly linkClickObserver = new LinkClickObserver(this)
@@ -72,10 +72,6 @@ export class Session implements NavigatorDelegate {
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}) {
     this.navigator.proposeVisit(Location.wrap(location), options)
-  }
-
-  startVisitToLocation(location: Locatable, restorationIdentifier: string, options?: Partial<VisitOptions>) {
-    this.navigator.startVisit(Location.wrap(location), restorationIdentifier, options)
   }
 
   connectStreamSource(source: StreamSource) {

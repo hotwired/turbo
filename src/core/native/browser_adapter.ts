@@ -1,8 +1,8 @@
 import { Adapter } from "./adapter"
-import { Session } from "../session"
 import { Locatable } from "../location"
 import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
+import { Session } from "../session"
 import { uuid } from "../../util"
 
 export class BrowserAdapter implements Adapter {
@@ -16,8 +16,7 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitProposedToLocation(location: Locatable, options?: Partial<VisitOptions>) {
-    const restorationIdentifier = uuid()
-    this.session.startVisitToLocation(location, restorationIdentifier, options)
+    this.navigator.startVisit(location, uuid(), options)
   }
 
   visitStarted(visit: Visit) {
@@ -91,5 +90,9 @@ export class BrowserAdapter implements Adapter {
 
   reload() {
     window.location.reload()
+  }
+
+  get navigator() {
+    return this.session.navigator
   }
 }

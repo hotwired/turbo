@@ -1,7 +1,7 @@
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
-import { Location } from "../location"
+import { Locatable, Location } from "../location"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 
 export type NavigatorDelegate = VisitDelegate & {
@@ -24,9 +24,9 @@ export class Navigator {
     }
   }
 
-  startVisit(location: Location, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+  startVisit(location: Locatable, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
     this.stop()
-    this.currentVisit = new Visit(this, location, restorationIdentifier, {
+    this.currentVisit = new Visit(this, Location.wrap(location), restorationIdentifier, {
       referrer: this.location,
       ...options
     })
@@ -113,5 +113,9 @@ export class Navigator {
 
   get location() {
     return this.history.location
+  }
+
+  get restorationIdentifier() {
+    return this.history.restorationIdentifier
   }
 }
