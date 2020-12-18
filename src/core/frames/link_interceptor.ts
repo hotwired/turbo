@@ -1,8 +1,3 @@
-export interface TurboClickEvent extends Event {
-  target: Element
-  data: { url: string }
-}
-
 export interface LinkInterceptorDelegate {
   shouldInterceptLinkClick(element: Element, url: string): boolean
   linkClickIntercepted(element: Element, url: string): void
@@ -38,12 +33,12 @@ export class LinkInterceptor {
     }
   }
 
-  linkClicked = <EventListener>((event: TurboClickEvent) => {
-    if (this.clickEvent && this.respondsToEventTarget(event.target)) {
-      if (this.delegate.shouldInterceptLinkClick(event.target, event.data.url)) {
+  linkClicked = <EventListener>((event: CustomEvent) => {
+    if (this.clickEvent && this.respondsToEventTarget(event.target) && event.target instanceof Element) {
+      if (this.delegate.shouldInterceptLinkClick(event.target, event.detail.url)) {
         this.clickEvent.preventDefault()
         event.preventDefault()
-        this.delegate.linkClickIntercepted(event.target, event.data.url)
+        this.delegate.linkClickIntercepted(event.target, event.detail.url)
       }
     }
     delete this.clickEvent
