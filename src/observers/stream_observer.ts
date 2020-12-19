@@ -51,7 +51,7 @@ export class StreamObserver {
   }
 
   prepareFetchRequest = (event: Event) => {
-    const fetchOptions: FetchRequestOptions = (event as any).data?.fetchOptions
+    const fetchOptions: FetchRequestOptions = (event as any).detail?.fetchOptions
     if (fetchOptions) {
       const { headers } = fetchOptions
       headers.Accept = [ StreamMessage.contentType, headers.Accept ].join(", ")
@@ -85,7 +85,7 @@ export class StreamObserver {
 }
 
 function fetchResponseFromEvent(event: any): FetchResponse | undefined {
-  if (event.data?.fetchResponse instanceof FetchResponse) {
-    return event.data.fetchResponse
+  if (event.detail?.fetchResponse instanceof FetchResponse) {
+    return event.detail.fetchResponse
   }
 }
