@@ -42,12 +42,12 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     return this.shouldInterceptNavigation(element)
   }
 
-  formSubmissionIntercepted(element: HTMLFormElement) {
+  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
     if (this.formSubmission) {
       this.formSubmission.stop()
     }
 
-    this.formSubmission = new FormSubmission(this, element)
+    this.formSubmission = new FormSubmission(this, element, submitter)
     if (this.formSubmission.fetchRequest.isIdempotent) {
       this.navigateFrame(element, this.formSubmission.fetchRequest.url)
     } else {

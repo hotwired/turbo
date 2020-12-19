@@ -33,9 +33,9 @@ export class Navigator {
     this.currentVisit.start()
   }
 
-  submitForm(form: HTMLFormElement) {
+  submitForm(form: HTMLFormElement, submitter?: HTMLElement) {
     this.stop()
-    this.formSubmission = new FormSubmission(this, form, true)
+    this.formSubmission = new FormSubmission(this, form, submitter, true)
     this.formSubmission.start()
   }
 

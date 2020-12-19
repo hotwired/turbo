@@ -27,27 +27,33 @@ export enum FormSubmissionState {
 export class FormSubmission {
   readonly delegate: FormSubmissionDelegate
   readonly formElement: HTMLFormElement
+  readonly submitter?: HTMLElement
   readonly formData: FormData
   readonly fetchRequest: FetchRequest
   readonly mustRedirect: boolean
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
-  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, mustRedirect = false) {
+  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement, mustRedirect = false) {
     this.delegate = delegate
     this.formElement = formElement
-    this.formData = new FormData(formElement)
+    this.formData = buildFormData(formElement, submitter)
+    this.submitter = submitter
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.formData)
     this.mustRedirect = mustRedirect
   }
 
   get method(): FetchMethod {
-    const method = this.formElement.getAttribute("method") || ""
+    const method = this.submitter?.getAttribute("formmethod") || this.formElement.method
     return fetchMethodFromString(method.toLowerCase()) || FetchMethod.get
   }
 
+  get action(): string {
+    return this.submitter?.getAttribute("formaction") || this.formElement.action
+  }
+
   get location() {
-    return Location.wrap(this.formElement.action)
+    return Location.wrap(this.action)
   }
 
   // The submission process
@@ -122,6 +128,18 @@ export class FormSubmission {
   requestMustRedirect(request: FetchRequest) {
     return !request.isIdempotent && this.mustRedirect
   }
+}
+
+function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): FormData {
+  const formData = new FormData(formElement)
+  const name = submitter?.getAttribute("name")
+  const value = submitter?.getAttribute("value")
+
+  if (name && formData.get(name) != value) {
+    formData.append(name, value || "")
+  }
+
+  return formData
 }
 
 function getCookieValue(cookieName: string | null) {

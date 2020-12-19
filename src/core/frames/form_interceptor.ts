@@ -1,6 +1,6 @@
 export interface FormInterceptorDelegate {
-  shouldInterceptFormSubmission(element: HTMLFormElement): boolean
-  formSubmissionIntercepted(element: HTMLFormElement): void
+  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: HTMLElement): boolean
+  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
 }
 
 export class FormInterceptor {
@@ -20,14 +20,15 @@ export class FormInterceptor {
     this.element.removeEventListener("submit", this.submitBubbled)
   }
 
-  submitBubbled = (event: Event) => {
+  submitBubbled = <EventListener>((event: SubmitEvent) => {
     if (event.target instanceof HTMLFormElement) {
       const form = event.target
-      if (this.delegate.shouldInterceptFormSubmission(form)) {
+      const submitter = event.submitter || undefined
+      if (this.delegate.shouldInterceptFormSubmission(form, submitter)) {
         event.preventDefault()
         event.stopImmediatePropagation()
-        this.delegate.formSubmissionIntercepted(form)
+        this.delegate.formSubmissionIntercepted(form, submitter)
       }
     }
-  }
+  })
 }
