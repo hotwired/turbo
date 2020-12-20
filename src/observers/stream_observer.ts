@@ -50,13 +50,13 @@ export class StreamObserver {
     return this.sources.has(source)
   }
 
-  prepareFetchRequest = (event: Event) => {
-    const fetchOptions: FetchRequestOptions = (event as any).detail?.fetchOptions
+  prepareFetchRequest = <EventListener>((event: CustomEvent) => {
+    const fetchOptions: FetchRequestOptions = event.detail?.fetchOptions
     if (fetchOptions) {
       const { headers } = fetchOptions
       headers.Accept = [ StreamMessage.contentType, headers.Accept ].join(", ")
     }
-  }
+  })
 
   inspectFetchResponse = (event: Event) => {
     const fetchResponse = fetchResponseFromEvent(event)
