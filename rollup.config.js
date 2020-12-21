@@ -109,7 +109,8 @@ export default [
       typescript()
     ],
     external: [
-      "express"
+      "express",
+      "multer"
     ],
     watch: {
       include: "src/tests/**"

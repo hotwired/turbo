@@ -1,13 +1,26 @@
 import { Response, Router } from "express"
+import multer from "multer"
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
 
+router.use(multer().none())
+
+router.post("/redirect", (request, response) => {
+  const path = request.body.path ?? "/src/tests/fixtures/one.html"
+  response.redirect(303, path)
+})
+
 router.post("/messages", (request, response) => {
-  const { content } = request.body
+  const { content, type } = request.body
   if (typeof content == "string") {
     receiveMessage(content)
-    response.sendStatus(201)
+    if (type == "stream") {
+      response.type("text/html; turbo-stream=*; charset=utf-8")
+      response.send(renderMessage(content))
+    } else {
+      response.sendStatus(201)
+    }
   } else {
     response.sendStatus(422)
   }

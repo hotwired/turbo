@@ -54,17 +54,17 @@ export class StreamObserver {
     const fetchOptions: FetchRequestOptions = event.detail?.fetchOptions
     if (fetchOptions) {
       const { headers } = fetchOptions
-      headers.Accept = [ StreamMessage.contentType, headers.Accept ].join(", ")
+      headers.Accept = [ "text/html; turbo-stream", headers.Accept ].join(", ")
     }
   })
 
-  inspectFetchResponse = (event: Event) => {
-    const fetchResponse = fetchResponseFromEvent(event)
-    if (fetchResponse?.contentType == StreamMessage.contentType + "; charset=utf-8") {
+  inspectFetchResponse = <EventListener>((event: CustomEvent) => {
+    const response = fetchResponseFromEvent(event)
+    if (response && fetchResponseIsStream(response)) {
       event.preventDefault()
-      this.receiveMessageResponse(fetchResponse)
+      this.receiveMessageResponse(response)
     }
-  }
+  })
 
   receiveMessageEvent = (event: MessageEvent) => {
     if (this.started && typeof event.data == "string") {
@@ -84,8 +84,14 @@ export class StreamObserver {
   }
 }
 
-function fetchResponseFromEvent(event: any): FetchResponse | undefined {
-  if (event.detail?.fetchResponse instanceof FetchResponse) {
-    return event.detail.fetchResponse
+function fetchResponseFromEvent(event: CustomEvent) {
+  const fetchResponse = event.detail?.fetchResponse
+  if (fetchResponse instanceof FetchResponse) {
+    return fetchResponse
   }
+}
+
+function fetchResponseIsStream(response: FetchResponse) {
+  const contentType = response.contentType ?? ""
+  return /text\/html;.*\bturbo-stream\b/.test(contentType)
 }
