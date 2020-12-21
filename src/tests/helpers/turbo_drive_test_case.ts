@@ -33,10 +33,6 @@ export class TurboDriveTestCase extends FunctionalTestCase {
     return record[1]
   }
 
-  get nextBeat(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 100))
-  }
-
   get nextBody(): Promise<Element> {
     return (async () => {
       let body

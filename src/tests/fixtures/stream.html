@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Turbo Streams</title>
+    <script src="/src/tests/fixtures/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script>Turbo.connectStreamSource(new EventSource("/__turbo/messages"))</script>
+  </head>
+  <body>
+    <div id="messages">
+      <div class="message">First</div>
+    </div>
+  </body>
+</html>

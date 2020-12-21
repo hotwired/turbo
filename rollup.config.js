@@ -93,5 +93,26 @@ export default [
     watch: {
       include: "src/tests/**"
     }
+  },
+
+  {
+    input: "src/tests/server.ts",
+    output: [
+      {
+        file: "dist/tests/server.js",
+        format: "cjs",
+        sourcemap: true
+      }
+    ],
+    plugins: [
+      resolve(),
+      typescript()
+    ],
+    external: [
+      "express"
+    ],
+    watch: {
+      include: "src/tests/**"
+    }
   }
 ]

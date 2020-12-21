@@ -36,7 +36,7 @@
     "clean": "rm -fr dist",
     "build": "rollup -c && tsc --noEmit false --declaration true --emitDeclarationOnly true --outDir dist/types",
     "watch": "rollup -wc",
-    "start": "intern serveOnly",
-    "test": "NODE_OPTIONS=--inspect intern"
+    "start": "node src/tests/runner.js serveOnly",
+    "test": "NODE_OPTIONS=--inspect node src/tests/runner.js"
   }
 }

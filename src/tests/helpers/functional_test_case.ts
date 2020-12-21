@@ -42,8 +42,12 @@ export class FunctionalTestCase extends InternTestCase {
     return offset > -1 && offset < 1
   }
 
-  async evaluate<T>(callback: () => T): Promise<T> {
-    return await this.remote.execute(callback)
+  get nextBeat(): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, 100))
+  }
+
+  async evaluate<T>(callback: (...args: any[]) => T, ...args: any[]): Promise<T> {
+    return await this.remote.execute(callback, args)
   }
 
   get head(): Promise<Element> {
@@ -56,6 +60,10 @@ export class FunctionalTestCase extends InternTestCase {
 
   get location(): Promise<string> {
     return this.evaluate(() => location.toString())
+  }
+
+  get origin(): Promise<string> {
+    return this.evaluate(() => location.origin.toString())
   }
 
   get pathname(): Promise<string> {
