@@ -14,6 +14,15 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
+  async "test submitter form submission reads button attributes"() {
+    const button = await this.querySelector("#submitter form button[type=submit]")
+    await button.click()
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/two.html")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
   async "test frame form submission with redirect response"() {
     const button = await this.querySelector("#frame form.redirect input[type=submit]")
     await button.click()

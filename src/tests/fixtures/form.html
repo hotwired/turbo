@@ -12,6 +12,12 @@
         <input type="submit">
       </form>
     </div>
+    <div id="submitter">
+      <form action="/src/tests/fixtures/one.html" method="get">
+        <button type="submit" formmethod="post" formaction="/__turbo/redirect"
+            name="path" value="/src/tests/fixtures/two.html">Submit</button>
+      </form>
+    </div>
     <hr>
     <turbo-frame id="frame">
       <form action="/__turbo/redirect" method="post" class="redirect">
