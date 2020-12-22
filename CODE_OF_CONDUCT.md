@@ -67,8 +67,8 @@ members of the project's leadership.
 
 ## Project Maintainers
 
-* Sam Stephenson <<sstephenson@gmail.com>>
-* Jeffrey Hardy <<packagethief@gmail.com>>
+* Sam Stephenson <<sam@hey.com>>
+* Javan Makhmali <<javan@javan.us>>
 
 ## Attribution
 
