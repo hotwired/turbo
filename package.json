@@ -6,7 +6,9 @@
   "main": "dist/turbo.es5-umd.js",
   "types": "dist/types/index.d.ts",
   "files": [
-    "dist"
+    "dist/*.js",
+    "dist/*.js.map",
+    "dist/types/**/*"
   ],
   "repository": {
     "type": "git",
