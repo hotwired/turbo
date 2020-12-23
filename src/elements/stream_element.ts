@@ -75,13 +75,7 @@ export class StreamElement extends HTMLElement {
   }
 
   private get beforeRenderEvent() {
-    let properties: CustomEventInit = { bubbles: true, cancelable: true }
-
-    if (this.action !== 'remove') {
-      properties.detail = { newTemplate: this.templateContent }
-    }
-
-    return new CustomEvent("turbo:before-stream-render", properties)
+    return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true, detail: { streamElement: this }})
   }
 }
 
