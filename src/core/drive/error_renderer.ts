@@ -6,7 +6,7 @@ export class ErrorRenderer extends Renderer {
   readonly newHead: HTMLHeadElement
   readonly newBody: HTMLBodyElement
 
-  static render(delegate: RenderDelegate, callback: RenderCallback, html: string) {
+  static render(delegate: RenderDelegate, callback: RenderCallback, html: string):Promise<void> {
     return new this(delegate, html).render(callback)
   }
 
@@ -22,8 +22,8 @@ export class ErrorRenderer extends Renderer {
     this.newBody = this.htmlElement.querySelector("body") || document.createElement("body")
   }
 
-  render(callback: RenderCallback) {
-    this.renderView(() => {
+  render(callback: RenderCallback):Promise<void> {
+    return this.renderView(() => {
       this.replaceHeadAndBody()
       this.activateBodyScriptElements()
       callback()

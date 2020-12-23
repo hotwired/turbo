@@ -17,7 +17,7 @@ export class SnapshotRenderer extends Renderer {
   readonly newBody: HTMLBodyElement
   readonly isPreview: boolean
 
-  static render(delegate: RenderDelegate, callback: RenderCallback, currentSnapshot: Snapshot, newSnapshot: Snapshot, isPreview: boolean) {
+  static render(delegate: RenderDelegate, callback: RenderCallback, currentSnapshot: Snapshot, newSnapshot: Snapshot, isPreview: boolean):Promise<void> {
     return new this(delegate, currentSnapshot, newSnapshot, isPreview).render(callback)
   }
 
@@ -32,10 +32,10 @@ export class SnapshotRenderer extends Renderer {
     this.isPreview = isPreview
   }
 
-  render(callback: RenderCallback) {
+  render(callback: RenderCallback):Promise<void> {
     if (this.shouldRender()) {
       this.mergeHead()
-      this.renderView(() => {
+      return this.renderView(() => {
         this.replaceBody()
         if (!this.isPreview) {
           this.focusFirstAutofocusableElement()
@@ -44,6 +44,7 @@ export class SnapshotRenderer extends Renderer {
       })
     } else {
       this.invalidateView()
+      return Promise.resolve()
     }
   }
 

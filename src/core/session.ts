@@ -142,7 +142,7 @@ export class Session implements NavigatorDelegate {
   }
 
   visitStarted(visit: Visit) {
-    this.notifyApplicationAfterVisitingLocation(visit.location)
+    this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
   }
 
   visitCompleted(visit: Visit) {
@@ -182,10 +182,6 @@ export class Session implements NavigatorDelegate {
 
   // View delegate
 
-  viewWillRender(newBody: HTMLBodyElement) {
-    this.notifyApplicationBeforeRender(newBody)
-  }
-
   viewRendered() {
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender()
@@ -211,6 +207,11 @@ export class Session implements NavigatorDelegate {
     return !event.defaultPrevented
   }
 
+  applicationAllowsImmediateRendering(newBody: HTMLBodyElement, render:() => void) {
+    const event = this.notifyApplicationBeforeRender(newBody, render)
+    return !event.defaultPrevented
+  }
+
   notifyApplicationAfterClickingLinkToLocation(link: Element, location: Location) {
     return dispatch("turbo:click", { target: link, detail: { url: location.absoluteURL }, cancelable: true })
   }
@@ -219,16 +220,16 @@ export class Session implements NavigatorDelegate {
     return dispatch("turbo:before-visit", { detail: { url: location.absoluteURL }, cancelable: true })
   }
 
-  notifyApplicationAfterVisitingLocation(location: Location) {
-    return dispatch("turbo:visit", { detail: { url: location.absoluteURL } })
+  notifyApplicationAfterVisitingLocation(location: Location, action: Action) {
+    return dispatch("turbo:visit", { detail: { url: location.absoluteURL, action } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement) {
-    return dispatch("turbo:before-render", { detail: { newBody }})
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, render:() => void) {
+    return dispatch("turbo:before-render", { detail: { newBody, render }, cancelable: true })
   }
 
   notifyApplicationAfterRender() {

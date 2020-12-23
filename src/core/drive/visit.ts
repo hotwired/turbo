@@ -194,14 +194,14 @@ export class Visit implements FetchRequestDelegate {
   loadResponse() {
     if (this.response) {
       const { statusCode, responseHTML } = this.response
-      this.render(() => {
+      this.render(async () => {
         this.cacheSnapshot()
         if (isSuccessful(statusCode) && responseHTML != null) {
-          this.view.render({ snapshot: Snapshot.fromHTMLString(responseHTML) }, this.performScroll)
+          await this.view.render({ snapshot: Snapshot.fromHTMLString(responseHTML) }, this.performScroll)
           this.adapter.visitRendered(this)
           this.complete()
         } else {
-          this.view.render({ error: responseHTML }, this.performScroll)
+          await this.view.render({ error: responseHTML }, this.performScroll)
           this.adapter.visitRendered(this)
           this.fail()
         }
@@ -233,9 +233,9 @@ export class Visit implements FetchRequestDelegate {
     const snapshot = this.getCachedSnapshot()
     if (snapshot) {
       const isPreview = this.shouldIssueRequest()
-      this.render(() => {
+      this.render(async () => {
         this.cacheSnapshot()
-        this.view.render({ snapshot, isPreview }, this.performScroll)
+        await this.view.render({ snapshot, isPreview }, this.performScroll)
         this.adapter.visitRendered(this)
         if (!isPreview) {
           this.complete()

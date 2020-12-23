@@ -56,12 +56,12 @@ export class View {
     return this.snapshotCache.get(location)
   }
 
-  render({ snapshot, error, isPreview }: Partial<RenderOptions>, callback: RenderCallback) {
+  render({ snapshot, error, isPreview }: Partial<RenderOptions>, callback: RenderCallback):Promise<void> {
     this.markAsPreview(isPreview)
     if (snapshot) {
-      this.renderSnapshot(snapshot, isPreview, callback)
+      return this.renderSnapshot(snapshot, isPreview, callback)
     } else {
-      this.renderError(error, callback)
+      return this.renderError(error, callback)
     }
   }
 
@@ -95,10 +95,10 @@ export class View {
   }
 
   renderSnapshot(snapshot: Snapshot, isPreview: boolean | undefined, callback: RenderCallback) {
-    SnapshotRenderer.render(this.delegate, callback, this.getSnapshot(), snapshot, isPreview || false)
+    return SnapshotRenderer.render(this.delegate, callback, this.getSnapshot(), snapshot, isPreview || false)
   }
 
   renderError(error: string | undefined, callback: RenderCallback) {
-    ErrorRenderer.render(this.delegate, callback, error || "")
+    return ErrorRenderer.render(this.delegate, callback, error || "")
   }
 }
