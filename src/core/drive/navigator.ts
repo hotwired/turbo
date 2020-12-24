@@ -35,7 +35,7 @@ export class Navigator {
 
   submitForm(form: HTMLFormElement, submitter?: HTMLElement) {
     this.stop()
-    this.formSubmission = new FormSubmission(this, form, submitter, true)
+    this.formSubmission = new FormSubmission(this, form, submitter)
     this.formSubmission.start()
   }
 
@@ -81,8 +81,9 @@ export class Navigator {
 
         const { statusCode } = fetchResponse
         const visitOptions = { response: { statusCode, responseHTML } }
-        console.log("Visiting", fetchResponse.location, visitOptions)
-        this.proposeVisit(fetchResponse.location, visitOptions)
+        const newLocation = fetchResponse.redirected ? fetchResponse.location : this.location
+        console.log("Visiting", newLocation, visitOptions)
+        this.proposeVisit(newLocation, visitOptions)
       }
     }
   }

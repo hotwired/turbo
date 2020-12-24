@@ -30,17 +30,15 @@ export class FormSubmission {
   readonly submitter?: HTMLElement
   readonly formData: FormData
   readonly fetchRequest: FetchRequest
-  readonly mustRedirect: boolean
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
-  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement, mustRedirect = false) {
+  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement) {
     this.delegate = delegate
     this.formElement = formElement
     this.formData = buildFormData(formElement, submitter)
     this.submitter = submitter
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.formData)
-    this.mustRedirect = mustRedirect
   }
 
   get method(): FetchMethod {
@@ -99,14 +97,9 @@ export class FormSubmission {
   }
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-    if (this.requestMustRedirect(request) && !response.redirected) {
-      const error = new Error("Form responses must redirect to another location")
-      this.delegate.formSubmissionErrored(this, error)
-    } else {
-      this.state = FormSubmissionState.receiving
-      this.result = { success: true, fetchResponse: response }
-      this.delegate.formSubmissionSucceededWithResponse(this, response)
-    }
+    this.state = FormSubmissionState.receiving
+    this.result = { success: true, fetchResponse: response }
+    this.delegate.formSubmissionSucceededWithResponse(this, response)
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
@@ -123,10 +116,6 @@ export class FormSubmission {
     this.state = FormSubmissionState.stopped
     dispatch("turbo:submit-end", { target: this.formElement, detail: { formSubmission: this, ...this.result }})
     this.delegate.formSubmissionFinished(this)
-  }
-
-  requestMustRedirect(request: FetchRequest) {
-    return !request.isIdempotent && this.mustRedirect
   }
 }
 
