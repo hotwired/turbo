@@ -37,6 +37,7 @@ function interpolate(strings: TemplateStringsArray, values: any[]) {
 }
 
 export function uuid() {
+  // eslint-disable-next-line prefer-spread
   return Array.apply(null, { length: 36 } as any).map((_, i) => {
     if (i == 8 || i == 13 || i == 18 || i == 23) {
       return "-"

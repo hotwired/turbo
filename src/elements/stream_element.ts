@@ -26,6 +26,7 @@ export class StreamElement extends HTMLElement {
   }
 
   disconnect() {
+    // eslint-disable-next-line no-empty
     try { this.remove() } catch {}
   }
  
@@ -97,7 +98,11 @@ export class StreamElement extends HTMLElement {
   }
 
   private get targetElementsById() {
-    const element = this.ownerDocument?.getElementById(this.target!)
+    if (!this.target) {
+      return [];
+    }
+
+    const element = this.ownerDocument?.getElementById(this.target)
 
     if (element !== null) {
       return [ element ]
@@ -107,7 +112,11 @@ export class StreamElement extends HTMLElement {
   }
 
   private get targetElementsByQuery() {
-    const elements = this.ownerDocument?.querySelectorAll(this.targets!)
+    if (!this.targets) {
+      return [];
+    }
+
+    const elements = this.ownerDocument?.querySelectorAll(this.targets)
 
     if (elements.length !== 0) {
       return Array.prototype.slice.call(elements)

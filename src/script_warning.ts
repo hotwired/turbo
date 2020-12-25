@@ -5,6 +5,7 @@ import { unindent } from "./util"
   if (!element) return
   if (element.hasAttribute("data-turbo-suppress-warning")) return
 
+  // eslint-disable-next-line no-cond-assign
   while (element = element.parentElement) {
     if (element == document.body) {
       return console.warn(unindent`

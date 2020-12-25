@@ -251,10 +251,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     const id = CSS.escape(this.id)
 
     try {
+      // eslint-disable-next-line no-cond-assign
       if (element = activateElement(container.querySelector(`turbo-frame#${id}`), this.currentURL)) {
         return element
       }
 
+      // eslint-disable-next-line no-cond-assign
       if (element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`), this.currentURL)) {
         await element.loaded
         return await this.extractForeignFrameElement(element)

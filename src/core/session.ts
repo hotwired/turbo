@@ -17,7 +17,7 @@ import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 
-export type TimingData = {}
+export type TimingData = Record<string, unknown>
 
 export class Session implements FormSubmitObserverDelegate, HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate, PageViewDelegate {
   readonly navigator = new Navigator(this)
