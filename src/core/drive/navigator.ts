@@ -3,6 +3,7 @@ import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
 import { Locatable, Location } from "../location"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
+import { Snapshot } from "./snapshot"
 
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocation(location: Location): boolean
@@ -87,8 +88,15 @@ export class Navigator {
     }
   }
 
-  formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-    console.error("Form submission failed", formSubmission, fetchResponse)
+  async formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
+    const responseHTML = await fetchResponse.responseHTML
+
+    if (responseHTML) {
+      debugger
+      const snapshot = Snapshot.fromHTMLString(responseHTML)
+      this.view.render({ snapshot }, () => {})
+      this.view.clearSnapshotCache()
+    }
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {

@@ -15,6 +15,14 @@ export class FetchResponse {
     return !this.succeeded
   }
 
+  get clientError() {
+    return this.statusCode >= 400 && this.statusCode <= 499
+  }
+
+  get serverError() {
+    return this.statusCode >= 500 && this.statusCode <= 599
+  }
+
   get redirected() {
     return this.response.redirected
   }
