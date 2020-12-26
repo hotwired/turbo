@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Unobtrustive JavaScript</title>
+    <script type="module">
+      import "/dist/turbo.es2017-umd.js"
+      import Rails from "https://cdn.skypack.dev/@rails/ujs"
+
+      Rails.start()
+
+      const { delegate, disableElement, enableElement } = Rails
+
+      delegate(document, Rails.linkDisableSelector,   "turbo:before-cache", enableElement)
+      delegate(document, Rails.buttonDisableSelector, "turbo:before-cache", enableElement)
+      delegate(document, Rails.buttonDisableSelector, "turbo:submit-end", enableElement)
+
+      delegate(document, Rails.formSubmitSelector, "turbo:submit-start", disableElement)
+      delegate(document, Rails.formSubmitSelector, "turbo:submit-end", enableElement)
+      delegate(document, Rails.formSubmitSelector, "turbo:before-cache", enableElement)
+    </script>
+  </head>
+  <body>
+    <a href="#" data-disable-with="Visiting">Visit</a>
+    <form action="/__turbo/redirect">
+      <input type="hidden" name="path" value="/src/tests/fixtures/unobtrusive_javascript.html">
+      <button data-disable-with="Clicked">Click</button>
+    </form>
+  </body>
+</html>
