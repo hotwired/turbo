@@ -1,11 +1,11 @@
-type FormSubmitter = HTMLElement & { form?: HTMLFormElement }
+type FormSubmitter = HTMLElement & { form?: HTMLFormElement, type?: string }
 
 const submittersByForm: WeakMap<HTMLFormElement, HTMLElement> = new WeakMap
 
 function findSubmitterFromClickTarget(target: EventTarget | null): FormSubmitter | null {
   const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
   const candidate = element ? element.closest("input, button") as FormSubmitter | null : null
-  return candidate?.getAttribute("type") == "submit" ? candidate : null
+  return candidate?.type == "submit" ? candidate : null
 }
 
 function clickCaptured(event: Event) {
