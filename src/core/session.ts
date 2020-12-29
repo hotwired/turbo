@@ -239,6 +239,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   // Frame element
 
+  frameLoaded(frame: FrameElement) {
+    this.notifyApplicationAfterFrameLoad(frame)
+  }
+
   frameRendered(fetchResponse: FetchResponse, frame: FrameElement) {
     this.notifyApplicationAfterFrameRender(fetchResponse, frame);
   }
@@ -285,6 +289,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL) {
     dispatchEvent(new HashChangeEvent("hashchange", { oldURL: oldURL.toString(), newURL: newURL.toString() }))
+  }
+
+  notifyApplicationAfterFrameLoad(frame: FrameElement) {
+    return dispatch("turbo:frame-load", { target: frame })
   }
 
   notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {

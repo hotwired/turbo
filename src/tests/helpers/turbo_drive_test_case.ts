@@ -2,7 +2,7 @@ import { FunctionalTestCase } from "./functional_test_case"
 import { RemoteChannel } from "./remote_channel"
 import { Element } from "@theintern/leadfoot"
 
-type EventLog = [string, any]
+type EventLog = [string, any, string | null]
 type MutationLog = [string, string | null, string | null]
 
 export class TurboDriveTestCase extends FunctionalTestCase {
@@ -38,6 +38,15 @@ export class TurboDriveTestCase extends FunctionalTestCase {
   async noNextEventNamed(eventName: string): Promise<boolean> {
     const records = await this.eventLogChannel.read(1)
     return !records.some(([name]) => name == eventName)
+  }
+
+  async nextEventOnTarget(elementId: string, eventName: string): Promise<any> {
+    let record: EventLog | undefined
+    while (!record) {
+      const records = await this.eventLogChannel.read(1)
+      record = records.find(([name, _, id]) => name == eventName && id == elementId)
+    }
+    return record[1]
   }
 
   async nextAttributeMutationNamed(elementId: string, attributeName: string): Promise<string | null> {

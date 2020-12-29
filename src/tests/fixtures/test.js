@@ -7,7 +7,7 @@
   }
 
   function eventListener(event) {
-    eventLogs.push([event.type, event.detail])
+    eventLogs.push([event.type, event.detail, event.target.id])
   }
   window.mutationLogs = []
 
@@ -26,6 +26,7 @@
   "turbo:render",
   "turbo:before-fetch-request",
   "turbo:before-fetch-response",
+  "turbo:visit",
+  "turbo:frame-load",
   "turbo:frame-render",
-  "turbo:visit"
 ])

@@ -19,11 +19,12 @@ export class FrameTests extends TurboDriveTestCase {
   async "test a frame whose src references itself does not infinitely loop"() {
     await this.clickSelector("#frame-self")
 
-    await this.nextEventNamed("turbo:frame-render") // recursive
-    await this.nextEventNamed("turbo:frame-render") // frame
+    // await this.nextEventOnTarget("frame", "turbo:frame-render")
+    await this.nextEventOnTarget("frame", "turbo:frame-load")
 
     const otherEvents = await this.eventLogChannel.read()
-    this.assert.equal(otherEvents.length, 0, "no more events")
+    // this.assert.equal(otherEvents.length, 0, "no more events")
+    this.assert.equal(otherEvents.join(', '), '')
   }
 
   async "test following a link driving a frame toggles the [busy] attribute"() {

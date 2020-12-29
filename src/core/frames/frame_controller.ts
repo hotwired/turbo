@@ -86,6 +86,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           this.appearanceObserver.stop()
           await this.element.loaded
           this.hasBeenLoaded = true
+          session.frameLoaded(this.element)
         } catch (error) {
           this.currentURL = previousURL
           throw error
@@ -222,11 +223,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
   }
 
   viewInvalidated() {
-
   }
 
   // Private
