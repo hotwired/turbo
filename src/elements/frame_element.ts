@@ -1,11 +1,13 @@
 import { FetchResponse } from "../http/fetch_response"
 import { FrameController } from "../core/frames/frame_controller"
 
+export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
+
 export class FrameElement extends HTMLElement {
   readonly controller: FrameController
 
   static get observedAttributes() {
-    return ["src"]
+    return ["loading", "src"]
   }
 
   constructor() {
@@ -21,10 +23,13 @@ export class FrameElement extends HTMLElement {
     this.controller.disconnect()
   }
 
-  attributeChangedCallback() {
-    if (this.src && this.isActive) {
-      const value = this.controller.visit(this.src)
-      Object.defineProperty(this, "loaded", { value, configurable: true })
+  attributeChangedCallback(name: string) {
+    if (this.loading == FrameLoadingStyle.eager && this.src && this.isActive) {
+      this.loaded = this.controller.visit(this.src)
+    }
+
+    if (name == "loading") {
+      this.loading == FrameLoadingStyle.eager ? this.controller.unobserveIntersections() : this.controller.observeIntersections()
     }
   }
 
@@ -44,8 +49,25 @@ export class FrameElement extends HTMLElement {
     }
   }
 
-  get loaded(): Promise<FetchResponse | undefined> {
+  get loading(): FrameLoadingStyle {
+    return frameLoadingStyleFromString(this.getAttribute("loading") || "")
+  }
+
+  set loading(value: FrameLoadingStyle) {
+    if (value) {
+      this.setAttribute("loading", value)
+    } else {
+      this.removeAttribute("loading")
+    }
+  }
+
+  get loaded(): Promise<FetchResponse | void> {
     return Promise.resolve(undefined)
+  }
+
+  set loaded(value: Promise<FetchResponse | void>) {
+    Object.defineProperty(this, "loaded", { value, configurable: true })
+    value.then(() => this.removeAttribute("loading"))
   }
 
   get disabled() {
@@ -78,6 +100,13 @@ export class FrameElement extends HTMLElement {
 
   get isPreview() {
     return this.ownerDocument?.documentElement?.hasAttribute("data-turbo-preview")
+  }
+}
+
+function frameLoadingStyleFromString(style: string) {
+  switch (style.toLowerCase()) {
+    case "lazy":  return FrameLoadingStyle.lazy
+    default:      return FrameLoadingStyle.eager
   }
 }
 

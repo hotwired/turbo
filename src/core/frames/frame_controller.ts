@@ -2,7 +2,7 @@ import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetc
 import { FetchResponse } from "../../http/fetch_response"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
-import { FrameElement } from "../../elements/frame_element"
+import { FrameElement, FrameLoadingStyle } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { Locatable, Location } from "../location"
 import { nextAnimationFrame } from "../../util"
@@ -12,22 +12,39 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
   formSubmission?: FormSubmission
+  private readonly intersectionObserver: IntersectionObserver
   private resolveVisitPromise = () => {}
 
   constructor(element: FrameElement) {
     this.element = element
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
+    this.intersectionObserver = new IntersectionObserver((entries) => {
+      const { src } = this.element
+
+      if (src) {
+        entries.forEach(({ isIntersecting }) => {
+          if (isIntersecting) {
+            this.element.loaded = this.visit(src)
+            this.unobserveIntersections()
+          }
+        })
+      }
+    })
   }
 
   connect() {
     this.linkInterceptor.start()
     this.formInterceptor.start()
+    if (this.element.loading == FrameLoadingStyle.lazy) {
+      this.observeIntersections()
+    }
   }
 
   disconnect() {
     this.linkInterceptor.stop()
     this.formInterceptor.stop()
+    this.unobserveIntersections()
   }
 
   shouldInterceptLinkClick(element: Element, url: string) {
@@ -206,6 +223,14 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     }
 
     return true
+  }
+
+  observeIntersections() {
+    this.intersectionObserver.observe(this.element)
+  }
+
+  unobserveIntersections() {
+    this.intersectionObserver.unobserve(this.element)
   }
 
   get firstAutofocusableElement(): HTMLElement | null {
