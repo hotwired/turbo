@@ -1,0 +1,15 @@
+import { Adapter } from "./native/adapter";
+import { Locatable } from "./location";
+import { StreamMessage } from "./streams/stream_message";
+import { StreamSource } from "./types";
+import { VisitOptions } from "./drive/visit";
+declare const navigator: import("./drive/navigator").Navigator;
+export { navigator };
+export declare function start(): void;
+export declare function registerAdapter(adapter: Adapter): void;
+export declare function visit(location: Locatable, options?: Partial<VisitOptions>): void;
+export declare function connectStreamSource(source: StreamSource): void;
+export declare function disconnectStreamSource(source: StreamSource): void;
+export declare function renderStreamMessage(message: StreamMessage | string): void;
+export declare function clearCache(): void;
+export declare function setProgressBarDelay(delay: number): void;
