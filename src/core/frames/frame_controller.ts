@@ -12,6 +12,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { elementIsNavigable } from "../session"
+import { dispatch } from "../../util"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -86,6 +87,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           this.appearanceObserver.stop()
           await this.element.loaded
           this.hasBeenLoaded = true
+          dispatch("turbo:frame-load", { target: this.element })
         } catch (error) {
           this.currentURL = previousURL
           throw error
@@ -211,11 +213,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // View delegate
 
   viewWillRenderSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
   }
 
   viewInvalidated() {
