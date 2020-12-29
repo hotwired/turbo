@@ -13,10 +13,8 @@ import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
 import { dispatch } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
-import { Visit, VisitOptions } from "./drive/visit"
+import { TimingMetrics, Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
-
-export type TimingData = {}
 
 export class Session implements HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate, PageViewDelegate {
   readonly navigator = new Navigator(this)
@@ -238,7 +236,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
     return dispatch("turbo:render")
   }
 
-  notifyApplicationAfterPageLoad(timing: TimingData = {}) {
+  notifyApplicationAfterPageLoad(timing: TimingMetrics = {}) {
     return dispatch("turbo:load", { detail: { url: this.location.href, timing }})
   }
 

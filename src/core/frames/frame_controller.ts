@@ -11,6 +11,8 @@ import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
+import { dispatch } from "../../util"
+import { TimingMetric, TimingMetrics } from "../drive/visit"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -21,6 +23,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   loadingURL?: string
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
+  timingMetrics: TimingMetrics = {}
 
   constructor(element: FrameElement) {
     this.element = element
@@ -60,6 +63,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
+    const event = dispatch("turbo:before-frame-visit", { target: this.element, detail: { url: this.sourceURL }, cancelable: true })
+    if (event.defaultPrevented) {
+      return new Promise<void>(resolve => resolve())
+    }
+
     if (this.isActive && this.sourceURL && this.sourceURL != this.loadingURL) {
       try {
         this.loadingURL = this.sourceURL
@@ -183,11 +191,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // View delegate
 
   viewWillRenderSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
+    dispatch("turbo:before-frame-cache", { target: this.element })
+    dispatch("turbo:before-frame-render", { target: this.element, detail: { newBody: snapshot.element } })
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
+    dispatch("turbo:frame-render", { target: this.element })
   }
 
   viewInvalidated() {
@@ -198,13 +207,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   private async visit(url: Locatable) {
     const request = new FetchRequest(this, FetchMethod.get, expandURL(url))
-
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
         resolve()
       }
+      this.clearTimingMetrics()
+      this.recordTimingMetric(TimingMetric.visitStart)
+      dispatch("turbo:frame-visit", { target: this.element, detail: { url: request.url.href } })
       request.perform()
+    }).then(() => {
+      this.recordTimingMetric(TimingMetric.visitEnd)
+      dispatch("turbo:frame-load", { target: this.element, detail: { url: request.url.href, timing: this.timingMetrics } })
     })
   }
 
@@ -245,6 +259,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
 
     return true
+  }
+
+  private clearTimingMetrics() {
+    this.timingMetrics = {}
+  }
+
+  private recordTimingMetric(metric: TimingMetric) {
+    this.timingMetrics[metric] = new Date().getTime()
   }
 
   // Computed properties
