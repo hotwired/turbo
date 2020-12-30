@@ -1,5 +1,4 @@
 {
-  "tunnel": "null",
   "suites": "dist/tests/unit.js",
   "functionalSuites": "dist/tests/functional.js",
   "environments": [
@@ -8,6 +7,12 @@
       "fixSessionCapabilities": true,
       "goog:chromeOptions": {
         "args": [ "headless", "disable-gpu" ]
+      }
+    },
+    {
+      "browserName": "firefox",
+      "moz:firefoxOptions": {
+        "args": [ "-headless" ]
       }
     }
   ],
