@@ -1,6 +1,6 @@
 name: CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -15,4 +15,10 @@ jobs:
     - run: sudo apt-get install --yes git jq
     - run: yarn install
     - run: yarn build
-    - run: .github/scripts/publish-dev-build '${{ secrets.GITHUB_TOKEN }}'
+
+    - name: Test
+      run: yarn test
+
+    - name: Publish dev build
+      run: .github/scripts/publish-dev-build '${{ secrets.GITHUB_TOKEN }}'
+      if: ${{ github.event_name == 'push' }}
