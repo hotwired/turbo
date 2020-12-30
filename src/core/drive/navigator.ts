@@ -92,7 +92,6 @@ export class Navigator {
     const responseHTML = await fetchResponse.responseHTML
 
     if (responseHTML) {
-      debugger
       const snapshot = Snapshot.fromHTMLString(responseHTML)
       this.view.render({ snapshot }, () => {})
       this.view.clearSnapshotCache()
