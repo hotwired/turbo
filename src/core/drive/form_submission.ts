@@ -99,7 +99,9 @@ export class FormSubmission {
   }
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-    if (this.requestMustRedirect(request) && !response.redirected) {
+    if (response.clientError || response.serverError) {
+      this.delegate.formSubmissionFailedWithResponse(this, response)
+    } else if (this.requestMustRedirect(request) && !response.redirected) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
     } else {

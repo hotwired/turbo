@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import multer from "multer"
+import path from "path"
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
@@ -9,6 +10,13 @@ router.use(multer().none())
 router.post("/redirect", (request, response) => {
   const path = request.body.path ?? "/src/tests/fixtures/one.html"
   response.redirect(303, path)
+})
+
+router.post("/reject", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
 router.post("/messages", (request, response) => {

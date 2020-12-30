@@ -109,7 +109,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-
+    this.element.controller.loadResponse(fetchResponse)
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
