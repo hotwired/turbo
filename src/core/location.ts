@@ -15,47 +15,61 @@ export class Location {
     }
   }
 
-  readonly absoluteURL: string
-  readonly requestURL: string
-  readonly anchor?: string
+  readonly link: HTMLAnchorElement = document.createElement("a")
+  private _requestURL?: string
+  private _anchor?: string
 
   constructor(url: string) {
-    const linkWithAnchor = document.createElement("a")
-    linkWithAnchor.href = url
+    this.link.href = url
+  }
 
-    this.absoluteURL = linkWithAnchor.href
+  get absoluteURL() {
+    return this.link.href
+  }
 
-    const anchorLength = linkWithAnchor.hash.length
-    if (anchorLength < 2) {
-      this.requestURL = this.absoluteURL
+  get requestURL() {
+    if (this._requestURL) return this._requestURL
+
+    if (typeof this.anchor === 'undefined') {
+      return this._requestURL = this.absoluteURL
     } else {
-      this.requestURL = this.absoluteURL.slice(0, -anchorLength)
-      this.anchor = linkWithAnchor.hash.slice(1)
+      return this._requestURL = this.absoluteURL.split('#')[0]
     }
   }
 
-  getOrigin() {
-    return this.absoluteURL.split("/", 3).join("/")
+  get origin() {
+    return this.link.origin
   }
 
-  getPath() {
-    return (this.requestURL.match(/\/\/[^/]*(\/[^?;]*)/) || [])[1] || "/"
+  get path() {
+    return this.link.pathname
   }
 
-  getPathComponents() {
-    return this.getPath().split("/").slice(1)
+  get anchor() {
+    if (this._anchor) return this._anchor
+
+    let anchorMatch
+    if (this.link.hash) {
+      return this._anchor = this.link.hash.slice(1)
+    } else if (anchorMatch = this.absoluteURL.match(/#(.*)$/)) {
+      return this._anchor = anchorMatch[1]
+    }
   }
 
-  getLastPathComponent() {
-    return this.getPathComponents().slice(-1)[0]
+  get pathComponents() {
+    return this.path.split("/").slice(1)
   }
 
-  getExtension() {
-    return (this.getLastPathComponent().match(/\.[^.]*$/) || [])[0] || ""
+  get lastPathComponent() {
+    return this.pathComponents.slice(-1)[0]
+  }
+
+  get extension() {
+    return (this.lastPathComponent.match(/\.[^.]*$/) || [])[0] || ""
   }
 
   isHTML() {
-    return !!this.getExtension().match(/^(?:|\.(?:htm|html|xhtml))$/)
+    return !!this.extension.match(/^(?:|\.(?:htm|html|xhtml))$/)
   }
 
   isPrefixedBy(location: Location): boolean {
@@ -85,7 +99,7 @@ export class Location {
 }
 
 function getPrefixURL(location: Location) {
-  return addTrailingSlash(location.getOrigin() + location.getPath())
+  return addTrailingSlash(location.origin + location.path)
 }
 
 function addTrailingSlash(url: string) {
