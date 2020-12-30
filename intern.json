@@ -8,6 +8,12 @@
       "goog:chromeOptions": {
         "args": [ "headless", "disable-gpu" ]
       }
+    },
+    {
+      "browserName": "firefox",
+      "moz:firefoxOptions": {
+        "args": [ "-headless" ]
+      }
     }
   ],
   "defaultTimeout": 2500

@@ -72,6 +72,7 @@ export class NavigationTests extends TurboDriveTestCase {
 
   async "test following a same-origin [target] link"() {
     this.clickSelector("#same-origin-targeted-link")
+    await this.nextBeat
     this.remote.switchToWindow(await this.nextWindowHandle)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "load")
