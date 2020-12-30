@@ -8,6 +8,14 @@ intern.configure({ reporters: [ "runner" ] })
 const arg = process.argv[2]
 if (arg == "serveOnly") {
   intern.configure({ serveOnly: true })
+} else {
+  const { spawnSync } = require("child_process")
+  const { status, stderr } = spawnSync("java", [ "-version" ])
+
+  if (status != 0) {
+    console.error(stderr.toString())
+    process.exit(status)
+  }
 }
 
 intern.on("serverStart", server => {
