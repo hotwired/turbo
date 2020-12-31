@@ -5,21 +5,12 @@
     <title>Form</title>
     <script src="/src/tests/fixtures/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
-    <script type="module">
-      import dialogPolyfill from "https://cdn.skypack.dev/dialog-polyfill"
-
-     addEventListener("click", ({ target }) => {
-        if (target instanceof HTMLElement) {
-          const id = target?.getAttribute("data-open")
-          const dialog = document.querySelector(`dialog#${id}`)
-
-          if (dialog && dialog.tagName == "DIALOG") {
-            dialogPolyfill.registerDialog(dialog)
-            dialog.showModal()
-          }
-        }
-      })
-    </script>
+    <style>
+      dialog {
+        display: block;
+        position: static;
+      }
+    </style>
   </head>
   <body>
     <div id="standard">
@@ -58,20 +49,18 @@
     </div>
     <hr>
     <div id="skipped">
-      <dialog id="dialog-method">
+      <dialog id="dialog-method" open>
         <form method="dialog">
           <button type="submit">Close</button>
         </form>
       </dialog>
-      <button type="button" data-open="dialog-method">Open</button>
 
-      <dialog id="dialog-formmethod">
+      <dialog id="dialog-formmethod" open>
         <form action="/__turbo/redirect" method="post">
           <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
           <button formmethod="dialog">Close</button>
         </form>
       </dialog>
-      <button type="button" data-open="dialog-formmethod">Open</button>
     </div>
     <hr>
     <turbo-frame id="frame">

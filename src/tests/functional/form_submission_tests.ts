@@ -103,22 +103,18 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test form submission skipped within method=dialog"() {
     this.listenForFormSubmissions()
-    await this.clickSelector('button[data-open="dialog-method"]')
     await this.clickSelector('#dialog-method [type="submit"]')
     await this.nextBeat
 
     this.assert.notOk(await this.turboFormSubmitted)
-    this.assert.notOk(await this.hasSelector("#dialog-method[open]"))
   }
 
   async "test form submission skipped with submitter formmethod=dialog"() {
     this.listenForFormSubmissions()
-    await this.clickSelector('button[data-open="dialog-formmethod"]')
     await this.clickSelector('#dialog-formmethod [formmethod="dialog"]')
     await this.nextBeat
 
     this.assert.notOk(await this.turboFormSubmitted)
-    this.assert.notOk(await this.hasSelector("#dialog-formmethod[open]"))
   }
 
   listenForFormSubmissions() {
