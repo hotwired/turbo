@@ -19,6 +19,10 @@ export class FunctionalTestCase extends InternTestCase {
     return this.remote.goForward()
   }
 
+  async refresh(): Promise<void> {
+    return this.remote.refresh()
+  }
+
   async hasSelector(selector: string) {
     return (await this.remote.findAllByCssSelector(selector)).length > 0
   }
@@ -31,6 +35,10 @@ export class FunctionalTestCase extends InternTestCase {
     return this.remote.findByCssSelector(selector).click()
   }
 
+  async scrollToSelector(selector: string): Promise<void> {
+    return this.remote.moveMouseTo(await this.remote.findByCssSelector(selector))
+  }
+
   get scrollPosition(): Promise<{ x: number, y: number }> {
     return this.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
   }
@@ -39,7 +47,7 @@ export class FunctionalTestCase extends InternTestCase {
     const { y: pageY } = await this.scrollPosition
     const { y: elementY } = await this.remote.findByCssSelector(selector).getPosition()
     const offset = pageY - elementY
-    return offset > -1 && offset < 1
+    return offset > -2 && offset < 2
   }
 
   get nextBeat(): Promise<void> {

@@ -116,6 +116,30 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "restore")
   }
+
+  async "test cold loading an anchored URL"() {
+    // Go back from setup() navigation to ensure a cold load
+    await this.goBack()
+    await this.goToLocation("/src/tests/fixtures/navigation.html#page-invalidated-link")
+    this.assert.notDeepEqual(await this.scrollPosition, { x: 0, y: 0 })
+    this.assert(await this.isScrolledToSelector("#page-invalidated-link"))
+  }
+
+  async "test following a link to a page which reloads"() {
+    await this.scrollToSelector("#page-invalidated-link")
+    this.clickSelector("#page-invalidated-link")
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
+    this.assert.equal(await this.visitAction, "load")
+    this.assert.deepEqual(await this.scrollPosition, { x: 0, y: 0 })
+  }
+
+  async "test refreshing a scrolled page"() {
+    await this.scrollToSelector("#page-invalidated-link")
+    const positionBeforeRefresh = await this.scrollPosition
+    await this.refresh()
+    this.assert.deepEqual(await this.scrollPosition, positionBeforeRefresh)
+  }
 }
 
 NavigationTests.registerSuite()
