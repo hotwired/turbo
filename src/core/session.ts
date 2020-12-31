@@ -10,12 +10,16 @@ import { PageObserver } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
-import { Action, Position, StreamSource, isAction } from "./types"
+import { SessionStorage } from "./session_storage"
+import { Action, Position, PersistedPosition, StreamSource, isAction } from "./types"
 import { dispatch } from "../util"
 import { View } from "./drive/view"
 import { Visit, VisitOptions } from "./drive/visit"
 
 export type TimingData = {}
+
+const SCROLL_POSITION = "turbo-scroll-position"
+const VIEW_INVALIDATED = "turbo-view-invalidated"
 
 export class Session implements NavigatorDelegate {
   readonly navigator = new Navigator(this)
@@ -28,6 +32,7 @@ export class Session implements NavigatorDelegate {
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
+  readonly sessionStorage = new SessionStorage
 
   readonly frameRedirector = new FrameRedirector(document.documentElement)
 
@@ -118,6 +123,25 @@ export class Session implements NavigatorDelegate {
     this.history.updateRestorationData({ scrollPosition: position })
   }
 
+  persistScrollPosition() {
+    this.sessionStorage.set(SCROLL_POSITION, {
+      location: Location.currentLocation.toString(),
+      ...this.scrollObserver.position
+    })
+  }
+
+  restorePersistedScrollPosition() {
+    const persistedPosition: PersistedPosition = this.sessionStorage.get(SCROLL_POSITION)
+    const viewInvalidated = this.sessionStorage.get(VIEW_INVALIDATED)
+
+    if (persistedPosition?.location == Location.currentLocation.toString() && !viewInvalidated) {
+      this.view.scrollToPosition({ x: persistedPosition.x, y: persistedPosition.y })
+    }
+
+    this.sessionStorage.remove(SCROLL_POSITION)
+    this.sessionStorage.remove(VIEW_INVALIDATED)
+  }
+
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: Location) {
@@ -163,6 +187,7 @@ export class Session implements NavigatorDelegate {
 
   pageBecameInteractive() {
     this.view.lastRenderedLocation = this.location
+    this.restorePersistedScrollPosition()
     this.notifyApplicationAfterPageLoad()
   }
 
@@ -172,6 +197,10 @@ export class Session implements NavigatorDelegate {
 
   pageInvalidated() {
     this.adapter.pageInvalidated()
+  }
+
+  beforePageUnloaded() {    
+    this.persistScrollPosition()
   }
 
   // Stream observer delegate
@@ -192,6 +221,7 @@ export class Session implements NavigatorDelegate {
   }
 
   viewInvalidated() {
+    this.sessionStorage.set(VIEW_INVALIDATED, true)
     this.pageObserver.invalidate()
   }
 

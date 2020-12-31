@@ -12,6 +12,10 @@ export class ScrollObserver {
     this.delegate = delegate
   }
 
+  get position(): Position {
+    return { x: window.pageXOffset, y: window.pageYOffset }
+  }
+
   start() {
     if (!this.started) {
       addEventListener("scroll", this.onScroll, false)
@@ -28,7 +32,7 @@ export class ScrollObserver {
   }
 
   onScroll = () => {
-    this.updatePosition({ x: window.pageXOffset, y: window.pageYOffset })
+    this.updatePosition(this.position)
   }
 
   // Private
