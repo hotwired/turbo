@@ -5,6 +5,12 @@
     <title>Form</title>
     <script src="/src/tests/fixtures/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <style>
+      dialog {
+        display: block;
+        position: static;
+      }
+    </style>
   </head>
   <body>
     <div id="standard">
@@ -22,11 +28,39 @@
         <input type="submit">
       </form>
     </div>
+    <hr>
     <div id="submitter">
       <form action="/src/tests/fixtures/one.html" method="get">
         <button type="submit" formmethod="post" formaction="/__turbo/redirect"
             name="path" value="/src/tests/fixtures/two.html">Submit</button>
       </form>
+    </div>
+    <hr>
+    <div id="disabled">
+      <form action="/__turbo/redirect" method="post" data-turbo="false">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <input type="submit">
+      </form>
+
+      <form action="/__turbo/redirect" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <input type="submit" data-turbo="false">
+      </form>
+    </div>
+    <hr>
+    <div id="skipped">
+      <dialog id="dialog-method" open>
+        <form method="dialog">
+          <button type="submit">Close</button>
+        </form>
+      </dialog>
+
+      <dialog id="dialog-formmethod" open>
+        <form action="/__turbo/redirect" method="post">
+          <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+          <button formmethod="dialog">Close</button>
+        </form>
+      </dialog>
     </div>
     <hr>
     <turbo-frame id="frame">

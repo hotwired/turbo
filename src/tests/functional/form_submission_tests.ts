@@ -6,10 +6,12 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test standard form submission with redirect response"() {
+    this.listenForFormSubmissions()
     const button = await this.querySelector("#standard form input[type=submit]")
     await button.click()
     await this.nextBody
 
+    this.assert.ok(this.turboFormSubmitted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
   }
@@ -79,6 +81,51 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.hasSelector("#frame form.redirect"))
     this.assert.equal(await message.getVisibleText(), "Hello!")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+  }
+
+  async "test form submission with Turbo disabled on the form"() {
+    this.listenForFormSubmissions()
+    await this.clickSelector('#disabled form[data-turbo="false"] input[type=submit]')
+    await this.nextBody
+    await this.querySelector("#element-id")
+
+    this.assert.notOk(await this.turboFormSubmitted)
+  }
+
+  async "test form submission with Turbo disabled on the submitter"() {
+    this.listenForFormSubmissions()
+    await this.clickSelector('#disabled form:not([data-turbo]) input[data-turbo="false"]')
+    await this.nextBody
+    await this.querySelector("#element-id")
+
+    this.assert.notOk(await this.turboFormSubmitted)
+  }
+
+  async "test form submission skipped within method=dialog"() {
+    this.listenForFormSubmissions()
+    await this.clickSelector('#dialog-method [type="submit"]')
+    await this.nextBeat
+
+    this.assert.notOk(await this.turboFormSubmitted)
+  }
+
+  async "test form submission skipped with submitter formmethod=dialog"() {
+    this.listenForFormSubmissions()
+    await this.clickSelector('#dialog-formmethod [formmethod="dialog"]')
+    await this.nextBeat
+
+    this.assert.notOk(await this.turboFormSubmitted)
+  }
+
+  listenForFormSubmissions() {
+    this.remote.execute(() => addEventListener("turbo:submit-start", function eventListener(event) {
+      removeEventListener("turbo:submit-start", eventListener, false)
+      document.head.insertAdjacentHTML("beforeend", `<meta name="turbo-form-submitted">`)
+    }, false))
+  }
+
+  get turboFormSubmitted(): Promise<boolean> {
+    return this.hasSelector("meta[name=turbo-form-submitted]")
   }
 }
 
