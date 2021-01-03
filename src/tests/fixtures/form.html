@@ -112,6 +112,14 @@
           <button formmethod="dialog">Close</button>
         </form>
       </dialog>
+
+      <form action="/src/tests/fixtures/one.html" method="get" target="iframe">
+        <button>Submit iframe target</button>
+      </form>
+
+      <form action="/src/tests/fixtures/one.html" method="get">
+        <button formtarget="iframe">Submit iframe formtarget</button>
+      </form>
     </div>
     <hr>
     <div id="targets-frame">
@@ -169,5 +177,6 @@
       <div id="messages">
       </div>
     </turbo-frame>
+    <iframe name="iframe"></iframe>
   </body>
 </html>

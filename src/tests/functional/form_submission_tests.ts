@@ -331,6 +331,22 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
   }
 
+  async "test form submission skipped with form[target]"() {
+    await this.clickSelector("#skipped form[target] button")
+    await this.nextBeat
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test form submission skipped with submitter button[formtarget]"() {
+    await this.clickSelector("#skipped [formtarget]")
+    await this.nextBeat
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.notOk(await this.formSubmitted)
+  }
+
   get formSubmitted(): Promise<boolean> {
     return this.hasSelector("html[data-form-submitted]")
   }
