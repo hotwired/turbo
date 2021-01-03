@@ -38,7 +38,7 @@ export class SnapshotRenderer extends Renderer {
       this.renderView(() => {
         this.replaceBody()
         if (!this.isPreview) {
-          this.focusFirstAutofocusableElement()
+          focusFirstAutofocusableElement(this.newSnapshot)
         }
         callback()
       })
@@ -55,10 +55,10 @@ export class SnapshotRenderer extends Renderer {
   }
 
   replaceBody() {
-    const placeholders = this.relocateCurrentBodyPermanentElements()
+    const placeholders = relocateCurrentBodyPermanentElements(this.currentSnapshot, this.newSnapshot)
     this.activateNewBody()
     this.assignNewBody()
-    this.replacePlaceholderElementsWithClonedPermanentElements(placeholders)
+    replacePlaceholderElementsWithClonedPermanentElements(placeholders)
   }
 
   shouldRender() {
@@ -93,27 +93,6 @@ export class SnapshotRenderer extends Renderer {
     }
   }
 
-  relocateCurrentBodyPermanentElements() {
-    return this.getCurrentBodyPermanentElements().reduce((placeholders, permanentElement) => {
-      const newElement = this.newSnapshot.getPermanentElementById(permanentElement.id)
-      if (newElement) {
-        const placeholder = createPlaceholderForPermanentElement(permanentElement)
-        replaceElementWithElement(permanentElement, placeholder.element)
-        replaceElementWithElement(newElement, permanentElement)
-        return [ ...placeholders, placeholder ]
-      } else {
-        return placeholders
-      }
-    }, [] as Placeholder[])
-  }
-
-  replacePlaceholderElementsWithClonedPermanentElements(placeholders: Placeholder[]) {
-    for (const { element, permanentElement } of placeholders) {
-      const clonedElement = permanentElement.cloneNode(true)
-      replaceElementWithElement(element, clonedElement)
-    }
-  }
-
   activateNewBody() {
     document.adoptNode(this.newBody)
     this.activateNewBodyScriptElements()
@@ -134,13 +113,6 @@ export class SnapshotRenderer extends Renderer {
     }
   }
 
-  focusFirstAutofocusableElement() {
-    const element = this.newSnapshot.findFirstAutofocusableElement()
-    if (elementIsFocusable(element)) {
-      element.focus()
-    }
-  }
-
   getNewHeadStylesheetElements() {
     return this.newHeadDetails.getStylesheetElementsNotInDetails(this.currentHeadDetails)
   }
@@ -157,10 +129,6 @@ export class SnapshotRenderer extends Renderer {
     return this.newHeadDetails.getProvisionalElements()
   }
 
-  getCurrentBodyPermanentElements(): PermanentElement[] {
-    return this.currentSnapshot.getPermanentElementsPresentInSnapshot(this.newSnapshot)
-  }
-
   getNewBodyScriptElements() {
     return [ ...this.newBody.querySelectorAll("script") ]
   }
@@ -173,13 +141,41 @@ function createPlaceholderForPermanentElement(permanentElement: PermanentElement
   return { element, permanentElement }
 }
 
-function replaceElementWithElement(fromElement: Element, toElement: Element) {
+export function relocateCurrentBodyPermanentElements(currentSnapshot: Snapshot, newSnapshot: Snapshot) {
+  return currentSnapshot.getPermanentElementsPresentInSnapshot(newSnapshot).reduce((placeholders, permanentElement) => {
+    const newElement = newSnapshot.getPermanentElementById(permanentElement.id)
+    if (newElement) {
+      const placeholder = createPlaceholderForPermanentElement(permanentElement)
+      replaceElementWithElement(permanentElement, placeholder.element)
+      replaceElementWithElement(newElement, permanentElement)
+      return [ ...placeholders, placeholder ]
+    } else {
+      return placeholders
+    }
+  }, [] as Placeholder[])
+}
+
+export function replaceElementWithElement(fromElement: Element, toElement: Element) {
   const parentElement = fromElement.parentElement
   if (parentElement) {
     return parentElement.replaceChild(toElement, fromElement)
   }
 }
 
-function elementIsFocusable(element: any): element is { focus: () => void } {
+export function replacePlaceholderElementsWithClonedPermanentElements(placeholders: Placeholder[]) {
+  for (const { element, permanentElement } of placeholders) {
+    const clonedElement = permanentElement.cloneNode(true)
+    replaceElementWithElement(element, clonedElement)
+  }
+}
+
+export function focusFirstAutofocusableElement(snapshot: Snapshot) {
+  const element = snapshot.findFirstAutofocusableElement()
+  if (elementIsFocusable(element)) {
+    element.focus()
+  }
+}
+
+export function elementIsFocusable(element: any): element is { focus: () => void } {
   return element && typeof element.focus == "function"
 }

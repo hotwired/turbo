@@ -4,11 +4,13 @@ import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { nextAnimationFrame } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
+import { Snapshot } from "../drive/snapshot"
+import { FrameRenderer, RenderDelegate } from "./frame_renderer"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { expandURL, Locatable } from "../url"
 
-export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate {
+export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, RenderDelegate  {
   readonly element: FrameElement
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
@@ -67,14 +69,10 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadResponse(response: FetchResponse): Promise<void> {
-    const fragment = fragmentFromHTML(await response.responseHTML)
-    if (fragment) {
-      const element = await this.extractForeignFrameElement(fragment)
-      await nextAnimationFrame()
-      this.loadFrameElement(element)
-      this.scrollFrameIntoView(element)
-      await nextAnimationFrame()
-      this.focusFirstAutofocusableElement()
+    const html = await response.responseHTML
+
+    if (html) {
+      FrameRenderer.render(this, () => {}, this.element, Snapshot.wrap(html))
     }
   }
 
@@ -169,6 +167,25 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   }
 
+  // Render delegate
+
+  viewWillRender(newBody: HTMLBodyElement): void {
+
+  }
+
+  async viewRendered(newBody: HTMLBodyElement) {
+    const element = getFrameElementById(this.id)
+
+    if (element) {
+      await nextAnimationFrame()
+      this.scrollFrameIntoView(element)
+    }
+  }
+
+  viewInvalidated(): void{
+
+  }
+
   // Private
 
   private async visit(url: Locatable) {
@@ -191,44 +208,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   private findFrameElement(element: Element) {
     const id = element.getAttribute("data-turbo-frame")
     return getFrameElementById(id) ?? this.element
-  }
-
-  private async extractForeignFrameElement(container: ParentNode): Promise<FrameElement> {
-    let element
-    const id = CSS.escape(this.id)
-
-    if (element = activateElement(container.querySelector(`turbo-frame#${id}`))) {
-      return element
-    }
-
-    if (element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`))) {
-      await element.loaded
-      return await this.extractForeignFrameElement(element)
-    }
-
-    console.error(`Response has no matching <turbo-frame id="${id}"> element`)
-    return new FrameElement()
-  }
-
-  private loadFrameElement(frameElement: FrameElement) {
-    const destinationRange = document.createRange()
-    destinationRange.selectNodeContents(this.element)
-    destinationRange.deleteContents()
-
-    const sourceRange = frameElement.ownerDocument?.createRange()
-    if (sourceRange) {
-      sourceRange.selectNodeContents(frameElement)
-      this.element.appendChild(sourceRange.extractContents())
-    }
-  }
-
-  private focusFirstAutofocusableElement(): boolean {
-    const element = this.firstAutofocusableElement
-    if (element) {
-      element.focus()
-      return true
-    }
-    return false
   }
 
   private scrollFrameIntoView(frame: FrameElement): boolean {
@@ -307,22 +286,5 @@ function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLog
     return value
   } else {
     return defaultValue
-  }
-}
-
-function fragmentFromHTML(html?: string) {
-  if (html) {
-    const foreignDocument = document.implementation.createHTMLDocument()
-    return foreignDocument.createRange().createContextualFragment(html)
-  }
-}
-
-function activateElement(element: Node | null) {
-  if (element && element.ownerDocument !== document) {
-    element = document.importNode(element, true)
-  }
-
-  if (element instanceof FrameElement) {
-    return element
   }
 }
