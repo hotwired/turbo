@@ -71,18 +71,15 @@ export class Navigator {
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-    console.log("Form submission succeeded", formSubmission)
     if (formSubmission == this.formSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
         if (formSubmission.method != FetchMethod.get) {
-          console.log("Clearing snapshot cache after successful form submission")
           this.view.clearSnapshotCache()
         }
 
         const { statusCode } = fetchResponse
         const visitOptions = { response: { statusCode, responseHTML } }
-        console.log("Visiting", fetchResponse.location, visitOptions)
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
@@ -99,7 +96,7 @@ export class Navigator {
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-    console.error("Form submission failed", formSubmission, error)
+
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
