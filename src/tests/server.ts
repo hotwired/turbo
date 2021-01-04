@@ -34,6 +34,22 @@ router.post("/messages", (request, response) => {
   }
 })
 
+router.put("/messages/:id", (request, response) => {
+  const { content, type } = request.body
+  const { id } = request.params
+  if (typeof content == "string") {
+    receiveMessage(content)
+    if (type == "stream") {
+      response.type("text/html; turbo-stream=*; charset=utf-8")
+      response.send(renderMessage(id + ": " + content))
+    } else {
+      response.sendStatus(200)
+    }
+  } else {
+    response.sendStatus(422)
+  }
+})
+
 router.get("/messages", (request, response) => {
   response.set({
     "Cache-Control": "no-cache",

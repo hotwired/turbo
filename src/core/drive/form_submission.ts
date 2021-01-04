@@ -44,7 +44,7 @@ export class FormSubmission {
   }
 
   get method(): FetchMethod {
-    const method = this.submitter?.getAttribute("formmethod") || this.formElement.method
+    const method = this.submitter?.getAttribute("formmethod") || this.formElement.getAttribute("method") || ""
     return fetchMethodFromString(method.toLowerCase()) || FetchMethod.get
   }
 
