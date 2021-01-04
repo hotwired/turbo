@@ -83,6 +83,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
   }
 
+  async "test frame form submission with HTTP verb other than GET or POST"() {
+    await this.clickSelector("#frame form.put.stream input[type=submit]")
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.ok(await this.hasSelector("#frame form.redirect"))
+    this.assert.equal(await message.getVisibleText(), "1: Hello!")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+  }
+
   async "test form submission with Turbo disabled on the form"() {
     this.listenForFormSubmissions()
     await this.clickSelector('#disabled form[data-turbo="false"] input[type=submit]')
