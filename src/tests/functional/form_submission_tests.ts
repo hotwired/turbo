@@ -134,21 +134,29 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test invalid form submission with unprocessable entity status"() {
+    await this.scrollToSelector("#reject")
     await this.clickSelector("#reject form.unprocessable_entity input[type=submit]")
     await this.nextBody
 
+    const { x: xAfterScrolling, y: yAfterScrolling } = await this.scrollPosition
     const title = await this.querySelector("h1")
     this.assert.equal(await title.getVisibleText(), "Unprocessable Entity", "renders the response HTML")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
+    this.assert.equal(xAfterScrolling, 0)
+    this.assert.equal(yAfterScrolling, 0)
   }
 
   async "test invalid form submission with server error status"() {
+    await this.scrollToSelector("#reject")
     await this.clickSelector("#reject form.internal_server_error input[type=submit]")
     await this.nextBody
 
+    const { x: xAfterScrolling, y: yAfterScrolling } = await this.scrollPosition
     const title = await this.querySelector("h1")
     this.assert.equal(await title.getVisibleText(), "Internal Server Error", "renders the response HTML")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
+    this.assert.equal(xAfterScrolling, 0)
+    this.assert.equal(yAfterScrolling, 0)
   }
 
   async "test submitter form submission reads button attributes"() {
