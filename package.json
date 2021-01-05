@@ -26,6 +26,9 @@
     "url": "https://github.com/hotwired/turbo/issues"
   },
   "homepage": "https://turbo.hotwire.dev",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "9.0.0",
     "@rollup/plugin-typescript": "^6.0.0",
