@@ -1,15 +1,13 @@
 export interface PageObserverDelegate {
   pageBecameInteractive(): void
   pageLoaded(): void
-  pageInvalidated(): void
 }
 
 export enum PageStage {
   initial,
   loading,
   interactive,
-  complete,
-  invalidated
+  complete
 }
 
 export class PageObserver {
@@ -35,13 +33,6 @@ export class PageObserver {
     if (this.started) {
       document.removeEventListener("readystatechange", this.interpretReadyState, false)
       this.started = false
-    }
-  }
-
-  invalidate() {
-    if (this.stage != PageStage.invalidated) {
-      this.stage = PageStage.invalidated
-      this.delegate.pageInvalidated()
     }
   }
 

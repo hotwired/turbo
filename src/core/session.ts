@@ -170,8 +170,6 @@ export class Session implements NavigatorDelegate {
 
   }
 
-  pageInvalidated() {
-    this.adapter.pageInvalidated()
   }
 
   // Stream observer delegate
@@ -192,7 +190,7 @@ export class Session implements NavigatorDelegate {
   }
 
   viewInvalidated() {
-    this.pageObserver.invalidate()
+    this.adapter.pageInvalidated()
   }
 
   viewWillCacheSnapshot() {
