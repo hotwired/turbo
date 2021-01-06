@@ -27,8 +27,6 @@ export class History {
 
   start() {
     if (!this.started) {
-      this.previousScrollRestoration = history.scrollRestoration
-      history.scrollRestoration = "manual"
       addEventListener("popstate", this.onPopState, false)
       addEventListener("load", this.onPageLoad, false)
       this.started = true
@@ -89,6 +87,8 @@ export class History {
 
   onPageLoad = async (event: Event) => {
     await nextMicrotask()
+    this.previousScrollRestoration = history.scrollRestoration
+    history.scrollRestoration = "manual"
     this.pageLoaded = true
   }
 
