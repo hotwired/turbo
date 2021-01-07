@@ -1,4 +1,5 @@
 import { expandURL } from "../core/url"
+import { elementIsNavigable } from "../core/session"
 
 export interface LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: URL): boolean
@@ -35,7 +36,7 @@ export class LinkClickObserver {
   clickBubbled = (event: MouseEvent) => {
     if (this.clickEventIsSignificant(event)) {
       const link = this.findLinkFromClickTarget(event.target)
-      if (link) {
+      if (link && elementIsNavigable(link)) {
         const location = this.getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location)) {
           event.preventDefault()

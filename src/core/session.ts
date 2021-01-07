@@ -122,8 +122,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: URL) {
-    return elementIsNavigable(link)
-      && this.locationIsVisitable(location)
+    return this.locationIsVisitable(location)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
 
@@ -155,7 +154,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-    return elementIsNavigable(form) && elementIsNavigable(submitter)
+    return true
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
