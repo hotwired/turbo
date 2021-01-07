@@ -41,3 +41,12 @@ export function uuid() {
     }
   }).join("")
 }
+
+export function elementIsNavigable(element?: Element): boolean {
+  const container = element?.closest("[data-turbo]")
+  if (container) {
+    return container.getAttribute("data-turbo") != "false"
+  } else {
+    return true
+  }
+}

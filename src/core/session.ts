@@ -121,8 +121,7 @@ export class Session implements NavigatorDelegate {
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: Location) {
-    return this.elementIsNavigable(link)
-      && this.locationIsVisitable(location)
+    return this.locationIsVisitable(location)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
 
@@ -152,7 +151,7 @@ export class Session implements NavigatorDelegate {
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-    return this.elementIsNavigable(form) && this.elementIsNavigable(submitter)
+    return true
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
@@ -244,15 +243,6 @@ export class Session implements NavigatorDelegate {
   getActionForLink(link: Element): Action {
     const action = link.getAttribute("data-turbo-action")
     return isAction(action) ? action : "advance"
-  }
-
-  elementIsNavigable(element?: Element) {
-    const container = element?.closest("[data-turbo]")
-    if (container) {
-      return container.getAttribute("data-turbo") != "false"
-    } else {
-      return true
-    }
   }
 
   locationIsVisitable(location: Location) {

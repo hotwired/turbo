@@ -1,3 +1,4 @@
+import { elementIsNavigable } from "../util"
 import { Location } from "../core/location"
 
 export interface LinkClickObserverDelegate {
@@ -35,7 +36,7 @@ export class LinkClickObserver {
   clickBubbled = (event: MouseEvent) => {
     if (this.clickEventIsSignificant(event)) {
       const link = this.findLinkFromClickTarget(event.target)
-      if (link) {
+      if (link && elementIsNavigable(link)) {
         const location = this.getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location)) {
           event.preventDefault()

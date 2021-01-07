@@ -1,3 +1,5 @@
+import { elementIsNavigable } from "../util"
+
 export interface FormSubmitObserverDelegate {
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement): void
@@ -35,7 +37,7 @@ export class FormSubmitObserver {
       const form = event.target instanceof HTMLFormElement ? event.target : undefined
       const submitter = event.submitter || undefined
 
-      if (form) {
+      if (form && elementIsNavigable(form) && elementIsNavigable(submitter)) {
         const method = submitter?.getAttribute("formmethod") || form.method
 
         if (method != "dialog" && this.delegate.willSubmitForm(form, submitter)) {
