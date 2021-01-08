@@ -1,5 +1,4 @@
 import { ErrorRenderer } from "./error_renderer"
-import { Location } from "../location"
 import { Snapshot } from "./snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { RenderCallback, RenderDelegate, SnapshotRenderer } from "./snapshot_renderer"
@@ -16,13 +15,13 @@ export class View {
   readonly delegate: ViewDelegate
   readonly htmlElement = document.documentElement as HTMLHtmlElement
   readonly snapshotCache = new SnapshotCache(10)
-  lastRenderedLocation?: Location
+  lastRenderedLocation?: URL
 
   constructor(delegate: ViewDelegate) {
     this.delegate = delegate
   }
 
-  getRootLocation(): Location {
+  getRootLocation(): URL {
     return this.getSnapshot().getRootLocation()
   }
 
@@ -46,13 +45,13 @@ export class View {
     if (this.shouldCacheSnapshot()) {
       this.delegate.viewWillCacheSnapshot()
       const snapshot = this.getSnapshot()
-      const location = this.lastRenderedLocation || Location.currentLocation
+      const location = this.lastRenderedLocation || new URL(window.location.href)
       await nextMicrotask()
       this.snapshotCache.put(location, snapshot.clone())
     }
   }
 
-  getCachedSnapshotForLocation(location: Location) {
+  getCachedSnapshotForLocation(location: URL) {
     return this.snapshotCache.get(location)
   }
 

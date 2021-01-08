@@ -4,9 +4,9 @@ import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { nextAnimationFrame } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
-import { Locatable, Location } from "../location"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
+import { expandPath, Locatable } from "../url"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate {
   readonly element: FrameElement
@@ -107,7 +107,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
     this.formSubmission = new FormSubmission(this, element, submitter)
     if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.navigateFrame(element, this.formSubmission.fetchRequest.url)
+      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
     } else {
       this.formSubmission.start()
     }
@@ -172,7 +172,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Private
 
   private async visit(url: Locatable) {
-    const location = Location.wrap(url)
+    const location = expandPath(url.toString())
     const request = new FetchRequest(this, FetchMethod.get, location)
 
     return new Promise<void>(resolve => {

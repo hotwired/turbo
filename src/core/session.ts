@@ -2,9 +2,9 @@ import { Adapter } from "./native/adapter"
 import { BrowserAdapter } from "./native/browser_adapter"
 import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
-import { History } from "./drive/history"
-import { LinkClickObserver } from "../observers/link_click_observer"
-import { Location, Locatable } from "./location"
+import { History, HistoryDelegate } from "./drive/history"
+import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
+import { expandPath, isPrefixedBy, isHTML, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -17,7 +17,7 @@ import { Visit, VisitOptions } from "./drive/visit"
 
 export type TimingData = {}
 
-export class Session implements NavigatorDelegate, PageObserverDelegate {
+export class Session implements HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate {
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly view = new View(this)
@@ -71,7 +71,7 @@ export class Session implements NavigatorDelegate, PageObserverDelegate {
   }
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}) {
-    this.navigator.proposeVisit(Location.wrap(location), options)
+    this.navigator.proposeVisit(expandPath(location), options)
   }
 
   connectStreamSource(source: StreamSource) {
@@ -104,7 +104,7 @@ export class Session implements NavigatorDelegate, PageObserverDelegate {
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location: Location) {
+  historyPoppedToLocationWithRestorationIdentifier(location: URL) {
     if (this.enabled) {
       this.navigator.proposeVisit(location, { action: "restore", historyChanged: true })
     } else {
@@ -120,24 +120,24 @@ export class Session implements NavigatorDelegate, PageObserverDelegate {
 
   // Link click observer delegate
 
-  willFollowLinkToLocation(link: Element, location: Location) {
+  willFollowLinkToLocation(link: Element, location: URL) {
     return this.elementIsNavigable(link)
       && this.locationIsVisitable(location)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
 
-  followedLinkToLocation(link: Element, location: Location) {
+  followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    this.visit(location, { action })
+    this.visit(location.href, { action })
   }
 
   // Navigator delegate
 
-  allowsVisitingLocation(location: Location) {
+  allowsVisitingLocation(location: URL) {
     return this.applicationAllowsVisitingLocation(location)
   }
 
-  visitProposedToLocation(location: Location, options: Partial<VisitOptions>) {
+  visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
     this.adapter.visitProposedToLocation(location, options)
   }
 
@@ -201,26 +201,26 @@ export class Session implements NavigatorDelegate, PageObserverDelegate {
 
   // Application events
 
-  applicationAllowsFollowingLinkToLocation(link: Element, location: Location) {
+  applicationAllowsFollowingLinkToLocation(link: Element, location: URL) {
     const event = this.notifyApplicationAfterClickingLinkToLocation(link, location)
     return !event.defaultPrevented
   }
 
-  applicationAllowsVisitingLocation(location: Location) {
+  applicationAllowsVisitingLocation(location: URL) {
     const event = this.notifyApplicationBeforeVisitingLocation(location)
     return !event.defaultPrevented
   }
 
-  notifyApplicationAfterClickingLinkToLocation(link: Element, location: Location) {
-    return dispatch("turbo:click", { target: link, detail: { url: location.absoluteURL }, cancelable: true })
+  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL) {
+    return dispatch("turbo:click", { target: link, detail: { url: location.href }, cancelable: true })
   }
 
-  notifyApplicationBeforeVisitingLocation(location: Location) {
-    return dispatch("turbo:before-visit", { detail: { url: location.absoluteURL }, cancelable: true })
+  notifyApplicationBeforeVisitingLocation(location: URL) {
+    return dispatch("turbo:before-visit", { detail: { url: location.href }, cancelable: true })
   }
 
-  notifyApplicationAfterVisitingLocation(location: Location) {
-    return dispatch("turbo:visit", { detail: { url: location.absoluteURL } })
+  notifyApplicationAfterVisitingLocation(location: URL) {
+    return dispatch("turbo:visit", { detail: { url: location.href } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
@@ -236,7 +236,7 @@ export class Session implements NavigatorDelegate, PageObserverDelegate {
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
-    return dispatch("turbo:load", { detail: { url: this.location.absoluteURL, timing }})
+    return dispatch("turbo:load", { detail: { url: this.location.href, timing }})
   }
 
   // Private
@@ -255,7 +255,7 @@ export class Session implements NavigatorDelegate, PageObserverDelegate {
     }
   }
 
-  locationIsVisitable(location: Location) {
-    return location.isPrefixedBy(this.view.getRootLocation()) && location.isHTML()
+  locationIsVisitable(location: URL) {
+    return isPrefixedBy(location, this.view.getRootLocation()) && isHTML(location)
   }
 }

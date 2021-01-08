@@ -1,5 +1,4 @@
 import { FetchResponse } from "./fetch_response"
-import { Location } from "../core/location"
 import { dispatch } from "../util"
 
 export interface FetchRequestDelegate {
@@ -43,35 +42,26 @@ export interface FetchRequestOptions {
 export class FetchRequest {
   readonly delegate: FetchRequestDelegate
   readonly method: FetchMethod
-  readonly location: Location
+  readonly url: URL
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
 
-  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: Location, body?: FetchRequestBody) {
+  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body?: FetchRequestBody) {
     this.delegate = delegate
     this.method = method
-    this.location = location
     this.body = body
+    this.url = appendToURLSearchParams(location, this.entries)
   }
 
-  get url() {
-    const url = this.location.absoluteURL
-    const query = this.params.toString()
-    if (this.isIdempotent && query.length) {
-      return [url, query].join(url.includes("?") ? "&" : "?")
-    } else {
-      return url
-    }
+  get location(): URL {
+    return this.url
   }
 
-  get params() {
-    return this.entries.reduce((params, [name, value]) => {
-      params.append(name, value.toString())
-      return params
-    }, new URLSearchParams)
+  get params(): URLSearchParams {
+    return this.url.searchParams
   }
 
-  get entries() {
+  get entries(): Array<[string, FormDataEntryValue]> {
     return this.body ? Array.from(this.body.entries()) : []
   }
 
@@ -84,7 +74,7 @@ export class FetchRequest {
     dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
     try {
       this.delegate.requestStarted(this)
-      const response = await fetch(this.url, fetchOptions)
+      const response = await fetch(this.url.href, fetchOptions)
       return await this.receive(response)
     } catch (error) {
       this.delegate.requestErrored(this, error)
@@ -140,4 +130,13 @@ export class FetchRequest {
   get abortSignal() {
     return this.abortController.signal
   }
+}
+
+function appendToURLSearchParams(url: URL, entries: Array<[string, FormDataEntryValue]>): URL {
+  entries.reduce((params, [name, value]) => {
+    params.append(name, value.toString())
+    return params
+  }, url.searchParams)
+
+  return url
 }

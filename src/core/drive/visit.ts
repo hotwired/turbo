@@ -2,7 +2,7 @@ import { Adapter } from "../native/adapter"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
-import { Location } from "../location"
+import { anchor } from "../url"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Action } from "../types"
@@ -38,7 +38,7 @@ export enum VisitState {
 export type VisitOptions = {
   action: Action,
   historyChanged: boolean,
-  referrer?: Location,
+  referrer?: URL,
   snapshotHTML?: string,
   response?: VisitResponse
 }
@@ -64,14 +64,14 @@ export class Visit implements FetchRequestDelegate {
   readonly identifier = uuid()
   readonly restorationIdentifier: string
   readonly action: Action
-  readonly referrer?: Location
+  readonly referrer?: URL
   readonly timingMetrics: TimingMetrics = {}
 
   followedRedirect = false
   frame?: number
   historyChanged = false
-  location: Location
-  redirectedToLocation?: Location
+  location: URL
+  redirectedToLocation?: URL
   request?: FetchRequest
   response?: VisitResponse
   scrolled = false
@@ -79,7 +79,7 @@ export class Visit implements FetchRequestDelegate {
   snapshotCached = false
   state = VisitState.initialized
 
-  constructor(delegate: VisitDelegate, location: Location, restorationIdentifier: string | undefined, options: Partial<VisitOptions> = {}) {
+  constructor(delegate: VisitDelegate, location: URL, restorationIdentifier: string | undefined, options: Partial<VisitOptions> = {}) {
     this.delegate = delegate
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
@@ -145,7 +145,7 @@ export class Visit implements FetchRequestDelegate {
 
   changeHistory() {
     if (!this.historyChanged) {
-      const actionForHistory = this.location.isEqualTo(this.referrer) ? "replace" : this.action
+      const actionForHistory = this.location === this.referrer ? "replace" : this.action
       const method = this.getHistoryMethodForAction(actionForHistory)
       this.history.update(method, this.location, this.restorationIdentifier)
       this.historyChanged = true
@@ -212,7 +212,7 @@ export class Visit implements FetchRequestDelegate {
   getCachedSnapshot() {
     const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
 
-    if (snapshot && (!this.location.anchor || snapshot.hasAnchor(this.location.anchor))) {
+    if (snapshot && (!anchor(this.location) || snapshot.hasAnchor(anchor(this.location)))) {
       if (this.action == "restore" || snapshot.isPreviewable()) {
         return snapshot
       }
@@ -311,8 +311,8 @@ export class Visit implements FetchRequestDelegate {
   }
 
   scrollToAnchor() {
-    if (this.location.anchor != null) {
-      this.view.scrollToAnchor(this.location.anchor)
+    if (anchor(this.location) != null) {
+      this.view.scrollToAnchor(anchor(this.location))
       return true
     }
   }

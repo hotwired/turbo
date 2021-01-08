@@ -1,4 +1,4 @@
-import { Location } from "../core/location"
+import { expandPath } from "../core/url"
 
 export class FetchResponse {
   readonly response: Response
@@ -27,8 +27,8 @@ export class FetchResponse {
     return this.response.redirected
   }
 
-  get location() {
-    return Location.wrap(this.response.url)
+  get location(): URL {
+    return expandPath(this.response.url)
   }
 
   get isHTML() {

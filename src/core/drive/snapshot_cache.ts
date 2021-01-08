@@ -1,4 +1,4 @@
-import { Location } from "../location"
+import { toCacheKey } from "../url"
 import { Snapshot } from "./snapshot"
 
 export class SnapshotCache {
@@ -10,11 +10,11 @@ export class SnapshotCache {
     this.size = size
   }
 
-  has(location: Location) {
-    return location.toCacheKey() in this.snapshots
+  has(location: URL) {
+    return toCacheKey(location) in this.snapshots
   }
 
-  get(location: Location): Snapshot | undefined {
+  get(location: URL): Snapshot | undefined {
     if (this.has(location)) {
       const snapshot = this.read(location)
       this.touch(location)
@@ -22,7 +22,7 @@ export class SnapshotCache {
     }
   }
 
-  put(location: Location, snapshot: Snapshot) {
+  put(location: URL, snapshot: Snapshot) {
     this.write(location, snapshot)
     this.touch(location)
     return snapshot
@@ -34,16 +34,16 @@ export class SnapshotCache {
 
   // Private
 
-  read(location: Location) {
-    return this.snapshots[location.toCacheKey()]
+  read(location: URL) {
+    return this.snapshots[toCacheKey(location)]
   }
 
-  write(location: Location, snapshot: Snapshot) {
-    this.snapshots[location.toCacheKey()] = snapshot
+  write(location: URL, snapshot: Snapshot) {
+    this.snapshots[toCacheKey(location)] = snapshot
   }
 
-  touch(location: Location) {
-    const key = location.toCacheKey()
+  touch(location: URL) {
+    const key = toCacheKey(location)
     const index = this.keys.indexOf(key)
     if (index > -1) this.keys.splice(index, 1)
     this.keys.unshift(key)
