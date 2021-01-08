@@ -116,6 +116,15 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "restore")
   }
+
+  async "test following a link to a page which reloads"() {
+    await this.scrollToSelector("#page-invalidated-link")
+    this.clickSelector("#page-invalidated-link")
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
+    this.assert.equal(await this.visitAction, "load")
+    this.assert.deepEqual(await this.scrollPosition, { x: 0, y: 0 })
+  }
 }
 
 NavigationTests.registerSuite()
