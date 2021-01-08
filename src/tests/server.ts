@@ -24,7 +24,7 @@ router.post("/messages", (request, response) => {
   if (typeof content == "string") {
     receiveMessage(content)
     if (type == "stream") {
-      response.type("text/html; turbo-stream=*; charset=utf-8")
+      response.type("text/vnd.turbo-stream.html; charset=utf-8")
       response.send(renderMessage(content))
     } else {
       response.sendStatus(201)
@@ -40,7 +40,7 @@ router.put("/messages/:id", (request, response) => {
   if (typeof content == "string") {
     receiveMessage(content)
     if (type == "stream") {
-      response.type("text/html; turbo-stream=*; charset=utf-8")
+      response.type("text/vnd.turbo-stream.html; charset=utf-8")
       response.send(renderMessage(id + ": " + content))
     } else {
       response.sendStatus(200)
