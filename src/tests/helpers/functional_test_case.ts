@@ -19,6 +19,11 @@ export class FunctionalTestCase extends InternTestCase {
     return this.remote.goForward()
   }
 
+  async reload(): Promise<void> {
+    await this.evaluate(() => location.reload())
+    return this.nextBeat
+  }
+
   async hasSelector(selector: string) {
     return (await this.remote.findAllByCssSelector(selector)).length > 0
   }
@@ -29,6 +34,11 @@ export class FunctionalTestCase extends InternTestCase {
 
   async clickSelector(selector: string): Promise<void> {
     return this.remote.findByCssSelector(selector).click()
+  }
+
+  async scrollToSelector(selector: string): Promise<void> {
+    const element = await this.remote.findByCssSelector(selector)
+    return this.evaluate(element => element.scrollIntoView(), element)
   }
 
   get scrollPosition(): Promise<{ x: number, y: number }> {

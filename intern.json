@@ -11,6 +11,7 @@
     },
     {
       "browserName": "firefox",
+      "fixSessionCapabilities": true,
       "moz:firefoxOptions": {
         "args": [ "-headless" ]
       }

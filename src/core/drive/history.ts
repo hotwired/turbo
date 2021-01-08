@@ -27,8 +27,6 @@ export class History {
 
   start() {
     if (!this.started) {
-      this.previousScrollRestoration = history.scrollRestoration
-      history.scrollRestoration = "manual"
       addEventListener("popstate", this.onPopState, false)
       addEventListener("load", this.onPageLoad, false)
       this.started = true
@@ -38,7 +36,6 @@ export class History {
 
   stop() {
     if (this.started) {
-      history.scrollRestoration = this.previousScrollRestoration ?? "auto"
       removeEventListener("popstate", this.onPopState, false)
       removeEventListener("load", this.onPageLoad, false)
       this.started = false
@@ -70,6 +67,22 @@ export class History {
     const { restorationIdentifier } = this
     const restorationData = this.restorationData[restorationIdentifier]
     this.restorationData[restorationIdentifier] = { ...restorationData, ...additionalData }
+  }
+
+  // Scroll restoration
+
+  assumeControlOfScrollRestoration() {
+    if (!this.previousScrollRestoration) {
+      this.previousScrollRestoration = history.scrollRestoration ?? "auto"
+      history.scrollRestoration = "manual"
+    }
+  }
+
+  relinquishControlOfScrollRestoration() {
+    if (this.previousScrollRestoration) {
+      history.scrollRestoration = this.previousScrollRestoration
+      delete this.previousScrollRestoration
+    }
   }
 
   // Event handlers

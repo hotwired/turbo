@@ -6,7 +6,7 @@ import { History } from "./drive/history"
 import { LinkClickObserver } from "../observers/link_click_observer"
 import { Location, Locatable } from "./location"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
-import { PageObserver } from "../observers/page_observer"
+import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
@@ -17,7 +17,7 @@ import { Visit, VisitOptions } from "./drive/visit"
 
 export type TimingData = {}
 
-export class Session implements NavigatorDelegate {
+export class Session implements NavigatorDelegate, PageObserverDelegate {
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly view = new View(this)
@@ -167,9 +167,11 @@ export class Session implements NavigatorDelegate {
   }
 
   pageLoaded() {
-
+    this.history.assumeControlOfScrollRestoration()
   }
 
+  pageWillUnload() {
+    this.history.relinquishControlOfScrollRestoration()
   }
 
   // Stream observer delegate
