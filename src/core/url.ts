@@ -8,11 +8,13 @@ export function expandPath(pathOrUrl: string | URL): URL {
 }
 
 export function anchor(url: URL): string {
-  const anchorLength = url.hash.length
-  if (anchorLength < 2) {
-    return ""
-  } else {
+  let anchorMatch
+  if (url.hash) {
     return url.hash.slice(1)
+  } else if (anchorMatch = url.href.match(/#(.*)$/)) {
+    return anchorMatch[1]
+  } else {
+    return ""
   }
 }
 
