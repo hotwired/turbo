@@ -54,7 +54,7 @@ export class StreamObserver {
     const fetchOptions: FetchRequestOptions = event.detail?.fetchOptions
     if (fetchOptions) {
       const { headers } = fetchOptions
-      headers.Accept = [ "text/html; turbo-stream", headers.Accept ].join(", ")
+      headers.Accept = [ "application/vnd.turbo.stream.html", headers.Accept ].join(", ")
     }
   })
 
@@ -93,5 +93,5 @@ function fetchResponseFromEvent(event: CustomEvent) {
 
 function fetchResponseIsStream(response: FetchResponse) {
   const contentType = response.contentType ?? ""
-  return /text\/html;.*\bturbo-stream\b/.test(contentType)
+  return contentType.startsWith("application/vnd.turbo.stream.html")
 }
