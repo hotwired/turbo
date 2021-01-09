@@ -101,7 +101,7 @@ export class FormSubmission {
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     if (response.clientError || response.serverError) {
       this.delegate.formSubmissionFailedWithResponse(this, response)
-    } else if (this.requestMustRedirect(request) && !response.redirected) {
+    } else if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response)) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
     } else {
@@ -158,4 +158,8 @@ function getCookieValue(cookieName: string | null) {
 function getMetaContent(name: string) {
   const element: HTMLMetaElement | null = document.querySelector(`meta[name="${name}"]`)
   return element && element.content
+}
+
+function responseSucceededWithoutRedirect(response: FetchResponse) {
+  return response.statusCode == 200 && !response.redirected
 }

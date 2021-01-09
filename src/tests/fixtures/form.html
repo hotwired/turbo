@@ -14,8 +14,17 @@
   </head>
   <body>
     <div id="standard">
-      <form action="/__turbo/redirect" method="post">
+      <form action="/__turbo/redirect" method="post" class="redirect">
         <input type="submit">
+      </form>
+      <form action="/__turbo/messages" method="post" class="created">
+        <input type="hidden" name="content" value="Hello!">
+        <input type="submit" style="">
+      </form>
+      <form action="/__turbo/messages" method="post" class="no-content">
+        <input type="hidden" name="content" value="Hello!">
+        <input type="hidden" name="status" value="204">
+        <input type="submit" style="">
       </form>
     </div>
     <div id="reject">
@@ -67,6 +76,15 @@
       <form action="/__turbo/redirect" method="post" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/frames/form.html">
         <input type="submit">
+      </form>
+      <form action="/__turbo/messages" method="post" class="created">
+        <input type="hidden" name="content" value="Hello!">
+        <input type="submit" style="">
+      </form>
+      <form action="/__turbo/messages" method="post" class="no-content">
+        <input type="hidden" name="content" value="Hello!">
+        <input type="hidden" name="status" value="204">
+        <input type="submit" style="">
       </form>
       <form class="unprocessable_entity" action="/__turbo/reject" method="post">
         <input type="hidden" name="status" value="422">

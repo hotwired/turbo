@@ -20,14 +20,14 @@ router.post("/reject", (request, response) => {
 })
 
 router.post("/messages", (request, response) => {
-  const { content, type } = request.body
+  const { content, status, type } = request.body
   if (typeof content == "string") {
     receiveMessage(content)
     if (type == "stream") {
       response.type("text/html; turbo-stream=*; charset=utf-8")
       response.send(renderMessage(content))
     } else {
-      response.sendStatus(201)
+      response.sendStatus(parseInt(status || "201", 10))
     }
   } else {
     response.sendStatus(422)

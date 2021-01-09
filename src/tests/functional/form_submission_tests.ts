@@ -7,13 +7,33 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test standard form submission with redirect response"() {
     this.listenForFormSubmissions()
-    const button = await this.querySelector("#standard form input[type=submit]")
+    const button = await this.querySelector("#standard form.redirect input[type=submit]")
     await button.click()
     await this.nextBody
 
     this.assert.ok(this.turboFormSubmitted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
+  }
+
+  async "test standard form submission with empty created response"() {
+    const htmlBefore = await this.getHTMLForSelector("body")
+    const button = await this.querySelector("#standard form.created input[type=submit]")
+    await button.click()
+    await this.nextBeat
+
+    const htmlAfter = await this.getHTMLForSelector("body")
+    this.assert.equal(htmlAfter, htmlBefore)
+  }
+
+  async "test standard form submission with empty no-content response"() {
+    const htmlBefore = await this.getHTMLForSelector("body")
+    const button = await this.querySelector("#standard form.no-content input[type=submit]")
+    await button.click()
+    await this.nextBeat
+
+    const htmlAfter = await this.getHTMLForSelector("body")
+    this.assert.equal(htmlAfter, htmlBefore)
   }
 
   async "test invalid form submission with unprocessable entity status"() {
@@ -52,6 +72,26 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("#frame form.redirect"))
     this.assert.equal(await message.getVisibleText(), "Frame redirected")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+  }
+
+  async "test frame form submission with empty created response"() {
+    const htmlBefore = await this.getHTMLForSelector("#frame")
+    const button = await this.querySelector("#frame form.created input[type=submit]")
+    await button.click()
+    await this.nextBeat
+
+    const htmlAfter = await this.getHTMLForSelector("#frame")
+    this.assert.equal(htmlAfter, htmlBefore)
+  }
+
+  async "test frame form submission with empty no-content response"() {
+    const htmlBefore = await this.getHTMLForSelector("#frame")
+    const button = await this.querySelector("#frame form.no-content input[type=submit]")
+    await button.click()
+    await this.nextBeat
+
+    const htmlAfter = await this.getHTMLForSelector("#frame")
+    this.assert.equal(htmlAfter, htmlBefore)
   }
 
   async "test invalid frame form submission with unprocessable entity status"() {
