@@ -94,11 +94,11 @@ export class Session implements NavigatorDelegate, PageObserverDelegate {
     this.progressBarDelay = delay
   }
 
-  disableLinkBehavior() {
+  disableNavigation() {
     this.linkClickObserver.stop()
   }
 
-  disableFormBehavior() {
+  disableFormSubmissions() {
     this.formSubmitObserver.stop()
   }
 

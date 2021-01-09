@@ -41,10 +41,10 @@ export function setProgressBarDelay(delay: number) {
   session.setProgressBarDelay(delay)
 }
 
-export function disableLinkBehavior() {
-  session.disableLinkBehavior()
+export function disableNavigation() {
+  session.disableNavigation()
 }
 
-export function disableFormBehavior() {
-  session.disableFormBehavior()
+export function disableFormSubmissions() {
+  session.disableFormSubmissions()
 }
