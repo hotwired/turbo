@@ -64,6 +64,21 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     }
   }
 
+  async visit(url: Locatable) {
+    const location = Location.wrap(url)
+    const request = new FetchRequest(this, FetchMethod.get, location)
+
+    return new Promise<void>(resolve => {
+      this.resolveVisitPromise = () => {
+        this.resolveVisitPromise = () => {}
+        resolve()
+      }
+      request.perform()
+    })
+  }
+
+  // Link interceptor delegate
+
   shouldInterceptLinkClick(element: Element, url: string) {
     return this.shouldInterceptNavigation(element)
   }
@@ -71,6 +86,8 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   linkClickIntercepted(element: Element, url: string) {
     this.navigateFrame(element, url)
   }
+
+  // Form interceptor delegate
 
   shouldInterceptFormSubmission(element: HTMLFormElement) {
     return this.shouldInterceptNavigation(element)
@@ -89,18 +106,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     }
   }
 
-  async visit(url: Locatable) {
-    const location = Location.wrap(url)
-    const request = new FetchRequest(this, FetchMethod.get, location)
-
-    return new Promise<void>(resolve => {
-      this.resolveVisitPromise = () => {
-        this.resolveVisitPromise = () => {}
-        resolve()
-      }
-      request.perform()
-    })
-  }
+  // Fetch request delegate
 
   additionalHeadersForRequest(request: FetchRequest) {
     return { "Turbo-Frame": this.id }
@@ -133,6 +139,8 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     this.element.removeAttribute("busy")
   }
 
+  // Form submission delegate
+
   formSubmissionStarted(formSubmission: FormSubmission) {
 
   }
@@ -153,6 +161,8 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   formSubmissionFinished(formSubmission: FormSubmission) {
 
   }
+
+  // Private
 
   private navigateFrame(element: Element, url: string) {
     const frame = this.findFrameElement(element)
@@ -249,6 +259,8 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   unobserveIntersections() {
     this.intersectionObserver.unobserve(this.element)
   }
+
+  // Computed properties
 
   get firstAutofocusableElement(): HTMLElement | null {
     const element = this.element.querySelector("[autofocus]")
