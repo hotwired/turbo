@@ -4,6 +4,7 @@ import { FrameController } from "../core/frames/frame_controller"
 export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
 
 export class FrameElement extends HTMLElement {
+  loaded: Promise<FetchResponse | void> = Promise.resolve()
   readonly controller: FrameController
 
   static get observedAttributes() {
@@ -59,15 +60,6 @@ export class FrameElement extends HTMLElement {
     } else {
       this.removeAttribute("loading")
     }
-  }
-
-  get loaded(): Promise<FetchResponse | void> {
-    return Promise.resolve(undefined)
-  }
-
-  set loaded(value: Promise<FetchResponse | void>) {
-    Object.defineProperty(this, "loaded", { value, configurable: true })
-    value.then(() => this.removeAttribute("loading"))
   }
 
   get disabled() {

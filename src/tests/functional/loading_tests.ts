@@ -21,7 +21,6 @@ export class LoadingTests extends TurboDriveTestCase {
 
     const contents = await this.querySelector(frameContents)
     this.assert.equal(await contents.getVisibleText(), "Hello from a frame")
-    this.assert.notOk(await this.hasSelector("#loading-lazy[loading=lazy]"), "removes attributes once loaded")
   }
 
   async "test changing loading attribute from lazy to eager loads frame"() {
@@ -50,7 +49,6 @@ export class LoadingTests extends TurboDriveTestCase {
 
     const contents = await this.querySelector(frameContents)
     this.assert.equal(await contents.getVisibleText(), "Frames: #hello")
-    this.assert.notOk(await this.hasSelector("#loading-lazy[loading=lazy]"), "removes attributes once loaded")
   }
 
   async "test changing src attribute on a frame with loading=eager navigates"() {
