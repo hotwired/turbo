@@ -13,6 +13,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
+  loadingURL?: string
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
 
@@ -52,24 +53,17 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
-  loadSourceURL() {
-    if (this.isActive && this.sourceURL) {
-      this.element.loaded = this.visit(this.sourceURL)
-      this.appearanceObserver.stop()
-    }
-  }
-
-  async visit(url: Locatable) {
-    const location = Location.wrap(url)
-    const request = new FetchRequest(this, FetchMethod.get, location)
-
-    return new Promise<void>(resolve => {
-      this.resolveVisitPromise = () => {
-        this.resolveVisitPromise = () => {}
-        resolve()
+  async loadSourceURL() {
+    if (this.isActive && this.sourceURL && this.sourceURL != this.loadingURL) {
+      try {
+        this.loadingURL = this.sourceURL
+        this.element.loaded = this.visit(this.sourceURL)
+        this.appearanceObserver.stop()
+        await this.element.loaded
+      } finally {
+        delete this.loadingURL
       }
-      request.perform()
-    })
+    }
   }
 
   // Appearance observer delegate
@@ -164,6 +158,19 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   // Private
+
+  private async visit(url: Locatable) {
+    const location = Location.wrap(url)
+    const request = new FetchRequest(this, FetchMethod.get, location)
+
+    return new Promise<void>(resolve => {
+      this.resolveVisitPromise = () => {
+        this.resolveVisitPromise = () => {}
+        resolve()
+      }
+      request.perform()
+    })
+  }
 
   private navigateFrame(element: Element, url: string) {
     const frame = this.findFrameElement(element)
@@ -274,6 +281,10 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   get loadingStyle() {
     return this.element.loading
+  }
+
+  get isLoading() {
+    return this.formSubmission !== undefined || this.loadingURL !== undefined
   }
 
   get isActive() {

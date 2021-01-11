@@ -84,6 +84,10 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  get complete() {
+    return !this.controller.isLoading
+  }
+
   get isActive() {
     return this.ownerDocument === document && !this.isPreview
   }
