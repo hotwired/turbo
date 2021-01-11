@@ -1,45 +1,40 @@
+import { FrameElement, FrameLoadingStyle } from "../../elements/frame_element"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
-import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
-import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
-import { FrameElement, FrameLoadingStyle } from "../../elements/frame_element"
-import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { Locatable, Location } from "../location"
+import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { nextAnimationFrame } from "../../util"
+import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
+import { Locatable, Location } from "../location"
+import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
+import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 
-export class FrameController implements FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, LinkInterceptorDelegate {
+export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, LinkInterceptorDelegate {
   readonly element: FrameElement
+  readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
   formSubmission?: FormSubmission
-  private readonly intersectionObserver: IntersectionObserver
   private resolveVisitPromise = () => {}
 
   constructor(element: FrameElement) {
     this.element = element
+    this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
-    this.intersectionObserver = new IntersectionObserver(entries => {
-      entries.forEach(({ isIntersecting }) => {
-        if (isIntersecting) {
-          this.loadSourceURL()
-        }
-      })
-    })
   }
 
   connect() {
+    if (this.loadingStyle == FrameLoadingStyle.lazy) {
+      this.appearanceObserver.start()
+    }
     this.linkInterceptor.start()
     this.formInterceptor.start()
-    if (this.loadingStyle == FrameLoadingStyle.lazy) {
-      this.observeIntersections()
-    }
   }
 
   disconnect() {
+    this.appearanceObserver.stop()
     this.linkInterceptor.stop()
     this.formInterceptor.stop()
-    this.unobserveIntersections()
   }
 
   sourceURLChanged() {
@@ -50,9 +45,9 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
 
   loadingStyleChanged() {
     if (this.loadingStyle == FrameLoadingStyle.lazy) {
-      this.observeIntersections()
+      this.appearanceObserver.start()
     } else {
-      this.unobserveIntersections()
+      this.appearanceObserver.stop()
       this.loadSourceURL()
     }
   }
@@ -60,7 +55,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   loadSourceURL() {
     if (this.isActive && this.sourceURL) {
       this.element.loaded = this.visit(this.sourceURL)
-      this.unobserveIntersections()
+      this.appearanceObserver.stop()
     }
   }
 
@@ -75,6 +70,12 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
       }
       request.perform()
     })
+  }
+
+  // Appearance observer delegate
+
+  elementAppearedInViewport(element: Element) {
+    this.loadSourceURL()
   }
 
   // Link interceptor delegate
@@ -250,14 +251,6 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     }
 
     return true
-  }
-
-  observeIntersections() {
-    this.intersectionObserver.observe(this.element)
-  }
-
-  unobserveIntersections() {
-    this.intersectionObserver.unobserve(this.element)
   }
 
   // Computed properties
