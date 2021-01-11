@@ -19,24 +19,19 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     this.element = element
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
-    this.intersectionObserver = new IntersectionObserver((entries) => {
-      const { src } = this.element
-
-      if (src) {
-        entries.forEach(({ isIntersecting }) => {
-          if (isIntersecting) {
-            this.element.loaded = this.visit(src)
-            this.unobserveIntersections()
-          }
-        })
-      }
+    this.intersectionObserver = new IntersectionObserver(entries => {
+      entries.forEach(({ isIntersecting }) => {
+        if (isIntersecting) {
+          this.loadSourceURL()
+        }
+      })
     })
   }
 
   connect() {
     this.linkInterceptor.start()
     this.formInterceptor.start()
-    if (this.element.loading == FrameLoadingStyle.lazy) {
+    if (this.loadingStyle == FrameLoadingStyle.lazy) {
       this.observeIntersections()
     }
   }
@@ -45,6 +40,28 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     this.linkInterceptor.stop()
     this.formInterceptor.stop()
     this.unobserveIntersections()
+  }
+
+  sourceURLChanged() {
+    if (this.loadingStyle == FrameLoadingStyle.eager) {
+      this.loadSourceURL()
+    }
+  }
+
+  loadingStyleChanged() {
+    if (this.loadingStyle == FrameLoadingStyle.lazy) {
+      this.observeIntersections()
+    } else {
+      this.unobserveIntersections()
+      this.loadSourceURL()
+    }
+  }
+
+  loadSourceURL() {
+    if (this.isActive && this.sourceURL) {
+      this.element.loaded = this.visit(this.sourceURL)
+      this.unobserveIntersections()
+    }
   }
 
   shouldInterceptLinkClick(element: Element, url: string) {
@@ -244,6 +261,18 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
 
   get enabled() {
     return !this.element.disabled
+  }
+
+  get sourceURL() {
+    return this.element.src
+  }
+
+  get loadingStyle() {
+    return this.element.loading
+  }
+
+  get isActive() {
+    return this.element.isActive
   }
 }
 

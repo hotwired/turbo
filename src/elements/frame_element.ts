@@ -25,12 +25,10 @@ export class FrameElement extends HTMLElement {
   }
 
   attributeChangedCallback(name: string) {
-    if (this.loading == FrameLoadingStyle.eager && this.src && this.isActive) {
-      this.loaded = this.controller.visit(this.src)
-    }
-
     if (name == "loading") {
-      this.loading == FrameLoadingStyle.eager ? this.controller.unobserveIntersections() : this.controller.observeIntersections()
+      this.controller.loadingStyleChanged()
+    } else if (name == "src") {
+      this.controller.sourceURLChanged()
     }
   }
 
