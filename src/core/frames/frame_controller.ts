@@ -1,34 +1,78 @@
+import { FrameElement, FrameLoadingStyle } from "../../elements/frame_element"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
-import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
-import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
-import { FrameElement } from "../../elements/frame_element"
-import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { Locatable, Location } from "../location"
+import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { nextAnimationFrame } from "../../util"
+import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
+import { Locatable, Location } from "../location"
+import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
+import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 
-export class FrameController implements FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, LinkInterceptorDelegate {
+export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, LinkInterceptorDelegate {
   readonly element: FrameElement
+  readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
+  loadingURL?: string
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
 
   constructor(element: FrameElement) {
     this.element = element
+    this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
   }
 
   connect() {
+    if (this.loadingStyle == FrameLoadingStyle.lazy) {
+      this.appearanceObserver.start()
+    }
     this.linkInterceptor.start()
     this.formInterceptor.start()
   }
 
   disconnect() {
+    this.appearanceObserver.stop()
     this.linkInterceptor.stop()
     this.formInterceptor.stop()
   }
+
+  sourceURLChanged() {
+    if (this.loadingStyle == FrameLoadingStyle.eager) {
+      this.loadSourceURL()
+    }
+  }
+
+  loadingStyleChanged() {
+    if (this.loadingStyle == FrameLoadingStyle.lazy) {
+      this.appearanceObserver.start()
+    } else {
+      this.appearanceObserver.stop()
+      this.loadSourceURL()
+    }
+  }
+
+  async loadSourceURL() {
+    if (this.isActive && this.sourceURL && this.sourceURL != this.loadingURL) {
+      try {
+        this.loadingURL = this.sourceURL
+        this.element.loaded = this.visit(this.sourceURL)
+        this.appearanceObserver.stop()
+        await this.element.loaded
+      } finally {
+        delete this.loadingURL
+      }
+    }
+  }
+
+  // Appearance observer delegate
+
+  elementAppearedInViewport(element: Element) {
+    this.loadSourceURL()
+  }
+
+  // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, url: string) {
     return this.shouldInterceptNavigation(element)
@@ -37,6 +81,8 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
   linkClickIntercepted(element: Element, url: string) {
     this.navigateFrame(element, url)
   }
+
+  // Form interceptor delegate
 
   shouldInterceptFormSubmission(element: HTMLFormElement) {
     return this.shouldInterceptNavigation(element)
@@ -55,18 +101,7 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     }
   }
 
-  async visit(url: Locatable) {
-    const location = Location.wrap(url)
-    const request = new FetchRequest(this, FetchMethod.get, location)
-
-    return new Promise<void>(resolve => {
-      this.resolveVisitPromise = () => {
-        this.resolveVisitPromise = () => {}
-        resolve()
-      }
-      request.perform()
-    })
-  }
+  // Fetch request delegate
 
   additionalHeadersForRequest(request: FetchRequest) {
     return { "Turbo-Frame": this.id }
@@ -99,6 +134,8 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     this.element.removeAttribute("busy")
   }
 
+  // Form submission delegate
+
   formSubmissionStarted(formSubmission: FormSubmission) {
 
   }
@@ -118,6 +155,21 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
 
   formSubmissionFinished(formSubmission: FormSubmission) {
 
+  }
+
+  // Private
+
+  private async visit(url: Locatable) {
+    const location = Location.wrap(url)
+    const request = new FetchRequest(this, FetchMethod.get, location)
+
+    return new Promise<void>(resolve => {
+      this.resolveVisitPromise = () => {
+        this.resolveVisitPromise = () => {}
+        resolve()
+      }
+      request.perform()
+    })
   }
 
   private navigateFrame(element: Element, url: string) {
@@ -208,6 +260,8 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
     return true
   }
 
+  // Computed properties
+
   get firstAutofocusableElement(): HTMLElement | null {
     const element = this.element.querySelector("[autofocus]")
     return element instanceof HTMLElement ? element : null
@@ -219,6 +273,22 @@ export class FrameController implements FetchRequestDelegate, FormInterceptorDel
 
   get enabled() {
     return !this.element.disabled
+  }
+
+  get sourceURL() {
+    return this.element.src
+  }
+
+  get loadingStyle() {
+    return this.element.loading
+  }
+
+  get isLoading() {
+    return this.formSubmission !== undefined || this.loadingURL !== undefined
+  }
+
+  get isActive() {
+    return this.element.isActive
   }
 }
 

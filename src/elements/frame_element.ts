@@ -1,11 +1,14 @@
 import { FetchResponse } from "../http/fetch_response"
 import { FrameController } from "../core/frames/frame_controller"
 
+export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
+
 export class FrameElement extends HTMLElement {
+  loaded: Promise<FetchResponse | void> = Promise.resolve()
   readonly controller: FrameController
 
   static get observedAttributes() {
-    return ["src"]
+    return ["loading", "src"]
   }
 
   constructor() {
@@ -21,10 +24,11 @@ export class FrameElement extends HTMLElement {
     this.controller.disconnect()
   }
 
-  attributeChangedCallback() {
-    if (this.src && this.isActive) {
-      const value = this.controller.visit(this.src)
-      Object.defineProperty(this, "loaded", { value, configurable: true })
+  attributeChangedCallback(name: string) {
+    if (name == "loading") {
+      this.controller.loadingStyleChanged()
+    } else if (name == "src") {
+      this.controller.sourceURLChanged()
     }
   }
 
@@ -44,8 +48,16 @@ export class FrameElement extends HTMLElement {
     }
   }
 
-  get loaded(): Promise<FetchResponse | undefined> {
-    return Promise.resolve(undefined)
+  get loading(): FrameLoadingStyle {
+    return frameLoadingStyleFromString(this.getAttribute("loading") || "")
+  }
+
+  set loading(value: FrameLoadingStyle) {
+    if (value) {
+      this.setAttribute("loading", value)
+    } else {
+      this.removeAttribute("loading")
+    }
   }
 
   get disabled() {
@@ -72,12 +84,23 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  get complete() {
+    return !this.controller.isLoading
+  }
+
   get isActive() {
     return this.ownerDocument === document && !this.isPreview
   }
 
   get isPreview() {
     return this.ownerDocument?.documentElement?.hasAttribute("data-turbo-preview")
+  }
+}
+
+function frameLoadingStyleFromString(style: string) {
+  switch (style.toLowerCase()) {
+    case "lazy":  return FrameLoadingStyle.lazy
+    default:      return FrameLoadingStyle.eager
   }
 }
 

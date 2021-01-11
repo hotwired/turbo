@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Turbo</title>
+    <script src="/src/tests/fixtures/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+  </head>
+  <body>
+    <details id="loading-lazy">
+      <summary>Lazy-loaded</summary>
+
+      <turbo-frame id="hello" src="/src/tests/fixtures/frames/hello.html" loading="lazy"></turbo-frame>
+    </details>
+
+    <details id="loading-eager">
+      <summary>Eager-loaded</summary>
+
+      <turbo-frame id="frame" src="/src/tests/fixtures/frames/frame.html" loading="eager"></turbo-frame>
+    </details>
+  </body>
+</html>

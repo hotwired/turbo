@@ -1,5 +1,6 @@
 export * from "./async_script_tests"
 export * from "./form_submission_tests"
+export * from "./loading_tests"
 export * from "./navigation_tests"
 export * from "./rendering_tests"
 export * from "./scroll_restoration_tests"
