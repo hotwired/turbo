@@ -32,7 +32,7 @@ export class FetchResponse {
   }
 
   get isHTML() {
-    return this.contentType && this.contentType.match(/^text\/html|^application\/xhtml\+xml/)
+    return this.contentType && this.contentType.match(/^(?:text\/([^\s;,]+\b)?html|application\/xhtml\+xml)\b/)
   }
 
   get statusCode() {
