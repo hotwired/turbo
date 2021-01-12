@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -eux
 
+DEV_BUILD_REPO_NAME="hotwired/dev-builds"
+DEV_BUILD_ORIGIN_URL="https://${1}@github.com/${DEV_BUILD_REPO_NAME}.git"
 BUILD_PATH="$HOME/publish-dev-build"
+
 mkdir "$BUILD_PATH"
 
 cd "$GITHUB_WORKSPACE"
 package_name="$(jq -r .name package.json)"
 package_files=( dist package.json )
-
-origin_url="https://${1}:${1}@github.com/${GITHUB_REPOSITORY}.git"
-tag="dev-builds/${GITHUB_SHA:0:7}"
+tag="${package_name}/${GITHUB_SHA:0:7}"
 
 name="$(git log -n 1 --format=format:%cn)"
 email="$(git log -n 1 --format=format:%ce)"
@@ -22,7 +23,7 @@ cp -R "${package_files[@]}" "$BUILD_PATH"
 
 cd "$BUILD_PATH"
 git init .
-git remote add origin "$origin_url"
+git remote add origin "$DEV_BUILD_ORIGIN_URL"
 git symbolic-ref HEAD refs/heads/publish-dev-build
 git add "${package_files[@]}"
 
@@ -32,7 +33,7 @@ GIT_AUTHOR_EMAIL="$email" GIT_COMMITTER_EMAIL="$email" \
   git commit -m "$message"
 
 git tag "$tag"
-[ "$GITHUB_REF" != "refs/heads/main" ] || git tag -f "dev-builds/latest"
+[ "$GITHUB_REF" != "refs/heads/main" ] || git tag -f "${package_name}/latest"
 git push -f --tags
 
 echo done
