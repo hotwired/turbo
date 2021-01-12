@@ -78,9 +78,13 @@ export default [
     input: "src/tests/unit/index.ts",
     output: [
       {
+        name: "tests_unit",
         file: "dist/tests/unit.js",
         format: "iife",
-        sourcemap: true
+        sourcemap: true,
+        globals: {
+          intern: "intern"
+        }
       }
     ],
     plugins: [
@@ -110,7 +114,8 @@ export default [
     ],
     external: [
       "express",
-      "multer"
+      "multer",
+      "path"
     ],
     watch: {
       include: "src/tests/**"
