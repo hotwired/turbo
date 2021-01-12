@@ -41,7 +41,7 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element)
     if (frame) {
-      frame.formSubmissionIntercepted(element, submitter)
+      frame.delegate.formSubmissionIntercepted(element, submitter)
     }
   }
 

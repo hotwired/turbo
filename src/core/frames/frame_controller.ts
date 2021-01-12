@@ -1,4 +1,4 @@
-import { FrameElement, FrameLoadingStyle } from "../../elements/frame_element"
+import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../elements/frame_element"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
@@ -8,7 +8,7 @@ import { Locatable, Location } from "../location"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 
-export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, LinkInterceptorDelegate {
+export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate {
   readonly element: FrameElement
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
@@ -63,6 +63,19 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       } finally {
         delete this.loadingURL
       }
+    }
+  }
+
+  async loadResponse(response: FetchResponse): Promise<void> {
+    const fragment = fragmentFromHTML(await response.responseHTML)
+    const element = await this.extractForeignFrameElement(fragment)
+
+    if (element) {
+      await nextAnimationFrame()
+      this.loadFrameElement(element)
+      this.scrollFrameIntoView(element)
+      await nextAnimationFrame()
+      this.focusFirstAutofocusableElement()
     }
   }
 
@@ -142,11 +155,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
     const frame = this.findFrameElement(formSubmission.formElement)
-    frame.controller.loadResponse(response)
+    frame.delegate.loadResponse(response)
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-    this.element.controller.loadResponse(fetchResponse)
+    this.element.delegate.loadResponse(fetchResponse)
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
@@ -180,19 +193,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   private findFrameElement(element: Element) {
     const id = element.getAttribute("data-turbo-frame")
     return getFrameElementById(id) ?? this.element
-  }
-
-  private async loadResponse(response: FetchResponse): Promise<void> {
-    const fragment = fragmentFromHTML(await response.responseHTML)
-    const element = await this.extractForeignFrameElement(fragment)
-
-    if (element) {
-      await nextAnimationFrame()
-      this.loadFrameElement(element)
-      this.scrollFrameIntoView(element)
-      await nextAnimationFrame()
-      this.focusFirstAutofocusableElement()
-    }
   }
 
   private async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | undefined> {

@@ -78,5 +78,3 @@ export class StreamElement extends HTMLElement {
     return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
   }
 }
-
-customElements.define("turbo-stream", StreamElement)

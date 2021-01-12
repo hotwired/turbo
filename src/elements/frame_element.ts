@@ -1,11 +1,22 @@
 import { FetchResponse } from "../http/fetch_response"
-import { FrameController } from "../core/frames/frame_controller"
 
 export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
 
+export interface FrameElementDelegate {
+  connect(): void
+  disconnect(): void
+  loadingStyleChanged(): void
+  sourceURLChanged(): void
+  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
+  loadResponse(response: FetchResponse): void
+  isLoading: boolean
+}
+
 export class FrameElement extends HTMLElement {
+  static delegateConstructor: new (element: FrameElement) => FrameElementDelegate
+
   loaded: Promise<FetchResponse | void> = Promise.resolve()
-  readonly controller: FrameController
+  readonly delegate: FrameElementDelegate
 
   static get observedAttributes() {
     return ["loading", "src"]
@@ -13,27 +24,23 @@ export class FrameElement extends HTMLElement {
 
   constructor() {
     super()
-    this.controller = new FrameController(this)
+    this.delegate = new FrameElement.delegateConstructor(this)
   }
 
   connectedCallback() {
-    this.controller.connect()
+    this.delegate.connect()
   }
 
   disconnectedCallback() {
-    this.controller.disconnect()
+    this.delegate.disconnect()
   }
 
   attributeChangedCallback(name: string) {
     if (name == "loading") {
-      this.controller.loadingStyleChanged()
+      this.delegate.loadingStyleChanged()
     } else if (name == "src") {
-      this.controller.sourceURLChanged()
+      this.delegate.sourceURLChanged()
     }
-  }
-
-  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
-    this.controller.formSubmissionIntercepted(element, submitter)
   }
 
   get src() {
@@ -85,7 +92,7 @@ export class FrameElement extends HTMLElement {
   }
 
   get complete() {
-    return !this.controller.isLoading
+    return !this.delegate.isLoading
   }
 
   get isActive() {
@@ -103,5 +110,3 @@ function frameLoadingStyleFromString(style: string) {
     default:      return FrameLoadingStyle.eager
   }
 }
-
-customElements.define("turbo-frame", FrameElement)

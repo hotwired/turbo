@@ -1,4 +1,4 @@
-import { StreamElement } from "../../elements/stream_element"
+import { StreamElement } from "../../elements"
 import { nextAnimationFrame } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
 
