@@ -1,6 +1,6 @@
 {
   "name": "@hotwired/turbo",
-  "version": "7.0.0-beta.2",
+  "version": "7.0.0-beta.3",
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
   "main": "dist/turbo.es5-umd.js",
@@ -41,7 +41,7 @@
   },
   "scripts": {
     "clean": "rm -fr dist",
-    "build": "rollup -c && tsc --noEmit false --declaration true --emitDeclarationOnly true --outDir dist/types",
+    "build": "tsc --noEmit false --declaration true --emitDeclarationOnly true --outDir dist/types && rollup -c",
     "watch": "rollup -wc",
     "start": "node src/tests/runner.js serveOnly",
     "test": "NODE_OPTIONS=--inspect node src/tests/runner.js"
