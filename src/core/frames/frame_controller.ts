@@ -68,9 +68,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   async loadResponse(response: FetchResponse): Promise<void> {
     const fragment = fragmentFromHTML(await response.responseHTML)
-    const element = await this.extractForeignFrameElement(fragment)
-
-    if (element) {
+    if (fragment) {
+      const element = await this.extractForeignFrameElement(fragment)
       await nextAnimationFrame()
       this.loadFrameElement(element)
       this.scrollFrameIntoView(element)
@@ -195,7 +194,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return getFrameElementById(id) ?? this.element
   }
 
-  private async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | undefined> {
+  private async extractForeignFrameElement(container: ParentNode): Promise<FrameElement> {
     let element
     const id = CSS.escape(this.id)
 
@@ -207,6 +206,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       await element.loaded
       return await this.extractForeignFrameElement(element)
     }
+
+    console.error(`Response has no matching <turbo-frame id="${id}"> element`)
+    return new FrameElement()
   }
 
   private loadFrameElement(frameElement: FrameElement) {
@@ -309,9 +311,11 @@ function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLog
   }
 }
 
-function fragmentFromHTML(html = "") {
-  const foreignDocument = document.implementation.createHTMLDocument()
-  return foreignDocument.createRange().createContextualFragment(html)
+function fragmentFromHTML(html?: string) {
+  if (html) {
+    const foreignDocument = document.implementation.createHTMLDocument()
+    return foreignDocument.createRange().createContextualFragment(html)
+  }
 }
 
 function activateElement(element: Node | null) {

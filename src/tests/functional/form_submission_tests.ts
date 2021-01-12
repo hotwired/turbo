@@ -17,22 +17,22 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test standard form submission with empty created response"() {
-    const htmlBefore = await this.getHTMLForSelector("body")
+    const htmlBefore = await this.outerHTMLForSelector("body")
     const button = await this.querySelector("#standard form.created input[type=submit]")
     await button.click()
     await this.nextBeat
 
-    const htmlAfter = await this.getHTMLForSelector("body")
+    const htmlAfter = await this.outerHTMLForSelector("body")
     this.assert.equal(htmlAfter, htmlBefore)
   }
 
   async "test standard form submission with empty no-content response"() {
-    const htmlBefore = await this.getHTMLForSelector("body")
+    const htmlBefore = await this.outerHTMLForSelector("body")
     const button = await this.querySelector("#standard form.no-content input[type=submit]")
     await button.click()
     await this.nextBeat
 
-    const htmlAfter = await this.getHTMLForSelector("body")
+    const htmlAfter = await this.outerHTMLForSelector("body")
     this.assert.equal(htmlAfter, htmlBefore)
   }
 
@@ -75,22 +75,22 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test frame form submission with empty created response"() {
-    const htmlBefore = await this.getHTMLForSelector("#frame")
+    const htmlBefore = await this.outerHTMLForSelector("#frame")
     const button = await this.querySelector("#frame form.created input[type=submit]")
     await button.click()
     await this.nextBeat
 
-    const htmlAfter = await this.getHTMLForSelector("#frame")
+    const htmlAfter = await this.outerHTMLForSelector("#frame")
     this.assert.equal(htmlAfter, htmlBefore)
   }
 
   async "test frame form submission with empty no-content response"() {
-    const htmlBefore = await this.getHTMLForSelector("#frame")
+    const htmlBefore = await this.outerHTMLForSelector("#frame")
     const button = await this.querySelector("#frame form.no-content input[type=submit]")
     await button.click()
     await this.nextBeat
 
-    const htmlAfter = await this.getHTMLForSelector("#frame")
+    const htmlAfter = await this.outerHTMLForSelector("#frame")
     this.assert.equal(htmlAfter, htmlBefore)
   }
 

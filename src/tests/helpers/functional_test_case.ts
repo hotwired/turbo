@@ -41,9 +41,14 @@ export class FunctionalTestCase extends InternTestCase {
     return this.evaluate(element => element.scrollIntoView(), element)
   }
 
-  async getHTMLForSelector(selector: string): Promise<string> {
+  async outerHTMLForSelector(selector: string): Promise<string> {
     const element = await this.remote.findByCssSelector(selector)
     return this.evaluate(element => element.outerHTML, element)
+  }
+
+  async innerHTMLForSelector(selector: string): Promise<string> {
+    const element = await this.remote.findAllByCssSelector(selector)
+    return this.evaluate(element => element.innerHTML, element)
   }
 
   get scrollPosition(): Promise<{ x: number, y: number }> {
