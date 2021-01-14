@@ -137,8 +137,17 @@ export class FetchRequest {
 }
 
 function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
+  const currentSearchParams = new URLSearchParams(url.search)
+
   for (const [ name, value ] of entries) {
-    url.searchParams.append(name, value.toString())
+    if (value instanceof File) continue
+
+    if (currentSearchParams.has(name)) {
+      currentSearchParams.delete(name)
+      url.searchParams.set(name, value)
+    } else {
+      url.searchParams.append(name, value)
+    }
   }
 
   return url

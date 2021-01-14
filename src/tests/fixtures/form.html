@@ -43,6 +43,22 @@
         <input type="hidden" name="greeting" value="Hello from a form">
         <input type="submit">
       </form>
+      <form action="/src/tests/fixtures/form.html?query=1" method="get" class="conflicting-values">
+        <input type="hidden" name="query" value="2">
+        <input type="submit">
+      </form>
+    </div>
+    <hr>
+    <div id="no-action">
+      <form class="single">
+        <input type="hidden" name="query" value="1">
+        <input type="submit">
+      </form>
+      <form class="multiple">
+        <input type="hidden" name="query" value="1">
+        <input type="hidden" name="query" value="2">
+        <input type="submit">
+      </form>
     </div>
     <hr>
     <div id="reject">

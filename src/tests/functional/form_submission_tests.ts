@@ -15,7 +15,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.formSubmitted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.equal(await this.visitAction, "advance")
-    this.assert.equal((await this.searchParams).get("greeting"), "Hello from a redirect")
+    this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
   }
 
   async "test standard GET form submission"() {
@@ -25,7 +25,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.formSubmitted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
-    this.assert.equal((await this.searchParams).get("greeting"), "Hello from a form")
+    this.assert.equal(await this.getSearchParam("greeting"), "Hello from a form")
+  }
+
+  async "test standard GET form submission appending keys"() {
+    await this.goToLocation("/src/tests/fixtures/form.html?query=1")
+    await this.clickSelector("#standard form.conflicting-values input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "2")
   }
 
   async "test standard form submission with empty created response"() {
@@ -52,7 +61,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.clickSelector("#standard form[method=post][enctype] input[type=submit]")
     await this.nextBeat
 
-    const enctype = (await this.searchParams).get("enctype")
+    const enctype = await this.getSearchParam("enctype")
     this.assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
   }
 
@@ -60,7 +69,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.clickSelector("#standard form[method=get][enctype] input[type=submit]")
     await this.nextBeat
 
-    const enctype = (await this.searchParams).get("enctype")
+    const enctype = await this.getSearchParam("enctype")
     this.assert.notOk(enctype, "GET form submissions ignore enctype")
   }
 
@@ -68,8 +77,44 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.clickSelector("#standard form[method=post].no-enctype input[type=submit]")
     await this.nextBeat
 
-    const enctype = (await this.searchParams).get("enctype")
+    const enctype = await this.getSearchParam("enctype")
     this.assert.ok(enctype?.startsWith("application/x-www-form-urlencoded"), "submits a application/x-www-form-urlencoded request")
+  }
+
+  async "test no-action form submission with single parameter"() {
+    await this.clickSelector("#no-action form.single input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "1")
+
+    await this.clickSelector("#no-action form.single input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "1")
+
+    await this.goToLocation("/src/tests/fixtures/form.html?query=2")
+    await this.clickSelector("#no-action form.single input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "1")
+  }
+
+  async "test no-action form submission with multiple parameters"() {
+    await this.goToLocation("/src/tests/fixtures/form.html?query=2")
+    await this.clickSelector("#no-action form.multiple input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
+
+    await this.clickSelector("#no-action form.multiple input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
   }
 
   async "test invalid form submission with unprocessable entity status"() {
@@ -103,7 +148,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.clickSelector("#submitter form[method=post]:not([enctype]) input[formenctype]")
     await this.nextBeat
 
-    const enctype = (await this.searchParams).get("enctype")
+    const enctype = await this.getSearchParam("enctype")
     this.assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
   }
 
