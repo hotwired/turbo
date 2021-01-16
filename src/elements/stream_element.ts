@@ -40,15 +40,25 @@ export class StreamElement extends HTMLElement {
     this.raise("action attribute is missing")
   }
 
-  get targetElement() {
-    if (this.target) {
-      return this.ownerDocument?.getElementById(this.target)
+  get targetElements(): Array<Element> {
+    // Try to get the target node by first looking it up by ID.
+    // If that fails, try using the target as a CSS Selector.
+    if (!this.target) {
+      this.raise("target attribute is missing")
     }
-    this.raise("target attribute is missing")
+    const idTarget = this.ownerDocument?.getElementById(this.target)
+    if (idTarget !== null) {
+      return [idTarget]
+    }
+    const cssTarget = this.ownerDocument?.querySelectorAll(this.target)
+    if (cssTarget.length !== 0) {
+      return Array.prototype.slice.call(cssTarget)
+    }
+    this.raise(`target "${this.target}" not found`)
   }
 
   get templateContent() {
-    return this.templateElement.content
+    return this.templateElement.content.cloneNode(true)
   }
 
   get templateElement() {

@@ -20,12 +20,12 @@ router.post("/reject", (request, response) => {
 })
 
 router.post("/messages", (request, response) => {
-  const { content, status, type } = request.body
+  const { content, status, type, target } = request.body
   if (typeof content == "string") {
-    receiveMessage(content)
+    receiveMessage(content, target)
     if (type == "stream") {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(renderMessage(content))
+      response.send(renderMessage(content, target))
     } else {
       response.sendStatus(parseInt(status || "201", 10))
     }
@@ -67,17 +67,17 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
-function receiveMessage(content: string) {
-  const data = renderSSEData(renderMessage(content))
+function receiveMessage(content: string, target?: string) {
+  const data = renderSSEData(renderMessage(content, target))
   for (const response of streamResponses) {
     intern.log("delivering message to stream", response.socket?.remotePort)
     response.write(data)
   }
 }
 
-function renderMessage(content: string) {
+function renderMessage(content: string, target = "messages") {
   return `
-    <turbo-stream action="append" target="messages"><template>
+    <turbo-stream action="append" target="${target}"><template>
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `
