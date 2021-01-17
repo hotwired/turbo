@@ -212,7 +212,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   private findFrameElement(element: Element) {
-    const id = element.getAttribute("data-turbo-frame")
+    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
