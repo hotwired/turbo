@@ -24,6 +24,20 @@ export enum FormSubmissionState {
   stopped,
 }
 
+enum FormEnctype {
+  urlEncoded = "application/x-www-form-urlencoded",
+  multipart  = "multipart/form-data",
+  plain      = "text/plain"
+}
+
+function formEnctypeFromString(encoding: string): FormEnctype {
+  switch(encoding.toLowerCase()) {
+    case FormEnctype.multipart: return FormEnctype.multipart
+    case FormEnctype.plain:     return FormEnctype.plain
+    default:                    return FormEnctype.urlEncoded
+  }
+}
+
 export class FormSubmission {
   readonly delegate: FormSubmissionDelegate
   readonly formElement: HTMLFormElement
@@ -39,7 +53,7 @@ export class FormSubmission {
     this.formElement = formElement
     this.formData = buildFormData(formElement, submitter)
     this.submitter = submitter
-    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.formData)
+    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
     this.mustRedirect = mustRedirect
   }
 
@@ -54,6 +68,18 @@ export class FormSubmission {
 
   get location(): URL {
     return expandURL(this.action)
+  }
+
+  get body() {
+    if (this.enctype == FormEnctype.urlEncoded || this.method == FetchMethod.get) {
+      return new URLSearchParams(this.formData as any)
+    } else {
+      return this.formData
+    }
+  }
+
+  get enctype(): FormEnctype {
+    return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
   }
 
   // The submission process
@@ -79,7 +105,7 @@ export class FormSubmission {
 
   additionalHeadersForRequest(request: FetchRequest) {
     const headers: FetchRequestHeaders = {}
-    if (this.method != FetchMethod.get) {
+    if (!request.isIdempotent) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
         headers["X-CSRF-Token"] = token

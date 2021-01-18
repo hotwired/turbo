@@ -36,6 +36,30 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(htmlAfter, htmlBefore)
   }
 
+  async "test standard POST form submission with multipart/form-data enctype"() {
+    await this.clickSelector("#standard form[method=post][enctype] input[type=submit]")
+    await this.nextBeat
+
+    const enctype = (await this.searchParams).get("enctype")
+    this.assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
+  }
+
+  async "test standard GET form submission ignores enctype"() {
+    await this.clickSelector("#standard form[method=get][enctype] input[type=submit]")
+    await this.nextBeat
+
+    const enctype = (await this.searchParams).get("enctype")
+    this.assert.notOk(enctype, "GET form submissions ignore enctype")
+  }
+
+  async "test standard POST form submission without an enctype"() {
+    await this.clickSelector("#standard form[method=post].no-enctype input[type=submit]")
+    await this.nextBeat
+
+    const enctype = (await this.searchParams).get("enctype")
+    this.assert.ok(enctype?.startsWith("application/x-www-form-urlencoded"), "submits a application/x-www-form-urlencoded request")
+  }
+
   async "test invalid form submission with unprocessable entity status"() {
     await this.clickSelector("#reject form.unprocessable_entity input[type=submit]")
     await this.nextBody
@@ -61,6 +85,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/two.html")
     this.assert.equal(await this.visitAction, "advance")
+  }
+
+  async "test submitter POST form submission with multipart/form-data formenctype"() {
+    await this.clickSelector("#submitter form[method=post]:not([enctype]) input[formenctype]")
+    await this.nextBeat
+
+    const enctype = (await this.searchParams).get("enctype")
+    this.assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
   }
 
   async "test frame form submission with redirect response"() {
