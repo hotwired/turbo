@@ -1,4 +1,4 @@
-import { Locatable } from "../location"
+import { Locatable } from "../url"
 import { Visit, VisitOptions } from "../drive/visit"
 
 export interface Adapter {

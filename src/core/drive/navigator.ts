@@ -1,13 +1,13 @@
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
-import { Locatable, Location } from "../location"
+import { expandURL, Locatable } from "../url"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { Snapshot } from "./snapshot"
 
 export type NavigatorDelegate = VisitDelegate & {
-  allowsVisitingLocation(location: Location): boolean
-  visitProposedToLocation(location: Location, options: Partial<VisitOptions>): void
+  allowsVisitingLocation(location: URL): boolean
+  visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void
 }
 
 export class Navigator {
@@ -19,15 +19,15 @@ export class Navigator {
     this.delegate = delegate
   }
 
-  proposeVisit(location: Location, options: Partial<VisitOptions> = {}) {
+  proposeVisit(location: URL, options: Partial<VisitOptions> = {}) {
     if (this.delegate.allowsVisitingLocation(location)) {
       this.delegate.visitProposedToLocation(location, options)
     }
   }
 
-  startVisit(location: Locatable, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+  startVisit(locatable: Locatable, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
     this.stop()
-    this.currentVisit = new Visit(this, Location.wrap(location), restorationIdentifier, {
+    this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
       ...options
     })

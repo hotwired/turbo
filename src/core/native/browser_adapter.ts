@@ -1,5 +1,5 @@
 import { Adapter } from "./adapter"
-import { Locatable } from "../location"
+import { Locatable } from "../url"
 import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
 import { Session } from "../session"
