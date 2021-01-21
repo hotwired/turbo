@@ -50,7 +50,7 @@ export class FetchRequest {
     this.delegate = delegate
     this.method = method
     this.body = body
-    this.url = appendToURLSearchParams(location, this.entries)
+    this.url = mergeFormDataEntries(location, this.entries)
   }
 
   get location(): URL {
@@ -61,7 +61,7 @@ export class FetchRequest {
     return this.url.searchParams
   }
 
-  get entries(): Array<[string, FormDataEntryValue]> {
+  get entries() {
     return this.body ? Array.from(this.body.entries()) : []
   }
 
@@ -132,11 +132,10 @@ export class FetchRequest {
   }
 }
 
-function appendToURLSearchParams(url: URL, entries: Array<[string, FormDataEntryValue]>): URL {
-  entries.reduce((params, [name, value]) => {
-    params.append(name, value.toString())
-    return params
-  }, url.searchParams)
+function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
+  for (const [ name, value ] of entries) {
+    url.searchParams.append(name, value.toString())
+  }
 
   return url
 }

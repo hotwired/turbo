@@ -1,6 +1,6 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
-import { expandPath } from "../url"
+import { expandURL } from "../url"
 import { dispatch } from "../../util"
 
 export interface FormSubmissionDelegate {
@@ -53,7 +53,7 @@ export class FormSubmission {
   }
 
   get location(): URL {
-    return expandPath(this.action)
+    return expandURL(this.action)
   }
 
   // The submission process

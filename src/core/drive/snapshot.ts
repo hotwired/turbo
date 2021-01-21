@@ -1,5 +1,5 @@
 import { HeadDetails } from "./head_details"
-import { expandPath } from "../url"
+import { expandURL } from "../url"
 
 export class Snapshot {
   static wrap(value: Snapshot | string | HTMLHtmlElement) {
@@ -39,7 +39,7 @@ export class Snapshot {
 
   getRootLocation(): URL {
     const root = this.getSetting("root", "/")
-    return expandPath(root)
+    return expandURL(root)
   }
 
   getCacheControlValue() {

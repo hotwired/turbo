@@ -4,7 +4,7 @@ import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
-import { expandPath, isPrefixedBy, isHTML, Locatable } from "./url"
+import { expandURL, isPrefixedBy, isHTML, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -71,7 +71,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   }
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}) {
-    this.navigator.proposeVisit(expandPath(location), options)
+    this.navigator.proposeVisit(expandURL(location), options)
   }
 
   connectStreamSource(source: StreamSource) {

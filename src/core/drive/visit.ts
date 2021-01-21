@@ -2,7 +2,7 @@ import { Adapter } from "../native/adapter"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
-import { anchor } from "../url"
+import { getAnchor } from "../url"
 import { RenderCallback } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Action } from "../types"
@@ -145,7 +145,7 @@ export class Visit implements FetchRequestDelegate {
 
   changeHistory() {
     if (!this.historyChanged) {
-      const actionForHistory = this.location === this.referrer ? "replace" : this.action
+      const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
       const method = this.getHistoryMethodForAction(actionForHistory)
       this.history.update(method, this.location, this.restorationIdentifier)
       this.historyChanged = true
@@ -212,7 +212,7 @@ export class Visit implements FetchRequestDelegate {
   getCachedSnapshot() {
     const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
 
-    if (snapshot && (!anchor(this.location) || snapshot.hasAnchor(anchor(this.location)))) {
+    if (snapshot && (!getAnchor(this.location) || snapshot.hasAnchor(getAnchor(this.location)))) {
       if (this.action == "restore" || snapshot.isPreviewable()) {
         return snapshot
       }
@@ -311,8 +311,8 @@ export class Visit implements FetchRequestDelegate {
   }
 
   scrollToAnchor() {
-    if (anchor(this.location) != null) {
-      this.view.scrollToAnchor(anchor(this.location))
+    if (getAnchor(this.location) != null) {
+      this.view.scrollToAnchor(getAnchor(this.location))
       return true
     }
   }

@@ -1,13 +1,13 @@
 export type Locatable = URL | string
 
-export function expandPath(pathOrUrl: string | URL): URL {
-  const anchor = document.createElement("a") as HTMLAnchorElement
+export function expandURL(pathOrUrl: string | URL): URL {
+  const anchor = document.createElement("a")
   anchor.href = pathOrUrl.toString()
 
   return new URL(anchor.href)
 }
 
-export function anchor(url: URL): string {
+export function getAnchor(url: URL): string {
   let anchorMatch
   if (url.hash) {
     return url.hash.slice(1)
@@ -18,32 +18,20 @@ export function anchor(url: URL): string {
   }
 }
 
-export function getExtension(location: URL) {
-  return (getLastPathComponent(location).match(/\.[^.]*$/) || [])[0] || ""
+export function getExtension(url: URL) {
+  return (getLastPathComponent(url).match(/\.[^.]*$/) || [])[0] || ""
 }
 
-export function isHTML(location: URL) {
-  return !!getExtension(location).match(/^(?:|\.(?:htm|html|xhtml))$/)
+export function isHTML(url: URL) {
+  return !!getExtension(url).match(/^(?:|\.(?:htm|html|xhtml))$/)
 }
 
-export function isPrefixedBy(location: URL, prefix: URL): boolean {
+export function isPrefixedBy(url: URL, prefix: URL): boolean {
   const prefixURL = getPrefixURL(prefix)
-  return location === expandPath(prefixURL) || stringStartsWith(location.href, prefixURL)
+  return url.href === expandURL(prefixURL).href || url.href.startsWith(prefixURL)
 }
 
 export function toCacheKey(url: URL) {
-  return requestURL(url)
-}
-
-function getPathComponents(location: URL) {
-  return location.pathname.split("/").slice(1)
-}
-
-function getLastPathComponent(location: URL) {
-  return getPathComponents(location).slice(-1)[0]
-}
-
-function requestURL(url: URL): string {
   const anchorLength = url.hash.length
   if (anchorLength < 2) {
     return url.href
@@ -52,18 +40,18 @@ function requestURL(url: URL): string {
   }
 }
 
-function getPrefixURL(location: URL) {
-  return addTrailingSlash(location.origin + location.pathname)
+function getPathComponents(url: URL) {
+  return url.pathname.split("/").slice(1)
+}
+
+function getLastPathComponent(url: URL) {
+  return getPathComponents(url).slice(-1)[0]
+}
+
+function getPrefixURL(url: URL) {
+  return addTrailingSlash(url.origin + url.pathname)
 }
 
 function addTrailingSlash(url: string) {
-  return stringEndsWith(url, "/") ? url : url + "/"
-}
-
-function stringStartsWith(string: string, prefix: string) {
-  return string.slice(0, prefix.length) === prefix
-}
-
-function stringEndsWith(string: string, suffix: string) {
-  return string.slice(-suffix.length) === suffix
+  return url.endsWith("/") ? url : url + "/"
 }

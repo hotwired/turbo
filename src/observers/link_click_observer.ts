@@ -1,4 +1,4 @@
-import { expandPath } from "../core/url"
+import { expandURL } from "../core/url"
 
 export interface LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: URL): boolean
@@ -64,6 +64,6 @@ export class LinkClickObserver {
   }
 
   getLocationForLink(link: Element): URL {
-    return expandPath(link.getAttribute("href") || "")
+    return expandURL(link.getAttribute("href") || "")
   }
 }

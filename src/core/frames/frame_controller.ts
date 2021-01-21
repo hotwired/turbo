@@ -6,7 +6,7 @@ import { nextAnimationFrame } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { expandPath, Locatable } from "../url"
+import { expandURL, Locatable } from "../url"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate {
   readonly element: FrameElement
@@ -172,8 +172,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Private
 
   private async visit(url: Locatable) {
-    const location = expandPath(url.toString())
-    const request = new FetchRequest(this, FetchMethod.get, location)
+    const request = new FetchRequest(this, FetchMethod.get, expandURL(url))
 
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
