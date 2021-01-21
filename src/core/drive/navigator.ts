@@ -25,9 +25,9 @@ export class Navigator {
     }
   }
 
-  startVisit(location: Locatable, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+  startVisit(locatable: Locatable, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
     this.stop()
-    this.currentVisit = new Visit(this, expandURL(location), restorationIdentifier, {
+    this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
       ...options
     })
