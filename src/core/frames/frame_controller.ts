@@ -314,6 +314,12 @@ function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLog
 function fragmentFromHTML(html?: string) {
   if (html) {
     const foreignDocument = document.implementation.createHTMLDocument()
+    if ( foreignDocument.baseURI !== document.baseURI )
+    {
+      const base = document.createElement('base')
+      base.setAttribute('href',document.baseURI)
+      foreignDocument.head.append(base)
+    }
     return foreignDocument.createRange().createContextualFragment(html)
   }
 }
