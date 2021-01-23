@@ -3,7 +3,7 @@ import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetc
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
-import { RenderCallback } from "./renderer"
+import { RenderCallback } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"

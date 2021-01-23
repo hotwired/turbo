@@ -1,4 +1,4 @@
-import { RenderCallback, RenderDelegate, Renderer } from "./renderer"
+import { RenderCallback, RenderDelegate, Renderer } from "../renderer"
 
 export class ErrorRenderer extends Renderer {
   readonly delegate: RenderDelegate

@@ -1,7 +1,7 @@
 import { ErrorRenderer } from "./error_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
-import { RenderCallback, RenderDelegate, SnapshotRenderer } from "./snapshot_renderer"
+import { PageRenderer, RenderCallback, RenderDelegate } from "./page_renderer"
 import { Position } from "../types"
 import { nextMicrotask } from "../../util"
 
@@ -94,7 +94,7 @@ export class View {
   }
 
   renderSnapshot(snapshot: PageSnapshot, isPreview: boolean | undefined, callback: RenderCallback) {
-    SnapshotRenderer.render(this.delegate, callback, this.getSnapshot(), snapshot, isPreview || false)
+    PageRenderer.render(this.delegate, callback, this.getSnapshot(), snapshot, isPreview || false)
   }
 
   renderError(error: string | undefined, callback: RenderCallback) {

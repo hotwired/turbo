@@ -1,13 +1,13 @@
-import { RenderCallback, RenderDelegate, Renderer } from "./renderer"
+import { RenderCallback, RenderDelegate, Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 
-export { RenderCallback, RenderDelegate } from "./renderer"
+export { RenderCallback, RenderDelegate } from "../renderer"
 
 export type PermanentElement = Element & { id: string }
 
 export type Placeholder = { element: Element, permanentElement: PermanentElement }
 
-export class SnapshotRenderer extends Renderer {
+export class PageRenderer extends Renderer {
   readonly delegate: RenderDelegate
   readonly currentSnapshot: PageSnapshot
   readonly newSnapshot: PageSnapshot
