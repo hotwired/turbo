@@ -2,6 +2,7 @@ import { Adapter } from "./native/adapter"
 import { BrowserAdapter } from "./native/browser_adapter"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
+import { defineCustomFrameElement } from "../elements"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
 import { expandURL, isPrefixedBy, isHTML, Locatable } from "./url"
@@ -93,6 +94,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   setProgressBarDelay(delay: number) {
     this.progressBarDelay = delay
+  }
+
+  defineCustomFrameElement(name: string) {
+    defineCustomFrameElement(name)
   }
 
   get location() {

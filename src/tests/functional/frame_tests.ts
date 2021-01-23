@@ -116,6 +116,17 @@ export class FrameTests extends TurboDriveTestCase {
 
     await this.nextEventNamed("turbo:before-fetch-request")
   }
+
+  async "test loading a tbody element"() {
+    await this.clickSelector("#tbody0 a")
+    await this.nextBeat
+
+    const contentsTd = await this.querySelector("#tbody0 td")
+    this.assert.equal(await contentsTd.getVisibleText(), "Table service")
+
+    const contentsTh = await this.querySelector("#thead0 th")
+    this.assert.equal(await contentsTh.getVisibleText(), "table thead0")
+  }
 }
 
 FrameTests.registerSuite()

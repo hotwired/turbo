@@ -40,3 +40,7 @@ export function clearCache() {
 export function setProgressBarDelay(delay: number) {
   session.setProgressBarDelay(delay)
 }
+
+export function defineCustomFrameElement(name: string) {
+  session.defineCustomFrameElement(name)
+}

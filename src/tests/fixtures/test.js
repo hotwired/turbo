@@ -28,3 +28,5 @@
   "turbo:before-fetch-response",
   "turbo:visit"
 ])
+
+Turbo.defineCustomFrameElement('tbody')
