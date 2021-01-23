@@ -1,6 +1,6 @@
 import { HeadDetails } from "./head_details"
 import { RenderCallback, RenderDelegate, Renderer } from "./renderer"
-import { Snapshot } from "./snapshot"
+import { PageSnapshot } from "./page_snapshot"
 
 export { RenderCallback, RenderDelegate } from "./renderer"
 
@@ -10,18 +10,18 @@ export type Placeholder = { element: Element, permanentElement: PermanentElement
 
 export class SnapshotRenderer extends Renderer {
   readonly delegate: RenderDelegate
-  readonly currentSnapshot: Snapshot
+  readonly currentSnapshot: PageSnapshot
   readonly currentHeadDetails: HeadDetails
-  readonly newSnapshot: Snapshot
+  readonly newSnapshot: PageSnapshot
   readonly newHeadDetails: HeadDetails
   readonly newBody: HTMLBodyElement
   readonly isPreview: boolean
 
-  static render(delegate: RenderDelegate, callback: RenderCallback, currentSnapshot: Snapshot, newSnapshot: Snapshot, isPreview: boolean) {
+  static render(delegate: RenderDelegate, callback: RenderCallback, currentSnapshot: PageSnapshot, newSnapshot: PageSnapshot, isPreview: boolean) {
     return new this(delegate, currentSnapshot, newSnapshot, isPreview).render(callback)
   }
 
-  constructor(delegate: RenderDelegate, currentSnapshot: Snapshot, newSnapshot: Snapshot, isPreview: boolean) {
+  constructor(delegate: RenderDelegate, currentSnapshot: PageSnapshot, newSnapshot: PageSnapshot, isPreview: boolean) {
     super()
     this.delegate = delegate
     this.currentSnapshot = currentSnapshot
@@ -62,7 +62,7 @@ export class SnapshotRenderer extends Renderer {
   }
 
   shouldRender() {
-    return this.newSnapshot.isVisitable() && this.trackedElementsAreIdentical()
+    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical()
   }
 
   trackedElementsAreIdentical() {
@@ -135,7 +135,7 @@ export class SnapshotRenderer extends Renderer {
   }
 
   focusFirstAutofocusableElement() {
-    const element = this.newSnapshot.findFirstAutofocusableElement()
+    const element = this.newSnapshot.firstAutofocusableElement
     if (elementIsFocusable(element)) {
       element.focus()
     }

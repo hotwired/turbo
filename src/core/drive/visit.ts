@@ -4,7 +4,7 @@ import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
 import { RenderCallback } from "./renderer"
-import { Snapshot } from "./snapshot"
+import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
 import { View } from "./view"
@@ -197,7 +197,7 @@ export class Visit implements FetchRequestDelegate {
       this.render(() => {
         this.cacheSnapshot()
         if (isSuccessful(statusCode) && responseHTML != null) {
-          this.view.render({ snapshot: Snapshot.fromHTMLString(responseHTML) }, this.performScroll)
+          this.view.render({ snapshot: PageSnapshot.fromHTMLString(responseHTML) }, this.performScroll)
           this.adapter.visitRendered(this)
           this.complete()
         } else {
@@ -213,7 +213,7 @@ export class Visit implements FetchRequestDelegate {
     const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
 
     if (snapshot && (!getAnchor(this.location) || snapshot.hasAnchor(getAnchor(this.location)))) {
-      if (this.action == "restore" || snapshot.isPreviewable()) {
+      if (this.action == "restore" || snapshot.isPreviewable) {
         return snapshot
       }
     }
@@ -221,7 +221,7 @@ export class Visit implements FetchRequestDelegate {
 
   getPreloadedSnapshot() {
     if (this.snapshotHTML) {
-      return Snapshot.wrap(this.snapshotHTML)
+      return PageSnapshot.fromHTMLString(this.snapshotHTML)
     }
   }
 

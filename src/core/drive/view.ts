@@ -1,11 +1,11 @@
 import { ErrorRenderer } from "./error_renderer"
-import { Snapshot } from "./snapshot"
+import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { RenderCallback, RenderDelegate, SnapshotRenderer } from "./snapshot_renderer"
 import { Position } from "../types"
 import { nextMicrotask } from "../../util"
 
-export type RenderOptions = { snapshot: Snapshot, error: string, isPreview: boolean }
+export type RenderOptions = { snapshot: PageSnapshot, error: string, isPreview: boolean }
 
 export type ViewDelegate = RenderDelegate & {
   viewWillCacheSnapshot(): void
@@ -22,15 +22,15 @@ export class View {
   }
 
   getRootLocation(): URL {
-    return this.getSnapshot().getRootLocation()
+    return this.getSnapshot().rootLocation
   }
 
   getElementForAnchor(anchor: string) {
     return this.getSnapshot().getElementForAnchor(anchor)
   }
 
-  getSnapshot(): Snapshot {
-    return Snapshot.fromHTMLElement(this.htmlElement)
+  getSnapshot(): PageSnapshot {
+    return PageSnapshot.fromHTMLElement(this.htmlElement)
   }
 
   clearSnapshotCache() {
@@ -38,7 +38,7 @@ export class View {
   }
 
   shouldCacheSnapshot() {
-    return this.getSnapshot().isCacheable()
+    return this.getSnapshot().isCacheable
   }
 
   async cacheSnapshot() {
@@ -93,7 +93,7 @@ export class View {
     }
   }
 
-  renderSnapshot(snapshot: Snapshot, isPreview: boolean | undefined, callback: RenderCallback) {
+  renderSnapshot(snapshot: PageSnapshot, isPreview: boolean | undefined, callback: RenderCallback) {
     SnapshotRenderer.render(this.delegate, callback, this.getSnapshot(), snapshot, isPreview || false)
   }
 

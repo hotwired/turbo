@@ -1,17 +1,7 @@
 import { HeadDetails } from "./head_details"
 import { expandURL } from "../url"
 
-export class Snapshot {
-  static wrap(value: Snapshot | string | HTMLHtmlElement) {
-    if (value instanceof this) {
-      return value
-    } else if (typeof value == "string") {
-      return this.fromHTMLString(value)
-    } else {
-      return this.fromHTMLElement(value)
-    }
-  }
-
+export class PageSnapshot {
   static fromHTMLString(html: string) {
     const { documentElement } = new DOMParser().parseFromString(html, "text/html")
     return this.fromHTMLElement(documentElement as HTMLHtmlElement)
@@ -32,17 +22,17 @@ export class Snapshot {
     this.bodyElement = bodyElement
   }
 
-  clone(): Snapshot {
-    const { bodyElement } = Snapshot.fromHTMLString(this.bodyElement.outerHTML)
-    return new Snapshot(this.headDetails, bodyElement)
+  clone(): PageSnapshot {
+    const { bodyElement } = PageSnapshot.fromHTMLString(this.bodyElement.outerHTML)
+    return new PageSnapshot(this.headDetails, bodyElement)
   }
 
-  getRootLocation(): URL {
+  get rootLocation(): URL {
     const root = this.getSetting("root", "/")
     return expandURL(root)
   }
 
-  getCacheControlValue() {
+  get cacheControlValue() {
     return this.getSetting("cache-control")
   }
 
@@ -54,7 +44,7 @@ export class Snapshot {
     }
   }
 
-  getPermanentElements() {
+  get permanentElements() {
     return [ ...this.bodyElement.querySelectorAll("[id][data-turbo-permanent]") ]
   }
 
@@ -62,11 +52,11 @@ export class Snapshot {
     return this.bodyElement.querySelector(`#${id}[data-turbo-permanent]`)
   }
 
-  getPermanentElementsPresentInSnapshot(snapshot: Snapshot) {
-    return this.getPermanentElements().filter(({ id }) => snapshot.getPermanentElementById(id))
+  getPermanentElementsPresentInSnapshot(snapshot: PageSnapshot) {
+    return this.permanentElements.filter(({ id }) => snapshot.getPermanentElementById(id))
   }
 
-  findFirstAutofocusableElement() {
+  get firstAutofocusableElement() {
     return this.bodyElement.querySelector("[autofocus]")
   }
 
@@ -74,15 +64,15 @@ export class Snapshot {
     return this.getElementForAnchor(anchor) != null
   }
 
-  isPreviewable() {
-    return this.getCacheControlValue() != "no-preview"
+  get isPreviewable() {
+    return this.cacheControlValue != "no-preview"
   }
 
-  isCacheable() {
-    return this.getCacheControlValue() != "no-cache"
+  get isCacheable() {
+    return this.cacheControlValue != "no-cache"
   }
 
-  isVisitable() {
+  get isVisitable() {
     return this.getSetting("visit-control") != "reload"
   }
 

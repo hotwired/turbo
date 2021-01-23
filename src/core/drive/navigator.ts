@@ -3,7 +3,7 @@ import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
 import { expandURL, Locatable } from "../url"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
-import { Snapshot } from "./snapshot"
+import { PageSnapshot } from "./page_snapshot"
 
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocation(location: URL): boolean
@@ -89,7 +89,7 @@ export class Navigator {
     const responseHTML = await fetchResponse.responseHTML
 
     if (responseHTML) {
-      const snapshot = Snapshot.fromHTMLString(responseHTML)
+      const snapshot = PageSnapshot.fromHTMLString(responseHTML)
       this.view.render({ snapshot }, () => {})
       this.view.clearSnapshotCache()
     }
