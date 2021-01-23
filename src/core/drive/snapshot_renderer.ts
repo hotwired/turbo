@@ -1,4 +1,3 @@
-import { HeadDetails } from "./head_details"
 import { RenderCallback, RenderDelegate, Renderer } from "./renderer"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -11,10 +10,7 @@ export type Placeholder = { element: Element, permanentElement: PermanentElement
 export class SnapshotRenderer extends Renderer {
   readonly delegate: RenderDelegate
   readonly currentSnapshot: PageSnapshot
-  readonly currentHeadDetails: HeadDetails
   readonly newSnapshot: PageSnapshot
-  readonly newHeadDetails: HeadDetails
-  readonly newBody: HTMLBodyElement
   readonly isPreview: boolean
 
   static render(delegate: RenderDelegate, callback: RenderCallback, currentSnapshot: PageSnapshot, newSnapshot: PageSnapshot, isPreview: boolean) {
@@ -25,11 +21,20 @@ export class SnapshotRenderer extends Renderer {
     super()
     this.delegate = delegate
     this.currentSnapshot = currentSnapshot
-    this.currentHeadDetails = currentSnapshot.headDetails
     this.newSnapshot = newSnapshot
-    this.newHeadDetails = newSnapshot.headDetails
-    this.newBody = newSnapshot.bodyElement
     this.isPreview = isPreview
+  }
+
+  get currentHeadSnapshot() {
+    return this.currentSnapshot.headSnapshot
+  }
+
+  get newHeadSnapshot() {
+    return this.newSnapshot.headSnapshot
+  }
+
+  get newBody() {
+    return this.newSnapshot.rootNode as HTMLBodyElement
   }
 
   render(callback: RenderCallback) {
@@ -66,7 +71,7 @@ export class SnapshotRenderer extends Renderer {
   }
 
   trackedElementsAreIdentical() {
-    return this.currentHeadDetails.getTrackedElementSignature() == this.newHeadDetails.getTrackedElementSignature()
+    return this.currentHeadSnapshot.trackedElementSignature == this.newHeadSnapshot.trackedElementSignature
   }
 
   copyNewHeadStylesheetElements() {
@@ -142,19 +147,19 @@ export class SnapshotRenderer extends Renderer {
   }
 
   getNewHeadStylesheetElements() {
-    return this.newHeadDetails.getStylesheetElementsNotInDetails(this.currentHeadDetails)
+    return this.newHeadSnapshot.getStylesheetElementsNotInSnapshot(this.currentHeadSnapshot)
   }
 
   getNewHeadScriptElements() {
-    return this.newHeadDetails.getScriptElementsNotInDetails(this.currentHeadDetails)
+    return this.newHeadSnapshot.getScriptElementsNotInSnapshot(this.currentHeadSnapshot)
   }
 
   getCurrentHeadProvisionalElements() {
-    return this.currentHeadDetails.getProvisionalElements()
+    return this.currentHeadSnapshot.provisionalElements
   }
 
   getNewHeadProvisionalElements() {
-    return this.newHeadDetails.getProvisionalElements()
+    return this.newHeadSnapshot.provisionalElements
   }
 
   getCurrentBodyPermanentElements(): PermanentElement[] {

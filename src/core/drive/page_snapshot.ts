@@ -1,30 +1,34 @@
-import { HeadDetails } from "./head_details"
+import { Snapshot, SnapshotRootNode } from "../snapshot"
 import { expandURL } from "../url"
+import { HeadSnapshot } from "./head_snapshot"
 
-export class PageSnapshot {
+export class PageSnapshot extends Snapshot {
   static fromHTMLString(html: string) {
-    const { documentElement } = new DOMParser().parseFromString(html, "text/html")
-    return this.fromHTMLElement(documentElement as HTMLHtmlElement)
+    const document = new DOMParser().parseFromString(html, "text/html")
+    return this.fromDocument(document)
   }
 
-  static fromHTMLElement(htmlElement: HTMLHtmlElement) {
-    const headElement = htmlElement.querySelector("head")
-    const bodyElement = htmlElement.querySelector("body") || document.createElement("body")
-    const headDetails = HeadDetails.fromHeadElement(headElement)
-    return new this(headDetails, bodyElement)
+  static fromHTMLElement(element: HTMLElement) {
+    return this.fromDocument(element.ownerDocument)
   }
 
-  readonly headDetails: HeadDetails
-  readonly bodyElement: HTMLBodyElement
-
-  constructor(headDetails: HeadDetails, bodyElement: HTMLBodyElement) {
-    this.headDetails = headDetails
-    this.bodyElement = bodyElement
+  static fromDocument({ head, body }: Document) {
+    return new this(body, new HeadSnapshot(head))
   }
 
-  clone(): PageSnapshot {
-    const { bodyElement } = PageSnapshot.fromHTMLString(this.bodyElement.outerHTML)
-    return new PageSnapshot(this.headDetails, bodyElement)
+  readonly headSnapshot: HeadSnapshot
+
+  constructor(rootNode: SnapshotRootNode, headSnapshot: HeadSnapshot) {
+    super(rootNode)
+    this.headSnapshot = headSnapshot
+  }
+
+  clone() {
+    return new PageSnapshot(this.rootNode.cloneNode(true), this.headSnapshot)
+  }
+
+  get headElement() {
+    return this.headSnapshot.rootNode as HTMLHeadElement
   }
 
   get rootLocation(): URL {
@@ -34,34 +38,6 @@ export class PageSnapshot {
 
   get cacheControlValue() {
     return this.getSetting("cache-control")
-  }
-
-  getElementForAnchor(anchor: string) {
-    try {
-      return this.bodyElement.querySelector(`[id='${anchor}'], a[name='${anchor}']`)
-    } catch {
-      return null
-    }
-  }
-
-  get permanentElements() {
-    return [ ...this.bodyElement.querySelectorAll("[id][data-turbo-permanent]") ]
-  }
-
-  getPermanentElementById(id: string) {
-    return this.bodyElement.querySelector(`#${id}[data-turbo-permanent]`)
-  }
-
-  getPermanentElementsPresentInSnapshot(snapshot: PageSnapshot) {
-    return this.permanentElements.filter(({ id }) => snapshot.getPermanentElementById(id))
-  }
-
-  get firstAutofocusableElement() {
-    return this.bodyElement.querySelector("[autofocus]")
-  }
-
-  hasAnchor(anchor: string) {
-    return this.getElementForAnchor(anchor) != null
   }
 
   get isPreviewable() {
@@ -81,7 +57,7 @@ export class PageSnapshot {
   getSetting(name: string): string | undefined
   getSetting(name: string, defaultValue: string): string
   getSetting(name: string, defaultValue?: string) {
-    const value = this.headDetails.getMetaValue(`turbo-${name}`)
+    const value = this.headSnapshot.getMetaValue(`turbo-${name}`)
     return value == null ? defaultValue : value
   }
 }
