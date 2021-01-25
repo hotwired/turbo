@@ -5,6 +5,10 @@ type ResolvingFunctions<T = unknown> = {
   reject(reason?: any): void
 }
 
+export type PermanentElement = Element & { id: string }
+
+export type Placeholder = { element: Element, permanentElement: PermanentElement }
+
 export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapshot<E>> {
   readonly currentSnapshot: S
   readonly newSnapshot: S
@@ -60,5 +64,57 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
 function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
   for (const { name, value } of [ ...sourceElement.attributes ]) {
     destinationElement.setAttribute(name, value)
+  }
+}
+
+function createPlaceholderForPermanentElement(permanentElement: PermanentElement) {
+  const element = document.createElement("meta")
+  element.setAttribute("name", "turbo-permanent-placeholder")
+  element.setAttribute("content", permanentElement.id)
+  return { element, permanentElement }
+}
+
+function replacePlaceholderElementsWithClonedPermanentElements(placeholders: Placeholder[]) {
+  for (const { element, permanentElement } of placeholders) {
+    const clonedElement = permanentElement.cloneNode(true)
+    replaceElementWithElement(element, clonedElement)
+  }
+}
+
+function relocatePermanentElements(currentSnapshot: Snapshot, newSnapshot: Snapshot) {
+  return currentSnapshot.getPermanentElementsPresentInSnapshot(newSnapshot).reduce((placeholders, permanentElement) => {
+    const newElement = newSnapshot.getPermanentElementById(permanentElement.id)
+    if (newElement) {
+      const placeholder = createPlaceholderForPermanentElement(permanentElement)
+      replaceElementWithElement(permanentElement, placeholder.element)
+      replaceElementWithElement(newElement, permanentElement)
+      return [ ...placeholders, placeholder ]
+    } else {
+      return placeholders
+    }
+  }, [] as Placeholder[])
+}
+
+export function replaceElementWithElement(fromElement: Element, toElement: Element) {
+  const parentElement = fromElement.parentElement
+  if (parentElement) {
+    return parentElement.replaceChild(toElement, fromElement)
+  }
+}
+
+export function renderSnapshotWithPermanentElements(currentSnapshot: Snapshot, newSnapshot: Snapshot, render: () => void) {
+  const placeholders = relocatePermanentElements(currentSnapshot, newSnapshot)
+  render()
+  replacePlaceholderElementsWithClonedPermanentElements(placeholders)
+}
+
+function elementIsFocusable(element: any): element is { focus: () => void } {
+  return element && typeof element.focus == "function"
+}
+
+export function focusFirstAutofocusableElement(snapshot: Snapshot) {
+  const element = snapshot.firstAutofocusableElement
+  if (elementIsFocusable(element)) {
+    element.focus()
   }
 }

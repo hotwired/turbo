@@ -1,6 +1,6 @@
 import { FrameElement } from "../../elements/frame_element"
 import { nextAnimationFrame } from "../../util"
-import { Renderer } from "../renderer"
+import { Renderer, focusFirstAutofocusableElement, renderSnapshotWithPermanentElements } from "../renderer"
 
 export class FrameRenderer extends Renderer<FrameElement> {
   get shouldRender() {
@@ -9,13 +9,15 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   async render() {
     await nextAnimationFrame()
-    this.loadFrameElement()
+    renderSnapshotWithPermanentElements(this.currentSnapshot, this.newSnapshot, () => {
+      this.loadFrameElement()
+    })
     this.scrollFrameIntoView()
     await nextAnimationFrame()
-    this.focusFirstAutofocusableElement()
+    focusFirstAutofocusableElement(this.newSnapshot)
   }
 
-  loadFrameElement() {
+  private loadFrameElement() {
     const destinationRange = document.createRange()
     destinationRange.selectNodeContents(this.currentElement)
     destinationRange.deleteContents()
@@ -28,7 +30,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
     }
   }
 
-  scrollFrameIntoView() {
+  private scrollFrameIntoView() {
     if (this.currentElement.autoscroll || this.newElement.autoscroll) {
       const element = this.currentElement.firstElementChild
       const block = readScrollLogicalPosition(this.currentElement.getAttribute("data-autoscroll-block"), "end")
@@ -39,24 +41,6 @@ export class FrameRenderer extends Renderer<FrameElement> {
       }
     }
     return false
-  }
-
-  focusFirstAutofocusableElement() {
-    const element = this.firstAutofocusableElement
-    if (element) {
-      element.focus()
-      return true
-    }
-    return false
-  }
-
-  get id() {
-    return this.currentElement.id
-  }
-
-  get firstAutofocusableElement() {
-    const element = this.currentElement.querySelector("[autofocus]")
-    return element instanceof HTMLElement ? element : null
   }
 }
 
