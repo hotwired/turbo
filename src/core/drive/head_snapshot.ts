@@ -1,61 +1,54 @@
+import { Snapshot } from "../snapshot"
+
 type ElementDetailMap = { [outerHTML: string]: ElementDetails }
 
 type ElementDetails = { type?: ElementType, tracked: boolean, elements: Element[] }
 
 type ElementType = "script" | "stylesheet"
 
-export class HeadDetails {
-  readonly detailsByOuterHTML: ElementDetailMap
-
-  static fromHeadElement(headElement: HTMLHeadElement | null): HeadDetails {
-    const children = headElement ? [ ...headElement.children ] : []
-    return new this(children)
-  }
-
-  constructor(children: Element[]) {
-    this.detailsByOuterHTML = children.reduce((result, element) => {
-      const { outerHTML } = element
-      const details: ElementDetails
-        = outerHTML in result
-        ? result[outerHTML]
-        : {
-          type: elementType(element),
-          tracked: elementIsTracked(element),
-          elements: []
-        }
-      return {
-        ...result,
-        [outerHTML]: {
-          ...details,
-          elements: [ ...details.elements, element ]
-        }
+export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
+  readonly detailsByOuterHTML = this.children.reduce((result, element) => {
+    const { outerHTML } = element
+    const details: ElementDetails
+      = outerHTML in result
+      ? result[outerHTML]
+      : {
+        type: elementType(element),
+        tracked: elementIsTracked(element),
+        elements: []
       }
-    }, {} as ElementDetailMap)
-  }
+    return {
+      ...result,
+      [outerHTML]: {
+        ...details,
+        elements: [ ...details.elements, element ]
+      }
+    }
+  }, {} as ElementDetailMap)
 
-  getTrackedElementSignature(): string {
+  get trackedElementSignature(): string {
     return Object.keys(this.detailsByOuterHTML)
       .filter(outerHTML => this.detailsByOuterHTML[outerHTML].tracked)
       .join("")
   }
 
-  getScriptElementsNotInDetails(headDetails: HeadDetails) {
-    return this.getElementsMatchingTypeNotInDetails("script", headDetails)
+  getScriptElementsNotInSnapshot(snapshot: HeadSnapshot) {
+    return this.getElementsMatchingTypeNotInSnapshot("script", snapshot)
   }
 
-  getStylesheetElementsNotInDetails(headDetails: HeadDetails) {
-    return this.getElementsMatchingTypeNotInDetails("stylesheet", headDetails)
+  getStylesheetElementsNotInSnapshot(snapshot: HeadSnapshot) {
+    return this.getElementsMatchingTypeNotInSnapshot("stylesheet", snapshot)
   }
 
-  getElementsMatchingTypeNotInDetails(matchedType: ElementType, headDetails: HeadDetails) {
+  getElementsMatchingTypeNotInSnapshot(matchedType: ElementType, snapshot: HeadSnapshot) {
     return Object.keys(this.detailsByOuterHTML)
-      .filter(outerHTML => !(outerHTML in headDetails.detailsByOuterHTML))
+      .filter(outerHTML => !(outerHTML in snapshot.detailsByOuterHTML))
       .map(outerHTML => this.detailsByOuterHTML[outerHTML])
       .filter(({ type }) => type == matchedType)
       .map(({ elements: [element] }) => element)
   }
 
-  getProvisionalElements(): Element[] {
+  get provisionalElements(): Element[] {
     return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
       const { type, tracked, elements } = this.detailsByOuterHTML[outerHTML]
       if (type == null && !tracked) {
