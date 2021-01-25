@@ -1,14 +1,12 @@
-export type SnapshotRootNode = Node & ParentNode
-
 export class Snapshot {
-  readonly rootNode: SnapshotRootNode
+  readonly element: Element
 
-  constructor(rootNode: SnapshotRootNode) {
-    this.rootNode = rootNode
+  constructor(element: Element) {
+    this.element = element
   }
 
   get children() {
-    return [ ...this.rootNode.children ]
+    return [ ...this.element.children ]
   }
 
   hasAnchor(anchor: string) {
@@ -17,22 +15,22 @@ export class Snapshot {
 
   getElementForAnchor(anchor: string) {
     try {
-      return this.rootNode.querySelector(`[id='${anchor}'], a[name='${anchor}']`)
+      return this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`)
     } catch {
       return null
     }
   }
 
   get firstAutofocusableElement() {
-    return this.rootNode.querySelector("[autofocus]")
+    return this.element.querySelector("[autofocus]")
   }
 
   get permanentElements() {
-    return [ ...this.rootNode.querySelectorAll("[id][data-turbo-permanent]") ]
+    return [ ...this.element.querySelectorAll("[id][data-turbo-permanent]") ]
   }
 
   getPermanentElementById(id: string) {
-    return this.rootNode.querySelector(`#${id}[data-turbo-permanent]`)
+    return this.element.querySelector(`#${id}[data-turbo-permanent]`)
   }
 
   getPermanentElementsPresentInSnapshot(snapshot: Snapshot) {

@@ -33,8 +33,8 @@ export class PageRenderer extends Renderer<PageSnapshot> {
     return this.toSnapshot.headSnapshot
   }
 
-  get toRootNode() {
-    return this.toSnapshot.rootNode
+  get toElement() {
+    return this.toSnapshot.element
   }
 
   mergeHead() {
@@ -101,7 +101,7 @@ export class PageRenderer extends Renderer<PageSnapshot> {
   }
 
   activateNewBody() {
-    document.adoptNode(this.toRootNode)
+    document.adoptNode(this.toElement)
     this.activateNewBodyScriptElements()
   }
 
@@ -113,10 +113,10 @@ export class PageRenderer extends Renderer<PageSnapshot> {
   }
 
   assignNewBody() {
-    if (document.body && this.toRootNode instanceof HTMLBodyElement) {
-      replaceElementWithElement(document.body, this.toRootNode)
+    if (document.body && this.toElement instanceof HTMLBodyElement) {
+      replaceElementWithElement(document.body, this.toElement)
     } else {
-      document.documentElement.appendChild(this.toRootNode)
+      document.documentElement.appendChild(this.toElement)
     }
   }
 
@@ -148,7 +148,7 @@ export class PageRenderer extends Renderer<PageSnapshot> {
   }
 
   getNewBodyScriptElements() {
-    return [ ...this.toRootNode.querySelectorAll("script") ]
+    return [ ...this.toElement.querySelectorAll("script") ]
   }
 }
 

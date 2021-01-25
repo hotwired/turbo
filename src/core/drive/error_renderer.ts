@@ -10,7 +10,7 @@ export class ErrorRenderer extends Renderer<PageSnapshot> {
   replaceHeadAndBody() {
     const { documentElement, head, body } = document
     documentElement.replaceChild(this.toHead, head)
-    documentElement.replaceChild(this.toRootNode, body)
+    documentElement.replaceChild(this.toElement, body)
   }
 
   activateScriptElements() {
@@ -24,7 +24,7 @@ export class ErrorRenderer extends Renderer<PageSnapshot> {
   }
 
   get toHead() {
-    return this.toSnapshot.headSnapshot.rootNode
+    return this.toSnapshot.headSnapshot.element
   }
 
   get scriptElements() {

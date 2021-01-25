@@ -48,12 +48,12 @@ export abstract class Renderer<S extends Snapshot = Snapshot> {
     }
   }
 
-  get fromRootNode() {
-    return this.fromSnapshot.rootNode
+  get fromElement() {
+    return this.fromSnapshot.element
   }
 
-  get toRootNode() {
-    return this.toSnapshot.rootNode
+  get toElement() {
+    return this.toSnapshot.element
   }
 }
 

@@ -1,4 +1,4 @@
-import { Snapshot, SnapshotRootNode } from "../snapshot"
+import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
 
@@ -18,17 +18,17 @@ export class PageSnapshot extends Snapshot {
 
   readonly headSnapshot: HeadSnapshot
 
-  constructor(rootNode: SnapshotRootNode, headSnapshot: HeadSnapshot) {
-    super(rootNode)
+  constructor(element: Element, headSnapshot: HeadSnapshot) {
+    super(element)
     this.headSnapshot = headSnapshot
   }
 
   clone() {
-    return new PageSnapshot(this.rootNode.cloneNode(true), this.headSnapshot)
+    return new PageSnapshot(this.element.cloneNode(true), this.headSnapshot)
   }
 
   get headElement() {
-    return this.headSnapshot.rootNode as HTMLHeadElement
+    return this.headSnapshot.element as HTMLHeadElement
   }
 
   get rootLocation(): URL {
