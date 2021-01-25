@@ -188,7 +188,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   }
 
   viewWillRenderSnapshot({ element }: PageSnapshot, isPreview: boolean) {
-    this.notifyApplicationBeforeRender(element as HTMLBodyElement)
+    this.notifyApplicationBeforeRender(element)
   }
 
   viewRenderedSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
