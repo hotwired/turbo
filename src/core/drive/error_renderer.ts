@@ -1,7 +1,7 @@
 import { PageSnapshot } from "./page_snapshot"
 import { Renderer } from "../renderer"
 
-export class ErrorRenderer extends Renderer<PageSnapshot> {
+export class ErrorRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   async render() {
     this.replaceHeadAndBody()
     this.activateScriptElements()

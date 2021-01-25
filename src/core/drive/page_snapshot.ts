@@ -1,24 +1,24 @@
+import { parseHTMLDocument } from "../../util"
 import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
 
-export class PageSnapshot extends Snapshot {
+export class PageSnapshot extends Snapshot<HTMLBodyElement> {
   static fromHTMLString(html = "") {
-    const document = new DOMParser().parseFromString(html, "text/html")
-    return this.fromDocument(document)
+    return this.fromDocument(parseHTMLDocument(html))
   }
 
-  static fromHTMLElement(element: HTMLElement) {
+  static fromElement(element: Element) {
     return this.fromDocument(element.ownerDocument)
   }
 
   static fromDocument({ head, body }: Document) {
-    return new this(body, new HeadSnapshot(head))
+    return new this(body as HTMLBodyElement, new HeadSnapshot(head))
   }
 
   readonly headSnapshot: HeadSnapshot
 
-  constructor(element: Element, headSnapshot: HeadSnapshot) {
+  constructor(element: HTMLBodyElement, headSnapshot: HeadSnapshot) {
     super(element)
     this.headSnapshot = headSnapshot
   }
@@ -28,7 +28,7 @@ export class PageSnapshot extends Snapshot {
   }
 
   get headElement() {
-    return this.headSnapshot.element as HTMLHeadElement
+    return this.headSnapshot.element
   }
 
   get rootLocation(): URL {

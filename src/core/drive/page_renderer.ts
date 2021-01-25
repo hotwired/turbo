@@ -5,7 +5,7 @@ export type PermanentElement = Element & { id: string }
 
 export type Placeholder = { element: Element, permanentElement: PermanentElement }
 
-export class PageRenderer extends Renderer<PageSnapshot> {
+export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }

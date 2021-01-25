@@ -5,7 +5,7 @@ type ResolvingFunctions<T = unknown> = {
   reject(reason?: any): void
 }
 
-export abstract class Renderer<S extends Snapshot = Snapshot> {
+export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapshot<E>> {
   readonly currentSnapshot: S
   readonly newSnapshot: S
   readonly isPreview: boolean

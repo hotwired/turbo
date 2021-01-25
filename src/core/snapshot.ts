@@ -1,7 +1,7 @@
-export class Snapshot {
-  readonly element: Element
+export class Snapshot<E extends Element = Element> {
+  readonly element: E
 
-  constructor(element: Element) {
+  constructor(element: E) {
     this.element = element
   }
 

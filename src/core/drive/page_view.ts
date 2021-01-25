@@ -11,7 +11,7 @@ export interface PageViewDelegate extends ViewDelegate<PageSnapshot> {
 
 type PageViewRenderer = PageRenderer | ErrorRenderer
 
-export class PageView extends View<PageSnapshot, PageViewDelegate, PageViewRenderer> {
+export class PageView extends View<Element, PageSnapshot, PageViewRenderer, PageViewDelegate> {
   readonly snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
 
@@ -43,7 +43,7 @@ export class PageView extends View<PageSnapshot, PageViewDelegate, PageViewRende
   }
 
   get snapshot() {
-    return PageSnapshot.fromHTMLElement(this.element)
+    return PageSnapshot.fromElement(this.element)
   }
 
   get shouldCacheSnapshot() {

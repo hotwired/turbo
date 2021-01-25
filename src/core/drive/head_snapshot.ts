@@ -6,7 +6,7 @@ type ElementDetails = { type?: ElementType, tracked: boolean, elements: Element[
 
 type ElementType = "script" | "stylesheet"
 
-export class HeadSnapshot extends Snapshot {
+export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
   readonly detailsByOuterHTML = this.children.reduce((result, element) => {
     const { outerHTML } = element
     const details: ElementDetails

@@ -8,13 +8,13 @@ export interface ViewDelegate<S extends Snapshot> {
   viewInvalidated(): void
 }
 
-export abstract class View<S extends Snapshot, D extends ViewDelegate<S>, R extends Renderer<S>> {
+export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E>, R extends Renderer<E, S> = Renderer<E, S>, D extends ViewDelegate<S> = ViewDelegate<S>> {
   readonly delegate: D
-  readonly element: HTMLElement
+  readonly element: E
   renderer?: R
   abstract readonly snapshot: S
 
-  constructor(delegate: D, element: HTMLElement) {
+  constructor(delegate: D, element: E) {
     this.delegate = delegate
     this.element = element
   }
@@ -62,8 +62,12 @@ export abstract class View<S extends Snapshot, D extends ViewDelegate<S>, R exte
         delete this.renderer
       }
     } else {
-      this.delegate.viewInvalidated()
+      this.invalidate()
     }
+  }
+
+  invalidate() {
+    this.delegate.viewInvalidated()
   }
 
   prepareToRenderSnapshot(renderer: R) {
