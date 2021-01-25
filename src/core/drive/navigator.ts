@@ -90,7 +90,7 @@ export class Navigator {
 
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
-      this.view.render({ snapshot }, () => {})
+      await this.view.renderPage(snapshot)
       this.view.clearSnapshotCache()
     }
   }

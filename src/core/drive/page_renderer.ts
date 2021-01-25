@@ -1,55 +1,40 @@
-import { RenderCallback, RenderDelegate, Renderer } from "../renderer"
+import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
-
-export { RenderCallback, RenderDelegate } from "../renderer"
 
 export type PermanentElement = Element & { id: string }
 
 export type Placeholder = { element: Element, permanentElement: PermanentElement }
 
-export class PageRenderer extends Renderer {
-  readonly delegate: RenderDelegate
-  readonly currentSnapshot: PageSnapshot
-  readonly newSnapshot: PageSnapshot
-  readonly isPreview: boolean
-
-  static render(delegate: RenderDelegate, callback: RenderCallback, currentSnapshot: PageSnapshot, newSnapshot: PageSnapshot, isPreview: boolean) {
-    return new this(delegate, currentSnapshot, newSnapshot, isPreview).render(callback)
+export class PageRenderer extends Renderer<PageSnapshot> {
+  get shouldRender() {
+    return this.toSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
 
-  constructor(delegate: RenderDelegate, currentSnapshot: PageSnapshot, newSnapshot: PageSnapshot, isPreview: boolean) {
-    super()
-    this.delegate = delegate
-    this.currentSnapshot = currentSnapshot
-    this.newSnapshot = newSnapshot
-    this.isPreview = isPreview
+  prepareToRender() {
+    this.mergeHead()
+  }
+
+  async render() {
+    this.replaceBody()
+  }
+
+  finishRendering() {
+    super.finishRendering()
+    if (this.isPreview) {
+      this.focusFirstAutofocusableElement()
+    }
   }
 
   get currentHeadSnapshot() {
-    return this.currentSnapshot.headSnapshot
+    return this.fromSnapshot.headSnapshot
   }
 
   get newHeadSnapshot() {
-    return this.newSnapshot.headSnapshot
+    return this.toSnapshot.headSnapshot
   }
 
-  get newBody() {
-    return this.newSnapshot.rootNode as HTMLBodyElement
-  }
-
-  render(callback: RenderCallback) {
-    if (this.shouldRender()) {
-      this.mergeHead()
-      this.renderView(() => {
-        this.replaceBody()
-        if (!this.isPreview) {
-          this.focusFirstAutofocusableElement()
-        }
-        callback()
-      })
-    } else {
-      this.invalidateView()
-    }
+  get toRootNode() {
+    return this.toSnapshot.rootNode
   }
 
   mergeHead() {
@@ -66,11 +51,7 @@ export class PageRenderer extends Renderer {
     this.replacePlaceholderElementsWithClonedPermanentElements(placeholders)
   }
 
-  shouldRender() {
-    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical()
-  }
-
-  trackedElementsAreIdentical() {
+  get trackedElementsAreIdentical() {
     return this.currentHeadSnapshot.trackedElementSignature == this.newHeadSnapshot.trackedElementSignature
   }
 
@@ -100,7 +81,7 @@ export class PageRenderer extends Renderer {
 
   relocateCurrentBodyPermanentElements() {
     return this.getCurrentBodyPermanentElements().reduce((placeholders, permanentElement) => {
-      const newElement = this.newSnapshot.getPermanentElementById(permanentElement.id)
+      const newElement = this.toSnapshot.getPermanentElementById(permanentElement.id)
       if (newElement) {
         const placeholder = createPlaceholderForPermanentElement(permanentElement)
         replaceElementWithElement(permanentElement, placeholder.element)
@@ -120,7 +101,7 @@ export class PageRenderer extends Renderer {
   }
 
   activateNewBody() {
-    document.adoptNode(this.newBody)
+    document.adoptNode(this.toRootNode)
     this.activateNewBodyScriptElements()
   }
 
@@ -132,15 +113,15 @@ export class PageRenderer extends Renderer {
   }
 
   assignNewBody() {
-    if (document.body) {
-      replaceElementWithElement(document.body, this.newBody)
+    if (document.body && this.toRootNode instanceof HTMLBodyElement) {
+      replaceElementWithElement(document.body, this.toRootNode)
     } else {
-      document.documentElement.appendChild(this.newBody)
+      document.documentElement.appendChild(this.toRootNode)
     }
   }
 
   focusFirstAutofocusableElement() {
-    const element = this.newSnapshot.firstAutofocusableElement
+    const element = this.toSnapshot.firstAutofocusableElement
     if (elementIsFocusable(element)) {
       element.focus()
     }
@@ -163,11 +144,11 @@ export class PageRenderer extends Renderer {
   }
 
   getCurrentBodyPermanentElements(): PermanentElement[] {
-    return this.currentSnapshot.getPermanentElementsPresentInSnapshot(this.newSnapshot)
+    return this.fromSnapshot.getPermanentElementsPresentInSnapshot(this.toSnapshot)
   }
 
   getNewBodyScriptElements() {
-    return [ ...this.newBody.querySelectorAll("script") ]
+    return [ ...this.toRootNode.querySelectorAll("script") ]
   }
 }
 

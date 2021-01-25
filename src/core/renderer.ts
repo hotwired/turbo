@@ -1,23 +1,39 @@
-export type RenderCallback = () => void
+import { Snapshot } from "./snapshot"
 
-export interface RenderDelegate {
-  viewWillRender(newBody: HTMLBodyElement): void
-  viewRendered(newBody: HTMLBodyElement): void
-  viewInvalidated(): void
+type ResolvingFunctions<T = unknown> = {
+  resolve(value: T | PromiseLike<T>): void
+  reject(reason?: any): void
 }
 
-export abstract class Renderer {
-  abstract delegate: RenderDelegate
-  abstract newBody: HTMLBodyElement
+export abstract class Renderer<S extends Snapshot = Snapshot> {
+  readonly fromSnapshot: S
+  readonly toSnapshot: S
+  readonly isPreview: boolean
+  readonly promise: Promise<void>
+  private resolvingFunctions?: ResolvingFunctions<void>
 
-  renderView(callback: RenderCallback) {
-    this.delegate.viewWillRender(this.newBody)
-    callback()
-    this.delegate.viewRendered(this.newBody)
+  constructor(fromSnapshot: S, toSnapshot: S, isPreview: boolean) {
+    this.fromSnapshot = fromSnapshot
+    this.toSnapshot = toSnapshot
+    this.isPreview = isPreview
+    this.promise = new Promise((resolve, reject) => this.resolvingFunctions = { resolve, reject })
   }
 
-  invalidateView() {
-    this.delegate.viewInvalidated()
+  get shouldRender() {
+    return true
+  }
+
+  prepareToRender() {
+    return
+  }
+
+  abstract render(): Promise<void>
+
+  finishRendering() {
+    if (this.resolvingFunctions) {
+      this.resolvingFunctions.resolve()
+      delete this.resolvingFunctions
+    }
   }
 
   createScriptElement(element: Element) {
@@ -30,6 +46,14 @@ export abstract class Renderer {
       copyElementAttributes(createdScriptElement, element)
       return createdScriptElement
     }
+  }
+
+  get fromRootNode() {
+    return this.fromSnapshot.rootNode
+  }
+
+  get toRootNode() {
+    return this.toSnapshot.rootNode
   }
 }
 

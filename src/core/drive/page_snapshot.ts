@@ -3,7 +3,7 @@ import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
 
 export class PageSnapshot extends Snapshot {
-  static fromHTMLString(html: string) {
+  static fromHTMLString(html = "") {
     const document = new DOMParser().parseFromString(html, "text/html")
     return this.fromDocument(document)
   }

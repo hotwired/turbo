@@ -12,15 +12,16 @@ import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
 import { dispatch } from "../util"
-import { View } from "./drive/view"
+import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
+import { PageSnapshot } from "./drive/page_snapshot"
 
 export type TimingData = {}
 
-export class Session implements HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate {
+export class Session implements HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate, PageViewDelegate {
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
-  readonly view = new View(this)
+  readonly view = new PageView(this, document.documentElement)
   adapter: Adapter = new BrowserAdapter(this)
 
   readonly pageObserver = new PageObserver(this)
@@ -180,23 +181,23 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
     this.renderStreamMessage(message)
   }
 
-  // View delegate
+  // Page view delegate
 
-  viewWillRender(newBody: HTMLBodyElement) {
-    this.notifyApplicationBeforeRender(newBody)
+  viewWillCacheSnapshot() {
+    this.notifyApplicationBeforeCachingSnapshot()
   }
 
-  viewRendered() {
+  viewWillRenderSnapshot({ rootNode }: PageSnapshot, isPreview: boolean) {
+    this.notifyApplicationBeforeRender(rootNode as HTMLBodyElement)
+  }
+
+  viewRenderedSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender()
   }
 
   viewInvalidated() {
     this.adapter.pageInvalidated()
-  }
-
-  viewWillCacheSnapshot() {
-    this.notifyApplicationBeforeCachingSnapshot()
   }
 
   // Application events
@@ -256,6 +257,10 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   }
 
   locationIsVisitable(location: URL) {
-    return isPrefixedBy(location, this.view.getRootLocation()) && isHTML(location)
+    return isPrefixedBy(location, this.snapshot.rootLocation) && isHTML(location)
+  }
+
+  get snapshot() {
+    return this.view.snapshot
   }
 }
