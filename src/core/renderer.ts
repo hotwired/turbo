@@ -6,15 +6,15 @@ type ResolvingFunctions<T = unknown> = {
 }
 
 export abstract class Renderer<S extends Snapshot = Snapshot> {
-  readonly fromSnapshot: S
-  readonly toSnapshot: S
+  readonly currentSnapshot: S
+  readonly newSnapshot: S
   readonly isPreview: boolean
   readonly promise: Promise<void>
   private resolvingFunctions?: ResolvingFunctions<void>
 
-  constructor(fromSnapshot: S, toSnapshot: S, isPreview: boolean) {
-    this.fromSnapshot = fromSnapshot
-    this.toSnapshot = toSnapshot
+  constructor(currentSnapshot: S, newSnapshot: S, isPreview: boolean) {
+    this.currentSnapshot = currentSnapshot
+    this.newSnapshot = newSnapshot
     this.isPreview = isPreview
     this.promise = new Promise((resolve, reject) => this.resolvingFunctions = { resolve, reject })
   }
@@ -48,12 +48,12 @@ export abstract class Renderer<S extends Snapshot = Snapshot> {
     }
   }
 
-  get fromElement() {
-    return this.fromSnapshot.element
+  get currentElement() {
+    return this.currentSnapshot.element
   }
 
-  get toElement() {
-    return this.toSnapshot.element
+  get newElement() {
+    return this.newSnapshot.element
   }
 }
 

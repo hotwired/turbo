@@ -49,7 +49,7 @@ export abstract class View<S extends Snapshot, D extends ViewDelegate<S>, R exte
       throw new Error("rendering is already in progress")
     }
 
-    const { isPreview, shouldRender, toSnapshot: snapshot } = renderer
+    const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
     if (shouldRender) {
       try {
         this.renderer = renderer

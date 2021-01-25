@@ -9,8 +9,8 @@ export class ErrorRenderer extends Renderer<PageSnapshot> {
 
   replaceHeadAndBody() {
     const { documentElement, head, body } = document
-    documentElement.replaceChild(this.toHead, head)
-    documentElement.replaceChild(this.toElement, body)
+    documentElement.replaceChild(this.newHead, head)
+    documentElement.replaceChild(this.newElement, body)
   }
 
   activateScriptElements() {
@@ -23,8 +23,8 @@ export class ErrorRenderer extends Renderer<PageSnapshot> {
     }
   }
 
-  get toHead() {
-    return this.toSnapshot.headSnapshot.element
+  get newHead() {
+    return this.newSnapshot.headSnapshot.element
   }
 
   get scriptElements() {

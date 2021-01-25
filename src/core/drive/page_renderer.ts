@@ -7,7 +7,7 @@ export type Placeholder = { element: Element, permanentElement: PermanentElement
 
 export class PageRenderer extends Renderer<PageSnapshot> {
   get shouldRender() {
-    return this.toSnapshot.isVisitable && this.trackedElementsAreIdentical
+    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
 
   prepareToRender() {
@@ -26,15 +26,15 @@ export class PageRenderer extends Renderer<PageSnapshot> {
   }
 
   get currentHeadSnapshot() {
-    return this.fromSnapshot.headSnapshot
+    return this.currentSnapshot.headSnapshot
   }
 
   get newHeadSnapshot() {
-    return this.toSnapshot.headSnapshot
+    return this.newSnapshot.headSnapshot
   }
 
-  get toElement() {
-    return this.toSnapshot.element
+  get newElement() {
+    return this.newSnapshot.element
   }
 
   mergeHead() {
@@ -81,7 +81,7 @@ export class PageRenderer extends Renderer<PageSnapshot> {
 
   relocateCurrentBodyPermanentElements() {
     return this.getCurrentBodyPermanentElements().reduce((placeholders, permanentElement) => {
-      const newElement = this.toSnapshot.getPermanentElementById(permanentElement.id)
+      const newElement = this.newSnapshot.getPermanentElementById(permanentElement.id)
       if (newElement) {
         const placeholder = createPlaceholderForPermanentElement(permanentElement)
         replaceElementWithElement(permanentElement, placeholder.element)
@@ -101,7 +101,7 @@ export class PageRenderer extends Renderer<PageSnapshot> {
   }
 
   activateNewBody() {
-    document.adoptNode(this.toElement)
+    document.adoptNode(this.newElement)
     this.activateNewBodyScriptElements()
   }
 
@@ -113,15 +113,15 @@ export class PageRenderer extends Renderer<PageSnapshot> {
   }
 
   assignNewBody() {
-    if (document.body && this.toElement instanceof HTMLBodyElement) {
-      replaceElementWithElement(document.body, this.toElement)
+    if (document.body && this.newElement instanceof HTMLBodyElement) {
+      replaceElementWithElement(document.body, this.newElement)
     } else {
-      document.documentElement.appendChild(this.toElement)
+      document.documentElement.appendChild(this.newElement)
     }
   }
 
   focusFirstAutofocusableElement() {
-    const element = this.toSnapshot.firstAutofocusableElement
+    const element = this.newSnapshot.firstAutofocusableElement
     if (elementIsFocusable(element)) {
       element.focus()
     }
@@ -144,11 +144,11 @@ export class PageRenderer extends Renderer<PageSnapshot> {
   }
 
   getCurrentBodyPermanentElements(): PermanentElement[] {
-    return this.fromSnapshot.getPermanentElementsPresentInSnapshot(this.toSnapshot)
+    return this.currentSnapshot.getPermanentElementsPresentInSnapshot(this.newSnapshot)
   }
 
   getNewBodyScriptElements() {
-    return [ ...this.toElement.querySelectorAll("script") ]
+    return [ ...this.newElement.querySelectorAll("script") ]
   }
 }
 
