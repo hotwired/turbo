@@ -14,6 +14,10 @@ export function nextMicrotask() {
   return Promise.resolve()
 }
 
+export function parseHTMLDocument(html = "") {
+  return new DOMParser().parseFromString(html, "text/html")
+}
+
 export function unindent(strings: TemplateStringsArray, ...values: any[]): string {
   const lines = interpolate(strings, values).replace(/^\n/, "").split("\n")
   const match = lines[0].match(/^\s+/)

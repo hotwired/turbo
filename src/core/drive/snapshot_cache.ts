@@ -1,10 +1,10 @@
 import { toCacheKey } from "../url"
-import { Snapshot } from "./snapshot"
+import { PageSnapshot } from "./page_snapshot"
 
 export class SnapshotCache {
   readonly keys: string[] = []
   readonly size: number
-  snapshots: { [url: string]: Snapshot } = {}
+  snapshots: { [url: string]: PageSnapshot } = {}
 
   constructor(size: number) {
     this.size = size
@@ -14,7 +14,7 @@ export class SnapshotCache {
     return toCacheKey(location) in this.snapshots
   }
 
-  get(location: URL): Snapshot | undefined {
+  get(location: URL): PageSnapshot | undefined {
     if (this.has(location)) {
       const snapshot = this.read(location)
       this.touch(location)
@@ -22,7 +22,7 @@ export class SnapshotCache {
     }
   }
 
-  put(location: URL, snapshot: Snapshot) {
+  put(location: URL, snapshot: PageSnapshot) {
     this.write(location, snapshot)
     this.touch(location)
     return snapshot
@@ -38,7 +38,7 @@ export class SnapshotCache {
     return this.snapshots[toCacheKey(location)]
   }
 
-  write(location: URL, snapshot: Snapshot) {
+  write(location: URL, snapshot: PageSnapshot) {
     this.snapshots[toCacheKey(location)] = snapshot
   }
 

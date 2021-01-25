@@ -1,65 +1,69 @@
 import { FrameElement } from "../../elements/frame_element"
-import { RenderCallback, RenderDelegate, Renderer } from "../drive/renderer"
-import { Snapshot } from "../drive/snapshot"
-import { relocateCurrentBodyPermanentElements, replacePlaceholderElementsWithClonedPermanentElements, replaceElementWithElement, focusFirstAutofocusableElement } from "../drive/snapshot_renderer"
+import { nextAnimationFrame } from "../../util"
+import { Renderer } from "../renderer"
 
-export { RenderCallback, RenderDelegate } from "../drive/renderer"
-
-export type PermanentElement = Element & { id: string }
-
-export type Placeholder = { element: Element, permanentElement: PermanentElement }
-
-export class FrameRenderer extends Renderer {
-  readonly delegate: RenderDelegate
-  readonly frameElement: FrameElement
-  readonly currentSnapshot: Snapshot
-  readonly newSnapshot: Snapshot
-  readonly newBody: HTMLBodyElement
-
-  static render(delegate: RenderDelegate, callback: RenderCallback, frameElement: FrameElement, newSnapshot: Snapshot) {
-    return new this(delegate, frameElement, newSnapshot).renderView(callback)
+export class FrameRenderer extends Renderer<FrameElement> {
+  get shouldRender() {
+    return true
   }
 
-  constructor(delegate: RenderDelegate, frameElement: FrameElement, newSnapshot: Snapshot) {
-    super()
-    this.delegate = delegate
-    this.frameElement = frameElement
-    this.currentSnapshot = Snapshot.wrap(frameElement.innerHTML)
-    this.newSnapshot = newSnapshot
-    this.newBody = newSnapshot.bodyElement
+  async render() {
+    await nextAnimationFrame()
+    this.loadFrameElement()
+    this.scrollFrameIntoView()
+    await nextAnimationFrame()
+    this.focusFirstAutofocusableElement()
   }
 
-  async renderView(callback: RenderCallback) {
-    const newFrameElement = await this.extractForeignFrameElement(this.newBody)
+  loadFrameElement() {
+    const destinationRange = document.createRange()
+    destinationRange.selectNodeContents(this.currentElement)
+    destinationRange.deleteContents()
 
-    if (newFrameElement) {
-      super.renderView(() => {
-        const placeholders = relocateCurrentBodyPermanentElements(this.currentSnapshot, this.newSnapshot)
-        replaceElementWithElement(this.frameElement, newFrameElement)
-        replacePlaceholderElementsWithClonedPermanentElements(placeholders)
-        focusFirstAutofocusableElement(this.newSnapshot)
-        callback()
-      })
-    } else {
-      this.invalidateView()
+    const frameElement = this.newElement
+    const sourceRange = frameElement.ownerDocument?.createRange()
+    if (sourceRange) {
+      sourceRange.selectNodeContents(frameElement)
+      this.currentElement.appendChild(sourceRange.extractContents())
     }
   }
 
-  private async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | undefined> {
-    let element
-    const id = CSS.escape(this.frameElement.id)
+  scrollFrameIntoView() {
+    if (this.currentElement.autoscroll || this.newElement.autoscroll) {
+      const element = this.currentElement.firstElementChild
+      const block = readScrollLogicalPosition(this.currentElement.getAttribute("data-autoscroll-block"), "end")
 
-    if (element = container.querySelector(`turbo-frame[id="${id}"]`) as FrameElement) {
-      return element
+      if (element) {
+        element.scrollIntoView({ block })
+        return true
+      }
     }
+    return false
+  }
 
-    if (element = container.querySelector(`turbo-frame[src][recurse~=${id}]`) as FrameElement) {
-      await element.loaded
-
-      return await this.extractForeignFrameElement(element)
+  focusFirstAutofocusableElement() {
+    const element = this.firstAutofocusableElement
+    if (element) {
+      element.focus()
+      return true
     }
+    return false
+  }
 
-    console.error(`Response has no matching <turbo-frame id="${id}"> element`)
-    return new FrameElement()
+  get id() {
+    return this.currentElement.id
+  }
+
+  get firstAutofocusableElement() {
+    const element = this.currentElement.querySelector("[autofocus]")
+    return element instanceof HTMLElement ? element : null
+  }
+}
+
+function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLogicalPosition): ScrollLogicalPosition {
+  if (value == "end" || value == "start" || value == "center" || value == "nearest") {
+    return value
+  } else {
+    return defaultValue
   }
 }

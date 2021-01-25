@@ -3,16 +3,15 @@ import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetc
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
-import { RenderCallback } from "./renderer"
-import { Snapshot } from "./snapshot"
+import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
-import { View } from "./view"
+import { PageView } from "./page_view"
 
 export interface VisitDelegate {
   readonly adapter: Adapter
-  readonly view: View
   readonly history: History
+  readonly view: PageView
 
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
@@ -194,14 +193,14 @@ export class Visit implements FetchRequestDelegate {
   loadResponse() {
     if (this.response) {
       const { statusCode, responseHTML } = this.response
-      this.render(() => {
+      this.render(async () => {
         this.cacheSnapshot()
         if (isSuccessful(statusCode) && responseHTML != null) {
-          this.view.render({ snapshot: Snapshot.fromHTMLString(responseHTML) }, this.performScroll)
+          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML))
           this.adapter.visitRendered(this)
           this.complete()
         } else {
-          this.view.render({ error: responseHTML }, this.performScroll)
+          await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML))
           this.adapter.visitRendered(this)
           this.fail()
         }
@@ -213,7 +212,7 @@ export class Visit implements FetchRequestDelegate {
     const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
 
     if (snapshot && (!getAnchor(this.location) || snapshot.hasAnchor(getAnchor(this.location)))) {
-      if (this.action == "restore" || snapshot.isPreviewable()) {
+      if (this.action == "restore" || snapshot.isPreviewable) {
         return snapshot
       }
     }
@@ -221,7 +220,7 @@ export class Visit implements FetchRequestDelegate {
 
   getPreloadedSnapshot() {
     if (this.snapshotHTML) {
-      return Snapshot.wrap(this.snapshotHTML)
+      return PageSnapshot.fromHTMLString(this.snapshotHTML)
     }
   }
 
@@ -233,9 +232,9 @@ export class Visit implements FetchRequestDelegate {
     const snapshot = this.getCachedSnapshot()
     if (snapshot) {
       const isPreview = this.shouldIssueRequest()
-      this.render(() => {
+      this.render(async () => {
         this.cacheSnapshot()
-        this.view.render({ snapshot, isPreview }, this.performScroll)
+        await this.view.renderPage(snapshot)
         this.adapter.visitRendered(this)
         if (!isPreview) {
           this.complete()
@@ -291,7 +290,7 @@ export class Visit implements FetchRequestDelegate {
 
   // Scrolling
 
-  performScroll = () => {
+  performScroll() {
     if (!this.scrolled) {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToTop()
@@ -358,12 +357,14 @@ export class Visit implements FetchRequestDelegate {
     }
   }
 
-  render(callback: RenderCallback) {
+  async render(callback: () => Promise<void>) {
     this.cancelRender()
-    this.frame = requestAnimationFrame(() => {
-      delete this.frame
-      callback.call(this)
+    await new Promise<void>(resolve => {
+      this.frame = requestAnimationFrame(() => resolve())
     })
+    callback()
+    delete this.frame
+    this.performScroll()
   }
 
   cancelRender() {
