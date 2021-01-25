@@ -31,8 +31,8 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
     return this.headSnapshot.element
   }
 
-  get rootLocation(): URL {
-    const root = this.getSetting("root", "/")
+  get rootLocation() {
+    const root = this.getSetting("root") ?? "/"
     return expandURL(root)
   }
 
@@ -54,10 +54,7 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
 
   // Private
 
-  getSetting(name: string): string | undefined
-  getSetting(name: string, defaultValue: string): string
-  getSetting(name: string, defaultValue?: string) {
-    const value = this.headSnapshot.getMetaValue(`turbo-${name}`)
-    return value == null ? defaultValue : value
+  getSetting(name: string) {
+    return this.headSnapshot.getMetaValue(`turbo-${name}`)
   }
 }
