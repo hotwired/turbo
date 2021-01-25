@@ -56,31 +56,31 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   copyNewHeadStylesheetElements() {
-    for (const element of this.getNewHeadStylesheetElements()) {
+    for (const element of this.newHeadStylesheetElements) {
       document.head.appendChild(element)
     }
   }
 
   copyNewHeadScriptElements() {
-    for (const element of this.getNewHeadScriptElements()) {
+    for (const element of this.newHeadScriptElements) {
       document.head.appendChild(this.createScriptElement(element))
     }
   }
 
   removeCurrentHeadProvisionalElements() {
-    for (const element of this.getCurrentHeadProvisionalElements()) {
+    for (const element of this.currentHeadProvisionalElements) {
       document.head.removeChild(element)
     }
   }
 
   copyNewHeadProvisionalElements() {
-    for (const element of this.getNewHeadProvisionalElements()) {
+    for (const element of this.newHeadProvisionalElements) {
       document.head.appendChild(element)
     }
   }
 
   relocateCurrentBodyPermanentElements() {
-    return this.getCurrentBodyPermanentElements().reduce((placeholders, permanentElement) => {
+    return this.currentBodyPermanentElements.reduce((placeholders, permanentElement) => {
       const newElement = this.newSnapshot.getPermanentElementById(permanentElement.id)
       if (newElement) {
         const placeholder = createPlaceholderForPermanentElement(permanentElement)
@@ -106,7 +106,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   activateNewBodyScriptElements() {
-    for (const inertScriptElement of this.getNewBodyScriptElements()) {
+    for (const inertScriptElement of this.newBodyScriptElements) {
       const activatedScriptElement = this.createScriptElement(inertScriptElement)
       replaceElementWithElement(inertScriptElement, activatedScriptElement)
     }
@@ -127,27 +127,27 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  getNewHeadStylesheetElements() {
+  get newHeadStylesheetElements() {
     return this.newHeadSnapshot.getStylesheetElementsNotInSnapshot(this.currentHeadSnapshot)
   }
 
-  getNewHeadScriptElements() {
+  get newHeadScriptElements() {
     return this.newHeadSnapshot.getScriptElementsNotInSnapshot(this.currentHeadSnapshot)
   }
 
-  getCurrentHeadProvisionalElements() {
+  get currentHeadProvisionalElements() {
     return this.currentHeadSnapshot.provisionalElements
   }
 
-  getNewHeadProvisionalElements() {
+  get newHeadProvisionalElements() {
     return this.newHeadSnapshot.provisionalElements
   }
 
-  getCurrentBodyPermanentElements(): PermanentElement[] {
+  get currentBodyPermanentElements(): PermanentElement[] {
     return this.currentSnapshot.getPermanentElementsPresentInSnapshot(this.newSnapshot)
   }
 
-  getNewBodyScriptElements() {
+  get newBodyScriptElements() {
     return [ ...this.newElement.querySelectorAll("script") ]
   }
 }
