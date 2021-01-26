@@ -82,6 +82,10 @@ export class FunctionalTestCase extends InternTestCase {
     return this.evaluate(() => document.body as any)
   }
 
+  async getActiveElement() {
+    return await this.remote.getActiveElement()
+  }
+
   get location(): Promise<string> {
     return this.evaluate(() => location.toString())
   }

@@ -105,9 +105,9 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location: URL) {
+  historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string) {
     if (this.enabled) {
-      this.navigator.proposeVisit(location, { action: "restore", historyChanged: true })
+      this.navigator.proposeVisit(location, { action: "restore", historyChanged: true, restorationIdentifier })
     } else {
       this.adapter.pageInvalidated()
     }

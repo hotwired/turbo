@@ -117,18 +117,23 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "restore")
   }
 
-  async "test skip link with hash-only path"() {
-    const bodyElementId = (await this.body).elementId
+  async "test skip link with hash-only path scrolls to the anchor"() {
     await this.clickSelector('a[href="#main"]')
-
     await this.nextBeat
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.hash, "#main")
-    this.assert.equal((await this.body).elementId, bodyElementId, "does not reload page")
+    this.assert.notOk(await this.changedBody, "does not reload page")
     this.assert.ok(await this.isScrolledToSelector("#main"))
+  }
 
+  async "test skip link with hash-only path moves focus and changes tab order"() {
+    await this.clickSelector('a[href="#main"]')
+    await this.nextBeat
     await this.pressTab()
-    const activeElement = await this.remote.getActiveElement()
+    await this.nextBeat
+
+    const activeElement = await this.getActiveElement()
     const skippedLink = await this.querySelector("#ignored-link")
     const firstLinkWithinMain = await this.querySelector("#main a:first-of-type")
     this.assert.notOk(await activeElement.equals(skippedLink), "skips interactive elements before #main")
@@ -137,14 +142,11 @@ export class NavigationTests extends TurboDriveTestCase {
 
   async "test navigating back to anchored URL"() {
     await this.clickSelector('a[href="#main"]')
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
-    this.assert.equal(await this.hash, "#main")
-    this.assert.ok(await this.isScrolledToSelector("#main"))
-
-    this.clickSelector("#same-origin-unannotated-link")
+    await this.clickSelector("#same-origin-unannotated-link")
     await this.nextBody
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     await this.goBack()
+    await this.nextBody
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.hash, "#main")
     this.assert.ok(await this.isScrolledToSelector("#main"))

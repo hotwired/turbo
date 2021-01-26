@@ -40,6 +40,7 @@ export type VisitOptions = {
   referrer?: URL,
   snapshotHTML?: string,
   response?: VisitResponse
+  restorationIdentifier?: string,
 }
 
 const defaultOptions: VisitOptions = {
