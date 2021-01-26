@@ -25,6 +25,7 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
     const element = this.snapshot.getElementForAnchor(anchor)
     if (element) {
       this.scrollToElement(element)
+      this.focusElement(element)
     } else {
       this.scrollToPosition({ x: 0, y: 0 })
     }
@@ -40,6 +41,13 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
 
   get scrollRoot(): { scrollTo(x: number, y: number): void } {
     return window
+  }
+
+  focusElement(element: Element | HTMLElement) {
+    const tabindex = element.getAttribute('tabindex')
+    element.setAttribute('tabindex', '-1')
+    if ('focus' in element) element.focus()
+    tabindex ? element.setAttribute('tabindex', tabindex) : element.removeAttribute('tabindex')
   }
 
   // Rendering
