@@ -84,7 +84,7 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.isSamePage = (
       getAnchor(location) != null &&
-      getRequestURL(location) === getRequestURL(new URL(window.location.href))
+      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation)
     )
 
     this.restorationIdentifier = restorationIdentifier || uuid()
