@@ -145,37 +145,35 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/hello.html")
   }
 
-  async "test skip link with hash-only path"() {
+  async "test skip link with hash-only path scrolls to the anchor without a visit"() {
     const bodyElementId = (await this.body).elementId
     await this.clickSelector('a[href="#main"]')
-
     await this.nextBeat
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
-    this.assert.equal(await this.hash, "#main")
-    this.assert.equal((await this.body).elementId, bodyElementId, "does not reload page")
-    this.assert.ok(await this.isScrolledToSelector("#main"))
 
+    this.assert.equal((await this.body).elementId, bodyElementId, "does not reload page")
+    this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
+  }
+
+  async "test skip link with hash-only path moves focus and changes tab order"() {
+    await this.clickSelector('a[href="#main"]')
+    await this.nextBeat
     await this.pressTab()
-    const activeElement = await this.remote.getActiveElement()
-    const skippedLink = await this.querySelector("#ignored-link")
-    const firstLinkWithinMain = await this.querySelector("#main a:first-of-type")
-    this.assert.notOk(await activeElement.equals(skippedLink), "skips interactive elements before #main")
-    this.assert.ok(await activeElement.equals(firstLinkWithinMain), "skips to first interactive element after #main")
+
+    this.assert.notOk(await this.selectorHasFocus("#ignored-link"), "skips interactive elements before #main")
+    this.assert.ok(await this.selectorHasFocus("#main a:first-of-type"), "skips to first interactive element after #main")
   }
 
   async "test navigating back to anchored URL"() {
     await this.clickSelector('a[href="#main"]')
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
-    this.assert.equal(await this.hash, "#main")
-    this.assert.ok(await this.isScrolledToSelector("#main"))
+    await this.nextBeat
 
-    this.clickSelector("#same-origin-unannotated-link")
+    await this.clickSelector("#same-origin-unannotated-link")
     await this.nextBody
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    await this.nextBeat
+
     await this.goBack()
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
-    this.assert.equal(await this.hash, "#main")
-    this.assert.ok(await this.isScrolledToSelector("#main"))
+
+    this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
   }
 }
 
