@@ -118,10 +118,13 @@ export class NavigationTests extends TurboDriveTestCase {
   }
 
   async "test skip link with hash-only path"() {
+    const bodyElementId = (await this.body).elementId
     await this.clickSelector('a[href="#main"]')
 
+    await this.nextBeat
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.hash, "#main")
+    this.assert.equal((await this.body).elementId, bodyElementId, "does not reload page")
     this.assert.ok(await this.isScrolledToSelector("#main"))
 
     await this.pressTab()
