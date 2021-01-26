@@ -310,8 +310,9 @@ export class Visit implements FetchRequestDelegate {
   }
 
   scrollToAnchor() {
-    if (getAnchor(this.location)) {
-      this.view.scrollToAnchor(getAnchor(this.location))
+    const anchor = getAnchor(this.location)
+    if (anchor != null) {
+      this.view.scrollToAnchor(anchor)
       return true
     }
   }
