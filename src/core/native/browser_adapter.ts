@@ -22,6 +22,7 @@ export class BrowserAdapter implements Adapter {
   visitStarted(visit: Visit) {
     visit.issueRequest()
     visit.changeHistory()
+    visit.goToSamePageAnchor()
     visit.loadCachedSnapshot()
   }
 
