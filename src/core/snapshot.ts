@@ -9,11 +9,11 @@ export class Snapshot<E extends Element = Element> {
     return [ ...this.element.children ]
   }
 
-  hasAnchor(anchor: string) {
+  hasAnchor(anchor: string | undefined) {
     return this.getElementForAnchor(anchor) != null
   }
 
-  getElementForAnchor(anchor: string) {
+  getElementForAnchor(anchor: string | undefined) {
     try {
       return this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`)
     } catch {

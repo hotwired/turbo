@@ -12,8 +12,6 @@ export function getAnchor(url: URL) {
     return url.hash.slice(1)
   } else if (anchorMatch = url.href.match(/#(.*)$/)) {
     return anchorMatch[1]
-  } else {
-    return ""
   }
 }
 
