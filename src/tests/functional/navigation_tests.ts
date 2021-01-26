@@ -162,6 +162,21 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.notOk(await activeElement.equals(skippedLink), "skips interactive elements before #main")
     this.assert.ok(await activeElement.equals(firstLinkWithinMain), "skips to first interactive element after #main")
   }
+
+  async "test navigating back to anchored URL"() {
+    await this.clickSelector('a[href="#main"]')
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
+    this.assert.equal(await this.hash, "#main")
+    this.assert.ok(await this.isScrolledToSelector("#main"))
+
+    this.clickSelector("#same-origin-unannotated-link")
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    await this.goBack()
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
+    this.assert.equal(await this.hash, "#main")
+    this.assert.ok(await this.isScrolledToSelector("#main"))
+  }
 }
 
 NavigationTests.registerSuite()
