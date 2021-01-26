@@ -72,7 +72,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
-  async loadResponse(response: FetchResponse): Promise<void> {
+  async loadResponse(response: FetchResponse) {
     try {
       const html = await response.responseHTML
       if (html) {
