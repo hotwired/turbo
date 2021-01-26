@@ -2,7 +2,7 @@ import { Adapter } from "../native/adapter"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
-import { getAnchor, getRequestURL } from "../url"
+import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
@@ -39,7 +39,8 @@ export type VisitOptions = {
   historyChanged: boolean,
   referrer?: URL,
   snapshotHTML?: string,
-  response?: VisitResponse
+  response?: VisitResponse,
+  restorationIdentifier?: string,
 }
 
 const defaultOptions: VisitOptions = {
@@ -70,7 +71,6 @@ export class Visit implements FetchRequestDelegate {
   frame?: number
   historyChanged = false
   location: URL
-  isSamePage: boolean
   redirectedToLocation?: URL
   request?: FetchRequest
   response?: VisitResponse
@@ -82,11 +82,6 @@ export class Visit implements FetchRequestDelegate {
   constructor(delegate: VisitDelegate, location: URL, restorationIdentifier: string | undefined, options: Partial<VisitOptions> = {}) {
     this.delegate = delegate
     this.location = location
-    this.isSamePage = (
-      getAnchor(location) != null &&
-      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation)
-    )
-
     this.restorationIdentifier = restorationIdentifier || uuid()
 
     const { action, historyChanged, referrer, snapshotHTML, response } = { ...defaultOptions, ...options }
@@ -240,14 +235,10 @@ export class Visit implements FetchRequestDelegate {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        if (this.isSamePage) {
-          this.adapter.visitRendered(this)
-        } else {
-          await this.view.renderPage(snapshot, isPreview)
-          this.adapter.visitRendered(this)
-          if (!isPreview) {
-            this.complete()
-          }
+        await this.view.renderPage(snapshot, isPreview)
+        this.adapter.visitRendered(this)
+        if (!isPreview) {
+          this.complete()
         }
       })
     }
@@ -258,15 +249,6 @@ export class Visit implements FetchRequestDelegate {
       this.location = this.redirectedToLocation
       this.history.replace(this.redirectedToLocation, this.restorationIdentifier)
       this.followedRedirect = true
-    }
-  }
-
-  goToSamePageAnchor() {
-    if (this.isSamePage) {
-      this.render(async () => {
-        this.cacheSnapshot()
-        this.adapter.visitRendered(this)
-      })
     }
   }
 
@@ -329,9 +311,8 @@ export class Visit implements FetchRequestDelegate {
   }
 
   scrollToAnchor() {
-    const anchor = getAnchor(this.location)
-    if (anchor != null) {
-      this.view.scrollToAnchor(anchor)
+    if (getAnchor(this.location) != null) {
+      this.view.scrollToAnchor(getAnchor(this.location))
       return true
     }
   }
@@ -365,13 +346,9 @@ export class Visit implements FetchRequestDelegate {
   }
 
   shouldIssueRequest() {
-    if (this.action == "restore") {
-      return !this.hasCachedSnapshot()
-    } else if (this.isSamePage) {
-      return false
-    } else {
-      return true
-    }
+    return this.action == "restore"
+      ? !this.hasCachedSnapshot()
+      : true
   }
 
   cacheSnapshot() {

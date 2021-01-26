@@ -28,6 +28,12 @@ export class FunctionalTestCase extends InternTestCase {
     return (await this.remote.findAllByCssSelector(selector)).length > 0
   }
 
+  async selectorHasFocus(selector: string) {
+    const activeElement = await this.remote.getActiveElement()
+
+    return activeElement.equals(await this.querySelector(selector))
+  }
+
   async querySelector(selector: string) {
     return this.remote.findByCssSelector(selector)
   }
