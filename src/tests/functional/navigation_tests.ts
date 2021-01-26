@@ -121,23 +121,23 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.clickSelector('a[href="#main"]')
     await this.nextBeat
 
+    const scrolledToMain = await this.isScrolledToSelector("#main")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.hash, "#main")
     this.assert.notOk(await this.changedBody, "does not reload page")
-    this.assert.ok(await this.isScrolledToSelector("#main"))
+    this.assert.ok(scrolledToMain, "scrolled to #main")
   }
 
   async "test skip link with hash-only path moves focus and changes tab order"() {
     await this.clickSelector('a[href="#main"]')
-    await this.nextBeat
     await this.pressTab()
-    await this.nextBeat
 
     const activeElement = await this.getActiveElement()
-    const skippedLink = await this.querySelector("#ignored-link")
-    const firstLinkWithinMain = await this.querySelector("#main a:first-of-type")
-    this.assert.notOk(await activeElement.equals(skippedLink), "skips interactive elements before #main")
-    this.assert.ok(await activeElement.equals(firstLinkWithinMain), "skips to first interactive element after #main")
+    const equalsSkippedLink = await activeElement.equals(await this.querySelector("#ignored-link"))
+    const equalsFirstLinkWithinMain = await activeElement.equals(await this.querySelector("#main a:first-of-type"))
+
+    this.assert.notOk(equalsSkippedLink, "skips interactive elements before #main")
+    this.assert.ok(equalsFirstLinkWithinMain, "skips to first interactive element after #main")
   }
 
   async "test navigating back to anchored URL"() {
@@ -147,9 +147,10 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.goBack()
     await this.nextBody
 
+    const scrolledToMain = await this.isScrolledToSelector("#main")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.hash, "#main")
-    this.assert.ok(await this.isScrolledToSelector("#main"))
+    this.assert.ok(scrolledToMain, "scrolled to #main")
   }
 }
 
