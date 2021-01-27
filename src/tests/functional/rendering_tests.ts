@@ -249,6 +249,17 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(await this.remote.findById("select-multiple").getProperty("value"), "2")
   }
 
+  async "test does not preserve password values"() {
+    await this.remote.findById("password-input").click().type("test")
+
+    this.clickSelector("#same-origin-link")
+    await this.nextBody
+    await this.goBack()
+    await this.nextBody
+
+    this.assert.equal(await this.remote.findById("password-input").getProperty("value"), "")
+  }
+
   async "test before-cache event"() {
     this.beforeCache((body) => (body.innerHTML = "Modified"))
     this.clickSelector("#same-origin-link")
