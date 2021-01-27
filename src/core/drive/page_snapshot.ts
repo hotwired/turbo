@@ -28,10 +28,18 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
   clone() {
     const clonedElement = this.element.cloneNode(true);
 
-    const selects = this.element.querySelectorAll<HTMLSelectElement>('select')
-    const clonedSelects = clonedElement.querySelectorAll<HTMLSelectElement>('select')
-    for (let i = 0; i < selects.length; i++) {
-      clonedSelects[i].value = selects[i].value
+    const singleSelects = this.element.querySelectorAll<HTMLSelectElement>('select:not([multiple])')
+    const clonedSingleSelects = clonedElement.querySelectorAll<HTMLSelectElement>('select:not([multiple])')
+    for (let i = 0; i < singleSelects.length; i++) {
+      clonedSingleSelects[i].value = singleSelects[i].value
+    }
+
+    const multipleSelects = this.element.querySelectorAll<HTMLSelectElement>('select[multiple]')
+    const clonedMultipleSelects = clonedElement.querySelectorAll<HTMLSelectElement>('select[multiple]')
+    for (let i = 0; i < multipleSelects.length; i++) {
+      for (let j = 0; j < multipleSelects[i].options.length; j++) {
+        clonedMultipleSelects[i].options[j].selected = multipleSelects[i].options[j].selected
+      }
     }
 
     return new PageSnapshot(clonedElement, this.headSnapshot, this.htmlElement)
