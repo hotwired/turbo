@@ -111,9 +111,17 @@ export class Navigator {
 
   visitCompleted(visit: Visit) {
     this.delegate.visitCompleted(visit)
+    this.followRedirectedResponse(visit)
   }
 
   // Visits
+
+  followRedirectedResponse(visit: Visit) {
+    const { redirectedToLocation, response, restorationIdentifier } = visit
+    if (redirectedToLocation && response) {
+      this.startVisit(redirectedToLocation, restorationIdentifier, { action: "replace", response })
+    }
+  }
 
   get location() {
     return this.history.location

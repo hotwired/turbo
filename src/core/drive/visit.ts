@@ -66,7 +66,6 @@ export class Visit implements FetchRequestDelegate {
   readonly referrer?: URL
   readonly timingMetrics: TimingMetrics = {}
 
-  followedRedirect = false
   frame?: number
   historyChanged = false
   location: URL
@@ -191,7 +190,7 @@ export class Visit implements FetchRequestDelegate {
   }
 
   loadResponse() {
-    if (this.response) {
+    if (this.response && !this.redirectedToLocation) {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
         this.cacheSnapshot()
@@ -240,14 +239,6 @@ export class Visit implements FetchRequestDelegate {
           this.complete()
         }
       })
-    }
-  }
-
-  followRedirect() {
-    if (this.redirectedToLocation && !this.followedRedirect) {
-      this.location = this.redirectedToLocation
-      this.history.replace(this.redirectedToLocation, this.restorationIdentifier)
-      this.followedRedirect = true
     }
   }
 
