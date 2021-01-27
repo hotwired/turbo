@@ -139,10 +139,12 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   }
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
+    extendURLWithDeprecatedProperties(location)
     this.adapter.visitProposedToLocation(location, options)
   }
 
   visitStarted(visit: Visit) {
+    extendURLWithDeprecatedProperties(visit.location)
     this.notifyApplicationAfterVisitingLocation(visit.location)
   }
 
@@ -262,5 +264,28 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
 
   get snapshot() {
     return this.view.snapshot
+  }
+}
+
+// Older versions of the Turbo Native adapters referenced the
+// `Location#absoluteURL` property in their implementations of
+// the `Adapter#visitProposedToLocation()` and `#visitStarted()`
+// methods. The Location class has since been removed in favor
+// of the DOM URL API, and accordingly all Adapter methods now
+// receive URL objects.
+//
+// We alias #absoluteURL to #toString() here to avoid crashing
+// older adapters which do not expect URL objects. We should
+// consider removing this support at some point in the future.
+
+function extendURLWithDeprecatedProperties(url: URL) {
+  Object.defineProperties(url, deprecatedLocationPropertyDescriptors)
+}
+
+const deprecatedLocationPropertyDescriptors = {
+  absoluteURL: {
+    get() {
+      return this.toString()
+    }
   }
 }

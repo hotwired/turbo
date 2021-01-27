@@ -1,5 +1,4 @@
 import { Adapter } from "./adapter"
-import { Locatable } from "../url"
 import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
 import { Session } from "../session"
@@ -15,7 +14,7 @@ export class BrowserAdapter implements Adapter {
     this.session = session
   }
 
-  visitProposedToLocation(location: Locatable, options?: Partial<VisitOptions>) {
+  visitProposedToLocation(location: URL, options?: Partial<VisitOptions>) {
     this.navigator.startVisit(location, uuid(), options)
   }
 
