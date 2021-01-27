@@ -52,12 +52,32 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     }
   }
 
+  renderSnapshotWithPermanentElements(render: () => void) {
+    const placeholders = relocatePermanentElements(this.currentSnapshot, this.newSnapshot)
+    render()
+    replacePlaceholderElementsWithClonedPermanentElements(placeholders)
+  }
+
+  focusFirstAutofocusableElement(snapshot: Snapshot) {
+    const element = snapshot.firstAutofocusableElement
+    if (elementIsFocusable(element)) {
+      element.focus()
+    }
+  }
+
   get currentElement() {
     return this.currentSnapshot.element
   }
 
   get newElement() {
     return this.newSnapshot.element
+  }
+}
+
+export function replaceElementWithElement(fromElement: Element, toElement: Element) {
+  const parentElement = fromElement.parentElement
+  if (parentElement) {
+    return parentElement.replaceChild(toElement, fromElement)
   }
 }
 
@@ -95,26 +115,6 @@ function relocatePermanentElements(currentSnapshot: Snapshot, newSnapshot: Snaps
   }, [] as Placeholder[])
 }
 
-export function replaceElementWithElement(fromElement: Element, toElement: Element) {
-  const parentElement = fromElement.parentElement
-  if (parentElement) {
-    return parentElement.replaceChild(toElement, fromElement)
-  }
-}
-
-export function renderSnapshotWithPermanentElements(currentSnapshot: Snapshot, newSnapshot: Snapshot, render: () => void) {
-  const placeholders = relocatePermanentElements(currentSnapshot, newSnapshot)
-  render()
-  replacePlaceholderElementsWithClonedPermanentElements(placeholders)
-}
-
 function elementIsFocusable(element: any): element is { focus: () => void } {
   return element && typeof element.focus == "function"
-}
-
-export function focusFirstAutofocusableElement(snapshot: Snapshot) {
-  const element = snapshot.firstAutofocusableElement
-  if (elementIsFocusable(element)) {
-    element.focus()
-  }
 }

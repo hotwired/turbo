@@ -1,6 +1,6 @@
 import { FrameElement } from "../../elements/frame_element"
 import { nextAnimationFrame } from "../../util"
-import { Renderer, focusFirstAutofocusableElement, renderSnapshotWithPermanentElements } from "../renderer"
+import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer<FrameElement> {
   get shouldRender() {
@@ -9,15 +9,15 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   async render() {
     await nextAnimationFrame()
-    renderSnapshotWithPermanentElements(this.currentSnapshot, this.newSnapshot, () => {
+    this.renderSnapshotWithPermanentElements(() => {
       this.loadFrameElement()
     })
     this.scrollFrameIntoView()
     await nextAnimationFrame()
-    focusFirstAutofocusableElement(this.newSnapshot)
+    this.focusFirstAutofocusableElement(this.newSnapshot)
   }
 
-  private loadFrameElement() {
+  loadFrameElement() {
     const destinationRange = document.createRange()
     destinationRange.selectNodeContents(this.currentElement)
     destinationRange.deleteContents()
@@ -30,7 +30,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
     }
   }
 
-  private scrollFrameIntoView() {
+  scrollFrameIntoView() {
     if (this.currentElement.autoscroll || this.newElement.autoscroll) {
       const element = this.currentElement.firstElementChild
       const block = readScrollLogicalPosition(this.currentElement.getAttribute("data-autoscroll-block"), "end")
