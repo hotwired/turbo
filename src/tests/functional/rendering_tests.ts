@@ -260,6 +260,29 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(await this.remote.findById("password-input").getProperty("value"), "")
   }
 
+  async "test <input type='reset'> clears values when restored from cache"() {
+    await this.remote.findById("text-input").click().type("test")
+    await this.remote.findById("checkbox-input").click()
+    await this.remote.findById("radio-input").click()
+    await this.remote.findById("textarea").click().type("test")
+    await this.remote.findById("select").findAllByCssSelector('option[value="2"]').click()
+    await this.remote.findById("select-multiple").findByCssSelector('option[value="2"]').click()
+
+    this.clickSelector("#same-origin-link")
+    await this.nextBody
+    await this.goBack()
+    await this.nextBody
+
+    await this.remote.findById("reset-input").click()
+
+    this.assert.equal(await this.remote.findById("text-input").getProperty("value"), "")
+    this.assert.equal(await this.remote.findById("checkbox-input").getProperty("checked"), false)
+    this.assert.equal(await this.remote.findById("radio-input").getProperty("checked"), false)
+    this.assert.equal(await this.remote.findById("textarea").getProperty("value"), "")
+    this.assert.equal(await this.remote.findById("select").getProperty("value"), "1")
+    this.assert.equal(await this.remote.findById("select-multiple").getProperty("value"), "")
+  }
+
   async "test before-cache event"() {
     this.beforeCache((body) => (body.innerHTML = "Modified"))
     this.clickSelector("#same-origin-link")
