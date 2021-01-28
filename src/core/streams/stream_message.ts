@@ -1,6 +1,7 @@
 import { StreamElement } from "../../elements/stream_element"
 
 export class StreamMessage {
+  static readonly contentType = "text/vnd.turbo-stream.html"
   readonly templateElement = document.createElement("template")
 
   static wrap(message: StreamMessage | string) {
