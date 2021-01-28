@@ -44,6 +44,24 @@
       <p><a id="permanent-in-frame-element-link" href="/src/tests/fixtures/permanent_element.html" data-turbo-frame="frame">Permanent element in frame</a></p>
       <p><a id="permanent-in-frame-without-layout-element-link" href="/src/tests/fixtures/frames/without_layout.html" data-turbo-frame="frame">Permanent element in frame without layout</a></p>
       <p><a id="delayed-link" href="/__turbo/delayed_response">Delayed link</a></p>
+      <form>
+        <input type="text" id="text-input">
+        <input type="radio" id="radio-input">
+        <input type="checkbox" id="checkbox-input">
+        <textarea id="textarea"></textarea>
+        <select id="select">
+          <option value="1">1</option>
+          <option value="2">2</option>
+        </select>
+        <select id="select-multiple" multiple>
+          <option value="1">1</option>
+          <option value="2">2</option>
+        </select>
+
+        <input type="password" id="password-input">
+
+        <input type="reset" id="reset-input">
+      </form>
     </section>
     <div id="permanent" data-turbo-permanent>Rendering</div>
 
