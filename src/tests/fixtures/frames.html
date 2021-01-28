@@ -12,8 +12,23 @@
       <h2>Frames: #frame</h2>
     </turbo-frame>
 
-    <turbo-frame id="hello">
+    <turbo-frame id="hello" target="frame">
       <h2>Frames: #hello</h2>
+
+      <a href="/src/tests/fixtures/frames/frame.html">Load #frame</a>
+    </turbo-frame>
+
+    <turbo-frame id="nested-root" target="frame">
+      <h2>Frames: #nested-root</h2>
+      <turbo-frame id="nested-child">
+        <h2>Frames: #nested-child</h2>
+        <a href="/src/tests/fixtures/frames/frame.html">Load #nested-child</a>
+        <a href="/src/tests/fixtures/one.html" data-turbo-frame="_top">Visit one.html</a>
+      </turbo-frame>
+    </turbo-frame>
+
+    <turbo-frame id="navigate-top" target="_top">
+      <a href="/src/tests/fixtures/one.html">Visit one.html</a>
     </turbo-frame>
 
     <turbo-frame id="missing">
