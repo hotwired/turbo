@@ -90,6 +90,10 @@ export class FunctionalTestCase extends InternTestCase {
     return this.evaluate(() => location.pathname)
   }
 
+  get searchParams(): Promise<URLSearchParams> {
+    return this.evaluate(() => location.search).then(search => new URLSearchParams(search))
+  }
+
   get hash(): Promise<string> {
     return this.evaluate(() => location.hash)
   }

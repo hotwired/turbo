@@ -37,7 +37,12 @@ export class Navigator {
   submitForm(form: HTMLFormElement, submitter?: HTMLElement) {
     this.stop()
     this.formSubmission = new FormSubmission(this, form, submitter, true)
-    this.formSubmission.start()
+
+    if (this.formSubmission.fetchRequest.isIdempotent) {
+      this.proposeVisit(this.formSubmission.fetchRequest.url)
+    } else {
+      this.formSubmission.start()
+    }
   }
 
   stop() {
