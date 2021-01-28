@@ -3,17 +3,29 @@ import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 export class FormSubmissionTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/form.html")
+    await this.remote.execute(() => {
+      addEventListener("turbo:submit-start", () => document.documentElement.setAttribute("data-form-submitted", ""), { once: true })
+    })
   }
 
   async "test standard form submission with redirect response"() {
-    this.listenForFormSubmissions()
-    const button = await this.querySelector("#standard form.redirect input[type=submit]")
-    await button.click()
+    await this.clickSelector("#standard form.redirect input[type=submit]")
     await this.nextBody
 
-    this.assert.ok(this.turboFormSubmitted)
+    this.assert.ok(await this.formSubmitted)
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.visitAction, "advance")
+    this.assert.equal((await this.searchParams).get("greeting"), "Hello from a redirect")
+  }
+
+  async "test standard GET form submission"() {
+    await this.clickSelector("#standard form.greeting input[type=submit]")
+    await this.nextBody
+
+    this.assert.notOk(await this.formSubmitted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
+    this.assert.equal((await this.searchParams).get("greeting"), "Hello from a form")
   }
 
   async "test standard form submission with empty created response"() {
@@ -166,48 +178,37 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test form submission with Turbo disabled on the form"() {
-    this.listenForFormSubmissions()
     await this.clickSelector('#disabled form[data-turbo="false"] input[type=submit]')
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
   async "test form submission with Turbo disabled on the submitter"() {
-    this.listenForFormSubmissions()
     await this.clickSelector('#disabled form:not([data-turbo]) input[data-turbo="false"]')
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
   async "test form submission skipped within method=dialog"() {
-    this.listenForFormSubmissions()
     await this.clickSelector('#dialog-method [type="submit"]')
     await this.nextBeat
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
   async "test form submission skipped with submitter formmethod=dialog"() {
-    this.listenForFormSubmissions()
     await this.clickSelector('#dialog-formmethod [formmethod="dialog"]')
     await this.nextBeat
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
-  listenForFormSubmissions() {
-    this.remote.execute(() => addEventListener("turbo:submit-start", function eventListener(event) {
-      removeEventListener("turbo:submit-start", eventListener, false)
-      document.head.insertAdjacentHTML("beforeend", `<meta name="turbo-form-submitted">`)
-    }, false))
-  }
-
-  get turboFormSubmitted(): Promise<boolean> {
-    return this.hasSelector("meta[name=turbo-form-submitted]")
+  get formSubmitted(): Promise<boolean> {
+    return this.hasSelector("html[data-form-submitted]")
   }
 }
 

@@ -15,6 +15,8 @@
   <body>
     <div id="standard">
       <form action="/__turbo/redirect" method="post" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
         <input type="submit">
       </form>
       <form action="/__turbo/messages" method="post" class="created">
@@ -34,6 +36,11 @@
         <input type="submit">
       </form>
       <form action="/__turbo/redirect" method="get" enctype="multipart/form-data">
+        <input type="submit">
+      </form>
+      <form action="/__turbo/redirect" method="get" class="greeting">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <input type="hidden" name="greeting" value="Hello from a form">
         <input type="submit">
       </form>
     </div>

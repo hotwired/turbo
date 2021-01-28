@@ -9,16 +9,22 @@ const streamResponses: Set<Response> = new Set
 router.use(multer().none())
 
 router.post("/redirect", (request, response) => {
-  const pathname = request.body.path ?? "/src/tests/fixtures/one.html"
+  const { path, ...query } = request.body
+  const pathname = path ?? "/src/tests/fixtures/one.html"
   const enctype = request.get("Content-Type")
-  const query = enctype ? { enctype } : {}
+  if (enctype) {
+    query.enctype = enctype
+  }
   response.redirect(303, url.format({ pathname, query }))
 })
 
 router.get("/redirect", (request, response) => {
-  const pathname = (request.query as any).path ?? "/src/tests/fixtures/one.html"
+  const { path, ...query } = request.query as any
+  const pathname = path ?? "/src/tests/fixtures/one.html"
   const enctype = request.get("Content-Type")
-  const query = enctype ? { enctype } : {}
+  if (enctype) {
+    query.enctype = enctype
+  }
   response.redirect(301, url.format({ pathname, query }))
 })
 
