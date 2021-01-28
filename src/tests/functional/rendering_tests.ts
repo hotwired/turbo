@@ -228,6 +228,23 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
   }
 
+  async "test preserves input values"() {
+    await this.remote.findById("text-input").click().type("test")
+    await this.remote.findById("checkbox-input").click()
+    await this.remote.findById("radio-input").click()
+    await this.remote.findById("textarea").click().type("test")
+
+    this.clickSelector("#same-origin-link")
+    await this.nextBody
+    await this.goBack()
+    await this.nextBody
+
+    this.assert.equal(await this.remote.findById("text-input").getProperty("value"), "test")
+    this.assert.equal(await this.remote.findById("checkbox-input").getProperty("checked"), true)
+    this.assert.equal(await this.remote.findById("radio-input").getProperty("checked"), true)
+    this.assert.equal(await this.remote.findById("textarea").getProperty("value"), "test")
+  }
+
   async "test before-cache event"() {
     this.beforeCache((body) => (body.innerHTML = "Modified"))
     this.clickSelector("#same-origin-link")
