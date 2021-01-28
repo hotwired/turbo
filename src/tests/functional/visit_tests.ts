@@ -38,6 +38,7 @@ export class VisitTests extends TurboDriveTestCase {
   async "test visiting a location served with a non-HTML content type"() {
     const urlBeforeVisit = await this.location
     await this.visitLocation("/src/tests/fixtures/svg")
+    await this.nextBeat
 
     const url = await this.remote.getCurrentUrl()
     const contentType = await contentTypeOfURL(url)
