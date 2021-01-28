@@ -1,6 +1,7 @@
 import { Response, Router } from "express"
 import multer from "multer"
 import path from "path"
+import url from "url"
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
@@ -8,8 +9,17 @@ const streamResponses: Set<Response> = new Set
 router.use(multer().none())
 
 router.post("/redirect", (request, response) => {
-  const path = request.body.path ?? "/src/tests/fixtures/one.html"
-  response.redirect(303, path)
+  const pathname = request.body.path ?? "/src/tests/fixtures/one.html"
+  const enctype = request.get("Content-Type")
+  const query = enctype ? { enctype } : {}
+  response.redirect(303, url.format({ pathname, query }))
+})
+
+router.get("/redirect", (request, response) => {
+  const pathname = (request.query as any).path ?? "/src/tests/fixtures/one.html"
+  const enctype = request.get("Content-Type")
+  const query = enctype ? { enctype } : {}
+  response.redirect(301, url.format({ pathname, query }))
 })
 
 router.post("/reject", (request, response) => {

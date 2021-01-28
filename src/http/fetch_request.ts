@@ -29,7 +29,7 @@ export function fetchMethodFromString(method: string) {
   }
 }
 
-export type FetchRequestBody = FormData
+export type FetchRequestBody = FormData | URLSearchParams
 
 export type FetchRequestHeaders = { [header: string]: string }
 
@@ -46,11 +46,15 @@ export class FetchRequest {
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
 
-  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body?: FetchRequestBody) {
+  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams) {
     this.delegate = delegate
     this.method = method
-    this.body = body
-    this.url = mergeFormDataEntries(location, this.entries)
+    if (this.isIdempotent) {
+      this.url = mergeFormDataEntries(location, [ ...body.entries() ])
+    } else {
+      this.body = body
+      this.url = location
+    }
   }
 
   get location(): URL {
@@ -103,7 +107,7 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.isIdempotent ? undefined : this.body,
+      body: this.body,
       signal: this.abortSignal
     }
   }
