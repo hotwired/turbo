@@ -233,6 +233,7 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.remote.findById("checkbox-input").click()
     await this.remote.findById("radio-input").click()
     await this.remote.findById("textarea").click().type("test")
+    await this.remote.findById("select").findAllByCssSelector('option[value="2"]').click()
 
     this.clickSelector("#same-origin-link")
     await this.nextBody
@@ -243,6 +244,7 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(await this.remote.findById("checkbox-input").getProperty("checked"), true)
     this.assert.equal(await this.remote.findById("radio-input").getProperty("checked"), true)
     this.assert.equal(await this.remote.findById("textarea").getProperty("value"), "test")
+    this.assert.equal(await this.remote.findById("select").getProperty("value"), "2")
   }
 
   async "test before-cache event"() {

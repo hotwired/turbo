@@ -26,7 +26,15 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
   }
 
   clone() {
-    return new PageSnapshot(this.element.cloneNode(true), this.headSnapshot, this.htmlElement)
+    const clonedElement = this.element.cloneNode(true);
+
+    const selects = this.element.querySelectorAll<HTMLSelectElement>('select')
+    const clonedSelects = clonedElement.querySelectorAll<HTMLSelectElement>('select')
+    for (let i = 0; i < selects.length; i++) {
+      clonedSelects[i].value = selects[i].value
+    }
+
+    return new PageSnapshot(clonedElement, this.headSnapshot, this.htmlElement)
   }
 
   get headElement() {
