@@ -52,8 +52,8 @@ export class FormSubmission {
   constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement, mustRedirect = false) {
     this.delegate = delegate
     this.formElement = formElement
-    this.formData = buildFormData(formElement, submitter)
     this.submitter = submitter
+    this.formData = buildFormData(formElement, submitter)
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
     this.mustRedirect = mustRedirect
   }
@@ -73,7 +73,7 @@ export class FormSubmission {
 
   get body() {
     if (this.enctype == FormEnctype.urlEncoded || this.method == FetchMethod.get) {
-      return new URLSearchParams(this.formData as any)
+      return new URLSearchParams(this.stringFormData)
     } else {
       return this.formData
     }
@@ -81,6 +81,12 @@ export class FormSubmission {
 
   get enctype(): FormEnctype {
     return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
+  }
+
+  get stringFormData() {
+    return [ ...this.formData ].reduce((entries, [ name, value ]) => {
+      return entries.concat(typeof value == "string" ? [[ name, value ]] : [])
+    }, [] as [string, string][])
   }
 
   // The submission process
