@@ -10,6 +10,10 @@ export function nextAnimationFrame() {
   return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 }
 
+export function nextEventLoopTick() {
+  return new Promise<void>(resolve => setTimeout(() => resolve(), 0))
+}
+
 export function nextMicrotask() {
   return Promise.resolve()
 }

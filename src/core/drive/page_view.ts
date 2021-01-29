@@ -1,4 +1,4 @@
-import { nextMicrotask } from "../../util"
+import { nextEventLoopTick } from "../../util"
 import { View, ViewDelegate } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
@@ -33,7 +33,7 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
     if (this.shouldCacheSnapshot) {
       this.delegate.viewWillCacheSnapshot()
       const { snapshot, lastRenderedLocation: location } = this
-      await nextMicrotask()
+      await nextEventLoopTick()
       this.snapshotCache.put(location, snapshot.clone())
     }
   }
