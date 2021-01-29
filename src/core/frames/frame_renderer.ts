@@ -14,7 +14,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
     })
     this.scrollFrameIntoView()
     await nextAnimationFrame()
-    this.focusFirstAutofocusableElement(this.newSnapshot)
+    this.focusFirstAutofocusableElement()
   }
 
   loadFrameElement() {

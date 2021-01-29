@@ -58,8 +58,8 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     replacePlaceholderElementsWithClonedPermanentElements(placeholders)
   }
 
-  focusFirstAutofocusableElement(snapshot: Snapshot) {
-    const element = snapshot.firstAutofocusableElement
+  focusFirstAutofocusableElement() {
+    const element = this.newSnapshot.firstAutofocusableElement
     if (elementIsFocusable(element)) {
       element.focus()
     }
