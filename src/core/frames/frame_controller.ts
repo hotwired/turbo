@@ -1,5 +1,5 @@
 import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../elements/frame_element"
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { parseHTMLDocument } from "../../util"
@@ -124,8 +124,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Fetch request delegate
 
-  additionalHeadersForRequest(request: FetchRequest) {
-    return { "Turbo-Frame": this.id }
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
+    headers["Turbo-Frame"] = this.id
   }
 
   requestStarted(request: FetchRequest) {
