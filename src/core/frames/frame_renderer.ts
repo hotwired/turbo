@@ -9,7 +9,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   async render() {
     await nextAnimationFrame()
-    this.renderSnapshotWithPermanentElements(() => {
+    this.preservingPermanentElements(() => {
       this.loadFrameElement()
     })
     this.scrollFrameIntoView()

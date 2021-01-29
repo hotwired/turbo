@@ -41,7 +41,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   replaceBody() {
-    this.renderSnapshotWithPermanentElements(() => {
+    this.preservingPermanentElements(() => {
       this.activateNewBody()
       this.assignNewBody()
     })

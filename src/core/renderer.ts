@@ -52,9 +52,9 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     }
   }
 
-  renderSnapshotWithPermanentElements(render: () => void) {
+  preservingPermanentElements(callback: () => void) {
     const placeholders = relocatePermanentElements(this.currentSnapshot, this.newSnapshot)
-    render()
+    callback()
     replacePlaceholderElementsWithClonedPermanentElements(placeholders)
   }
 
