@@ -94,6 +94,14 @@ export class FunctionalTestCase extends InternTestCase {
     return this.evaluate(() => location.search).then(search => new URLSearchParams(search))
   }
 
+  async getSearchParam(key: string): Promise<string> {
+    return (await this.searchParams).get(key) || ""
+  }
+
+  async getAllSearchParams(key: string): Promise<string[]> {
+    return (await this.searchParams).getAll(key) || []
+  }
+
   get hash(): Promise<string> {
     return this.evaluate(() => location.hash)
   }
