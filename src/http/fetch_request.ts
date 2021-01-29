@@ -2,7 +2,7 @@ import { FetchResponse } from "./fetch_response"
 import { dispatch } from "../util"
 
 export interface FetchRequestDelegate {
-  additionalHeadersForRequest?(request: FetchRequest): { [header: string]: string }
+  prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
   requestStarted(request: FetchRequest): void
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): void
@@ -117,22 +117,21 @@ export class FetchRequest {
   }
 
   get headers() {
-    return {
-      "Accept": "text/html, application/xhtml+xml",
-      ...this.additionalHeaders
+    const headers = { ...this.defaultHeaders }
+    if (typeof this.delegate.prepareHeadersForRequest == "function") {
+      this.delegate.prepareHeadersForRequest(headers, this)
     }
-  }
-
-  get additionalHeaders() {
-    if (typeof this.delegate.additionalHeadersForRequest == "function") {
-      return this.delegate.additionalHeadersForRequest(this)
-    } else {
-      return {}
-    }
+    return headers
   }
 
   get abortSignal() {
     return this.abortController.signal
+  }
+
+  get defaultHeaders() {
+    return {
+      "Accept": "text/html, application/xhtml+xml"
+    }
   }
 }
 

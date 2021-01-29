@@ -1,4 +1,4 @@
-import { Response, Router } from "express"
+import { Request, Response, Router } from "express"
 import multer from "multer"
 import path from "path"
 import url from "url"
@@ -7,6 +7,14 @@ const router = Router()
 const streamResponses: Set<Response> = new Set
 
 router.use(multer().none())
+
+router.use((request, response, next) => {
+  if (request.accepts(["text/html", "application/xhtml+xml"])) {
+    next()
+  } else {
+    response.sendStatus(422)
+  }
+})
 
 router.post("/redirect", (request, response) => {
   const { path, ...query } = request.body
@@ -39,7 +47,7 @@ router.post("/messages", (request, response) => {
   const { content, status, type } = request.body
   if (typeof content == "string") {
     receiveMessage(content)
-    if (type == "stream") {
+    if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
       response.send(renderMessage(content))
     } else {
@@ -55,7 +63,7 @@ router.put("/messages/:id", (request, response) => {
   const { id } = request.params
   if (typeof content == "string") {
     receiveMessage(content)
-    if (type == "stream") {
+    if (type == "stream" &&  acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
       response.send(renderMessage(id + ": " + content))
     } else {
@@ -97,6 +105,10 @@ function renderMessage(content: string) {
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `
+}
+
+function acceptsStreams(request: Request): boolean {
+  return !!request.accepts("text/vnd.turbo-stream.html")
 }
 
 function renderSSEData(data: any) {

@@ -104,16 +104,14 @@ export class FormSubmission {
 
   // Fetch request delegate
 
-  additionalHeadersForRequest(request: FetchRequest) {
-    const headers: FetchRequestHeaders = {}
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
     if (!request.isIdempotent) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
         headers["X-CSRF-Token"] = token
       }
-      headers["Accept"] = StreamMessage.contentType
+      headers["Accept"] = [ StreamMessage.contentType, headers["Accept"] ].join(", ")
     }
-    return headers
   }
 
   requestStarted(request: FetchRequest) {
