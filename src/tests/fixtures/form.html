@@ -83,7 +83,7 @@
       </form>
     </div>
     <hr>
-    <div id="disabled">
+    <div id="turbo-false">
       <form action="/__turbo/redirect" method="post" data-turbo="false">
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <input type="submit">
@@ -110,6 +110,12 @@
       </dialog>
     </div>
     <hr>
+    <div id="targets-frame">
+      <form action="/__turbo/redirect" method="post" data-turbo-frame="frame">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <button type="submit">Submit</button>
+      </form>
+    </div>
     <turbo-frame id="frame">
       <h2>Frame: Form</h2>
       <form action="/__turbo/redirect" method="post" class="redirect">
