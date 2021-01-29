@@ -1,9 +1,5 @@
-import { Renderer } from "../renderer"
+import { Renderer, replaceElementWithElement } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
-
-export type PermanentElement = Element & { id: string }
-
-export type Placeholder = { element: Element, permanentElement: PermanentElement }
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   get shouldRender() {
@@ -21,7 +17,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   finishRendering() {
     super.finishRendering()
     if (this.isPreview) {
-      this.focusFirstAutofocusableElement()
+      this.focusFirstAutofocusableElement(this.newSnapshot)
     }
   }
 
@@ -45,10 +41,10 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   replaceBody() {
-    const placeholders = this.relocateCurrentBodyPermanentElements()
-    this.activateNewBody()
-    this.assignNewBody()
-    this.replacePlaceholderElementsWithClonedPermanentElements(placeholders)
+    this.renderSnapshotWithPermanentElements(() => {
+      this.activateNewBody()
+      this.assignNewBody()
+    })
   }
 
   get trackedElementsAreIdentical() {
@@ -79,27 +75,6 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  relocateCurrentBodyPermanentElements() {
-    return this.currentBodyPermanentElements.reduce((placeholders, permanentElement) => {
-      const newElement = this.newSnapshot.getPermanentElementById(permanentElement.id)
-      if (newElement) {
-        const placeholder = createPlaceholderForPermanentElement(permanentElement)
-        replaceElementWithElement(permanentElement, placeholder.element)
-        replaceElementWithElement(newElement, permanentElement)
-        return [ ...placeholders, placeholder ]
-      } else {
-        return placeholders
-      }
-    }, [] as Placeholder[])
-  }
-
-  replacePlaceholderElementsWithClonedPermanentElements(placeholders: Placeholder[]) {
-    for (const { element, permanentElement } of placeholders) {
-      const clonedElement = permanentElement.cloneNode(true)
-      replaceElementWithElement(element, clonedElement)
-    }
-  }
-
   activateNewBody() {
     document.adoptNode(this.newElement)
     this.activateNewBodyScriptElements()
@@ -120,13 +95,6 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  focusFirstAutofocusableElement() {
-    const element = this.newSnapshot.firstAutofocusableElement
-    if (elementIsFocusable(element)) {
-      element.focus()
-    }
-  }
-
   get newHeadStylesheetElements() {
     return this.newHeadSnapshot.getStylesheetElementsNotInSnapshot(this.currentHeadSnapshot)
   }
@@ -143,29 +111,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.newHeadSnapshot.provisionalElements
   }
 
-  get currentBodyPermanentElements(): PermanentElement[] {
-    return this.currentSnapshot.getPermanentElementsPresentInSnapshot(this.newSnapshot)
-  }
-
   get newBodyScriptElements() {
     return [ ...this.newElement.querySelectorAll("script") ]
   }
-}
-
-function createPlaceholderForPermanentElement(permanentElement: PermanentElement) {
-  const element = document.createElement("meta")
-  element.setAttribute("name", "turbo-permanent-placeholder")
-  element.setAttribute("content", permanentElement.id)
-  return { element, permanentElement }
-}
-
-function replaceElementWithElement(fromElement: Element, toElement: Element) {
-  const parentElement = fromElement.parentElement
-  if (parentElement) {
-    return parentElement.replaceChild(toElement, fromElement)
-  }
-}
-
-function elementIsFocusable(element: any): element is { focus: () => void } {
-  return element && typeof element.focus == "function"
 }
