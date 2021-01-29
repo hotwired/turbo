@@ -115,7 +115,8 @@ export default [
     external: [
       "express",
       "multer",
-      "path"
+      "path",
+      "url"
     ],
     watch: {
       include: "src/tests/**"
