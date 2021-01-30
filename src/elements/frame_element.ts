@@ -1,3 +1,4 @@
+import { Session } from "../core/session"
 import { FetchResponse } from "../http/fetch_response"
 
 export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
@@ -13,7 +14,8 @@ export interface FrameElementDelegate {
 }
 
 export class FrameElement extends HTMLElement {
-  static delegateConstructor: new (element: FrameElement) => FrameElementDelegate
+  static delegateConstructor: new (element: FrameElement, session: Session) => FrameElementDelegate
+  static session: Session
 
   loaded: Promise<FetchResponse | void> = Promise.resolve()
   readonly delegate: FrameElementDelegate
@@ -24,7 +26,7 @@ export class FrameElement extends HTMLElement {
 
   constructor() {
     super()
-    this.delegate = new FrameElement.delegateConstructor(this)
+    this.delegate = new FrameElement.delegateConstructor(this, FrameElement.session)
   }
 
   connectedCallback() {

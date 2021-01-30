@@ -1,15 +1,25 @@
+import { Session } from "../core/session"
 import { StreamActions } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
 export class StreamElement extends HTMLElement {
+  static session: Session
+  readonly session: Session
+
+  constructor() {
+    super()
+    this.session = StreamElement.session
+  }
+
   async connectedCallback() {
     try {
       await this.render()
     } catch (error) {
       console.error(error)
     } finally {
+      this.updateHistory()
       this.disconnect()
     }
   }
@@ -23,6 +33,15 @@ export class StreamElement extends HTMLElement {
         this.performAction()
       }
     })()
+  }
+
+  updateHistory() {
+    if (this.hasHistoryURL) {
+      this.session.updateHistoryOnStreamElementRender(
+        this.historyMethod,
+        this.historyURL
+      )
+    }
   }
 
   disconnect() {
@@ -64,6 +83,18 @@ export class StreamElement extends HTMLElement {
 
   get target() {
     return this.getAttribute("target")
+  }
+
+  get hasHistoryURL() {
+    return this.hasAttribute("history-url")
+  }
+
+  get historyURL() {
+    return this.getAttribute("history-url") || this.raise("history-url attribute is missing")
+  }
+
+  get historyMethod() {
+    return this.getAttribute("history-method") || "push"
   }
 
   private raise(message: string): never {

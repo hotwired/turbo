@@ -11,6 +11,7 @@ import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
+import { Session } from "../session"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -18,13 +19,15 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
+  readonly session: Session
   loadingURL?: string
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
 
-  constructor(element: FrameElement) {
+  constructor(element: FrameElement, session: Session) {
     this.element = element
     this.view = new FrameView(this, this.element)
+    this.session = session
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
@@ -175,7 +178,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
+    const { result, formElement } = formSubmission
 
+    if (result?.success) {
+      const method = formElement.getAttribute('data-turbo-history')
+      const { url } = result.fetchResponse.response
+
+      this.session.updateHistoryOnFrameFormSubmissionSuccess(method, url)
+    }
   }
 
   // View delegate
@@ -209,6 +219,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   private navigateFrame(element: Element, url: string) {
     const frame = this.findFrameElement(element)
     frame.src = url
+
+    const method = element.getAttribute('data-turbo-history')
+    this.session.updateHistoryOnFrameNavigation(method, url)
   }
 
   private findFrameElement(element: Element) {

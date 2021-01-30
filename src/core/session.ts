@@ -15,6 +15,9 @@ import { dispatch } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
+import { FrameController } from "./frames/frame_controller"
+import { FrameElement } from "../elements/frame_element"
+import { StreamElement } from "../elements/stream_element"
 
 export type TimingData = {}
 
@@ -30,11 +33,17 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
 
-  readonly frameRedirector = new FrameRedirector(document.documentElement)
+  readonly frameRedirector = new FrameRedirector(document.documentElement, this)
 
   enabled = true
   progressBarDelay = 500
   started = false
+
+  constructor() {
+    StreamElement.session = this
+    FrameElement.session = this
+    FrameElement.delegateConstructor = FrameController
+  }
 
   start() {
     if (!this.started) {
@@ -111,6 +120,20 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
     } else {
       this.adapter.pageInvalidated()
     }
+  }
+
+  // Frame redirector delegate
+
+  updateHistoryOnFrameNavigation(method: string|null, url: string) {
+    this.updateHistory(method, url)
+  }
+
+  updateHistoryOnFrameFormSubmissionSuccess(method: string|null, url: string) {
+    this.updateHistory(method, url)
+  }
+
+  updateHistoryOnStreamElementRender(method: string, url: string) {
+    this.updateHistory(method, url)
   }
 
   // Scroll observer delegate
@@ -264,6 +287,14 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
 
   get snapshot() {
     return this.view.snapshot
+  }
+
+  private updateHistory(method: string|null, url: string) {
+    if (method === "push") {
+      this.history.push(expandURL(url));
+    } else if (method === "replace") {
+      this.history.replace(expandURL(url));
+    }
   }
 }
 

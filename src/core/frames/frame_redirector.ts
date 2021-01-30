@@ -1,14 +1,17 @@
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
+import { Session } from "../session";
 
 export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptorDelegate {
   readonly element: Element
+  readonly session: Session
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
 
-  constructor(element: Element) {
+  constructor(element: Element, session: Session) {
     this.element = element
+    this.session = session
     this.linkInterceptor = new LinkInterceptor(this, element)
     this.formInterceptor = new FormInterceptor(this, element)
   }
@@ -31,6 +34,9 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
     const frame = this.findFrameElement(element)
     if (frame) {
       frame.src = url
+
+      const method = element.getAttribute('data-turbo-history')
+      this.session.updateHistoryOnFrameNavigation(method, url)
     }
   }
 
