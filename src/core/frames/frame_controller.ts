@@ -12,6 +12,7 @@ import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { Action } from "../types"
+import { StreamAction } from "../streams/stream_actions"
 
 export class FrameController implements AppearanceObserverDelegate, FormInterceptorDelegate, FrameElementDelegate, FrameVisitDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -108,12 +109,12 @@ export class FrameController implements AppearanceObserverDelegate, FormIntercep
     markAsBusy(this.element)
   }
 
-  async visitSucceeded({ action }: FrameVisit, response: FetchResponse) {
-    await this.loadResponse(response, action)
+  async visitSucceeded({ action, rendering }: FrameVisit, response: FetchResponse) {
+    await this.loadResponse(response, action, rendering)
   }
 
-  async visitFailed({ action }: FrameVisit, response: FetchResponse) {
-    await this.loadResponse(response, action)
+  async visitFailed({ action, rendering }: FrameVisit, response: FetchResponse) {
+    await this.loadResponse(response, action, rendering)
   }
 
   visitErrored(frameVisit: FrameVisit, error: Error) {
@@ -128,7 +129,7 @@ export class FrameController implements AppearanceObserverDelegate, FormIntercep
     this.hasBeenLoaded = true
   }
 
-  async loadResponse(fetchResponse: FetchResponse, action: Action | null) {
+  async loadResponse(fetchResponse: FetchResponse, action: Action | null, rendering: StreamAction) {
     const fetchResponseLoaded = this.proposeVisitIfNavigatedWithAction(this.element, action)
 
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
@@ -140,7 +141,7 @@ export class FrameController implements AppearanceObserverDelegate, FormIntercep
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
+        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, rendering)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
         session.frameRendered(fetchResponse, this.element)

@@ -1,15 +1,18 @@
 import { expandURL } from "../url"
+import { getAttribute } from "../../util"
 import { Action } from "../types"
 import { getVisitAction } from "../drive/visit"
 import { FrameElement } from "../../elements/frame_element"
 import { FetchRequest, FetchRequestHeaders, FetchRequestDelegate, FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
+import { StreamAction, streamActionFromString } from "../streams/stream_actions"
 
 export interface FrameVisitOptions {
   action: Action | null,
   submit: { form: HTMLFormElement, submitter?: HTMLElement },
   url: string,
+  rendering: StreamAction | null
 }
 
 export interface FrameVisitDelegate {
@@ -26,6 +29,7 @@ export class FrameVisit implements FetchRequestDelegate, FormSubmissionDelegate 
   readonly element: FrameElement
   readonly action: Action | null
   readonly previousURL: string | null
+  readonly rendering: StreamAction
   readonly options: Partial<FrameVisitOptions>
   readonly isFormSubmission: boolean = false
 
@@ -35,23 +39,26 @@ export class FrameVisit implements FetchRequestDelegate, FormSubmissionDelegate 
 
   static optionsForClick(element: Element, url: string): Partial<FrameVisitOptions> {
     const action = getVisitAction(element)
+    const rendering = streamActionFromString(getAttribute("data-turbo-rendering", element))
 
-    return { action, url }
+    return { action, rendering, url }
   }
 
   static optionsForSubmit(form: HTMLFormElement, submitter?: HTMLElement): Partial<FrameVisitOptions> {
     const action = getVisitAction(form, submitter)
+    const rendering = streamActionFromString(getAttribute("data-turbo-rendering", submitter, form))
 
-    return { action, submit: { form, submitter } }
+    return { action, rendering, submit: { form, submitter } }
   }
 
   constructor(delegate: FrameVisitDelegate, element: FrameElement, options: Partial<FrameVisitOptions> = {}) {
     this.delegate = delegate
     this.element = element
     this.previousURL = this.element.src
-    const { action, url, submit } = this.options = options
+    const { action, rendering, url, submit } = this.options = options
 
     this.action = action || getVisitAction(this.element)
+    this.rendering = rendering || this.element.rendering
     if (url) {
       this.fetchRequest = new FetchRequest(this, FetchMethod.get, expandURL(url), new URLSearchParams, this.element)
     } else if (submit) {

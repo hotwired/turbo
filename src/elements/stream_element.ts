@@ -1,4 +1,4 @@
-import { StreamActions } from "../core/streams/stream_actions"
+import { StreamActions, StreamRenderable } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
@@ -23,7 +23,7 @@ import { nextAnimationFrame } from "../util"
  *     </template>
  *   </turbo-stream>
  */
-export class StreamElement extends HTMLElement {
+export class StreamElement extends HTMLElement implements StreamRenderable {
   async connectedCallback() {
     try {
       await this.render()
@@ -48,24 +48,6 @@ export class StreamElement extends HTMLElement {
   disconnect() {
     try { this.remove() } catch {}
   }
- 
-  /**
-   * Removes duplicate children (by ID)
-   */
-  removeDuplicateTargetChildren() {
-    this.duplicateChildren.forEach(c => c.remove())
-  }
-  
-  /**
-   * Gets the list of duplicate children (i.e. those with the same ID)
-   */
-  get duplicateChildren() {
-    const existingChildren = this.targetElements.flatMap(e => [...e.children]).filter(c => !!c.id)
-    const newChildrenIds   = [...this.templateContent?.children].filter(c => !!c.id).map(c => c.id)
-  
-    return existingChildren.filter(c => newChildrenIds.includes(c.id))
-  }
-  
 
   /**
    * Gets the action function to be performed.
@@ -131,6 +113,10 @@ export class StreamElement extends HTMLElement {
    */
   get targets() {
     return this.getAttribute("targets")
+  }
+
+  get removeDuplicates() {
+    return true
   }
 
   private raise(message: string): never {

@@ -1,8 +1,16 @@
 import { FrameElement } from "../../elements/frame_element"
 import { nextAnimationFrame } from "../../util"
 import { Renderer } from "../renderer"
+import { Snapshot } from "../snapshot"
+import { StreamActions, StreamAction } from "../streams/stream_actions"
 
 export class FrameRenderer extends Renderer<FrameElement> {
+  readonly streamAction: StreamAction
+  constructor(currentSnapshot: Snapshot<FrameElement>, newSnapshot: Snapshot<FrameElement>, isPreview: boolean, streamAction: StreamAction) {
+    super(currentSnapshot, newSnapshot, isPreview)
+    this.streamAction = streamAction
+  }
+
   get shouldRender() {
     return true
   }
@@ -20,16 +28,14 @@ export class FrameRenderer extends Renderer<FrameElement> {
   }
 
   loadFrameElement() {
-    const destinationRange = document.createRange()
-    destinationRange.selectNodeContents(this.currentElement)
-    destinationRange.deleteContents()
+    const sourceRange = this.newElement.ownerDocument.createRange()
+    sourceRange.selectNodeContents(this.newElement)
 
-    const frameElement = this.newElement
-    const sourceRange = frameElement.ownerDocument?.createRange()
-    if (sourceRange) {
-      sourceRange.selectNodeContents(frameElement)
-      this.currentElement.appendChild(sourceRange.extractContents())
-    }
+    StreamActions[this.streamAction].apply({
+      removeDuplicates: false,
+      targetElements: [this.currentElement],
+      templateContent: sourceRange.extractContents(),
+    })
   }
 
   scrollFrameIntoView() {
@@ -54,7 +60,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   get newScriptElements() {
     return this.currentElement.querySelectorAll("script")
-  }  
+  }
 }
 
 function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLogicalPosition): ScrollLogicalPosition {

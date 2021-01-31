@@ -1,3 +1,4 @@
+import { StreamAction, streamActionFromString } from "../core/streams/stream_actions"
 import { FetchResponse } from "../http/fetch_response"
 import { FrameVisitOptions } from "../core/frames/frame_visit"
 
@@ -66,6 +67,26 @@ export class FrameElement extends HTMLElement {
       this.delegate.sourceURLChanged()
     } else {
       this.delegate.disabledChanged()
+    }
+  }
+
+  /**
+   * Gets the action the frame will render its changes with from the `rendering`
+   * HTML attribute. Defaults to "update" when the attribute is missing.
+   */
+  get rendering(): StreamAction {
+    return streamActionFromString(this.getAttribute("rendering")) || StreamAction.default
+  }
+
+  /**
+   * Sets the action the frame will render its changes with. Defaults to
+   * "update" when the value is null.
+   */
+  set rendering(value: StreamAction) {
+    if (value) {
+      this.setAttribute("rendering", value)
+    } else {
+      this.removeAttribute("rendering")
     }
   }
 

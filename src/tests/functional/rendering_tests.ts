@@ -208,6 +208,166 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.goBack()
   }
 
+  async "test frame with rendering=after inserts the contents after the frame"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("rendering", "after"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame"), "Rendering", "preserves frame contents")
+    this.assert.equal(await this.getVisibleText("#frame ~ h2"), "Frame: Loaded", "inserts contents after frame")
+  }
+
+  async "test frame with rendering=append appends the contents"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("rendering", "append"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.ok(await this.hasSelector("#frame"), "preserves existing frame")
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Rendering")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Frame: Loaded")
+  }
+
+  async "test frame with rendering=before inserts the contents before the frame"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("rendering", "before"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame-rendering :first-child"), "Frame: Loaded", "inserts contents before frame")
+    this.assert.equal(await this.getVisibleText("#frame"), "Rendering", "preserves frame contents")
+  }
+
+  async "test frame with rendering=prepend prepends the contents"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("rendering", "prepend"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.ok(await this.hasSelector("#frame"), "preserves existing frame")
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Frame: Loaded")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Rendering")
+  }
+
+  async "test frame with rendering=remove removes the element"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("rendering", "remove"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.notOk(await this.hasSelector("#frame"), "removes existing frame")
+    this.assert.ok(await this.hasSelector("#outside-frame"), "does not navigate page")
+  }
+
+  async "test frame with rendering=replace sets outerHTML"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("rendering", "replace"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.notOk(await this.hasSelector("#frame"), "removes existing frame")
+    this.assert.equal(await this.getVisibleText("#frame-rendering :first-child"), "Frame: Loaded")
+  }
+
+  async "test frame without action defaults to rendering=update"() {
+    await this.remote.execute(() => document.getElementById("frame")?.removeAttribute("action"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame"), "Frame: Loaded")
+  }
+
+  async "test frame with rendering=update sets innerHTML"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("rendering", "update"))
+    await this.clickSelector("#outside-frame")
+    await this.nextBeat
+
+    this.assert.ok(await this.hasSelector("#frame"))
+    this.assert.equal(await this.getVisibleText("#frame"), "Frame: Loaded")
+  }
+
+  async "test link with data-turbo-rendering=after inserts the contents after the frame"() {
+    await this.clickSelector("#frame-after")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame"), "Rendering", "preserves frame contents")
+    this.assert.equal(await this.getVisibleText("#frame ~ h2"), "Frame: Loaded", "inserts contents after frame")
+  }
+
+  async "test link with data-turbo-rendering=append appends the contents"() {
+    await this.clickSelector("#frame-append")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Rendering")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Frame: Loaded")
+  }
+
+  async "test link with data-turbo-rendering=before inserts the contents before the frame"() {
+    await this.clickSelector("#frame-before")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame-rendering :first-child"), "Frame: Loaded", "inserts contents before frame")
+    this.assert.equal(await this.getVisibleText("#frame"), "Rendering", "preserves frame contents")
+  }
+
+  async "test link with data-turbo-rendering=prepend prepends the contents"() {
+    await this.clickSelector("#frame-prepend")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Frame: Loaded")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Rendering")
+  }
+
+  async "test link with data-turbo-rendering=remove removes the element"() {
+    await this.clickSelector("#frame-remove")
+    await this.nextBeat
+
+    this.assert.notOk(await this.hasSelector("#frame"), "removes existing frame")
+    this.assert.ok(await this.hasSelector("#frame-remove"), "does not navigate the page")
+  }
+
+  async "test link with data-turbo-rendering=replace sets outerHTML"() {
+    await this.clickSelector("#frame-replace")
+    await this.nextBeat
+
+    this.assert.notOk(await this.hasSelector("#frame"), "removes existing frame")
+    this.assert.equal(await this.getVisibleText("#frame-rendering :first-child"), "Frame: Loaded")
+  }
+
+  async "test link with data-turbo-rendering=update sets innerHTML"() {
+    await this.clickSelector("#frame-update")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame"), "Frame: Loaded")
+  }
+
+  async "test form[method=get][data-turbo-rendering=prepend] prepends the contents"() {
+    await this.clickSelector("#frame-form-get-prepend")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Frame: Loaded")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Rendering")
+  }
+
+  async "test form[method=post][data-turbo-rendering=prepend] prepends the contents"() {
+    await this.clickSelector("#frame-form-post-prepend")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Frame: Loaded")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Rendering")
+  }
+
+  async "test form[method=get] with button[data-turbo-rendering=append] appends the contents"() {
+    await this.clickSelector("#frame-form-get-append")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Rendering")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Frame: Loaded")
+  }
+
+  async "test form[method=post] with button[data-turbo-rendering=append] appends the contents"() {
+    await this.clickSelector("#frame-form-post-append")
+    await this.nextBeat
+
+    this.assert.equal(await this.getVisibleText("#frame :first-child"), "Rendering")
+    this.assert.equal(await this.getVisibleText("#frame :last-child"), "Frame: Loaded")
+  }
+
   get assetElements(): Promise<Element[]> {
     return filter(this.headElements, isAssetElement)
   }

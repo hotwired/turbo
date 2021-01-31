@@ -62,6 +62,10 @@ export class FunctionalTestCase extends InternTestCase {
     return (await this.remote.findByCssSelector(selector)).click()
   }
 
+  async getVisibleText(selector: string): Promise<string> {
+    return this.querySelector(selector).then(element => element.getVisibleText())
+  }
+
   async scrollToSelector(selector: string): Promise<void> {
     const element = await this.remote.findByCssSelector(selector)
     return this.evaluate(element => element.scrollIntoView(), element)
