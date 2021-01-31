@@ -118,8 +118,11 @@ export class FetchRequest {
 
   get headers() {
     const headers = { ...this.defaultHeaders }
-    if (typeof this.delegate.prepareHeadersForRequest == "function") {
-      this.delegate.prepareHeadersForRequest(headers, this)
+    let fetchRequest:any = this;
+    while(fetchRequest = fetchRequest.delegate) {
+      if (typeof fetchRequest.prepareHeadersForRequest == "function") {
+        fetchRequest.prepareHeadersForRequest(headers, this);
+      }
     }
     return headers
   }
