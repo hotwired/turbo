@@ -116,6 +116,13 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "restore")
   }
+
+  async "test link targeting a disabled turbo-frame navigates the page"() {
+    await this.clickSelector("#link-to-disabled-frame")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/hello.html")
+  }
 }
 
 NavigationTests.registerSuite()

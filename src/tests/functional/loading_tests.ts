@@ -53,9 +53,12 @@ export class LoadingTests extends TurboDriveTestCase {
 
   async "test changing src attribute on a frame with loading=eager navigates"() {
     const frameContents = "#loading-eager turbo-frame h2"
-    await this.remote.execute(() => document.querySelector("#loading-eager turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html"))
     await this.nextBeat
+
+    await this.remote.execute(() => document.querySelector("#loading-eager turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html"))
+
     await this.clickSelector("#loading-eager summary")
+    await this.nextBeat
 
     const contents = await this.querySelector(frameContents)
     this.assert.equal(await contents.getVisibleText(), "Frames: #frame")

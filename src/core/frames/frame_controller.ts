@@ -1,15 +1,20 @@
 import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../elements/frame_element"
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { nextAnimationFrame } from "../../util"
+import { parseHTMLDocument } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
-import { Locatable, Location } from "../location"
+import { Snapshot } from "../snapshot"
+import { ViewDelegate } from "../view"
+import { expandURL, Locatable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
+import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
+import { FrameRenderer } from "./frame_renderer"
 
-export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate {
+export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
+  readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
@@ -19,6 +24,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   constructor(element: FrameElement) {
     this.element = element
+    this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
@@ -66,15 +72,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
-  async loadResponse(response: FetchResponse): Promise<void> {
-    const fragment = fragmentFromHTML(await response.responseHTML)
-    if (fragment) {
-      const element = await this.extractForeignFrameElement(fragment)
-      await nextAnimationFrame()
-      this.loadFrameElement(element)
-      this.scrollFrameIntoView(element)
-      await nextAnimationFrame()
-      this.focusFirstAutofocusableElement()
+  async loadResponse(response: FetchResponse) {
+    try {
+      const html = await response.responseHTML
+      if (html) {
+        const { body } = parseHTMLDocument(html)
+        const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
+        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
+        await this.view.render(renderer)
+      }
+    } catch (error) {
+      console.error(error)
+      this.view.invalidate()
     }
   }
 
@@ -107,7 +116,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
     this.formSubmission = new FormSubmission(this, element, submitter)
     if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.navigateFrame(element, this.formSubmission.fetchRequest.url)
+      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
     } else {
       this.formSubmission.start()
     }
@@ -115,8 +124,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Fetch request delegate
 
-  additionalHeadersForRequest(request: FetchRequest) {
-    return { "Turbo-Frame": this.id }
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
+    headers["Turbo-Frame"] = this.id
   }
 
   requestStarted(request: FetchRequest) {
@@ -169,11 +178,24 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   }
 
+  // View delegate
+
+  viewWillRenderSnapshot(snapshot: Snapshot, isPreview: boolean) {
+
+  }
+
+  viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
+
+  }
+
+  viewInvalidated() {
+
+  }
+
   // Private
 
   private async visit(url: Locatable) {
-    const location = Location.wrap(url)
-    const request = new FetchRequest(this, FetchMethod.get, location)
+    const request = new FetchRequest(this, FetchMethod.get, expandURL(url))
 
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
@@ -190,11 +212,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   private findFrameElement(element: Element) {
-    const id = element.getAttribute("data-turbo-frame")
+    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
-  private async extractForeignFrameElement(container: ParentNode): Promise<FrameElement> {
+  async extractForeignFrameElement(container: ParentNode): Promise<FrameElement> {
     let element
     const id = CSS.escape(this.id)
 
@@ -209,40 +231,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
     console.error(`Response has no matching <turbo-frame id="${id}"> element`)
     return new FrameElement()
-  }
-
-  private loadFrameElement(frameElement: FrameElement) {
-    const destinationRange = document.createRange()
-    destinationRange.selectNodeContents(this.element)
-    destinationRange.deleteContents()
-
-    const sourceRange = frameElement.ownerDocument?.createRange()
-    if (sourceRange) {
-      sourceRange.selectNodeContents(frameElement)
-      this.element.appendChild(sourceRange.extractContents())
-    }
-  }
-
-  private focusFirstAutofocusableElement(): boolean {
-    const element = this.firstAutofocusableElement
-    if (element) {
-      element.focus()
-      return true
-    }
-    return false
-  }
-
-  private scrollFrameIntoView(frame: FrameElement): boolean {
-    if (this.element.autoscroll || frame.autoscroll) {
-      const element = this.element.firstElementChild
-      const block = readScrollLogicalPosition(this.element.getAttribute("data-autoscroll-block"), "end")
-
-      if (element) {
-        element.scrollIntoView({ block })
-        return true
-      }
-    }
-    return false
   }
 
   private shouldInterceptNavigation(element: Element) {
@@ -263,11 +251,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   // Computed properties
-
-  get firstAutofocusableElement(): HTMLElement | null {
-    const element = this.element.querySelector("[autofocus]")
-    return element instanceof HTMLElement ? element : null
-  }
 
   get id() {
     return this.element.id
@@ -300,21 +283,6 @@ function getFrameElementById(id: string | null) {
     if (element instanceof FrameElement) {
       return element
     }
-  }
-}
-
-function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLogicalPosition): ScrollLogicalPosition {
-  if (value == "end" || value == "start" || value == "center" || value == "nearest") {
-    return value
-  } else {
-    return defaultValue
-  }
-}
-
-function fragmentFromHTML(html?: string) {
-  if (html) {
-    const foreignDocument = document.implementation.createHTMLDocument()
-    return foreignDocument.createRange().createContextualFragment(html)
   }
 }
 

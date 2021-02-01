@@ -12,7 +12,7 @@ export class StreamTests extends FunctionalTestCase {
     element = await this.querySelector(selector)
     this.assert.equal(await element.getVisibleText(), "First")
 
-    await this.createMessage("Hello world!")
+    await this.clickSelector("#create [type=submit]")
     await this.nextBeat
 
     element = await this.querySelector(selector)

@@ -10,8 +10,16 @@ export function nextAnimationFrame() {
   return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 }
 
+export function nextEventLoopTick() {
+  return new Promise<void>(resolve => setTimeout(() => resolve(), 0))
+}
+
 export function nextMicrotask() {
   return Promise.resolve()
+}
+
+export function parseHTMLDocument(html = "") {
+  return new DOMParser().parseFromString(html, "text/html")
 }
 
 export function unindent(strings: TemplateStringsArray, ...values: any[]): string {
