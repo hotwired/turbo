@@ -2,6 +2,7 @@ import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { Session } from "../session";
+import { NavigationElement } from "./navigation-element";
 
 export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptorDelegate {
   readonly element: Element
@@ -30,13 +31,11 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
     return this.shouldRedirect(element)
   }
 
-  linkClickIntercepted(element: Element, url: string) {
-    const frame = this.findFrameElement(element)
+  linkClickIntercepted(navigationElement: NavigationElement) {
+    const frame = this.findFrameElement(navigationElement.element)
     if (frame) {
-      frame.src = url
-
-      const method = element.getAttribute('data-turbo-history')
-      this.session.updateHistoryOnFrameNavigation(method, url)
+      frame.delegate.setNavigationElement(navigationElement)
+      frame.src = navigationElement.url
     }
   }
 

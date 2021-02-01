@@ -12,6 +12,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { Session } from "../session"
+import { NavigationElement } from "./navigation-element"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -22,12 +23,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly session: Session
   loadingURL?: string
   formSubmission?: FormSubmission
+  navigationElement: NavigationElement | null
   private resolveVisitPromise = () => {}
 
   constructor(element: FrameElement, session: Session) {
     this.element = element
     this.view = new FrameView(this, this.element)
     this.session = session
+    this.navigationElement = null
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
@@ -102,8 +105,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return this.shouldInterceptNavigation(element)
   }
 
-  linkClickIntercepted(element: Element, url: string) {
-    this.navigateFrame(element, url)
+  linkClickIntercepted(element: NavigationElement) {
+    this.navigateFrame(element)
   }
 
   // Form interceptor delegate
@@ -118,8 +121,10 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
 
     this.formSubmission = new FormSubmission(this, element, submitter)
+
     if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
+      const navigationElement = new NavigationElement(element, this.formSubmission.fetchRequest.url.href)
+      this.navigateFrame(navigationElement)
     } else {
       this.formSubmission.start()
     }
@@ -142,6 +147,10 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     await this.loadResponse(response)
     this.resolveVisitPromise()
+
+    if (this.navigationElement?.shouldUpdateHistory) {
+      this.session.updateHistoryOnFrameNavigation(this.navigationElement)
+    }
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
@@ -156,6 +165,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   requestFinished(request: FetchRequest) {
     this.element.removeAttribute("busy")
+    this.setNavigationElement(null)
   }
 
   // Form submission delegate
@@ -167,6 +177,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
     const frame = this.findFrameElement(formSubmission.formElement)
     frame.delegate.loadResponse(response)
+
+    if (this.navigationElement?.shouldUpdateHistory) {
+      this.navigationElement.url = response.response.url
+      this.session.updateHistoryOnFrameFormSubmissionSuccess(this.navigationElement)
+    }
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -178,14 +193,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-    const { result, formElement } = formSubmission
-
-    if (result?.success) {
-      const method = formElement.getAttribute('data-turbo-history')
-      const { url } = result.fetchResponse.response
-
-      this.session.updateHistoryOnFrameFormSubmissionSuccess(method, url)
-    }
+    this.setNavigationElement(null)
   }
 
   // View delegate
@@ -202,6 +210,10 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   }
 
+  setNavigationElement(element: NavigationElement | null) {
+    this.navigationElement = element
+  }
+
   // Private
 
   private async visit(url: Locatable) {
@@ -216,12 +228,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     })
   }
 
-  private navigateFrame(element: Element, url: string) {
-    const frame = this.findFrameElement(element)
-    frame.src = url
+  private navigateFrame(navigationElement: NavigationElement) {
+    this.setNavigationElement(navigationElement)
 
-    const method = element.getAttribute('data-turbo-history')
-    this.session.updateHistoryOnFrameNavigation(method, url)
+    const frame = this.findFrameElement(navigationElement.element)
+    frame.src = navigationElement.url
   }
 
   private findFrameElement(element: Element) {

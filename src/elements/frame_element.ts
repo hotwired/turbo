@@ -1,3 +1,4 @@
+import { NavigationElement } from "../core/frames/navigation-element"
 import { Session } from "../core/session"
 import { FetchResponse } from "../http/fetch_response"
 
@@ -10,6 +11,7 @@ export interface FrameElementDelegate {
   sourceURLChanged(): void
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
   loadResponse(response: FetchResponse): void
+  setNavigationElement(element: NavigationElement): void
   isLoading: boolean
 }
 

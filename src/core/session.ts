@@ -18,6 +18,7 @@ import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameController } from "./frames/frame_controller"
 import { FrameElement } from "../elements/frame_element"
 import { StreamElement } from "../elements/stream_element"
+import { NavigationElement } from "./frames/navigation-element"
 
 export type TimingData = {}
 
@@ -124,16 +125,16 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
 
   // Frame redirector delegate
 
-  updateHistoryOnFrameNavigation(method: string|null, url: string) {
-    this.updateHistory(method, url)
+  updateHistoryOnFrameNavigation(element: NavigationElement) {
+    this.updateHistory(element)
   }
 
-  updateHistoryOnFrameFormSubmissionSuccess(method: string|null, url: string) {
-    this.updateHistory(method, url)
+  updateHistoryOnFrameFormSubmissionSuccess(element: NavigationElement) {
+    this.updateHistory(element)
   }
 
   updateHistoryOnStreamElementRender(method: string, url: string) {
-    this.updateHistory(method, url)
+    // this.updateHistory(method, url)
   }
 
   // Scroll observer delegate
@@ -289,11 +290,11 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
     return this.view.snapshot
   }
 
-  private updateHistory(method: string|null, url: string) {
-    if (method === "push") {
-      this.history.push(expandURL(url));
-    } else if (method === "replace") {
-      this.history.replace(expandURL(url));
+  private updateHistory(element: NavigationElement) {
+    if (element.method === "push") {
+      this.history.push(element.locationURL);
+    } else if (element.method === "replace") {
+      this.history.replace(element.locationURL);
     }
   }
 }

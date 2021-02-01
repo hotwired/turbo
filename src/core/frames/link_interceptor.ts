@@ -1,6 +1,8 @@
+import { NavigationElement } from './navigation-element'
+
 export interface LinkInterceptorDelegate {
   shouldInterceptLinkClick(element: Element, url: string): boolean
-  linkClickIntercepted(element: Element, url: string): void
+  linkClickIntercepted(element: NavigationElement): void
 }
 
 export class LinkInterceptor {
@@ -38,7 +40,8 @@ export class LinkInterceptor {
       if (this.delegate.shouldInterceptLinkClick(event.target, event.detail.url)) {
         this.clickEvent.preventDefault()
         event.preventDefault()
-        this.delegate.linkClickIntercepted(event.target, event.detail.url)
+        const navigationElement = new NavigationElement(event.target, event.detail.url)
+        this.delegate.linkClickIntercepted(navigationElement)
       }
     }
     delete this.clickEvent
