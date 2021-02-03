@@ -312,7 +312,7 @@ export class Visit implements FetchRequestDelegate {
   performScroll() {
     if (!this.scrolled) {
       if (this.action == "restore") {
-        this.scrollToRestoredPosition() || this.scrollToTop()
+        this.scrollToRestoredPosition() || this.scrollToAnchor() || this.scrollToTop()
       } else {
         this.scrollToAnchor() || this.scrollToTop()
       }
@@ -365,10 +365,10 @@ export class Visit implements FetchRequestDelegate {
   }
 
   shouldIssueRequest() {
-    if (this.action == "restore") {
-      return !this.hasCachedSnapshot()
-    } else if (this.isSamePage) {
+    if (this.isSamePage) {
       return false
+    } else if (this.action == "restore") {
+      return !this.hasCachedSnapshot()
     } else {
       return true
     }
