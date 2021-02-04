@@ -1,6 +1,6 @@
-import { FunctionalTestCase } from "../helpers/functional_test_case"
+import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 
-export class FrameTests extends FunctionalTestCase {
+export class FrameTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/frames.html")
   }
@@ -13,6 +13,13 @@ export class FrameTests extends FunctionalTestCase {
 
     const frame = await this.querySelector("turbo-frame#frame")
     this.assert.equal(await frame.getAttribute("data-loaded-from"), currentPath)
+  }
+
+  async "test following a link driving a frame toggles the [busy] attribute"() {
+    await this.clickSelector("#hello a")
+
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
   }
 
   async "test following a link to a page without a matching frame results in an empty frame"() {
