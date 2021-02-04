@@ -129,7 +129,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestStarted(request: FetchRequest) {
-    this.element.setAttribute("busy", "")
+    this.element.setAttribute("aria-busy", "true")
   }
 
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
@@ -152,13 +152,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestFinished(request: FetchRequest) {
-    this.element.removeAttribute("busy")
+    this.element.removeAttribute("aria-busy")
   }
 
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    const frame = this.findFrameElement(formSubmission.formElement)
+    frame.setAttribute("aria-busy", "true")
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
@@ -175,7 +176,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    const frame = this.findFrameElement(formSubmission.formElement)
+    frame.removeAttribute("aria-busy")
   }
 
   // View delegate
