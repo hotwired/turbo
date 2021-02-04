@@ -17,7 +17,7 @@
       <form action="/__turbo/redirect" method="post" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="hidden" name="greeting" value="Hello from a redirect">
-        <input type="submit">
+        <input id="standard-form-submit" type="submit">
       </form>
       <form action="/__turbo/messages" method="post" class="created">
         <input type="hidden" name="content" value="Hello!">
@@ -122,7 +122,7 @@
 
       <form action="/__turbo/redirect" method="post" data-turbo-frame="frame" class="frame">
         <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
-        <button type="submit">Submit</button>
+        <button id="targets-frame-form-submit" type="submit">Submit</button>
       </form>
     </div>
     <turbo-frame id="frame">

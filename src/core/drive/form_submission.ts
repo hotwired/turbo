@@ -126,6 +126,7 @@ export class FormSubmission {
 
   requestStarted(request: FetchRequest) {
     this.state = FormSubmissionState.waiting
+    this.submitter?.setAttribute("disabled", "")
     dispatch("turbo:submit-start", { target: this.formElement, detail: { formSubmission: this } })
     this.delegate.formSubmissionStarted(this)
   }
@@ -159,6 +160,7 @@ export class FormSubmission {
 
   requestFinished(request: FetchRequest) {
     this.state = FormSubmissionState.stopped
+    this.submitter?.removeAttribute("disabled")
     dispatch("turbo:submit-end", { target: this.formElement, detail: { formSubmission: this, ...this.result }})
     this.delegate.formSubmissionFinished(this)
   }
