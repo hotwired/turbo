@@ -53,7 +53,7 @@ export class FormSubmission {
     this.delegate = delegate
     this.formElement = formElement
     this.submitter = submitter
-    this.formData = buildFormData(formElement, submitter)
+    this.formData = buildFormData(formElement, submitter, this.method)
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
     this.mustRedirect = mustRedirect
   }
@@ -164,13 +164,17 @@ export class FormSubmission {
   }
 }
 
-function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): FormData {
+function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement, method: FetchMethod): FormData {
   const formData = new FormData(formElement)
   const name = submitter?.getAttribute("name")
   const value = submitter?.getAttribute("value")
 
   if (name && formData.get(name) != value) {
     formData.append(name, value || "")
+  }
+  const _method = formData.get("_method")?.toString()
+  if(_method && fetchMethodFromString(_method) != method){
+    formData.set("_method", method.toString())
   }
 
   return formData
