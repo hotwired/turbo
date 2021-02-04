@@ -185,6 +185,23 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.attributeForSelector("#frame", "src"), url.href, "redirects the target frame")
   }
 
+  async "test frame form submission toggles the ancestor frame's [busy] attribute"() {
+    await this.clickSelector("#frame form.redirect input[type=submit]")
+
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
+  }
+
+  async "test frame form submission toggles the target frame's [busy] attribute"() {
+    await this.clickSelector('#targets-frame form.frame [type="submit"]')
+
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+
+    const title = await this.querySelector("#frame h2")
+    this.assert.equal(await title.getVisibleText(), "Frame: Loaded")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
+  }
+
   async "test frame form submission with empty created response"() {
     const htmlBefore = await this.outerHTMLForSelector("#frame")
     const button = await this.querySelector("#frame form.created input[type=submit]")
@@ -300,7 +317,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test form submission targets disabled frame"() {
     this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
-    await this.clickSelector('#targets-frame [type="submit"]')
+    await this.clickSelector('#targets-frame form.one [type="submit"]')
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
