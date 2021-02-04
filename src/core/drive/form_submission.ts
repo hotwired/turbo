@@ -164,7 +164,7 @@ export class FormSubmission {
   }
 }
 
-function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement, method: FetchMethod): FormData {
+function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement, method?: FetchMethod): FormData {
   const formData = new FormData(formElement)
   const name = submitter?.getAttribute("name")
   const value = submitter?.getAttribute("value")
@@ -173,7 +173,7 @@ function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement, me
     formData.append(name, value || "")
   }
   const _method = formData.get("_method")?.toString()
-  if(_method && fetchMethodFromString(_method) != method){
+  if(method && _method && fetchMethodFromString(_method) != method){
     formData.set("_method", method.toString())
   }
 
