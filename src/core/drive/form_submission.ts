@@ -45,6 +45,7 @@ export class FormSubmission {
   readonly submitter?: HTMLElement
   readonly formData: FormData
   readonly fetchRequest: FetchRequest
+  readonly method: FetchMethod
   readonly mustRedirect: boolean
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
@@ -54,13 +55,9 @@ export class FormSubmission {
     this.formElement = formElement
     this.submitter = submitter
     this.formData = buildFormData(formElement, submitter)
+    this.method = getFetchMethod(this.formData, this.formElement, this.submitter)
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
     this.mustRedirect = mustRedirect
-  }
-
-  get method(): FetchMethod {
-    const method = this.submitter?.getAttribute("formmethod") || this.formElement.getAttribute("method") || ""
-    return fetchMethodFromString(method.toLowerCase()) || FetchMethod.get
   }
 
   get action(): string {
@@ -174,6 +171,16 @@ function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): F
   }
 
   return formData
+}
+
+function getFetchMethod(formData: FormData, formElement: HTMLFormElement, submitter?: HTMLElement) {
+  const methodFromFormData = formData.get("_method")
+  const methodOverride = methodFromFormData instanceof File ? "" : methodFromFormData
+  const method = submitter?.getAttribute("formmethod") || methodOverride || formElement.getAttribute("method") || ""
+
+  formData.delete("_method")
+
+  return fetchMethodFromString(method.toLowerCase()) || FetchMethod.get
 }
 
 function getCookieValue(cookieName: string | null) {

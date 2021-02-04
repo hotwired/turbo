@@ -8,6 +8,11 @@ const streamResponses: Set<Response> = new Set
 
 router.use(multer().none())
 
+router.use((request, _, next) => {
+  request.method = request.body._method || request.method
+  next()
+})
+
 router.use((request, response, next) => {
   if (request.accepts(["text/html", "application/xhtml+xml"])) {
     next()

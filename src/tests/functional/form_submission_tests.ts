@@ -144,6 +144,24 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
+  async "test standard form submission respects formmethod on submitter over _method in body"() {
+    await this.clickSelector("#submitter form.put [type=submit][formmethod]")
+    await this.nextBody
+
+    this.assert.ok(await this.formSubmitted)
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
+  async "test standard form submission respects formmethod on submitter over _method on submitter"() {
+    await this.clickSelector("#submitter button[type=submit][name=_method][value=get][formmethod=post]")
+    await this.nextBody
+
+    this.assert.ok(await this.formSubmitted)
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
   async "test submitter POST form submission with multipart/form-data formenctype"() {
     await this.clickSelector("#submitter form[method=post]:not([enctype]) input[formenctype]")
     await this.nextBeat
@@ -216,6 +234,38 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.clickSelector("#frame form.put.stream input[type=submit]")
     await this.nextBeat
 
+    const message = await this.querySelector("#frame div.message")
+    this.assert.ok(await this.hasSelector("#frame form.redirect"))
+    this.assert.equal(await message.getVisibleText(), "1: Hello!")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+  }
+
+  async "test POST form submission with _method in body"() {
+    await this.clickSelector("#frame form.method.stream input[type=submit]")
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.ok(await this.hasSelector("#frame form.redirect"))
+    this.assert.equal(await message.getVisibleText(), "1: Hello!")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+  }
+
+  async "test POST form submission with _method on submitter"() {
+    await this.clickSelector("#frame form.stream button[type=submit][name=_method]")
+    await this.nextBeat
+
+    this.assert.ok(await this.formSubmitted)
+    const message = await this.querySelector("#frame div.message")
+    this.assert.ok(await this.hasSelector("#frame form.redirect"))
+    this.assert.equal(await message.getVisibleText(), "1: Hello!")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+  }
+
+  async "test POST form submission with formmethod on submitter and _method in form"() {
+    await this.clickSelector("#frame form.stream button[type=submit][name=_method]")
+    await this.nextBeat
+
+    this.assert.ok(await this.formSubmitted)
     const message = await this.querySelector("#frame div.message")
     this.assert.ok(await this.hasSelector("#frame form.redirect"))
     this.assert.equal(await message.getVisibleText(), "1: Hello!")
