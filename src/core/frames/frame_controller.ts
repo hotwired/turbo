@@ -65,15 +65,17 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   async loadSourceURL() {
     const event = dispatch("turbo:before-frame-visit", { target: this.element, detail: { url: this.sourceURL }, cancelable: true })
     if (event.defaultPrevented) {
-      return new Promise<void>(resolve => resolve())
+      return
     }
 
     if (this.isActive && this.sourceURL && this.sourceURL != this.loadingURL) {
       try {
         this.loadingURL = this.sourceURL
+        this.notifyApplicationBeforeVisitingLocation(this.sourceURL)
         this.element.loaded = this.visit(this.sourceURL)
         this.appearanceObserver.stop()
         await this.element.loaded
+        this.notifyApplicationAfterVisitingLocation(this.sourceURL)
       } finally {
         delete this.loadingURL
       }
@@ -192,7 +194,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   viewWillRenderSnapshot(snapshot: Snapshot, isPreview: boolean) {
     dispatch("turbo:before-frame-cache", { target: this.element })
-    dispatch("turbo:before-frame-render", { target: this.element, detail: { newBody: snapshot.element } })
+    dispatch("turbo:before-frame-render", { target: this.element, detail: { newFrame: snapshot.element } })
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
@@ -207,18 +209,13 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   private async visit(url: Locatable) {
     const request = new FetchRequest(this, FetchMethod.get, expandURL(url))
+
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
         resolve()
       }
-      this.clearTimingMetrics()
-      this.recordTimingMetric(TimingMetric.visitStart)
-      dispatch("turbo:frame-visit", { target: this.element, detail: { url: request.url.href } })
       request.perform()
-    }).then(() => {
-      this.recordTimingMetric(TimingMetric.visitEnd)
-      dispatch("turbo:frame-load", { target: this.element, detail: { url: request.url.href, timing: this.timingMetrics } })
     })
   }
 
@@ -259,6 +256,16 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
 
     return true
+  }
+
+  private notifyApplicationBeforeVisitingLocation(url: Locatable) {
+    this.clearTimingMetrics()
+    this.recordTimingMetric(TimingMetric.visitStart)
+    dispatch("turbo:frame-visit", { target: this.element, detail: { url: expandURL(url) } })
+  }
+
+  private notifyApplicationAfterVisitingLocation(src: Locatable) {
+    dispatch("turbo:frame-load", { target: this.element, detail: { url: expandURL(src), timing: this.timingMetrics } })
   }
 
   private clearTimingMetrics() {

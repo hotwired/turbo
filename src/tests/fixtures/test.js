@@ -7,15 +7,22 @@
   }
 
   function eventListener(event) {
-    eventLogs.push([event.type, event.detail])
+    if (event && event.detail && "newFrame" in event.detail) {
+      event.detail.newFrame = event.detail.newFrame.outerHTML
+    }
+    eventLogs.push([event.type, event.target.id, event.detail])
   }
-
 })([
   "turbo:before-cache",
   "turbo:before-render",
   "turbo:before-visit",
   "turbo:load",
   "turbo:render",
-  "turbo:request-end",
-  "turbo:visit"
+  "turbo:visit",
+  "turbo:before-frame-cache",
+  "turbo:before-frame-render",
+  "turbo:before-frame-visit",
+  "turbo:frame-load",
+  "turbo:frame-render",
+  "turbo:frame-visit",
 ])
