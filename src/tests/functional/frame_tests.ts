@@ -22,6 +22,15 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
   }
 
+  async "test a frame whose src references itself does not infinitely loop"() {
+    await this.clickSelector("#frame-self")
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    this.assert.equal(await this.getVisibleText("h2"), "Frames: Self")
+    this.assert.ok(await this.noNextEventNamed("turbo:before-fetch-response"), "no subsequent fetches")
+  }
+
   async "test following a link to a page without a matching frame results in an empty frame"() {
     await this.clickSelector("#missing a")
     await this.nextBeat

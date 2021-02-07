@@ -48,7 +48,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   sourceURLChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
+    if (this.loadingStyle == FrameLoadingStyle.eager && this.element.isConnected) {
       this.loadSourceURL()
     }
   }

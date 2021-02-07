@@ -26,6 +26,12 @@ export class TurboDriveTestCase extends FunctionalTestCase {
     })()
   }
 
+  async noNextEventNamed(eventName: string): Promise<boolean> {
+    const records: EventLog[] = await this.eventLogChannel.read()
+
+    return !records.some(([name]) => name == eventName)
+  }
+
   async nextEventNamed(eventName: string): Promise<any> {
     let record: EventLog | undefined
     while (!record) {
