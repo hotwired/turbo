@@ -72,7 +72,7 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    this.adapter.formSubmissionStarted(formSubmission)
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -105,7 +105,7 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    this.adapter.formSubmissionFinished(formSubmission)
   }
 
   // Visit delegate

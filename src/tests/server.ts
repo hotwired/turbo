@@ -17,13 +17,13 @@ router.use((request, response, next) => {
 })
 
 router.post("/redirect", (request, response) => {
-  const { path, ...query } = request.body
+  const { path, sleep, ...query } = request.body
   const pathname = path ?? "/src/tests/fixtures/one.html"
   const enctype = request.get("Content-Type")
   if (enctype) {
     query.enctype = enctype
   }
-  response.redirect(303, url.format({ pathname, query }))
+  setTimeout(() => response.redirect(303, url.format({ pathname, query })), parseInt(sleep || "0", 10))
 })
 
 router.get("/redirect", (request, response) => {

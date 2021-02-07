@@ -3,6 +3,7 @@ import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
 import { Session } from "../session"
 import { uuid } from "../../util"
+import { FormSubmission } from "../drive/form_submission"
 
 export class BrowserAdapter implements Adapter {
   readonly session: Session
@@ -25,7 +26,7 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitRequestStarted(visit: Visit) {
-    this.progressBar.setValue(0)
+    this.progressBar.value = 0
     if (visit.hasCachedSnapshot() || visit.action != "restore") {
       this.showProgressBarAfterDelay()
     } else {
@@ -49,7 +50,7 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitRequestFinished(visit: Visit) {
-    this.progressBar.setValue(1)
+    this.progressBar.value = 1.0
     this.hideProgressBar()
   }
 
@@ -69,6 +70,16 @@ export class BrowserAdapter implements Adapter {
 
   }
 
+  formSubmissionStarted(formSubmission: FormSubmission) {
+    this.progressBar.value = 0
+    this.showProgressBarAfterDelay()
+  }
+
+  formSubmissionFinished(formSubmission: FormSubmission) {
+    this.progressBar.value = 1.0
+    this.hideProgressBar()
+  }
+
   // Private
 
   showProgressBarAfterDelay() {
@@ -76,7 +87,9 @@ export class BrowserAdapter implements Adapter {
   }
 
   showProgressBar = () => {
-    this.progressBar.show()
+    if (this.progressBar.value < 1.0) {
+      this.progressBar.show()
+    }
   }
 
   hideProgressBar() {

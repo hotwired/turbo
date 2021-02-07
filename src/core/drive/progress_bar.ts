@@ -2,6 +2,7 @@ import { unindent } from "../../util"
 
 export class ProgressBar {
   static animationDuration = 300/*ms*/
+  static color = "#0076ff"
 
   static get defaultCSS() {
     return unindent`
@@ -11,29 +12,44 @@ export class ProgressBar {
         top: 0;
         left: 0;
         height: 3px;
-        background: #0076ff;
+        background: transparent;
         z-index: 9999;
         transition:
-          width ${ProgressBar.animationDuration}ms ease-out,
           opacity ${ProgressBar.animationDuration / 2}ms ${ProgressBar.animationDuration / 2}ms ease-in;
         transform: translate3d(0, 0, 0);
+        width: 100%;
+        -webkit-appearance: none;
+      }
+      .turbo-progress-bar::-ms-fill {
+        background: ${ProgressBar.color};
+        transition: width ${ProgressBar.animationDuration}ms ease-out;
+      }
+      .turbo-progress-bar::::-moz-progress-bar {
+        background: ${ProgressBar.color};
+        transition: width ${ProgressBar.animationDuration}ms ease-out;
+      }
+      .turbo-progress-bar::-webkit-progress-bar {
+        background: transparent;
+      }
+      .turbo-progress-bar::-webkit-progress-value {
+        background: ${ProgressBar.color};
+        transition: width ${ProgressBar.animationDuration}ms ease-out;
       }
     `
   }
 
   readonly stylesheetElement: HTMLStyleElement
-  readonly progressElement: HTMLDivElement
+  readonly progressElement: HTMLProgressElement
 
   hiding = false
   trickleInterval?: number
-  value = 0
   visible = false
 
   constructor() {
     this.stylesheetElement = this.createStylesheetElement()
     this.progressElement = this.createProgressElement()
     this.installStylesheetElement()
-    this.setValue(0)
+    this.value = 0
   }
 
   show() {
@@ -56,9 +72,12 @@ export class ProgressBar {
     }
   }
 
-  setValue(value: number) {
-    this.value = value
-    this.refresh()
+  get value(): number {
+    return this.progressElement.value
+  }
+
+  set value(value: number) {
+    this.progressElement.value = Math.min(value, 1.0)
   }
 
   // Private
@@ -68,10 +87,9 @@ export class ProgressBar {
   }
 
   installProgressElement() {
-    this.progressElement.style.width = "0"
+    this.value = 0
     this.progressElement.style.opacity = "1"
     document.documentElement.insertBefore(this.progressElement, document.body)
-    this.refresh()
   }
 
   fadeProgressElement(callback: () => void) {
@@ -97,13 +115,7 @@ export class ProgressBar {
   }
 
   trickle = () => {
-    this.setValue(this.value + Math.random() / 100)
-  }
-
-  refresh() {
-    requestAnimationFrame(() => {
-      this.progressElement.style.width = `${10 + (this.value * 90)}%`
-    })
+    this.value = this.value + (Math.random() / 100)
   }
 
   createStylesheetElement() {
@@ -114,7 +126,7 @@ export class ProgressBar {
   }
 
   createProgressElement() {
-    const element = document.createElement("div")
+    const element = document.createElement("progress")
     element.className = "turbo-progress-bar"
     return element
   }

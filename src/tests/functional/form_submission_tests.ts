@@ -8,6 +8,26 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     })
   }
 
+  async "test standard form submission renders a progress bar"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
+    await this.clickSelector("#standard form.sleep input[type=submit]")
+
+    await this.waitUntilSelector("progress")
+    this.assert.ok(await this.hasSelector("progress[value]"), "displays progress bar")
+
+    await this.nextBody
+    await this.waitUntilNoSelector("progress")
+
+    this.assert.notOk(await this.hasSelector("progress"), "hides progress bar")
+  }
+
+  async "test standard form submission does not render a progress bar before expiring the delay"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(500))
+    await this.clickSelector("#standard form.redirect input[type=submit]")
+
+    this.assert.notOk(await this.hasSelector("progress"), "does not show progress bar before delay")
+  }
+
   async "test standard form submission with redirect response"() {
     await this.clickSelector("#standard form.redirect input[type=submit]")
     await this.nextBody
