@@ -35,4 +35,6 @@
   "turbo:frame-load",
   "turbo:frame-render",
   "turbo:frame-visit",
+  "turbo:before-fetch-request",
+  "turbo:before-fetch-response",
 ])

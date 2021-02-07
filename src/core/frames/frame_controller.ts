@@ -130,6 +130,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       const frame = this.findFrameElement(element, submitter)
       frame.src = this.formSubmission.fetchRequest.url.href
     } else {
+      const { fetchRequest } = this.formSubmission
+      this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
       this.formSubmission.start()
     }
   }

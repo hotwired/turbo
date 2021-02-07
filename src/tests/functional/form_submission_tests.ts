@@ -273,6 +273,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(htmlAfter, htmlBefore)
   }
 
+  async "test frame form submission within a frame submits the Turbo-Frame header"() {
+    await this.clickSelector("#frame form.redirect input[type=submit]")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+  }
+
   async "test invalid frame form submission with unprocessable entity status"() {
     await this.clickSelector("#frame form.unprocessable_entity input[type=submit]")
     await this.nextBeat
@@ -349,6 +357,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+  }
+
+  async "test form submission targeting a frame submits the Turbo-Frame header"() {
+    await this.clickSelector('#targets-frame [type="submit"]')
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
   }
 
   get formSubmitted(): Promise<boolean> {

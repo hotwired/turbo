@@ -42,6 +42,7 @@ export interface FetchRequestOptions {
 export class FetchRequest {
   readonly delegate: FetchRequestDelegate
   readonly method: FetchMethod
+  readonly headers: FetchRequestHeaders
   readonly url: URL
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
@@ -55,6 +56,7 @@ export class FetchRequest {
       this.body = body
       this.url = location
     }
+    this.headers = prepareHeadersForRequest(this)
   }
 
   get location(): URL {
@@ -116,23 +118,17 @@ export class FetchRequest {
     return this.method == FetchMethod.get
   }
 
-  get headers() {
-    const headers = { ...this.defaultHeaders }
-    if (typeof this.delegate.prepareHeadersForRequest == "function") {
-      this.delegate.prepareHeadersForRequest(headers, this)
-    }
-    return headers
-  }
-
   get abortSignal() {
     return this.abortController.signal
   }
+}
 
-  get defaultHeaders() {
-    return {
-      "Accept": "text/html, application/xhtml+xml"
-    }
+function prepareHeadersForRequest(fetchRequest: FetchRequest) {
+  const headers = { "Accept": "text/html, application/xhtml+xml" }
+  if (typeof fetchRequest.delegate.prepareHeadersForRequest == "function") {
+    fetchRequest.delegate.prepareHeadersForRequest(headers, fetchRequest)
   }
+  return headers
 }
 
 function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
