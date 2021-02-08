@@ -28,6 +28,12 @@
         <input type="hidden" name="status" value="204">
         <input type="submit" style="">
       </form>
+      <form action="/__turbo/messages" method="post" class="stream invalid">
+        <input type="hidden" name="type" value="stream">
+        <input type="hidden" name="content" value="Hello!">
+        <input type="hidden" name="status" value="422">
+        <input type="submit">
+      </form>
       <form action="/__turbo/redirect" method="post" class="no-enctype">
         <input type="submit">
       </form>

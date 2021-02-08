@@ -43,6 +43,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await button.click()
     await this.nextBeat
 
+    this.assert.ok(this.noNextEventNamed("turbo:before-fetch-response"), "stream response intercepted")
     const htmlAfter = await this.outerHTMLForSelector("body")
     this.assert.equal(htmlAfter, htmlBefore)
   }
@@ -53,8 +54,21 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await button.click()
     await this.nextBeat
 
+    this.assert.ok(this.noNextEventNamed("turbo:before-fetch-response"), "stream response intercepted")
     const htmlAfter = await this.outerHTMLForSelector("body")
     this.assert.equal(htmlAfter, htmlBefore)
+  }
+
+  async "test standard form submission with 422 stream response"() {
+    await this.clickSelector("#standard form.stream.invalid input[type=submit]")
+    await this.nextBeat
+
+
+    this.assert.ok(await this.noNextEventNamed("turbo:before-fetch-response"), "response intercepted as Stream")
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Hello!")
+    this.assert.ok(await this.hasSelector("#standard form.stream.invalid input[type=submit]"), "does not navigate page")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
   }
 
   async "test standard POST form submission with multipart/form-data enctype"() {

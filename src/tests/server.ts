@@ -46,12 +46,14 @@ router.post("/reject", (request, response) => {
 router.post("/messages", (request, response) => {
   const { content, status, type } = request.body
   if (typeof content == "string") {
+    const responseStatus = parseInt(status || "201", 10)
     receiveMessage(content)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
+      response.status(responseStatus)
       response.send(renderMessage(content))
     } else {
-      response.sendStatus(parseInt(status || "201", 10))
+      response.sendStatus(responseStatus)
     }
   } else {
     response.sendStatus(422)
