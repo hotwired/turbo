@@ -1,12 +1,11 @@
-
-const HISTORY_DATA_ATTRIBUTE = 'data-turbo-history'
-const HISTORY_URL_DATA_ATTRIBUTE = 'data-turbo-history-url'
+export const HISTORY_DATA_ATTRIBUTE = 'data-turbo-history'
+export const HISTORY_URL_DATA_ATTRIBUTE = 'data-turbo-history-url'
 
 export class NavigationElement {
   readonly element: Element
-  url: string
+  url?: string
 
-  constructor(element: Element, url: string) {
+  constructor(element: Element, url?: string) {
     this.element = element
     this.url = url
   }
@@ -17,11 +16,12 @@ export class NavigationElement {
 
   get locationURL() {
     const url = this.hasHistoryURLDataAttribute ? this.historyURLDataAttribute : this.url
-    return new URL(url)
+    if (!url) throw new Error('url is missing')
+    return new URL(url, window.location.origin)
   }
 
   get method() {
-    if (this.hasHistoryDataAttribute) {
+    if (this.historyDataAttribute) {
       return this.historyDataAttribute
     } else {
       return "push"
@@ -29,7 +29,7 @@ export class NavigationElement {
   }
 
   private get hasHistoryURLDataAttribute() {
-    return this.element.hasAttribute(HISTORY_DATA_ATTRIBUTE)
+    return this.element.hasAttribute(HISTORY_URL_DATA_ATTRIBUTE)
   }
 
   private get hasHistoryDataAttribute() {
@@ -41,6 +41,6 @@ export class NavigationElement {
   }
 
   private get historyDataAttribute() {
-    return this.element.getAttribute(HISTORY_URL_DATA_ATTRIBUTE)
+    return this.element.getAttribute(HISTORY_DATA_ATTRIBUTE)
   }
 }

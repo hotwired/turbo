@@ -36,7 +36,10 @@
     </turbo-frame>
 
     <turbo-frame id="history">
-      <a href="/src/tests/fixtures/frames/frame.html" data-turbo-history="push">History frame</a>
+      <a href="/src/tests/fixtures/frames/frame.html" data-turbo-history>History frame</a>
+      <a href="/src/tests/fixtures/frames/frame.html" id="special-url" data-turbo-history-url="/special">History frame</a>
     </turbo-frame>
+
+    <a href="/src/tests/fixtures/frames/frame.html" id="history-link" data-turbo-frame="history" data-turbo-history="">History frame</a>
   </body>
 </html>

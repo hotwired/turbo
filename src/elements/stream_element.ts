@@ -1,3 +1,4 @@
+import { NavigationElement } from "../core/frames/navigation-element"
 import { Session } from "../core/session"
 import { StreamActions } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
@@ -7,10 +8,12 @@ import { nextAnimationFrame } from "../util"
 export class StreamElement extends HTMLElement {
   static session: Session
   readonly session: Session
+  readonly navigationElement: NavigationElement
 
   constructor() {
     super()
     this.session = StreamElement.session
+    this.navigationElement = new NavigationElement(this)
   }
 
   async connectedCallback() {
@@ -36,10 +39,9 @@ export class StreamElement extends HTMLElement {
   }
 
   updateHistory() {
-    if (this.hasHistoryURL) {
+    if (this.navigationElement.shouldUpdateHistory) {
       this.session.updateHistoryOnStreamElementRender(
-        this.historyMethod,
-        this.historyURL
+        this.navigationElement
       )
     }
   }
@@ -83,18 +85,6 @@ export class StreamElement extends HTMLElement {
 
   get target() {
     return this.getAttribute("target")
-  }
-
-  get hasHistoryURL() {
-    return this.hasAttribute("history-url")
-  }
-
-  get historyURL() {
-    return this.getAttribute("history-url") || this.raise("history-url attribute is missing")
-  }
-
-  get historyMethod() {
-    return this.getAttribute("history-method") || "push"
   }
 
   private raise(message: string): never {

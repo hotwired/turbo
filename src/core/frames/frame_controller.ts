@@ -106,6 +106,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   linkClickIntercepted(element: NavigationElement) {
+    this.setNavigationElement(element)
     this.navigateFrame(element)
   }
 
@@ -121,9 +122,10 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
 
     this.formSubmission = new FormSubmission(this, element, submitter)
+    const navigationElement = new NavigationElement(element, this.formSubmission.fetchRequest.url.href)
+    this.setNavigationElement(navigationElement)
 
     if (this.formSubmission.fetchRequest.isIdempotent) {
-      const navigationElement = new NavigationElement(element, this.formSubmission.fetchRequest.url.href)
       this.navigateFrame(navigationElement)
     } else {
       this.formSubmission.start()
@@ -151,6 +153,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     if (this.navigationElement?.shouldUpdateHistory) {
       this.session.updateHistoryOnFrameNavigation(this.navigationElement)
     }
+    this.setNavigationElement(null)
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
@@ -165,7 +168,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   requestFinished(request: FetchRequest) {
     this.element.removeAttribute("busy")
-    this.setNavigationElement(null)
   }
 
   // Form submission delegate
@@ -182,6 +184,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.navigationElement.url = response.response.url
       this.session.updateHistoryOnFrameFormSubmissionSuccess(this.navigationElement)
     }
+    this.setNavigationElement(null)
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -193,7 +196,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-    this.setNavigationElement(null)
   }
 
   // View delegate
@@ -229,8 +231,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   private navigateFrame(navigationElement: NavigationElement) {
-    this.setNavigationElement(navigationElement)
-
     const frame = this.findFrameElement(navigationElement.element)
     frame.src = navigationElement.url
   }

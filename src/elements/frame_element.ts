@@ -51,7 +51,7 @@ export class FrameElement extends HTMLElement {
     return this.getAttribute("src")
   }
 
-  set src(value: string | null) {
+  set src(value: string | null | undefined) {
     if (value) {
       this.setAttribute("src", value)
     } else {

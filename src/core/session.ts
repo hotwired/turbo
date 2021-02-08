@@ -133,8 +133,8 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
     this.updateHistory(element)
   }
 
-  updateHistoryOnStreamElementRender(method: string, url: string) {
-    // this.updateHistory(method, url)
+  updateHistoryOnStreamElementRender(element: NavigationElement) {
+    this.updateHistory(element)
   }
 
   // Scroll observer delegate

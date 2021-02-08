@@ -111,9 +111,13 @@
     </div>
     <hr>
     <div id="targets-frame">
-      <form action="/__turbo/redirect" method="post" data-turbo-frame="frame">
+      <form action="/__turbo/redirect" method="post" data-turbo-frame="frame" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <button type="submit">Submit</button>
+      </form>
+      <form action="/__turbo/messages" method="post" class="history" data-turbo-frame="frame" data-turbo-history>
+        <input type="hidden" name="content" value="Hello!">
+        <input type="submit" style="">
       </form>
     </div>
     <turbo-frame id="frame">
@@ -149,6 +153,31 @@
         <input type="hidden" name="content" value="Hello!">
         <input type="submit">
       </form>
+      <div class="history">
+        <form action="/__turbo/redirect" method="post" class="redirect" data-turbo-history>
+          <input type="hidden" name="path" value="/src/tests/fixtures/frames/hello.html">
+          <input type="submit">
+        </form>
+        <form action="/__turbo/messages" method="post" class="created" data-turbo-history>
+          <input type="hidden" name="content" value="Hello!">
+          <input type="submit" style="">
+        </form>
+        <form class="unprocessable_entity" action="/__turbo/reject" method="post" data-turbo-history>
+          <input type="hidden" name="status" value="422">
+          <input type="submit">
+        </form>
+        <form action="/__turbo/messages" method="post" class="override" data-turbo-history-url="/override">
+          <input type="hidden" name="content" value="Hello!">
+          <input type="submit" style="">
+        </form>
+
+        <form action="/__turbo/messages" method="post" class="stream">
+          <input type="hidden" name="type" value="stream">
+          <input type="hidden" name="content" value="Hello!">
+          <input type="hidden" name="historyUrl" value="/stream_url">
+          <input type="submit">
+        </form>
+      </div>
       <div id="messages">
       </div>
     </turbo-frame>

@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express"
 import multer from "multer"
 import path from "path"
 import url from "url"
+import { HISTORY_URL_DATA_ATTRIBUTE } from "../core/frames/navigation-element";
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
@@ -44,12 +45,12 @@ router.post("/reject", (request, response) => {
 })
 
 router.post("/messages", (request, response) => {
-  const { content, status, type } = request.body
+  const { content, status, type, historyUrl } = request.body
   if (typeof content == "string") {
     receiveMessage(content)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(renderMessage(content))
+      response.send(renderMessage(content, historyUrl))
     } else {
       response.sendStatus(parseInt(status || "201", 10))
     }
@@ -99,12 +100,16 @@ function receiveMessage(content: string) {
   }
 }
 
-function renderMessage(content: string) {
+function renderMessage(content: string, historyUrl?: "") {
   return `
-    <turbo-stream action="append" target="messages"><template>
+    <turbo-stream action="append" target="messages"${getUrlAttribute(historyUrl)}><template>
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `
+}
+
+function getUrlAttribute(historyUrl?: string) {
+  return historyUrl ? ` ${HISTORY_URL_DATA_ATTRIBUTE}=${historyUrl}` : "";
 }
 
 function acceptsStreams(request: Request): boolean {

@@ -254,7 +254,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test form submission targets disabled frame"() {
     this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
-    await this.clickSelector('#targets-frame [type="submit"]')
+    await this.clickSelector('#targets-frame .redirect [type="submit"]')
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
