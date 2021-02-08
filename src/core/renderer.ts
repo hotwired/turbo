@@ -59,10 +59,14 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
   }
 
   focusFirstAutofocusableElement() {
-    const element = this.newSnapshot.firstAutofocusableElement
+    const element = this.connectedSnapshot.firstAutofocusableElement
     if (elementIsFocusable(element)) {
       element.focus()
     }
+  }
+
+  get connectedSnapshot() {
+    return this.newSnapshot.isConnected ? this.newSnapshot : this.currentSnapshot
   }
 
   get currentElement() {
