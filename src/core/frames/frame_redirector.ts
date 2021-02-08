@@ -1,18 +1,15 @@
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { Session } from "../session";
 import { NavigationElement } from "./navigation-element";
 
 export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptorDelegate {
   readonly element: Element
-  readonly session: Session
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
 
-  constructor(element: Element, session: Session) {
+  constructor(element: Element) {
     this.element = element
-    this.session = session
     this.linkInterceptor = new LinkInterceptor(this, element)
     this.formInterceptor = new FormInterceptor(this, element)
   }

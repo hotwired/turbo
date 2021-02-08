@@ -34,7 +34,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
 
-  readonly frameRedirector = new FrameRedirector(document.documentElement, this)
+  readonly frameRedirector = new FrameRedirector(document.documentElement)
 
   enabled = true
   progressBarDelay = 500
@@ -123,7 +123,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
     }
   }
 
-  // Frame redirector delegate
+  // History navigation delegate
 
   updateHistoryOnFrameNavigation(element: NavigationElement) {
     this.updateHistory(element)
