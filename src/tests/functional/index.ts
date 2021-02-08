@@ -1,4 +1,5 @@
 export * from "./async_script_tests"
+export * from "./autofocus_tests"
 export * from "./form_submission_tests"
 export * from "./frame_tests"
 export * from "./loading_tests"
