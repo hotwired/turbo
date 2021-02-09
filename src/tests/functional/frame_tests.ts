@@ -5,6 +5,16 @@ export class FrameTests extends FunctionalTestCase {
     await this.goToLocation("/src/tests/fixtures/frames.html")
   }
 
+  async "test following a link preserves the current <turbo-frame> element's attributes"() {
+    const currentPath = await this.pathname
+
+    await this.clickSelector("#hello a")
+    await this.nextBeat
+
+    const frame = await this.querySelector("turbo-frame#frame")
+    this.assert.equal(await frame.getAttribute("data-loaded-from"), currentPath)
+  }
+
   async "test following a link to a page without a matching frame results in an empty frame"() {
     await this.clickSelector("#missing a")
     await this.nextBeat

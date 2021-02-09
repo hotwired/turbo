@@ -16,7 +16,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   finishRendering() {
     super.finishRendering()
-    if (this.isPreview) {
+    if (!this.isPreview) {
       this.focusFirstAutofocusableElement()
     }
   }

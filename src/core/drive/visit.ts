@@ -234,7 +234,7 @@ export class Visit implements FetchRequestDelegate {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        await this.view.renderPage(snapshot)
+        await this.view.renderPage(snapshot, isPreview)
         this.adapter.visitRendered(this)
         if (!isPreview) {
           this.complete()

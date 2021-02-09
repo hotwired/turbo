@@ -21,6 +21,10 @@ export class Snapshot<E extends Element = Element> {
     }
   }
 
+  get isConnected() {
+    return this.element.isConnected
+  }
+
   get firstAutofocusableElement() {
     return this.element.querySelector("[autofocus]")
   }
