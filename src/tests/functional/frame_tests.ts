@@ -98,6 +98,17 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextBeat
     this.assert.ok(await this.querySelector("#recursive details:not([open])"))
   }
+
+  async "test removing [disabled] attribute from eager-loaded frame navigates it"() {
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
+    await this.remote.execute((src: string) => document.getElementById("frame")?.setAttribute("src", "/src/tests/fixtures/frames/frame.html"))
+
+    this.assert.ok(await this.noNextEventNamed("turbo:before-fetch-request"), "[disabled] frames do not submit requests")
+
+    await this.remote.execute(() => document.getElementById("frame")?.removeAttribute("disabled"))
+
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
 }
 
 FrameTests.registerSuite()

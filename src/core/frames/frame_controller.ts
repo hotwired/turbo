@@ -55,6 +55,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
+  disabledChanged() {
+    if (this.loadingStyle == FrameLoadingStyle.eager) {
+      this.loadSourceURL()
+    }
+  }
+
   sourceURLChanged() {
     if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
       this.loadSourceURL()
@@ -71,7 +77,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (!this.settingSourceURL && this.isActive && this.sourceURL != this.currentURL) {
+    if (!this.settingSourceURL && this.enabled && this.isActive && this.sourceURL != this.currentURL) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
