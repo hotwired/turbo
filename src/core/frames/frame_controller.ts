@@ -11,10 +11,14 @@ import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
+import { PageRenderer } from "./../drive/page_renderer"
+import { PageSnapshot } from "./../drive/page_snapshot"
+import { PageView, PageViewDelegate } from "../drive/page_view"
 
-export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
+export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>>, PageViewDelegate {
   readonly element: FrameElement
   readonly view: FrameView
+  readonly pageView: PageView
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
@@ -25,9 +29,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   constructor(element: FrameElement) {
     this.element = element
     this.view = new FrameView(this, this.element)
+    this.pageView = new PageView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
+  }
+
+  // TODO: move this somewhere
+  viewWillCacheSnapshot() {
   }
 
   connect() {
@@ -77,9 +86,23 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       const html = await response.responseHTML
       if (html) {
         const { body } = parseHTMLDocument(html)
-        const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
-        await this.view.render(renderer)
+
+        const foreignFrameElement = await this.extractForeignFrameElement(body);
+
+        if (foreignFrameElement)
+        {
+          const snapshot = new Snapshot(foreignFrameElement)
+          const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
+          await this.view.render(renderer)  
+        }
+        else
+        {
+          // no frame came back from server: render full page using whatever came back
+          // TODO: update location in address bar
+          const snapshot = PageSnapshot.fromHTMLString(html)
+          const renderer = new PageRenderer(this.pageView.snapshot, snapshot, false)
+          await this.pageView.render(renderer)  
+        }
       }
     } catch (error) {
       console.error(error)
@@ -216,7 +239,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return getFrameElementById(id) ?? this.element
   }
 
-  async extractForeignFrameElement(container: ParentNode): Promise<FrameElement> {
+  async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | null> {
     let element
     const id = CSS.escape(this.id)
 
@@ -229,8 +252,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       return await this.extractForeignFrameElement(element)
     }
 
-    console.error(`Response has no matching <turbo-frame id="${id}"> element`)
-    return new FrameElement()
+    return null;
   }
 
   private shouldInterceptNavigation(element: Element) {
