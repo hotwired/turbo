@@ -34,7 +34,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "2")
+    this.assert.equal(await this.getSearchParam("query"), "2")
   }
 
   async "test standard form submission with empty created response"() {
@@ -86,20 +86,20 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
 
     await this.clickSelector("#no-action form.single input[type=submit]")
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
 
     await this.goToLocation("/src/tests/fixtures/form.html?query=2")
     await this.clickSelector("#no-action form.single input[type=submit]")
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
   }
 
   async "test no-action form submission with multiple parameters"() {
@@ -115,6 +115,22 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
+  }
+
+  async "test no-action form submission submitter parameters"() {
+    await this.clickSelector("#no-action form.button-param [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+    this.assert.deepEqual(await this.getAllSearchParams("button"), [])
+
+    await this.clickSelector("#no-action form.button-param [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+    this.assert.deepEqual(await this.getAllSearchParams("button"), [])
   }
 
   async "test invalid form submission with unprocessable entity status"() {
