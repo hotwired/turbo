@@ -63,6 +63,15 @@ export class LoadingTests extends TurboDriveTestCase {
     const contents = await this.querySelector(frameContents)
     this.assert.equal(await contents.getVisibleText(), "Frames: #frame")
   }
+
+  async "test navigating away from a page does not reload its frames"() {
+    await this.clickSelector("#one")
+    await this.nextBody
+
+    const eventLogs = await this.eventLogChannel.read()
+    const requestLogs = eventLogs.filter(([ name ]) => name == "turbo:before-fetch-request")
+    this.assert.equal(requestLogs.length, 1)
+  }
 }
 
 LoadingTests.registerSuite()

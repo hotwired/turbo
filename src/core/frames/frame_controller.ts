@@ -21,6 +21,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   loadingURL?: string
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
+  private connected = false
 
   constructor(element: FrameElement) {
     this.element = element
@@ -31,17 +32,24 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   connect() {
-    if (this.loadingStyle == FrameLoadingStyle.lazy) {
-      this.appearanceObserver.start()
+    if (!this.connected) {
+      this.connected = true
+      if (this.loadingStyle == FrameLoadingStyle.lazy) {
+        this.appearanceObserver.start()
+      }
+      this.linkInterceptor.start()
+      this.formInterceptor.start()
+      this.sourceURLChanged()
     }
-    this.linkInterceptor.start()
-    this.formInterceptor.start()
   }
 
   disconnect() {
-    this.appearanceObserver.stop()
-    this.linkInterceptor.stop()
-    this.formInterceptor.stop()
+    if (this.connected) {
+      this.connected = false
+      this.appearanceObserver.stop()
+      this.linkInterceptor.stop()
+      this.formInterceptor.stop()
+    }
   }
 
   sourceURLChanged() {
@@ -273,7 +281,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get isActive() {
-    return this.element.isActive
+    return this.element.isActive && this.connected
   }
 }
 
@@ -292,6 +300,7 @@ function activateElement(element: Node | null) {
   }
 
   if (element instanceof FrameElement) {
+    element.connectedCallback()
     return element
   }
 }
