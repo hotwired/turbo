@@ -18,7 +18,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
-  loadingURL?: string
+  currentURL?: string
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
   private connected = false
@@ -68,14 +68,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (this.isActive && this.sourceURL && this.sourceURL != this.loadingURL) {
-      try {
-        this.loadingURL = this.sourceURL
-        this.element.loaded = this.visit(this.sourceURL)
-        this.appearanceObserver.stop()
-        await this.element.loaded
-      } finally {
-        delete this.loadingURL
+    if (this.isActive && this.sourceURL != this.currentURL) {
+      const previousURL = this.currentURL
+      this.currentURL = this.sourceURL
+      if (this.sourceURL) {
+        try {
+          this.element.loaded = this.visit(this.sourceURL)
+          this.appearanceObserver.stop()
+          await this.element.loaded
+        } catch (error) {
+          this.currentURL = previousURL
+          throw error
+        }
       }
     }
   }
@@ -269,7 +273,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get sourceURL() {
-    return this.element.src
+    if (this.element.src) {
+      return this.element.src
+    }
   }
 
   get loadingStyle() {
@@ -277,7 +283,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get isLoading() {
-    return this.formSubmission !== undefined || this.loadingURL !== undefined
+    return this.formSubmission !== undefined || this.resolveVisitPromise !== undefined
   }
 
   get isActive() {

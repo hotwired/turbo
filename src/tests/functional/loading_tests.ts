@@ -1,5 +1,11 @@
 import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 
+declare global {
+  interface Window {
+    savedElement: Element | null
+  }
+}
+
 export class LoadingTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/loading.html")
@@ -71,6 +77,27 @@ export class LoadingTests extends TurboDriveTestCase {
     const eventLogs = await this.eventLogChannel.read()
     const requestLogs = eventLogs.filter(([ name ]) => name == "turbo:before-fetch-request")
     this.assert.equal(requestLogs.length, 1)
+  }
+
+  async "test disconnecting and reconnecting a frame does not reload the frame"() {
+    await this.nextBeat
+
+    await this.remote.execute(() => {
+      window.savedElement = document.querySelector("#loading-eager")
+      window.savedElement?.remove()
+    })
+    await this.nextBeat
+
+    await this.remote.execute(() => {
+      if (window.savedElement) {
+        document.body.appendChild(window.savedElement)
+      }
+    })
+    await this.nextBeat
+
+    const eventLogs = await this.eventLogChannel.read()
+    const requestLogs = eventLogs.filter(([ name ]) => name == "turbo:before-fetch-request")
+    this.assert.equal(requestLogs.length, 0)
   }
 }
 
