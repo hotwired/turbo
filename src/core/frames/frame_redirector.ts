@@ -3,6 +3,7 @@ import { FrameElement } from "../../elements/frame_element"
 import { expandURL, getAction, locationIsVisitable } from "../url"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
 import { Session } from "../session"
+import { getAttribute } from "../../util"
 
 export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObserverDelegate {
   readonly session: Session
@@ -69,19 +70,32 @@ export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObs
 
     if (isNavigatable) {
       const frame = this.findFrameElement(element, submitter)
-      return frame ? frame != element.closest("turbo-frame") : false
-    } else {
-      return false
+
+      if (frame) {
+        const id = getAttribute("data-turbo-frame", submitter, element) || frame.getAttribute("target")
+
+        if (frame == findClosestFrameElement(element)) {
+          return id == "_top"
+        } else {
+          return true
+        }
+      } else {
+        return false
+      }
     }
   }
 
   private findFrameElement(element: Element, submitter?: HTMLElement) {
-    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame")
+    const id = getAttribute("data-turbo-frame", submitter, element)
+
     if (id && id != "_top") {
-      const frame = this.element.querySelector(`#${id}:not([disabled])`)
-      if (frame instanceof FrameElement) {
-        return frame
-      }
+      return this.element.querySelector<FrameElement>(`turbo-frame#${id}:not([disabled])`)
+    } else {
+      return findClosestFrameElement(element)
     }
   }
+}
+
+function findClosestFrameElement(element: Element) {
+  return element.closest<FrameElement>("turbo-frame:not([disabled])")
 }

@@ -696,6 +696,52 @@ test("test invalid frame form submission with internal server errror status", as
   assert.equal(await page.textContent("#frame h2"), "Frame: Internal Server Error")
 })
 
+test("test frame form submission with form[data-turbo-frame=_top]", async ({ page }) => {
+  await page.click("#frame-form-targets-top-303")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await page.textContent("h1"), "One", "follows form redirect")
+  assert.notOk(await hasSelector(page, "#frame"), "redirects entire page")
+})
+
+test("test invalid frame form submission submitted by form[data-turbo-frame=_top]", async ({ page }) => {
+  await page.click("#frame-form-targets-top-422")
+  await nextBeat()
+
+  assert.equal(await page.textContent("h1"), "Form", "does not replace entire page")
+  assert.equal(
+    await page.textContent("#frame h2"),
+    "Frame: Unprocessable Entity",
+    "renders the response HTML inside the frame"
+  )
+})
+
+test("test invalid frame form submission submitted by button[data-turbo-frame=_top]", async ({ page }) => {
+  await page.click("#frame-button-targets-top-422")
+  await nextBeat()
+
+  assert.equal(await page.textContent("h1"), "Form", "does not replace entire page")
+  assert.equal(
+    await page.textContent("#frame h2"),
+    "Frame: Unprocessable Entity",
+    "renders the response HTML inside the frame"
+  )
+})
+
+test("test unprocessable entity frame form submission submitted in turbo-frame[target=_top]", async ({ page }) => {
+  await page.click("#set-frame-target-top")
+  await page.click("#frame-form-targets-top-422")
+  await nextBeat()
+
+  assert.equal(await page.textContent("h1"), "Form", "does not replace entire page")
+  assert.equal(
+    await page.textContent("#frame h2"),
+    "Frame: Unprocessable Entity",
+    "renders the response HTML inside the frame"
+  )
+})
+
 test("test frame form submission with stream response", async ({ page }) => {
   const button = await page.locator("#frame form.stream[method=post] input[type=submit]")
   await button.click()
