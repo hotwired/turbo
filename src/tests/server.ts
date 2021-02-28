@@ -44,12 +44,12 @@ router.post("/reject", (request, response) => {
 })
 
 router.post("/messages", (request, response) => {
-  const { content, status, type } = request.body
+  const { action, content, status, target, type } = request.body
   if (typeof content == "string") {
-    receiveMessage(content)
+    receiveMessage(content, action, target)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(renderMessage(content))
+      response.send(renderMessage(content, action, target))
     } else {
       response.sendStatus(parseInt(status || "201", 10))
     }
@@ -59,13 +59,13 @@ router.post("/messages", (request, response) => {
 })
 
 router.put("/messages/:id", (request, response) => {
-  const { content, type } = request.body
+  const { action, content, target, type } = request.body
   const { id } = request.params
   if (typeof content == "string") {
-    receiveMessage(content)
+    receiveMessage(content, action, target, id)
     if (type == "stream" &&  acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(renderMessage(id + ": " + content))
+      response.send(renderMessage(content, action, target, id))
     } else {
       response.sendStatus(200)
     }
@@ -91,18 +91,18 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
-function receiveMessage(content: string) {
-  const data = renderSSEData(renderMessage(content))
+function receiveMessage(content: string, action: string, target: string, id?: string) {
+  const data = renderSSEData(renderMessage(content, action, target, id))
   for (const response of streamResponses) {
     intern.log("delivering message to stream", response.socket?.remotePort)
     response.write(data)
   }
 }
 
-function renderMessage(content: string) {
+function renderMessage(content: string, action: string, target: string, id?: string) {
   return `
-    <turbo-stream action="append" target="messages"><template>
-      <div class="message">${escapeHTML(content)}</div>
+    <turbo-stream action="${action}" target="${target}"><template>
+      <div ${id ? `id="${id}"` : ""} class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `
 }

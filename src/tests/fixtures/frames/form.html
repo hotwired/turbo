@@ -9,6 +9,8 @@
   <body>
     <turbo-frame id="frame">
       <form action="/__turbo/messages" method="post" class="stream">
+        <input type="hidden" name="action" value="append">
+        <input type="hidden" name="target" value="messages">
         <input type="hidden" name="content" value="Hello!">
         <input id="frames-form-first-autofocus-element" autofocus type="submit">
       </form>

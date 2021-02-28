@@ -7,13 +7,34 @@
     <script>Turbo.connectStreamSource(new EventSource("/__turbo/messages"))</script>
   </head>
   <body>
-    <form id="create" method="post" action="/__turbo/messages">
+    <form id="append_messages" method="post" action="/__turbo/messages">
+      <input type="hidden" name="action" value="append">
+      <input type="hidden" name="target" value="messages">
       <input type="hidden" name="content" value="Hello world!">
       <input type="hidden" name="type" value="stream">
-      <button type="submit">Create</button>
+      <button type="submit">Append to #messages</button>
     </form>
+
+    <form id="append_message_1" method="put" action="/__turbo/messages/message_1">
+      <input type="hidden" name="action" value="append">
+      <input type="hidden" name="target" value="messages">
+      <input type="hidden" name="content" value="Hello world!">
+      <input type="hidden" name="type" value="stream">
+      <button type="submit">Append #message_1 to #messages</button>
+    </form>
+
+    <form id="prepend_message_3" method="put" action="/__turbo/messages/message_3">
+      <input type="hidden" name="action" value="prepend">
+      <input type="hidden" name="target" value="messages">
+      <input type="hidden" name="content" value="Hello world!">
+      <input type="hidden" name="type" value="stream">
+      <button type="submit">Prepend #message_3 to #messages</button>
+    </form>
+
     <div id="messages">
-      <div class="message">First</div>
+      <div id="message_1" class="message">First</div>
+      <div id="message_2" class="message">Second</div>
+      <div id="message_3" class="message">Third</div>
     </div>
   </body>
 </html>

@@ -218,7 +218,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const message = await this.querySelector("#frame div.message")
     this.assert.ok(await this.hasSelector("#frame form.redirect"))
-    this.assert.equal(await message.getVisibleText(), "1: Hello!")
+    this.assert.equal(await message.getVisibleText(), "Hello!")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
   }
 

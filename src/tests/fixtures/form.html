@@ -20,10 +20,14 @@
         <input type="submit">
       </form>
       <form action="/__turbo/messages" method="post" class="created">
+        <input type="hidden" name="action" value="append">
+        <input type="hidden" name="target" value="messages">
         <input type="hidden" name="content" value="Hello!">
         <input type="submit" style="">
       </form>
       <form action="/__turbo/messages" method="post" class="no-content">
+        <input type="hidden" name="action" value="append">
+        <input type="hidden" name="target" value="messages">
         <input type="hidden" name="content" value="Hello!">
         <input type="hidden" name="status" value="204">
         <input type="submit" style="">
@@ -127,6 +131,8 @@
         <input type="submit" style="">
       </form>
       <form action="/__turbo/messages" method="post" class="no-content">
+        <input type="hidden" name="action" value="append">
+        <input type="hidden" name="target" value="messages">
         <input type="hidden" name="content" value="Hello!">
         <input type="hidden" name="status" value="204">
         <input type="submit" style="">
@@ -140,11 +146,15 @@
         <input type="submit">
       </form>
       <form action="/__turbo/messages" method="post" class="stream">
+        <input type="hidden" name="action" value="append">
+        <input type="hidden" name="target" value="messages">
         <input type="hidden" name="type" value="stream">
         <input type="hidden" name="content" value="Hello!">
         <input type="submit">
       </form>
       <form action="/__turbo/messages/1" method="put" class="stream put">
+        <input type="hidden" name="action" value="append">
+        <input type="hidden" name="target" value="messages">
         <input type="hidden" name="type" value="stream">
         <input type="hidden" name="content" value="Hello!">
         <input type="submit">
