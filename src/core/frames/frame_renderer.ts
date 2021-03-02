@@ -53,7 +53,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
   }
 
   get newScriptElements() {
-    return [ ...this.currentElement.querySelectorAll("script") ]
+    return this.currentElement.querySelectorAll("script")
   }  
 }
 

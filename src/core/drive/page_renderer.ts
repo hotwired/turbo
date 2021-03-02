@@ -112,6 +112,6 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   get newBodyScriptElements() {
-    return [ ...this.newElement.querySelectorAll("script") ]
+    return this.newElement.querySelectorAll("script")
   }
 }
