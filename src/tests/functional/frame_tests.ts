@@ -56,6 +56,35 @@ export class FrameTests extends FunctionalTestCase {
     const frameText = await this.querySelector("body > h1")
     this.assert.equal(await frameText.getVisibleText(), "One")
   }
+
+  async "test evaluates frame script elements on each render"() {
+    this.assert.equal(await this.frameScriptEvaluationCount, undefined)
+
+    this.clickSelector("#body-script-link")
+    await this.nextBeat
+    this.assert.equal(await this.frameScriptEvaluationCount, 1)
+
+    this.clickSelector("#body-script-link")
+    await this.nextBeat
+    this.assert.equal(await this.frameScriptEvaluationCount, 2)
+  }
+
+  async "test does not evaluate data-turbo-eval=false scripts"() {
+    this.clickSelector("#eval-false-script-link")
+    await this.nextBeat
+    this.assert.equal(await this.frameScriptEvaluationCount, undefined)
+  }
+
+  get frameScriptEvaluationCount(): Promise<number | undefined> {
+    return this.evaluate(() => window.frameScriptEvaluationCount)
+  }
 }
+
+declare global {
+  interface Window {
+    frameScriptEvaluationCount?: number
+  }
+}
+
 
 FrameTests.registerSuite()
