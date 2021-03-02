@@ -36,13 +36,11 @@ Once you are done developing the feature or bug fix you have 2 options:
 ### Testing
 The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in `intern.json` check it out to see the used browser environments.
 
-The tests are using the compiled version of the library and they are themselves also compiled. To compile the tests and library:
+The tests are using the compiled version of the library and they are themselves also compiled. To compile the tests and library and watch for changes:
 
 ```bash
-yarn build
+yarn watch
 ```
-
-> **_Caveat:_**  Don't forget to run the build command before you run the tests everytime you changed anything, if you forget it you will eventually run into unexpected results.
 
 To run the tests:
 
@@ -64,4 +62,12 @@ To run the webserver:
 yarn start
 ```
 
-The webserver is available on port 9000. Since the webserver is run from the root of the project the fixtures can be found using the same path as they have in the project itself, so `src/tests/fixtures/rendering.html` makes: `http://localhost:9000/src/tests/fixtures/rendering.html`
+This requires a build (via `yarn build`), or a separate process running `yarn watch`.
+
+The webserver is available on port 9000. Since the webserver is run from the root of the project the fixtures can be found using the same path as they have in the project itself, so `src/tests/fixtures/rendering.html` makes: http://localhost:9000/src/tests/fixtures/rendering.html
+
+Depending on your operating system you are able to open the page using:
+
+```bash
+open http://localhost:9000/src/tests/fixtures/rendering.html
+```
