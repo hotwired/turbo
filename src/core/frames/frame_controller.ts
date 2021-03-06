@@ -2,7 +2,7 @@ import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../ele
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { getAttribute, parseHTMLDocument } from "../../util"
+import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -165,7 +165,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestStarted(request: FetchRequest) {
-    this.element.setAttribute("busy", "")
+    [ this.element, document.documentElement ].forEach(markAsBusy)
   }
 
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
@@ -188,14 +188,13 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestFinished(request: FetchRequest) {
-    this.element.removeAttribute("busy")
+    [ this.element, document.documentElement ].forEach(clearBusyState)
   }
 
   // Form submission delegate
 
-  formSubmissionStarted(formSubmission: FormSubmission) {
-    const frame = this.findFrameElement(formSubmission.formElement)
-    frame.setAttribute("busy", "")
+  formSubmissionStarted({ formElement }: FormSubmission) {
+    [ formElement, this.findFrameElement(formElement), document.documentElement ].forEach(markAsBusy)
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
@@ -214,9 +213,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     console.error(error)
   }
 
-  formSubmissionFinished(formSubmission: FormSubmission) {
-    const frame = this.findFrameElement(formSubmission.formElement)
-    frame.removeAttribute("busy")
+  formSubmissionFinished({ formElement }: FormSubmission) {
+    [ formElement, this.findFrameElement(formElement), document.documentElement ].forEach(clearBusyState)
   }
 
   // View delegate
