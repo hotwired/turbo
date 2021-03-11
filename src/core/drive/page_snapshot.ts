@@ -24,7 +24,8 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
   }
 
   clone() {
-    return new PageSnapshot(this.element.cloneNode(true), this.headSnapshot)
+    const { element } = PageSnapshot.fromHTMLString(this.element.outerHTML)
+    return new PageSnapshot(element, this.headSnapshot);
   }
 
   get headElement() {
