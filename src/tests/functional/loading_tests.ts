@@ -43,6 +43,20 @@ export class LoadingTests extends TurboDriveTestCase {
     this.assert.equal(await contents.getVisibleText(), "Hello from a frame")
   }
 
+  async "test navigating a visible frame with loading=lazy navigates"() {
+    await this.clickSelector("#loading-lazy summary")
+    await this.nextBeat
+
+    const initialContents = await this.querySelector("#hello h2")
+    this.assert.equal(await initialContents.getVisibleText(), "Hello from a frame")
+
+    await this.clickSelector("#hello a")
+    await this.nextBeat
+
+    const navigatedContents = await this.querySelector("#hello h2")
+    this.assert.equal(await navigatedContents.getVisibleText(), "Frames: #hello")
+  }
+
   async "test changing src attribute on a frame with loading=lazy defers navigation"() {
     const frameContents = "#loading-lazy turbo-frame h2"
     await this.nextBeat
