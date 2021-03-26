@@ -190,7 +190,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   }
 
   viewWillRenderSnapshot({ element }: PageSnapshot, isPreview: boolean) {
-    this.notifyApplicationBeforeRender(element)
+    return this.notifyApplicationBeforeRender(element)
   }
 
   viewRenderedSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
@@ -231,7 +231,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   }
 
   notifyApplicationBeforeRender(newBody: HTMLBodyElement) {
-    return dispatch("turbo:before-render", { detail: { newBody }})
+    return dispatch("turbo:before-render", { detail: { newBody }, cancelable: true})
   }
 
   notifyApplicationAfterRender() {

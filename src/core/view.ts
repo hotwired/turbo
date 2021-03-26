@@ -3,7 +3,7 @@ import { Snapshot } from "./snapshot"
 import { Position } from "./types"
 
 export interface ViewDelegate<S extends Snapshot> {
-  viewWillRenderSnapshot(snapshot: S, isPreview: boolean): void
+  viewWillRenderSnapshot(snapshot: S, isPreview: boolean): Event
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
   viewInvalidated(): void
 }
@@ -50,12 +50,15 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
     }
 
     const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
+
     if (shouldRender) {
       try {
         this.renderer = renderer
         this.prepareToRenderSnapshot(renderer)
-        this.delegate.viewWillRenderSnapshot(snapshot, isPreview)
-        await this.renderSnapshot(renderer)
+        const event = this.delegate.viewWillRenderSnapshot(snapshot, isPreview)
+        if (!event.defaultPrevented) {
+          await this.renderSnapshot(renderer)
+        }
         this.delegate.viewRenderedSnapshot(snapshot, isPreview)
         this.finishRenderingSnapshot(renderer)
       } finally {

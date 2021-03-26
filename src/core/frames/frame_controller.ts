@@ -2,7 +2,7 @@ import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../ele
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { parseHTMLDocument } from "../../util"
+import { dispatch, parseHTMLDocument } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -181,7 +181,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // View delegate
 
   viewWillRenderSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
+    return dispatch("turbo:before-render", { detail: { newBody: snapshot.element}, cancelable: true})
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
