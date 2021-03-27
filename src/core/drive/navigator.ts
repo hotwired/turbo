@@ -101,7 +101,7 @@ export class Navigator {
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-
+    console.error(error)
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {

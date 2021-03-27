@@ -171,7 +171,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-
+    console.error(error)
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
