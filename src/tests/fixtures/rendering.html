@@ -5,6 +5,15 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      addEventListener("click", (event) => {
+        if (event.target.matches("#permanent-audio-button")) {
+          const audio = document.getElementById("permanent-audio")
+
+          if (audio.paused) { audio.play() } else { audio.pause() }
+        }
+      })
+    </script>
   </head>
   <body>
     <section>
@@ -26,5 +35,8 @@
     <turbo-frame id="frame">
       <div id="permanent-in-frame" data-turbo-permanent>Rendering</div>
     </turbo-frame>
+
+    <audio id="permanent-audio" src="/src/tests/fixtures/audio.mp3" controls data-turbo-permanent></audio>
+    <button id="permanent-audio-button" type="button">Audio</button>
   </body>
 </html>
