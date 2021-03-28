@@ -144,6 +144,22 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
   }
 
+  async "test preserves permanent element video playback"() {
+    let videoElement = await this.querySelector("#permanent-video")
+    await this.clickSelector("#permanent-video-button")
+    await this.sleep(500)
+
+    const timeBeforeRender = await videoElement.getProperty("currentTime")
+    this.assert.notEqual(timeBeforeRender, 0, "playback has started")
+
+    await this.clickSelector("#permanent-element-link")
+    await this.nextBody
+    videoElement = await this.querySelector("#permanent-video")
+
+    const timeAfterRender = await videoElement.getProperty("currentTime")
+    this.assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
+  }
+
   async "test before-cache event"() {
     this.beforeCache(body => body.innerHTML = "Modified")
     this.clickSelector("#same-origin-link")
