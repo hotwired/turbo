@@ -20,6 +20,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly formInterceptor: FormInterceptor
   currentURL?: string
   formSubmission?: FormSubmission
+  private loadSourceURLWhenChanged = true
   private resolveVisitPromise = () => {}
   private connected = false
 
@@ -68,7 +69,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (this.isActive && this.sourceURL != this.currentURL) {
+    if (this.loadSourceURLWhenChanged && this.isActive && this.sourceURL != this.currentURL) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -84,9 +85,15 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
-  async loadResponse(response: FetchResponse) {
+  async loadResponse(fetchResponse: FetchResponse) {
+    if (fetchResponse.redirected) {
+      this.loadSourceURLWhenChanged = false
+      this.element.src = fetchResponse.response.url
+      this.loadSourceURLWhenChanged = true
+    }
+
     try {
-      const html = await response.responseHTML
+      const html = await fetchResponse.responseHTML
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))

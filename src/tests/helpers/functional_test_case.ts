@@ -51,6 +51,18 @@ export class FunctionalTestCase extends InternTestCase {
     return this.evaluate(element => element.innerHTML, element)
   }
 
+  async attributeForSelector(selector: string, attributeName: string) {
+    const element = await this.querySelector(selector)
+
+    return await element.getAttribute(attributeName)
+  }
+
+  async propertyForSelector(selector: string, attributeName: string) {
+    const element = await this.querySelector(selector)
+
+    return await element.getProperty(attributeName)
+  }
+
   get scrollPosition(): Promise<{ x: number, y: number }> {
     return this.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
   }
@@ -92,6 +104,10 @@ export class FunctionalTestCase extends InternTestCase {
 
   get pathname(): Promise<string> {
     return this.evaluate(() => location.pathname)
+  }
+
+  get search(): Promise<string> {
+    return this.evaluate(() => location.search)
   }
 
   get searchParams(): Promise<URLSearchParams> {
