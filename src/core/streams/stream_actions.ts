@@ -1,11 +1,16 @@
 import { StreamElement } from "../../elements/stream_element"
 
 export const StreamActions: { [action: string]: (this: StreamElement) => void } = {
+  
   append() {
+    this.replaceDuplicateTargetChildrenById()
+    this.removeDuplicateTemplateChildrenById();
     this.targetElement?.append(this.templateContent)
   },
 
   prepend() {
+    this.replaceDuplicateTargetChildrenById()
+    this.removeDuplicateTemplateChildrenById();
     this.targetElement?.prepend(this.templateContent)
   },
 
@@ -23,4 +28,5 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
       this.targetElement.append(this.templateContent)
     }
   }
+  
 }

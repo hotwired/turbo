@@ -29,6 +29,29 @@ export class StreamElement extends HTMLElement {
     try { this.remove() } catch {}
   }
 
+  replaceDuplicateTargetChildrenById() {
+    if (this.targetElement) {
+      const templateChildrenIds = [...this.templateContent.children ].map(child => child.id).filter(Boolean);
+      [...this.targetElement.children].forEach(targetChild => {
+          if (templateChildrenIds.includes(targetChild.id)){
+              let newContent = [...this.templateContent.children].filter(child => child.id == targetChild.id)[0]
+              targetChild.replaceWith(newContent)
+          }
+      });
+    }
+  }
+
+  removeDuplicateTemplateChildrenById() {
+    if (this.targetElement) {
+      const targetChildrenIds = [...this.targetElement.children].map(child => child.id).filter(Boolean);
+      [...this.templateContent.children].forEach(templateChild => {
+          if (targetChildrenIds.includes(templateChild.id)){
+              templateChild.remove();
+          }
+      });
+    }
+  }
+  
   get performAction() {
     if (this.action) {
       const actionFunction = StreamActions[this.action]
@@ -76,5 +99,5 @@ export class StreamElement extends HTMLElement {
 
   private get beforeRenderEvent() {
     return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
-  }
+  }  
 }
