@@ -63,6 +63,63 @@ export class StreamElementTests extends DOMTestCase {
     this.assert.equal(this.find("#hello")?.textContent, 'New First Second tail2  tail1 Hello Turbo')
   }
 
+  async "test action=update_children_or_append"() {
+    const element = createStreamElement("update_children_or_append", "hello", createTemplateElement(" Streams"))
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo Streams")
+    this.assert.isNull(element.parentElement)
+  }
+
+  async "test action=update_children_or_append with children ID already present in target"() {
+    const element = createStreamElement("update_children_or_append", "hello", createTemplateElement(' <div id="child_1">First</div> tail1 '))
+    const element2 = createStreamElement("update_children_or_append", "hello", createTemplateElement('<div id="child_1">New First</div><div id="child_2">Second</div> tail2 '))
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'Hello Turbo First tail1 ')
+    this.assert.isNull(element.parentElement)
+
+    this.append(element2)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'Hello Turbo New First tail1 Second tail2 ')
+  }
+
+  async "test action=update_children_or_prepend"() {
+    const element = createStreamElement("update_children_or_prepend", "hello", createTemplateElement("Streams "))
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, "Streams Hello Turbo")
+    this.assert.isNull(element.parentElement)
+  }
+
+  async "test action=update_children_or_prepend with children ID already present in target"() {
+    const element = createStreamElement("update_children_or_prepend", "hello", createTemplateElement('<div id="child_1">First</div> tail1 '))
+    const element2 = createStreamElement("update_children_or_prepend", "hello", createTemplateElement('<div id="child_1">New First</div><div id="child_2">Second</div> tail2 '))
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'First tail1 Hello Turbo')
+    this.assert.isNull(element.parentElement)
+
+    this.append(element2)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'Second tail2 New First tail1 Hello Turbo')
+  }
+
+
   async "test action=remove"() {
     const element = createStreamElement("remove", "hello")
     this.assert.ok(this.find("#hello"))

@@ -11,6 +11,17 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
     this.targetElement?.prepend(this.templateContent)
   },
 
+  update_children_or_append() {
+    this.replaceDuplicateChildren()
+    this.targetElement?.append(this.templateContent)
+  },
+
+  update_children_or_prepend() {
+    this.replaceDuplicateChildren()
+    this.targetElement?.prepend(this.templateContent)
+  },
+
+
   remove() {
     this.targetElement?.remove()
   },

@@ -34,6 +34,13 @@ export class StreamElement extends HTMLElement {
       targetChild.remove();
     })
   }
+ 
+  replaceDuplicateChildren() {
+    this.duplicateChildren.forEach(({targetChild, templateChild}) => {
+      templateChild.remove();
+      targetChild!.replaceWith(templateChild);
+    })
+  }
 
   get duplicateChildren() {
     return [...this.templateContent?.children].map(templateChild => {
