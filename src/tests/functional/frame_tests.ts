@@ -56,6 +56,26 @@ export class FrameTests extends FunctionalTestCase {
     const frameText = await this.querySelector("body > h1")
     this.assert.equal(await frameText.getVisibleText(), "One")
   }
+
+  async "test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame"() {
+    await this.nextBeat
+    await this.clickSelector("#recursive summary")
+    this.assert.ok(await this.querySelector("#recursive details[open]"))
+
+    await this.clickSelector("#recursive a")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#recursive details:not([open])"))
+  }
+
+  async "test submitting a form that redirects to a page with a <turbo-frame recurse> which lazily loads a matching frame"() {
+    await this.nextBeat
+    await this.clickSelector("#recursive summary")
+    this.assert.ok(await this.querySelector("#recursive details[open]"))
+
+    await this.clickSelector("#recursive input[type=submit]")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#recursive details:not([open])"))
+  }
 }
 
 FrameTests.registerSuite()
