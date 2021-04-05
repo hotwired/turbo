@@ -5,6 +5,22 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script type="module">
+      const permanentVideoElementLoaded = new Promise(resolve => {
+        addEventListener("DOMContentLoaded", () => {
+          const element = document.getElementById("permanent-video")
+          element.addEventListener("canplaythrough", () => resolve(element), { once: true })
+        })
+      })
+
+      addEventListener("click", async event => {
+        if (event.target.id == "permanent-video-button") {
+          const element = await permanentVideoElementLoaded
+          element.addEventListener("timeupdate", () => element.pause(), { once: true })
+          element.play()
+        }
+      })
+    </script>
   </head>
   <body>
     <section>
@@ -26,5 +42,11 @@
     <turbo-frame id="frame">
       <div id="permanent-in-frame" data-turbo-permanent>Rendering</div>
     </turbo-frame>
+
+    <video id="permanent-video" data-turbo-permanent>
+      <source src="/src/tests/fixtures/video.webm" type="video/webm">
+      <source src="/src/tests/fixtures/video.mp4" type="video/mp4">
+    </video>
+    <button id="permanent-video-button" type="button">Play</button>
   </body>
 </html>

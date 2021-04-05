@@ -63,7 +63,11 @@ export class FunctionalTestCase extends InternTestCase {
   }
 
   get nextBeat(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 100))
+    return this.sleep(100)
+  }
+
+  async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
   async evaluate<T>(callback: (...args: any[]) => T, ...args: any[]): Promise<T> {
