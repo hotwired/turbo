@@ -1,3 +1,4 @@
+import { Action, isAction } from "../types"
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
@@ -38,8 +39,8 @@ export class Navigator {
     this.stop()
     this.formSubmission = new FormSubmission(this, form, submitter, true)
 
-    if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.proposeVisit(this.formSubmission.fetchRequest.url)
+    if (this.formSubmission.isIdempotent) {
+      this.proposeVisit(this.formSubmission.fetchRequest.url, { action: this.getActionForFormSubmission(this.formSubmission) })
     } else {
       this.formSubmission.start()
     }
@@ -126,5 +127,11 @@ export class Navigator {
 
   get restorationIdentifier() {
     return this.history.restorationIdentifier
+  }
+
+  getActionForFormSubmission(formSubmission: FormSubmission): Action {
+    const { formElement, submitter } = formSubmission
+    const action = submitter?.getAttribute("data-turbo-action") || formElement.getAttribute("data-turbo-action")
+    return isAction(action) ? action : "advance"
   }
 }
