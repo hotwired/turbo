@@ -6,7 +6,7 @@ import { parseHTMLDocument } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
-import { expandURL, Locatable } from "../url"
+import { expandURL, urlsAreEqual, Locatable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
@@ -53,7 +53,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   sourceURLChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager && this.element.isConnected) {
+    if (this.loadingStyle == FrameLoadingStyle.eager) {
       this.loadSourceURL()
     }
   }
@@ -232,16 +232,21 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     let element
     const id = CSS.escape(this.id)
 
-    if (element = activateElement(container.querySelector(`turbo-frame#${id}`))) {
-      return element
+    try {
+      if (element = activateElement(container.querySelector(`turbo-frame#${id}`), this.currentURL)) {
+        return element
+      }
+
+      if (element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`), this.currentURL)) {
+        await element.loaded
+        return await this.extractForeignFrameElement(element)
+      }
+
+      console.error(`Response has no matching <turbo-frame id="${id}"> element`)
+    } catch (error) {
+      console.error(error)
     }
 
-    if (element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`))) {
-      await element.loaded
-      return await this.extractForeignFrameElement(element)
-    }
-
-    console.error(`Response has no matching <turbo-frame id="${id}"> element`)
     return new FrameElement()
   }
 
@@ -300,13 +305,19 @@ function getFrameElementById(id: string | null) {
   }
 }
 
-function activateElement(element: Node | null) {
-  if (element && element.ownerDocument !== document) {
-    element = document.importNode(element, true)
-  }
+function activateElement(element: Element | null, currentURL?: string) {
+  if (element) {
+    const src = element.getAttribute("src")
+    if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {
+      throw new Error(`Matching <turbo-frame id="${element.id}"> element has a source URL which references itself`)
+    }
+    if (element.ownerDocument !== document) {
+      element = document.importNode(element, true)
+    }
 
-  if (element instanceof FrameElement) {
-    element.connectedCallback()
-    return element
+    if (element instanceof FrameElement) {
+      element.connectedCallback()
+      return element
+    }
   }
 }

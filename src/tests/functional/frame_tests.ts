@@ -20,10 +20,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     await this.nextEventNamed("turbo:before-fetch-response")
 
-    this.assert.equal(await this.getVisibleText("h2"), "Frames: Self")
-
     const otherEvents = await this.eventLogChannel.read()
-
     this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
