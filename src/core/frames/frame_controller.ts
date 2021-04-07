@@ -20,9 +20,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly formInterceptor: FormInterceptor
   currentURL?: string
   formSubmission?: FormSubmission
-  private loadSourceURLWhenChanged = true
   private resolveVisitPromise = () => {}
   private connected = false
+  private settingSourceURL = false
 
   constructor(element: FrameElement) {
     this.element = element
@@ -69,7 +69,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (this.loadSourceURLWhenChanged && this.isActive && this.sourceURL != this.currentURL) {
+    if (!this.settingSourceURL && this.isActive && this.sourceURL != this.currentURL) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -87,9 +87,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   async loadResponse(fetchResponse: FetchResponse) {
     if (fetchResponse.redirected) {
-      this.loadSourceURLWhenChanged = false
-      this.element.src = fetchResponse.response.url
-      this.loadSourceURLWhenChanged = true
+      this.sourceURL = fetchResponse.response.url
     }
 
     try {
@@ -283,6 +281,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     if (this.element.src) {
       return this.element.src
     }
+  }
+
+  set sourceURL(sourceURL: string | undefined) {
+    this.settingSourceURL = true
+    this.element.src = sourceURL ?? null
+    this.settingSourceURL = false
   }
 
   get loadingStyle() {
