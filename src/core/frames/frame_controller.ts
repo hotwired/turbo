@@ -22,6 +22,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
   private connected = false
+  private hasBeenLoaded = false
 
   constructor(element: FrameElement) {
     this.element = element
@@ -53,7 +54,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   sourceURLChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
+    if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
       this.loadSourceURL()
     }
   }
@@ -76,6 +77,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           this.element.loaded = this.visit(this.sourceURL)
           this.appearanceObserver.stop()
           await this.element.loaded
+          this.hasBeenLoaded = true
         } catch (error) {
           this.currentURL = previousURL
           throw error
