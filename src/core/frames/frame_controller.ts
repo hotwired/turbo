@@ -24,6 +24,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   private resolveVisitPromise = () => {}
   private connected = false
   private hasBeenLoaded = false
+  private settingSourceURL = false
 
   constructor(element: FrameElement) {
     this.element = element
@@ -70,7 +71,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (this.isActive && this.sourceURL != this.currentURL) {
+    if (!this.settingSourceURL && this.isActive && this.sourceURL != this.currentURL) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -87,9 +88,13 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
-  async loadResponse(response: FetchResponse) {
+  async loadResponse(fetchResponse: FetchResponse) {
+    if (fetchResponse.redirected) {
+      this.sourceURL = fetchResponse.response.url
+    }
+
     try {
-      const html = await response.responseHTML
+      const html = await fetchResponse.responseHTML
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
@@ -292,6 +297,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     if (this.element.src) {
       return this.element.src
     }
+  }
+
+  set sourceURL(sourceURL: string | undefined) {
+    this.settingSourceURL = true
+    this.element.src = sourceURL ?? null
+    this.settingSourceURL = false
   }
 
   get loadingStyle() {

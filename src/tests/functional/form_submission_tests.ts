@@ -169,6 +169,10 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test frame form submission with redirect response"() {
+    const path = await this.attributeForSelector("#frame form.redirect input[name=path]", "value") || ""
+    const url = new URL(path, "http://localhost:9000")
+    url.searchParams.set("enctype", "application/x-www-form-urlencoded;charset=UTF-8")
+
     const button = await this.querySelector("#frame form.redirect input[type=submit]")
     await button.click()
     await this.nextBeat
@@ -176,7 +180,9 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     const message = await this.querySelector("#frame div.message")
     this.assert.notOk(await this.hasSelector("#frame form.redirect"))
     this.assert.equal(await message.getVisibleText(), "Frame redirected")
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html", "does not redirect _top")
+    this.assert.notOk(await this.search, "does not redirect _top")
+    this.assert.equal(await this.attributeForSelector("#frame", "src"), url.href, "redirects the target frame")
   }
 
   async "test frame form submission with empty created response"() {

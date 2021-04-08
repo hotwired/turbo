@@ -13,6 +13,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     const frame = await this.querySelector("turbo-frame#frame")
     this.assert.equal(await frame.getAttribute("data-loaded-from"), currentPath)
+    this.assert.equal(await frame.getAttribute("src"), await this.propertyForSelector("#hello a", "href"))
   }
 
   async "test a frame whose src references itself does not infinitely loop"() {
@@ -39,7 +40,10 @@ export class FrameTests extends TurboDriveTestCase {
   }
 
   async "test following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame"() {
-    await this.clickSelector("#nested-root[target=frame] #nested-child a:not([data-turbo-frame])")
+    const link = await this.querySelector("#nested-root[target=frame] #nested-child a:not([data-turbo-frame])")
+    const href = await link.getProperty("href")
+
+    await link.click()
     await this.nextBeat
 
     const frame = await this.querySelector("#frame h2")
@@ -48,6 +52,9 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await frame.getVisibleText(), "Frames: #frame")
     this.assert.equal(await nestedRoot.getVisibleText(), "Frames: #nested-root")
     this.assert.equal(await nestedChild.getVisibleText(), "Frame: Loaded")
+    this.assert.equal(await this.attributeForSelector("#frame", "src"), null)
+    this.assert.equal(await this.attributeForSelector("#nested-root", "src"), null)
+    this.assert.equal(await this.attributeForSelector("#nested-child", "src"), href)
   }
 
   async "test following a link that declares data-turbo-frame within a frame whose ancestor respects the override"() {
@@ -56,14 +63,20 @@ export class FrameTests extends TurboDriveTestCase {
 
     const frameText = await this.querySelector("body > h1")
     this.assert.equal(await frameText.getVisibleText(), "One")
+    this.assert.notOk(await this.hasSelector("#frame"))
+    this.assert.notOk(await this.hasSelector("#nested-root"))
+    this.assert.notOk(await this.hasSelector("#nested-child"))
   }
 
   async "test following a link within a frame with target=_top navigates the page"() {
+    this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
+
     await this.clickSelector("#navigate-top a")
     await this.nextBeat
 
     const frameText = await this.querySelector("body > h1")
     this.assert.equal(await frameText.getVisibleText(), "One")
+    this.assert.notOk(await this.hasSelector("#navigate-top"))
   }
 
   async "test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame"() {
