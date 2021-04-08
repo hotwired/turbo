@@ -17,5 +17,6 @@
   "turbo:load",
   "turbo:render",
   "turbo:before-fetch-request",
+  "turbo:before-fetch-response",
   "turbo:visit"
 ])

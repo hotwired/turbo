@@ -83,6 +83,10 @@ export class FormSubmission {
     return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
   }
 
+  get isIdempotent() {
+    return this.fetchRequest.isIdempotent
+  }
+
   get stringFormData() {
     return [ ...this.formData ].reduce((entries, [ name, value ]) => {
       return entries.concat(typeof value == "string" ? [[ name, value ]] : [])
