@@ -267,7 +267,15 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       }
     }
 
-    return elementIsNavigable(element) && (submitter ? elementIsNavigable(submitter) : true)
+    if (!elementIsNavigable(element)) {
+      return false
+    }
+
+    if (submitter && !elementIsNavigable(submitter)) {
+      return false
+    }
+
+    return true
   }
 
   // Computed properties
