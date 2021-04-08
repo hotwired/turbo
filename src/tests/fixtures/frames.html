@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Frame</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
   </head>
   <body>
     <h1>Frames</h1>
@@ -37,5 +38,7 @@
 
     <turbo-frame id="recursive" recurse="composer" src="/src/tests/fixtures/frames/recursive.html">
     </turbo-frame>
+
+    <a id="frame-self" href="/src/tests/fixtures/frames/self.html" data-turbo-frame="frame">Visit self.html</a>
   </body>
 </html>

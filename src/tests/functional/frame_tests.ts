@@ -1,6 +1,6 @@
-import { FunctionalTestCase } from "../helpers/functional_test_case"
+import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 
-export class FrameTests extends FunctionalTestCase {
+export class FrameTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/frames.html")
   }
@@ -13,6 +13,15 @@ export class FrameTests extends FunctionalTestCase {
 
     const frame = await this.querySelector("turbo-frame#frame")
     this.assert.equal(await frame.getAttribute("data-loaded-from"), currentPath)
+  }
+
+  async "test a frame whose src references itself does not infinitely loop"() {
+    await this.clickSelector("#frame-self")
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    const otherEvents = await this.eventLogChannel.read()
+    this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
   async "test following a link to a page without a matching frame results in an empty frame"() {
