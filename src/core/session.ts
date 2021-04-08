@@ -1,6 +1,6 @@
 import { Adapter } from "./native/adapter"
 import { BrowserAdapter } from "./native/browser_adapter"
-import { FormSubmitObserver } from "../observers/form_submit_observer"
+import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
@@ -18,7 +18,7 @@ import { PageSnapshot } from "./drive/page_snapshot"
 
 export type TimingData = {}
 
-export class Session implements HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate, PageViewDelegate {
+export class Session implements FormSubmitObserverDelegate, HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate, PageViewDelegate {
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly view = new PageView(this, document.documentElement)
@@ -122,7 +122,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: URL) {
-    return this.elementIsNavigable(link)
+    return elementIsNavigable(link)
       && this.locationIsVisitable(location)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
@@ -155,7 +155,7 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-    return this.elementIsNavigable(form) && this.elementIsNavigable(submitter)
+    return elementIsNavigable(form) && elementIsNavigable(submitter)
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
@@ -249,21 +249,21 @@ export class Session implements HistoryDelegate, LinkClickObserverDelegate, Navi
     return isAction(action) ? action : "advance"
   }
 
-  elementIsNavigable(element?: Element) {
-    const container = element?.closest("[data-turbo]")
-    if (container) {
-      return container.getAttribute("data-turbo") != "false"
-    } else {
-      return true
-    }
-  }
-
   locationIsVisitable(location: URL) {
     return isPrefixedBy(location, this.snapshot.rootLocation) && isHTML(location)
   }
 
   get snapshot() {
     return this.view.snapshot
+  }
+}
+
+export function elementIsNavigable(element?: Element) {
+  const container = element?.closest("[data-turbo]")
+  if (container) {
+    return container.getAttribute("data-turbo") != "false"
+  } else {
+    return true
   }
 }
 

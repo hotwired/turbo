@@ -11,6 +11,7 @@ import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
+import { elementIsNavigable } from "../session"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -119,8 +120,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Form interceptor delegate
 
-  shouldInterceptFormSubmission(element: HTMLFormElement) {
-    return this.shouldInterceptNavigation(element)
+  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: Element) {
+    return this.shouldInterceptNavigation(element, submitter)
   }
 
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
@@ -252,7 +253,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return new FrameElement()
   }
 
-  private shouldInterceptNavigation(element: Element) {
+  private shouldInterceptNavigation(element: Element, submitter?: Element) {
     const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
 
     if (!this.enabled || id == "_top") {
@@ -266,7 +267,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       }
     }
 
-    return true
+    return elementIsNavigable(element) && (submitter ? elementIsNavigable(submitter) : true)
   }
 
   // Computed properties

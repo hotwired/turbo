@@ -238,7 +238,23 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
   }
 
-  async "test form submission with Turbo disabled on the form"() {
+  async "test frame form submission with [data-turbo=false] on the form"() {
+    await this.clickSelector('#frame form[data-turbo="false"] input[type=submit]')
+    await this.nextBody
+    await this.querySelector("#element-id")
+
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test frame form submission with [data-turbo=false] on the submitter"() {
+    await this.clickSelector('#frame form:not([data-turbo]) input[data-turbo="false"]')
+    await this.nextBody
+    await this.querySelector("#element-id")
+
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test form submission with [data-turbo=false] on the form"() {
     await this.clickSelector('#turbo-false form[data-turbo="false"] input[type=submit]')
     await this.nextBody
     await this.querySelector("#element-id")
