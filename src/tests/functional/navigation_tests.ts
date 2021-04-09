@@ -81,7 +81,7 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.hash, "#named-anchor")
     this.assert.equal(await this.visitAction, "advance")
-    this.assert(await this.isScrolledToSelector("[name=named-anchor]"))
+    this.assert.ok(await this.isScrolledToSelector("[name=named-anchor]"), "scrolls to [name=named-anchor]")
   }
 
   async "test following a cross-origin unannotated link"() {
