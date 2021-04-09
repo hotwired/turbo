@@ -9,7 +9,15 @@
   function eventListener(event) {
     eventLogs.push([event.type, event.detail])
   }
+  window.mutationLogs = []
 
+  new MutationObserver((mutations) => {
+    for (const { attributeName, oldValue, target } of mutations.filter(({ type }) => type == "attributes")) {
+      if (target instanceof Element) {
+        mutationLogs.push([attributeName, target.id, target.getAttribute(attributeName)])
+      }
+    }
+  }).observe(document, { subtree: true, childList: true, attributes: true })
 })([
   "turbo:before-cache",
   "turbo:before-render",
