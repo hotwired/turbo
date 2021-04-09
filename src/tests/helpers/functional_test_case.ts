@@ -71,7 +71,7 @@ export class FunctionalTestCase extends InternTestCase {
     const { y: pageY } = await this.scrollPosition
     const { y: elementY } = await this.remote.findByCssSelector(selector).getPosition()
     const offset = pageY - elementY
-    return offset > -1 && offset < 1
+    return Math.abs(offset) < 2
   }
 
   get nextBeat(): Promise<void> {
