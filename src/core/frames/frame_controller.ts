@@ -186,7 +186,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    const frame = this.findFrameElement(formSubmission.formElement)
+    frame.setAttribute("busy", "")
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
@@ -203,7 +204,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    const frame = this.findFrameElement(formSubmission.formElement)
+    frame.removeAttribute("busy")
   }
 
   // View delegate

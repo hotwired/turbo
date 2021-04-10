@@ -25,6 +25,13 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
+  async "test following a link driving a frame toggles the [busy] attribute"() {
+    await this.clickSelector("#hello a")
+
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
+  }
+
   async "test following a link to a page without a matching frame results in an empty frame"() {
     await this.clickSelector("#missing a")
     await this.nextBeat
