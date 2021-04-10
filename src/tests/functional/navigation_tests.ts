@@ -121,17 +121,6 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "load")
   }
 
-  async "test following a link to a page that has been visited renders a preview the Snapshot cache"() {
-    await this.clickSelector("#same-origin-unannotated-link")
-    await this.nextBody
-    this.assert.notOk(await this.hasSelector("html[data-turbo-preview]"), "does not set data-turbo-preview on a visit")
-
-    await this.clickSelector("#navigation-link")
-    await this.nextBody
-    this.assert.equal(await this.nextAttributeMutationNamed("document", "data-turbo-preview"), "", "sets [data-turbo-preview] on the <html> element")
-    this.assert.equal(await this.nextAttributeMutationNamed("document", "data-turbo-preview"), null, "removes [data-turbo-preview] from the <html> element")
-  }
-
   async "test clicking the back button"() {
     this.clickSelector("#same-origin-unannotated-link")
     await this.nextBody
