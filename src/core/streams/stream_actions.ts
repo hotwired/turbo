@@ -13,6 +13,10 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
     this.targetElement?.remove()
   },
 
+  clear() {
+    this.targetElement?.replaceWith("")
+  },
+
   replace() {
     this.targetElement?.replaceWith(this.templateContent)
   },

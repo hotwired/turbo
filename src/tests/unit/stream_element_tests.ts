@@ -40,6 +40,17 @@ export class StreamElementTests extends DOMTestCase {
     this.assert.isNull(element.parentElement)
   }
 
+  async "test action=clear"() {
+    const element = createStreamElement("clear", "hello")
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, "")
+    this.assert.isNull(element.parentElement)
+  }
+
   async "test action=replace"() {
     const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello">Hello Turbo</h1>`))
     this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
