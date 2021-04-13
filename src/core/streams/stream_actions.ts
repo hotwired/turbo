@@ -14,7 +14,9 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
   },
 
   clear() {
-    this.targetElement?.replaceWith("")
+    if (this.targetElement) {
+      this.targetElement.innerHTML = ""
+    }
   },
 
   replace() {
