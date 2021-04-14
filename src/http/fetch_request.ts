@@ -1,5 +1,6 @@
 import { FetchResponse } from "./fetch_response"
 import { dispatch } from "../util"
+import { RequestInterceptor } from "../core/request_interceptor"
 
 export interface FetchRequestDelegate {
   prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
@@ -76,6 +77,14 @@ export class FetchRequest {
   }
 
   async perform(): Promise<FetchResponse> {
+    try {
+      const requestInterceptor = RequestInterceptor.get()
+      if (requestInterceptor) {
+        await requestInterceptor(this)
+      }
+    } catch (error) {
+      console.error(error)
+    }
     const { fetchOptions } = this
     this.delegate.prepareHeadersForRequest?.(this.headers, this)
     dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
@@ -119,6 +128,10 @@ export class FetchRequest {
     return {
       "Accept": "text/html, application/xhtml+xml"
     }
+  }
+
+  addHeader(key: string, value: string) {
+    this.headers[key] = value
   }
 
   get isIdempotent() {

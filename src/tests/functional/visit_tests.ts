@@ -61,6 +61,16 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.equal(urlAfterVisit, urlBeforeVisit)
   }
 
+  async "test adding custom header via request interceptor"() {
+    this.setRequestInterceptor()
+
+    this.clickSelector("#same-origin-link")
+    const { fetchOptions: { headers } } = await this.nextEventNamed("turbo:before-fetch-request")
+    this.assert.equal(headers.Authorization, "Bearer Test Token")
+
+    this.resetRequestInterceptor()
+  }
+
   async "test navigation by history is not cancelable"() {
     this.clickSelector("#same-origin-link")
     await this.drainEventLog()
@@ -79,6 +89,20 @@ export class VisitTests extends TurboDriveTestCase {
       removeEventListener("turbo:before-visit", eventListener, false)
       event.preventDefault()
     }, false))
+  }
+
+  async setRequestInterceptor() {
+    this.remote.execute(() => {
+      window.Turbo.setRequestInterceptor(async (request) => {
+        request.addHeader("Authorization", "Bearer Test Token")
+      })
+    })
+  }
+
+  async resetRequestInterceptor() {
+    this.remote.execute(() => {
+      window.Turbo.setRequestInterceptor(async (request) => {})
+    })
   }
 }
 
