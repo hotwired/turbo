@@ -1,4 +1,4 @@
-import { StreamActions } from "../core/streams/stream_actions"
+import { StreamActions, StreamOperations } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
@@ -18,9 +18,10 @@ export class StreamElement extends HTMLElement {
 
   async render() {
     return this.renderPromise ??= (async () => {
-      if (this.dispatchEvent(this.beforeRenderEvent)) {
+      const event = this.beforeRenderEvent
+      if (this.dispatchEvent(event)) {
         await nextAnimationFrame()
-        this.performAction()
+        this.performAction(event.detail.actions as StreamOperations).bind(this).call(this)
       }
     })()
   }
@@ -29,9 +30,9 @@ export class StreamElement extends HTMLElement {
     try { this.remove() } catch {}
   }
 
-  get performAction() {
+  performAction(actions: StreamOperations) {
     if (this.action) {
-      const actionFunction = StreamActions[this.action]
+      const actionFunction = actions[this.action]
       if (actionFunction) {
         return actionFunction
       }
@@ -75,6 +76,7 @@ export class StreamElement extends HTMLElement {
   }
 
   private get beforeRenderEvent() {
-    return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
+    const actions = { ...StreamActions }
+    return new CustomEvent("turbo:before-stream-render", { detail: { actions }, bubbles: true, cancelable: true })
   }
 }

@@ -1,6 +1,10 @@
 import { StreamElement } from "../../elements/stream_element"
 
-export const StreamActions: { [action: string]: (this: StreamElement) => void } = {
+export interface StreamOperations {
+  [action: string]: (this: StreamElement) => void
+}
+
+export const StreamActions: StreamOperations = {
   append() {
     this.targetElement?.append(this.templateContent)
   },

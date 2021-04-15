@@ -44,12 +44,12 @@ router.post("/reject", (request, response) => {
 })
 
 router.post("/messages", (request, response) => {
-  const { content, status, type } = request.body
+  const { actionName, content, status, type } = request.body
   if (typeof content == "string") {
     receiveMessage(content)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(renderMessage(content))
+      response.send(renderMessage(content, actionName || "append"))
     } else {
       response.sendStatus(parseInt(status || "201", 10))
     }
@@ -99,9 +99,9 @@ function receiveMessage(content: string) {
   }
 }
 
-function renderMessage(content: string) {
+function renderMessage(content: string, action = "append") {
   return `
-    <turbo-stream action="append" target="messages"><template>
+    <turbo-stream action="${action}" target="messages"><template>
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `

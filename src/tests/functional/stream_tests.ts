@@ -18,6 +18,15 @@ export class StreamTests extends FunctionalTestCase {
     element = await this.querySelector(selector)
     this.assert.equal(await element.getVisibleText(), "Hello world!")
   }
+
+  async "test receiving a stream message with a custom action"() {
+    this.assert.notOk(await this.hasSelector("#messages marquee"))
+
+    await this.clickSelector("#custom-action [type=submit]")
+    await this.nextBeat
+
+    this.assert.ok(await this.hasSelector("#messages marquee"))
+  }
 }
 
 StreamTests.registerSuite()

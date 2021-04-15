@@ -5,11 +5,27 @@
     <title>Turbo Streams</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script>Turbo.connectStreamSource(new EventSource("/__turbo/messages"))</script>
+    <script>
+      addEventListener("turbo:before-stream-render", ({ detail: { actions } }) => {
+        actions.customUpdate = function() {
+          const marquee = document.createElement("marquee")
+          marquee.append(this.templateContent)
+
+          this.targetElement.append(marquee)
+        }
+      })
+    </script>
   </head>
   <body>
     <form id="create" method="post" action="/__turbo/messages">
       <input type="hidden" name="content" value="Hello world!">
       <input type="hidden" name="type" value="stream">
+      <button type="submit">Create</button>
+    </form>
+    <form id="custom-action" method="post" action="/__turbo/messages">
+      <input type="hidden" name="content" value="Hello world!">
+      <input type="hidden" name="type" value="stream">
+      <input type="hidden" name="actionName" value="customUpdate">
       <button type="submit">Create</button>
     </form>
     <div id="messages">
