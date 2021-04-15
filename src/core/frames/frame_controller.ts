@@ -24,7 +24,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
   private connected = false
-  private hasBeenLoaded = false
+  private willEagerLoad = true
   private settingSourceURL = false
 
   constructor(element: FrameElement) {
@@ -40,6 +40,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.connected = true
       this.reloadable = false
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
+        this.willEagerLoad = false
         this.appearanceObserver.start()
       }
       this.linkInterceptor.start()
@@ -64,7 +65,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   sourceURLChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
+    if (this.loadingStyle == FrameLoadingStyle.eager || this.willEagerLoad) {
       this.loadSourceURL()
     }
   }
@@ -87,7 +88,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           this.element.loaded = this.visit(this.sourceURL)
           this.appearanceObserver.stop()
           await this.element.loaded
-          this.hasBeenLoaded = true
         } catch (error) {
           this.currentURL = previousURL
           throw error
@@ -121,6 +121,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Appearance observer delegate
 
   elementAppearedInViewport(element: Element) {
+    this.willEagerLoad = true
     this.loadSourceURL()
   }
 
