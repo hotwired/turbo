@@ -320,7 +320,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get isLoading() {
-    return this.formSubmission !== undefined || this.resolveVisitPromise !== undefined
+    return this.formSubmission !== undefined || this.resolveVisitPromise() !== undefined
   }
 
   get isActive() {
