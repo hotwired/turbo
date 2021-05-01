@@ -19,7 +19,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
-  currentURL?: string
+  currentURL?: string | null
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
   private connected = false
@@ -312,6 +312,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   set sourceURL(sourceURL: string | undefined) {
     this.settingSourceURL = true
     this.element.src = sourceURL ?? null
+    this.currentURL = this.element.src
     this.settingSourceURL = false
   }
 
@@ -337,7 +338,7 @@ function getFrameElementById(id: string | null) {
   }
 }
 
-function activateElement(element: Element | null, currentURL?: string) {
+function activateElement(element: Element | null, currentURL?: string | null) {
   if (element) {
     const src = element.getAttribute("src")
     if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {
