@@ -64,7 +64,7 @@ export class FormSubmission {
   }
 
   get action(): string {
-    return this.submitter?.getAttribute("formaction") || this.formElement.action
+    return this.submitter?.getAttribute("formaction") || this.formElement.getAttribute("action")
   }
 
   get location(): URL {
