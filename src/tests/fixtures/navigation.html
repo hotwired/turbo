@@ -5,6 +5,22 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      class CustomLinkElement extends HTMLElement {
+        constructor() {
+          super()
+          this.attachShadow({ mode: 'open' })
+        }
+        connectedCallback() {
+          this.shadowRoot.innerHTML = `
+            <a href="${this.getAttribute('link')}">
+              ${this.getAttribute('text')}
+            </a>
+          `
+        }
+      }
+      window.customElements.define('custom-link-element', CustomLinkElement)
+    </script>
   </head>
   <body>
     <section>
@@ -26,6 +42,7 @@
       <svg width="600" height="100" viewbox="-300 -50 600 100"><text><a id="cross-origin-link-inside-svg-element" href="about:blank">Cross-origin link inside SVG element</a></text></svg>
       <p><a id="link-to-disabled-frame" href="/src/tests/fixtures/frames/hello.html" data-turbo-frame="hello">Disabled turbo-frame</a></p>
       <p><a id="autofocus-link" href="/src/tests/fixtures/autofocus.html">autofocus.html link</a></p>
+      <p><custom-link-element id="same-origin-unannotated-custom-element-link" link="/src/tests/fixtures/one.html" text="Same-origin unannotated custom element link"></custom-link-element></p>
     </section>
 
     <turbo-frame id="hello" disabled></turbo-frame>

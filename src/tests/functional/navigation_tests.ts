@@ -17,6 +17,26 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
+  // Needs revisit. Tests behavior of clicks on links contained within
+  // shadow dom trees. The current test runner (intern) artificially dispatches
+  // click events, bypassing the browser's own dispatch
+  // logic. However it does not implement the same browser behavior around
+  // setting the `MouseEvent.target` attribute. For a click on a link within a
+  // shadow dom, browsers assign it the shadow dom parent (the custom element),
+  // intern assigns it the link element. This prevents writing a failing test
+  // case.
+  async "test following a same-origin unannotated custom element link"() {
+    // standard finders like `findByCssSelector` or `findByLinkText` will not
+    // match elements in the shadow dom, need to reach it via javascript
+    const element = await this.remote.findByCssSelector("#same-origin-unannotated-custom-element-link")
+    const shadowRoot = this.remote.execute("el => el.shadowRoot", [element])
+    const link = await shadowRoot.findByCssSelector("a")
+    await link.click()
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
   async "test following a same-origin unannotated form[method=GET]"() {
     this.clickSelector("#same-origin-unannotated-form button")
     await this.nextBody
