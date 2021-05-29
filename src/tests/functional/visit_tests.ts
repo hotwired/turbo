@@ -101,7 +101,7 @@ export class VisitTests extends TurboDriveTestCase {
 
   async resetRequestInterceptor() {
     this.remote.execute(() => {
-      window.Turbo.setRequestInterceptor(async (request) => {})
+      window.Turbo.clearRequestInterceptor()
     })
   }
 }

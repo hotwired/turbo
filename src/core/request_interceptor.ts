@@ -8,4 +8,8 @@ export class RequestInterceptor {
   static get() {
     return this.interceptor
   }
+
+  static reset() {
+    this.interceptor = undefined
+  }
 }

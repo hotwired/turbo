@@ -45,3 +45,7 @@ export function setProgressBarDelay(delay: number) {
 export function setRequestInterceptor(interceptor: (request: any) => void) {
   RequestInterceptor.register(interceptor)
 }
+
+export function clearRequestInterceptor() {
+  RequestInterceptor.reset()
+}
