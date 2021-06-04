@@ -3,6 +3,7 @@ import { expandURL } from "../core/url"
 export interface LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: URL): boolean
   followedLinkToLocation(link: Element, location: URL): void
+  ping(url: URL): void
 }
 
 export class LinkClickObserver {
@@ -41,6 +42,11 @@ export class LinkClickObserver {
           event.preventDefault()
           this.delegate.followedLinkToLocation(link, location)
         }
+
+        if (willPing(link)) {
+          const pings = this.getPingLocationsForLink(link)
+          pings.forEach(url => this.delegate.ping(url))
+        }
       }
     }
   }
@@ -66,4 +72,17 @@ export class LinkClickObserver {
   getLocationForLink(link: Element): URL {
     return expandURL(link.getAttribute("href") || "")
   }
+
+  getPingLocationsForLink(link: Element): URL[] {
+    const attribute = link.getAttribute("ping")
+    if (attribute && attribute.length > 0) {
+      return attribute.split(" ").map(link => expandURL(link))
+    } else {
+      return []
+    }
+  }
+}
+
+function willPing(link: Element) {
+  return link.hasAttribute("ping")
 }

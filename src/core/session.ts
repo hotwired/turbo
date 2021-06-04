@@ -15,6 +15,7 @@ import { dispatch } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
+import { Ping } from "./drive/ping"
 
 export type TimingData = {}
 
@@ -130,6 +131,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
     this.visit(location.href, { action })
+  }
+
+  ping(url: URL) {
+    new Ping(url).perform()
   }
 
   // Navigator delegate
