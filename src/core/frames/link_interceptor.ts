@@ -1,3 +1,5 @@
+import { dispatch } from "../../util"
+
 export interface LinkInterceptorDelegate {
   shouldInterceptLinkClick(element: Element, url: string): boolean
   linkClickIntercepted(element: Element, url: string): void
@@ -38,7 +40,9 @@ export class LinkInterceptor {
       if (this.delegate.shouldInterceptLinkClick(event.target, event.detail.url)) {
         this.clickEvent.preventDefault()
         event.preventDefault()
-        this.delegate.linkClickIntercepted(event.target, event.detail.url)
+        
+        this.convertLinkWithMethodClickToFormSubmission(event.target) || 
+          this.delegate.linkClickIntercepted(event.target, event.detail.url)
       }
     }
     delete this.clickEvent
@@ -46,6 +50,21 @@ export class LinkInterceptor {
 
   willVisit = () => {
     delete this.clickEvent
+  }
+
+  convertLinkWithMethodClickToFormSubmission(link: Element) {
+    const linkMethod = link.getAttribute("data-turbo-method") || link.getAttribute("data-method")
+
+    if (linkMethod) {
+      const form = document.createElement("form")
+      form.method = linkMethod
+      form.action = link.getAttribute("href") || "undefined"
+
+      link.parentNode?.insertBefore(form, link)
+      return dispatch("submit", { target: form })
+    } else {
+      return false
+    }
   }
 
   respondsToEventTarget(target: EventTarget | null) {
