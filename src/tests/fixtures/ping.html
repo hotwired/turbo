@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Turbo</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <section>
+      <h1>Pings</h1>
+      <p><a id="single-ping" href="/src/tests/fixtures/one.html" ping="/__turbo/messages">Ping one URL</a></p>
+      <p><a id="double-ping" href="/src/tests/fixtures/one.html" ping="/__turbo/messages/1 /__turbo/messages/2">Ping several URLs</a></p>
+  </body>
+</html>
