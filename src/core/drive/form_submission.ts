@@ -171,7 +171,12 @@ export class FormSubmission {
 function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): FormData {
   const formData = new FormData(formElement)
   const name = submitter?.getAttribute("name")
-  const value = submitter?.getAttribute("value")
+  let value = submitter?.getAttribute("value")
+
+  const formMethod = submitter?.getAttribute("formmethod") || formElement.getAttribute("method") || formElement.method
+  if (formMethod.toLowerCase() != "get") {
+    value ??= ""
+  }
 
   if (name && value != null && formData.get(name) != value) {
     formData.append(name, value)
