@@ -75,7 +75,7 @@ export class LinkClickObserver {
 
   getPingLocationsForLink(link: Element): URL[] {
     const attribute = link.getAttribute("ping")
-    if (attribute && attribute.length > 0) {
+    if (attribute) {
       return attribute.split(" ").map(link => expandURL(link))
     } else {
       return []
