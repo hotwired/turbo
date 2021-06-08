@@ -1,15 +1,39 @@
-import { Response, Router } from "express"
+import { Request, Response, Router } from "express"
 import multer from "multer"
 import path from "path"
+import url from "url"
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
 
 router.use(multer().none())
 
+router.use((request, response, next) => {
+  if (request.accepts(["text/html", "application/xhtml+xml"])) {
+    next()
+  } else {
+    response.sendStatus(422)
+  }
+})
+
 router.post("/redirect", (request, response) => {
-  const path = request.body.path ?? "/src/tests/fixtures/one.html"
-  response.redirect(303, path)
+  const { path, ...query } = request.body
+  const pathname = path ?? "/src/tests/fixtures/one.html"
+  const enctype = request.get("Content-Type")
+  if (enctype) {
+    query.enctype = enctype
+  }
+  response.redirect(303, url.format({ pathname, query }))
+})
+
+router.get("/redirect", (request, response) => {
+  const { path, ...query } = request.query as any
+  const pathname = path ?? "/src/tests/fixtures/one.html"
+  const enctype = request.get("Content-Type")
+  if (enctype) {
+    query.enctype = enctype
+  }
+  response.redirect(301, url.format({ pathname, query }))
 })
 
 router.post("/reject", (request, response) => {
@@ -23,7 +47,7 @@ router.post("/messages", (request, response) => {
   const { content, status, type } = request.body
   if (typeof content == "string") {
     receiveMessage(content)
-    if (type == "stream") {
+    if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
       response.send(renderMessage(content))
     } else {
@@ -39,7 +63,7 @@ router.put("/messages/:id", (request, response) => {
   const { id } = request.params
   if (typeof content == "string") {
     receiveMessage(content)
-    if (type == "stream") {
+    if (type == "stream" &&  acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
       response.send(renderMessage(id + ": " + content))
     } else {
@@ -81,6 +105,10 @@ function renderMessage(content: string) {
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `
+}
+
+function acceptsStreams(request: Request): boolean {
+  return !!request.accepts("text/vnd.turbo-stream.html")
 }
 
 function renderSSEData(data: any) {

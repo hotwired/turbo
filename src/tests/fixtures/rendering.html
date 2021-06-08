@@ -5,6 +5,22 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script type="module">
+      const permanentVideoElementLoaded = new Promise(resolve => {
+        addEventListener("DOMContentLoaded", () => {
+          const element = document.getElementById("permanent-video")
+          element.addEventListener("canplaythrough", () => resolve(element), { once: true })
+        })
+      })
+
+      addEventListener("click", async event => {
+        if (event.target.id == "permanent-video-button") {
+          const element = await permanentVideoElementLoaded
+          element.addEventListener("timeupdate", () => element.pause(), { once: true })
+          element.play()
+        }
+      })
+    </script>
   </head>
   <body>
     <section>
@@ -18,7 +34,19 @@
       <p><a id="nonexistent-link" href="/nonexistent">Nonexistent link</a></p>
       <p><a id="visit-control-reload-link" href="/src/tests/fixtures/visit_control_reload.html">Visit control: reload</a></p>
       <p><a id="permanent-element-link" href="/src/tests/fixtures/permanent_element.html">Permanent element</a></p>
+      <p><a id="permanent-in-frame-element-link" href="/src/tests/fixtures/permanent_element.html" data-turbo-frame="frame">Permanent element in frame</a></p>
+      <p><a id="permanent-in-frame-without-layout-element-link" href="/src/tests/fixtures/frames/without_layout.html" data-turbo-frame="frame">Permanent element in frame without layout</a></p>
     </section>
     <div id="permanent" data-turbo-permanent>Rendering</div>
+
+    <turbo-frame id="frame">
+      <div id="permanent-in-frame" data-turbo-permanent>Rendering</div>
+    </turbo-frame>
+
+    <video id="permanent-video" data-turbo-permanent>
+      <source src="/src/tests/fixtures/video.webm" type="video/webm">
+      <source src="/src/tests/fixtures/video.mp4" type="video/mp4">
+    </video>
+    <button id="permanent-video-button" type="button">Play</button>
   </body>
 </html>

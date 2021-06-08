@@ -12,21 +12,11 @@ export class StreamTests extends FunctionalTestCase {
     element = await this.querySelector(selector)
     this.assert.equal(await element.getVisibleText(), "First")
 
-    await this.createMessage("Hello world!")
+    await this.clickSelector("#create [type=submit]")
     await this.nextBeat
 
     element = await this.querySelector(selector)
     this.assert.equal(await element.getVisibleText(), "Hello world!")
-  }
-
-  async createMessage(content: string) {
-    return this.post("/__turbo/messages", { content })
-  }
-
-  async post(path: string, params: any = {}) {
-    await this.evaluate((path, method, params) => {
-      fetch(location.origin + path, { method, body: new URLSearchParams(params) })
-    }, path, "POST", params)
   }
 }
 

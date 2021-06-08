@@ -8,5 +8,5 @@ interface Node {
 }
 
 interface Window {
-  Turbo: any
+  Turbo: typeof import("./core/index")
 }

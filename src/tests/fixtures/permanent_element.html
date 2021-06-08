@@ -11,5 +11,15 @@
       <h1>Permanent element</h1>
     </section>
     <div id="permanent" data-turbo-permanent>Permanent element</div>
+
+    <turbo-frame id="frame">
+      <div id="permanent-in-frame" data-turbo-permanent>Permanent element</div>
+    </turbo-frame>
+
+    <video id="permanent-video" data-turbo-permanent>
+      <source src="/src/tests/fixtures/video.webm" type="video/webm">
+      <source src="/src/tests/fixtures/video.mp4" type="video/mp4">
+    </video>
+    <button id="permanent-video-button" type="button">Play</button>
   </body>
 </html>

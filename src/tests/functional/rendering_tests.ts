@@ -124,6 +124,42 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert(await permanentElement.equals(await this.permanentElement))
   }
 
+  async "test preserves permanent elements within turbo-frames"() {
+    let permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+
+    await this.clickSelector("#permanent-in-frame-element-link")
+    await this.nextBeat
+    permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+  }
+
+  async "test preserves permanent elements within turbo-frames rendered without layouts"() {
+    let permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+
+    await this.clickSelector("#permanent-in-frame-without-layout-element-link")
+    await this.nextBeat
+    permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+  }
+
+  async "test preserves permanent element video playback"() {
+    let videoElement = await this.querySelector("#permanent-video")
+    await this.clickSelector("#permanent-video-button")
+    await this.sleep(500)
+
+    const timeBeforeRender = await videoElement.getProperty("currentTime")
+    this.assert.notEqual(timeBeforeRender, 0, "playback has started")
+
+    await this.clickSelector("#permanent-element-link")
+    await this.nextBody
+    videoElement = await this.querySelector("#permanent-video")
+
+    const timeAfterRender = await videoElement.getProperty("currentTime")
+    this.assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
+  }
+
   async "test before-cache event"() {
     this.beforeCache(body => body.innerHTML = "Modified")
     this.clickSelector("#same-origin-link")

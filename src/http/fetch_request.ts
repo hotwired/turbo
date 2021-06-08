@@ -1,9 +1,8 @@
 import { FetchResponse } from "./fetch_response"
-import { Location } from "../core/location"
 import { dispatch } from "../util"
 
 export interface FetchRequestDelegate {
-  additionalHeadersForRequest?(request: FetchRequest): { [header: string]: string }
+  prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
   requestStarted(request: FetchRequest): void
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): void
@@ -30,7 +29,7 @@ export function fetchMethodFromString(method: string) {
   }
 }
 
-export type FetchRequestBody = FormData
+export type FetchRequestBody = FormData | URLSearchParams
 
 export type FetchRequestHeaders = { [header: string]: string }
 
@@ -43,32 +42,29 @@ export interface FetchRequestOptions {
 export class FetchRequest {
   readonly delegate: FetchRequestDelegate
   readonly method: FetchMethod
-  readonly location: Location
+  readonly headers: FetchRequestHeaders
+  readonly url: URL
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
 
-  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: Location, body?: FetchRequestBody) {
+  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams) {
     this.delegate = delegate
     this.method = method
-    this.location = location
-    this.body = body
-  }
-
-  get url() {
-    const url = this.location.absoluteURL
-    const query = this.params.toString()
-    if (this.isIdempotent && query.length) {
-      return [url, query].join(url.includes("?") ? "&" : "?")
+    this.headers = this.defaultHeaders
+    if (this.isIdempotent) {
+      this.url = mergeFormDataEntries(location, [ ...body.entries() ])
     } else {
-      return url
+      this.body = body
+      this.url = location
     }
   }
 
-  get params() {
-    return this.entries.reduce((params, [name, value]) => {
-      params.append(name, value.toString())
-      return params
-    }, new URLSearchParams)
+  get location(): URL {
+    return this.url
+  }
+
+  get params(): URLSearchParams {
+    return this.url.searchParams
   }
 
   get entries() {
@@ -81,10 +77,11 @@ export class FetchRequest {
 
   async perform(): Promise<FetchResponse> {
     const { fetchOptions } = this
+    this.delegate.prepareHeadersForRequest?.(this.headers, this)
     dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
     try {
       this.delegate.requestStarted(this)
-      const response = await fetch(this.url, fetchOptions)
+      const response = await fetch(this.url.href, fetchOptions)
       return await this.receive(response)
     } catch (error) {
       this.delegate.requestErrored(this, error)
@@ -113,8 +110,14 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.isIdempotent ? undefined : this.body,
+      body: this.body,
       signal: this.abortSignal
+    }
+  }
+
+  get defaultHeaders() {
+    return {
+      "Accept": "text/html, application/xhtml+xml"
     }
   }
 
@@ -122,22 +125,24 @@ export class FetchRequest {
     return this.method == FetchMethod.get
   }
 
-  get headers() {
-    return {
-      "Accept": "text/html, application/xhtml+xml",
-      ...this.additionalHeaders
-    }
-  }
-
-  get additionalHeaders() {
-    if (typeof this.delegate.additionalHeadersForRequest == "function") {
-      return this.delegate.additionalHeadersForRequest(this)
-    } else {
-      return {}
-    }
-  }
-
   get abortSignal() {
     return this.abortController.signal
   }
+}
+
+function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
+  const currentSearchParams = new URLSearchParams(url.search)
+
+  for (const [ name, value ] of entries) {
+    if (value instanceof File) continue
+
+    if (currentSearchParams.has(name)) {
+      currentSearchParams.delete(name)
+      url.searchParams.set(name, value)
+    } else {
+      url.searchParams.append(name, value)
+    }
+  }
+
+  return url
 }

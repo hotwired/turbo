@@ -3,9 +3,11 @@ import { RemoteChannel } from "./remote_channel"
 import { Element } from "@theintern/leadfoot"
 
 type EventLog = [string, any]
+type MutationLog = [string, string | null, string | null]
 
 export class TurboDriveTestCase extends FunctionalTestCase {
   eventLogChannel: RemoteChannel<EventLog> = new RemoteChannel(this.remote, "eventLogs")
+  mutationLogChannel: RemoteChannel<MutationLog> = new RemoteChannel(this.remote, "mutationLogs")
   lastBody?: Element
 
   async beforeTest() {
@@ -33,6 +35,21 @@ export class TurboDriveTestCase extends FunctionalTestCase {
     return record[1]
   }
 
+  async noNextEventNamed(eventName: string): Promise<boolean> {
+    const records = await this.eventLogChannel.read(1)
+    return !records.some(([name]) => name == eventName)
+  }
+
+  async nextAttributeMutationNamed(elementId: string, attributeName: string): Promise<string | null> {
+    let record: MutationLog | undefined
+    while (!record) {
+      const records = await this.mutationLogChannel.read(1)
+      record = records.find(([name, id]) => name == attributeName && id == elementId)
+    }
+    const attributeValue = record[2]
+    return attributeValue
+  }
+
   get nextBody(): Promise<Element> {
     return (async () => {
       let body
@@ -54,7 +71,7 @@ export class TurboDriveTestCase extends FunctionalTestCase {
   get visitAction(): Promise<string> {
     return this.evaluate(() => {
       try {
-        return window.Turbo.navigator.currentVisit.action
+        return window.Turbo.navigator.currentVisit!.action
       } catch (error) {
         return "load"
       }

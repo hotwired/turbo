@@ -6,6 +6,7 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
   },
 
   append() {
+    this.removeDuplicateTargetChildren()
     this.targetElement?.append(this.templateContent)
   },
 
@@ -14,6 +15,7 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
   },
 
   prepend() {
+    this.removeDuplicateTargetChildren()
     this.targetElement?.prepend(this.templateContent)
   },
 

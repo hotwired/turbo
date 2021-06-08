@@ -6,7 +6,11 @@
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
   </head>
   <body>
-    <turbo-frame id="frame">
+    <turbo-frame id="frame" data-loaded-from="/src/tests/fixtures/frames/frame.html">
+      <h2>Frame: Loaded</h2>
+    </turbo-frame>
+
+    <turbo-frame id="nested-child">
       <h2>Frame: Loaded</h2>
     </turbo-frame>
   </body>

@@ -1,6 +1,6 @@
 import { Adapter } from "./native/adapter"
 import { Session } from "./session"
-import { Locatable } from "./location"
+import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
 import { VisitOptions } from "./drive/visit"

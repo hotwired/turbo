@@ -1,9 +1,8 @@
-import { Location } from "../location"
 import { Position } from "../types"
 import { nextMicrotask, uuid } from "../../util"
 
 export interface HistoryDelegate {
-  historyPoppedToLocationWithRestorationIdentifier(location: Location, restorationIdentifier: string): void
+  historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string): void
 }
 
 type HistoryMethod = (this: typeof history, state: any, title: string, url?: string | null | undefined) => void
@@ -14,7 +13,7 @@ export type RestorationDataMap = { [restorationIdentifier: string]: RestorationD
 
 export class History {
   readonly delegate: HistoryDelegate
-  location!: Location
+  location!: URL
   restorationIdentifier = uuid()
   restorationData: RestorationDataMap = {}
   started = false
@@ -30,7 +29,7 @@ export class History {
       addEventListener("popstate", this.onPopState, false)
       addEventListener("load", this.onPageLoad, false)
       this.started = true
-      this.replace(Location.currentLocation)
+      this.replace(new URL(window.location.href))
     }
   }
 
@@ -42,17 +41,17 @@ export class History {
     }
   }
 
-  push(location: Location, restorationIdentifier?: string) {
+  push(location: URL, restorationIdentifier?: string) {
     this.update(history.pushState, location, restorationIdentifier)
   }
 
-  replace(location: Location, restorationIdentifier?: string) {
+  replace(location: URL, restorationIdentifier?: string) {
     this.update(history.replaceState, location, restorationIdentifier)
   }
 
-  update(method: HistoryMethod, location: Location, restorationIdentifier = uuid()) {
+  update(method: HistoryMethod, location: URL, restorationIdentifier = uuid()) {
     const state = { turbo: { restorationIdentifier } }
-    method.call(history, state, "", location.absoluteURL)
+    method.call(history, state, "", location.href)
     this.location = location
     this.restorationIdentifier = restorationIdentifier
   }
@@ -91,11 +90,10 @@ export class History {
     if (this.shouldHandlePopState()) {
       const { turbo } = event.state || {}
       if (turbo) {
-        const location = Location.currentLocation
-        this.location = location
+        this.location = new URL(window.location.href)
         const { restorationIdentifier } = turbo
         this.restorationIdentifier = restorationIdentifier
-        this.delegate.historyPoppedToLocationWithRestorationIdentifier(location, restorationIdentifier)
+        this.delegate.historyPoppedToLocationWithRestorationIdentifier(this.location, restorationIdentifier)
       }
     }
   }

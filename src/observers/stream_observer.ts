@@ -1,4 +1,3 @@
-import { FetchRequestOptions } from "../http/fetch_request"
 import { FetchResponse } from "../http/fetch_response"
 import { StreamMessage } from "../core/streams/stream_message"
 import { StreamSource } from "../core/types"
@@ -19,7 +18,6 @@ export class StreamObserver {
   start() {
     if (!this.started) {
       this.started = true
-      addEventListener("turbo:before-fetch-request", this.prepareFetchRequest, true)
       addEventListener("turbo:before-fetch-response", this.inspectFetchResponse, false)
     }
   }
@@ -27,7 +25,6 @@ export class StreamObserver {
   stop() {
     if (this.started) {
       this.started = false
-      removeEventListener("turbo:before-fetch-request", this.prepareFetchRequest, true)
       removeEventListener("turbo:before-fetch-response", this.inspectFetchResponse, false)
     }
   }
@@ -49,14 +46,6 @@ export class StreamObserver {
   streamSourceIsConnected(source: StreamSource) {
     return this.sources.has(source)
   }
-
-  prepareFetchRequest = <EventListener>((event: CustomEvent) => {
-    const fetchOptions: FetchRequestOptions = event.detail?.fetchOptions
-    if (fetchOptions) {
-      const { headers } = fetchOptions
-      headers.Accept = [ "text/vnd.turbo-stream.html", headers.Accept ].join(", ")
-    }
-  })
 
   inspectFetchResponse = <EventListener>((event: CustomEvent) => {
     const response = fetchResponseFromEvent(event)
@@ -93,5 +82,5 @@ function fetchResponseFromEvent(event: CustomEvent) {
 
 function fetchResponseIsStream(response: FetchResponse) {
   const contentType = response.contentType ?? ""
-  return /^text\/vnd\.turbo-stream\.html\b/.test(contentType)
+  return contentType.startsWith(StreamMessage.contentType)
 }

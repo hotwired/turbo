@@ -1,7 +1,8 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
-import { Location } from "../location"
+import { expandURL } from "../url"
 import { dispatch } from "../../util"
+import { StreamMessage } from "../streams/stream_message"
 
 export interface FormSubmissionDelegate {
   formSubmissionStarted(formSubmission: FormSubmission): void
@@ -24,6 +25,20 @@ export enum FormSubmissionState {
   stopped,
 }
 
+enum FormEnctype {
+  urlEncoded = "application/x-www-form-urlencoded",
+  multipart  = "multipart/form-data",
+  plain      = "text/plain"
+}
+
+function formEnctypeFromString(encoding: string): FormEnctype {
+  switch(encoding.toLowerCase()) {
+    case FormEnctype.multipart: return FormEnctype.multipart
+    case FormEnctype.plain:     return FormEnctype.plain
+    default:                    return FormEnctype.urlEncoded
+  }
+}
+
 export class FormSubmission {
   readonly delegate: FormSubmissionDelegate
   readonly formElement: HTMLFormElement
@@ -37,9 +52,9 @@ export class FormSubmission {
   constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement, mustRedirect = false) {
     this.delegate = delegate
     this.formElement = formElement
-    this.formData = buildFormData(formElement, submitter)
     this.submitter = submitter
-    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.formData)
+    this.formData = buildFormData(formElement, submitter)
+    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
     this.mustRedirect = mustRedirect
   }
 
@@ -52,8 +67,30 @@ export class FormSubmission {
     return this.submitter?.getAttribute("formaction") || this.formElement.action
   }
 
-  get location() {
-    return Location.wrap(this.action)
+  get location(): URL {
+    return expandURL(this.action)
+  }
+
+  get body() {
+    if (this.enctype == FormEnctype.urlEncoded || this.method == FetchMethod.get) {
+      return new URLSearchParams(this.stringFormData)
+    } else {
+      return this.formData
+    }
+  }
+
+  get enctype(): FormEnctype {
+    return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
+  }
+
+  get isIdempotent() {
+    return this.fetchRequest.isIdempotent
+  }
+
+  get stringFormData() {
+    return [ ...this.formData ].reduce((entries, [ name, value ]) => {
+      return entries.concat(typeof value == "string" ? [[ name, value ]] : [])
+    }, [] as [string, string][])
   }
 
   // The submission process
@@ -77,15 +114,14 @@ export class FormSubmission {
 
   // Fetch request delegate
 
-  additionalHeadersForRequest(request: FetchRequest) {
-    const headers: FetchRequestHeaders = {}
-    if (this.method != FetchMethod.get) {
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
+    if (!request.isIdempotent) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
         headers["X-CSRF-Token"] = token
       }
+      headers["Accept"] = [ StreamMessage.contentType, headers["Accept"] ].join(", ")
     }
-    return headers
   }
 
   requestStarted(request: FetchRequest) {
@@ -137,8 +173,8 @@ function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): F
   const name = submitter?.getAttribute("name")
   const value = submitter?.getAttribute("value")
 
-  if (name && formData.get(name) != value) {
-    formData.append(name, value || "")
+  if (name && value != null && formData.get(name) != value) {
+    formData.append(name, value)
   }
 
   return formData
