@@ -6,6 +6,7 @@ export class AutofocusTests extends TurboDriveTestCase {
   }
 
   async "test autofocus first autofocus element on load"() {
+    await this.nextBeat
     this.assert.ok(await this.hasSelector("#first-autofocus-element:focus"), "focuses the first [autofocus] element on the page")
     this.assert.notOk(await this.hasSelector("#second-autofocus-element:focus"), "focuses the first [autofocus] element on the page")
   }

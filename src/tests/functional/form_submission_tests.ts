@@ -34,7 +34,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "2")
+    this.assert.equal(await this.getSearchParam("query"), "2")
   }
 
   async "test standard form submission with empty created response"() {
@@ -86,20 +86,20 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
 
     await this.clickSelector("#no-action form.single input[type=submit]")
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
 
     await this.goToLocation("/src/tests/fixtures/form.html?query=2")
     await this.clickSelector("#no-action form.single input[type=submit]")
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await await this.getSearchParam("query"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
   }
 
   async "test no-action form submission with multiple parameters"() {
@@ -115,6 +115,22 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
+  }
+
+  async "test no-action form submission submitter parameters"() {
+    await this.clickSelector("#no-action form.button-param [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+    this.assert.deepEqual(await this.getAllSearchParams("button"), [])
+
+    await this.clickSelector("#no-action form.button-param [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+    this.assert.deepEqual(await this.getAllSearchParams("button"), [])
   }
 
   async "test invalid form submission with unprocessable entity status"() {
@@ -153,6 +169,10 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test frame form submission with redirect response"() {
+    const path = await this.attributeForSelector("#frame form.redirect input[name=path]", "value") || ""
+    const url = new URL(path, "http://localhost:9000")
+    url.searchParams.set("enctype", "application/x-www-form-urlencoded;charset=UTF-8")
+
     const button = await this.querySelector("#frame form.redirect input[type=submit]")
     await button.click()
     await this.nextBeat
@@ -160,7 +180,26 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     const message = await this.querySelector("#frame div.message")
     this.assert.notOk(await this.hasSelector("#frame form.redirect"))
     this.assert.equal(await message.getVisibleText(), "Frame redirected")
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html", "does not redirect _top")
+    this.assert.notOk(await this.search, "does not redirect _top")
+    this.assert.equal(await this.attributeForSelector("#frame", "src"), url.href, "redirects the target frame")
+  }
+
+  async "test frame form submission toggles the ancestor frame's [busy] attribute"() {
+    await this.clickSelector("#frame form.redirect input[type=submit]")
+
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
+  }
+
+  async "test frame form submission toggles the target frame's [busy] attribute"() {
+    await this.clickSelector('#targets-frame form.frame [type="submit"]')
+
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+
+    const title = await this.querySelector("#frame h2")
+    this.assert.equal(await title.getVisibleText(), "Frame: Loaded")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
   }
 
   async "test frame form submission with empty created response"() {
@@ -181,6 +220,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const htmlAfter = await this.outerHTMLForSelector("#frame")
     this.assert.equal(htmlAfter, htmlBefore)
+  }
+
+  async "test frame form submission within a frame submits the Turbo-Frame header"() {
+    await this.clickSelector("#frame form.redirect input[type=submit]")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
   }
 
   async "test invalid frame form submission with unprocessable entity status"() {
@@ -222,7 +269,23 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
   }
 
-  async "test form submission with Turbo disabled on the form"() {
+  async "test frame form submission with [data-turbo=false] on the form"() {
+    await this.clickSelector('#frame form[data-turbo="false"] input[type=submit]')
+    await this.nextBody
+    await this.querySelector("#element-id")
+
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test frame form submission with [data-turbo=false] on the submitter"() {
+    await this.clickSelector('#frame form:not([data-turbo]) input[data-turbo="false"]')
+    await this.nextBody
+    await this.querySelector("#element-id")
+
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test form submission with [data-turbo=false] on the form"() {
     await this.clickSelector('#turbo-false form[data-turbo="false"] input[type=submit]')
     await this.nextBody
     await this.querySelector("#element-id")
@@ -254,10 +317,27 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test form submission targets disabled frame"() {
     this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
-    await this.clickSelector('#targets-frame [type="submit"]')
+    await this.clickSelector('#targets-frame form.one [type="submit"]')
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+  }
+
+  async "test form submission targeting a frame submits the Turbo-Frame header"() {
+    await this.clickSelector('#targets-frame [type="submit"]')
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+  }
+
+  async "test link method form submission"() {
+    await this.clickSelector("#link-method-redirect")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.visitAction, "advance")
+    this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
   }
 
   get formSubmitted(): Promise<boolean> {

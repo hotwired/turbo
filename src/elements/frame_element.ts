@@ -7,6 +7,7 @@ export interface FrameElementDelegate {
   disconnect(): void
   loadingStyleChanged(): void
   sourceURLChanged(): void
+  disabledChanged(): void
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
   loadResponse(response: FetchResponse): void
   isLoading: boolean
@@ -19,7 +20,7 @@ export class FrameElement extends HTMLElement {
   readonly delegate: FrameElementDelegate
 
   static get observedAttributes() {
-    return ["loading", "src"]
+    return ["disabled", "loading", "src"]
   }
 
   constructor() {
@@ -40,6 +41,8 @@ export class FrameElement extends HTMLElement {
       this.delegate.loadingStyleChanged()
     } else if (name == "src") {
       this.delegate.sourceURLChanged()
+    } else {
+      this.delegate.disabledChanged()
     }
   }
 
