@@ -1,9 +1,7 @@
 export type Locatable = URL | string
 
 export function expandURL(locatable: Locatable) {
-  const anchor = document.createElement("a")
-  anchor.href = locatable.toString()
-  return new URL(anchor.href)
+  return new URL(locatable.toString(), document.baseURI)
 }
 
 export function getAnchor(url: URL) {
@@ -37,6 +35,10 @@ export function toCacheKey(url: URL) {
   } else {
     return url.href.slice(0, -anchorLength)
   }
+}
+
+export function urlsAreEqual(left: string, right: string) {
+  return expandURL(left).href == expandURL(right).href
 }
 
 function getPathComponents(url: URL) {

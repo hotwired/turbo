@@ -1,4 +1,4 @@
-import { Renderer, replaceElementWithElement } from "../renderer"
+import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
@@ -16,7 +16,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   finishRendering() {
     super.finishRendering()
-    if (this.isPreview) {
+    if (!this.isPreview) {
       this.focusFirstAutofocusableElement()
     }
   }
@@ -83,13 +83,13 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   activateNewBodyScriptElements() {
     for (const inertScriptElement of this.newBodyScriptElements) {
       const activatedScriptElement = this.createScriptElement(inertScriptElement)
-      replaceElementWithElement(inertScriptElement, activatedScriptElement)
+      inertScriptElement.replaceWith(activatedScriptElement)
     }
   }
 
   assignNewBody() {
     if (document.body && this.newElement instanceof HTMLBodyElement) {
-      replaceElementWithElement(document.body, this.newElement)
+      document.body.replaceWith(this.newElement)
     } else {
       document.documentElement.appendChild(this.newElement)
     }

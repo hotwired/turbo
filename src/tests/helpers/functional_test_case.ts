@@ -55,6 +55,18 @@ export class FunctionalTestCase extends InternTestCase {
     return this.evaluate(element => element.innerHTML, element)
   }
 
+  async attributeForSelector(selector: string, attributeName: string) {
+    const element = await this.querySelector(selector)
+
+    return await element.getAttribute(attributeName)
+  }
+
+  async propertyForSelector(selector: string, attributeName: string) {
+    const element = await this.querySelector(selector)
+
+    return await element.getProperty(attributeName)
+  }
+
   get scrollPosition(): Promise<{ x: number, y: number }> {
     return this.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
   }
@@ -63,11 +75,15 @@ export class FunctionalTestCase extends InternTestCase {
     const { y: pageY } = await this.scrollPosition
     const { y: elementY } = await this.remote.findByCssSelector(selector).getPosition()
     const offset = pageY - elementY
-    return offset > -1 && offset < 1
+    return Math.abs(offset) < 2
   }
 
   get nextBeat(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 100))
+    return this.sleep(100)
+  }
+
+  async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
   async evaluate<T>(callback: (...args: any[]) => T, ...args: any[]): Promise<T> {
@@ -92,6 +108,10 @@ export class FunctionalTestCase extends InternTestCase {
 
   get pathname(): Promise<string> {
     return this.evaluate(() => location.pathname)
+  }
+
+  get search(): Promise<string> {
+    return this.evaluate(() => location.search)
   }
 
   get searchParams(): Promise<URLSearchParams> {

@@ -21,6 +21,10 @@ export class Snapshot<E extends Element = Element> {
     }
   }
 
+  get isConnected() {
+    return this.element.isConnected
+  }
+
   get firstAutofocusableElement() {
     return this.element.querySelector("[autofocus]")
   }
@@ -33,7 +37,19 @@ export class Snapshot<E extends Element = Element> {
     return this.element.querySelector(`#${id}[data-turbo-permanent]`)
   }
 
-  getPermanentElementsPresentInSnapshot(snapshot: Snapshot) {
-    return this.permanentElements.filter(({ id }) => snapshot.getPermanentElementById(id))
+  getPermanentElementMapForSnapshot(snapshot: Snapshot) {
+    const permanentElementMap: PermanentElementMap = {}
+
+    for (const currentPermanentElement of this.permanentElements) {
+      const { id } = currentPermanentElement
+      const newPermanentElement = snapshot.getPermanentElementById(id)
+      if (newPermanentElement) {
+        permanentElementMap[id] = [ currentPermanentElement, newPermanentElement ]
+      }
+    }
+
+    return permanentElementMap
   }
 }
+
+export type PermanentElementMap = Record<string, [Element, Element]>

@@ -2,10 +2,12 @@ import { StreamElement } from "../../elements/stream_element"
 
 export const StreamActions: { [action: string]: (this: StreamElement) => void } = {
   append() {
+    this.removeDuplicateTargetChildren()
     this.targetElements?.forEach(e => e.append(this.templateContent))
   },
 
   prepend() {
+    this.removeDuplicateTargetChildren()
     this.targetElements?.forEach(e => e.prepend(this.templateContent))
   },
 

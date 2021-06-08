@@ -10,11 +10,13 @@
     <turbo-frame id="frame">
       <form action="/__turbo/messages" method="post" class="stream">
         <input type="hidden" name="content" value="Hello!">
-        <input type="submit">
+        <input id="frames-form-first-autofocus-element" autofocus type="submit">
       </form>
       <div id="messages">
         <div class="message">Frame redirected</div>
       </div>
+
+      <button type="button" id="frames-form-second-autofocus-element" autofocus>Second autofocus</button>
     </turbo-frame>
   </body>
 </html>

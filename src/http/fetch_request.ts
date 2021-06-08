@@ -42,6 +42,7 @@ export interface FetchRequestOptions {
 export class FetchRequest {
   readonly delegate: FetchRequestDelegate
   readonly method: FetchMethod
+  readonly headers: FetchRequestHeaders
   readonly url: URL
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
@@ -49,6 +50,7 @@ export class FetchRequest {
   constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams) {
     this.delegate = delegate
     this.method = method
+    this.headers = this.defaultHeaders
     if (this.isIdempotent) {
       this.url = mergeFormDataEntries(location, [ ...body.entries() ])
     } else {
@@ -75,6 +77,7 @@ export class FetchRequest {
 
   async perform(): Promise<FetchResponse> {
     const { fetchOptions } = this
+    this.delegate.prepareHeadersForRequest?.(this.headers, this)
     dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
     try {
       this.delegate.requestStarted(this)
@@ -112,26 +115,18 @@ export class FetchRequest {
     }
   }
 
-  get isIdempotent() {
-    return this.method == FetchMethod.get
-  }
-
-  get headers() {
-    const headers = { ...this.defaultHeaders }
-    if (typeof this.delegate.prepareHeadersForRequest == "function") {
-      this.delegate.prepareHeadersForRequest(headers, this)
-    }
-    return headers
-  }
-
-  get abortSignal() {
-    return this.abortController.signal
-  }
-
   get defaultHeaders() {
     return {
       "Accept": "text/html, application/xhtml+xml"
     }
+  }
+
+  get isIdempotent() {
+    return this.method == FetchMethod.get
+  }
+
+  get abortSignal() {
+    return this.abortController.signal
   }
 }
 
