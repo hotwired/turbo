@@ -1,5 +1,6 @@
 import { Adapter } from "./native/adapter"
 import { BrowserAdapter } from "./native/browser_adapter"
+import { CacheObserver } from "../observers/cache_observer"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
@@ -25,6 +26,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   adapter: Adapter = new BrowserAdapter(this)
 
   readonly pageObserver = new PageObserver(this)
+  readonly cacheObserver = new CacheObserver()
   readonly linkClickObserver = new LinkClickObserver(this)
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
@@ -39,6 +41,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   start() {
     if (!this.started) {
       this.pageObserver.start()
+      this.cacheObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
       this.scrollObserver.start()
@@ -57,6 +60,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   stop() {
     if (this.started) {
       this.pageObserver.stop()
+      this.cacheObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
       this.scrollObserver.stop()
