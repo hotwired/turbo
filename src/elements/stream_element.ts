@@ -93,22 +93,18 @@ export class StreamElement extends HTMLElement {
   }
 
   private get targetElementById() {
-    if (this.target) {
-      const element = this.ownerDocument?.getElementById(this.target)
+    const element = this.ownerDocument?.getElementById(this.target!)
 
-      if (element !== null) {
-        return [ element ]
-      }
+    if (element !== null) {
+      return [ element ]
     }
   }
 
   private get targetElementsByClass() {
-    if (this.target) {
-      const elements = this.ownerDocument?.querySelectorAll(this.target)
+    const elements = this.ownerDocument?.querySelectorAll(this.target!)
 
-      if (elements.length !== 0) {
-        return Array.prototype.slice.call(elements)
-      }
+    if (elements.length !== 0) {
+      return Array.prototype.slice.call(elements)
     }
   }
 }
