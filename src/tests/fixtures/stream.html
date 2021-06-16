@@ -14,10 +14,18 @@
       <input type="hidden" name="type" value="stream">
       <button type="submit">Create</button>
     </form>
+
+    <form id="replace" method="post" action="/__turbo/messages">
+      <input type="hidden" name="content" value="Hello CSS!">
+      <input type="hidden" name="target" value=".messages">
+      <input type="hidden" name="type" value="stream">
+      <button type="submit">Replace</button>
+    </form>
+
     <div id="messages">
       <div class="message">First</div>
     </div>
-    <div class="messages">
+    <div class="messages" id="message_2">
       <div class="message">Second</div>
     </div>
     <div class="messages">
