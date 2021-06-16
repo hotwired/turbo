@@ -28,7 +28,9 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
   },
 
   update() {
-    this.targetElements.forEach(e => e.innerHTML = "")
-    this.targetElements.forEach(e => e.append(this.templateContent))
+    this.targetElements.forEach(e => { 
+      e.innerHTML = ""
+      e.append(this.templateContent)
+    })
   }
 }
