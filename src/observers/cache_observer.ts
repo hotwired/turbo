@@ -15,12 +15,10 @@ export class CacheObserver {
     }
   }
 
-  get staleElements(): HTMLElement[] {
-    return [ ...document.querySelectorAll('[data-turbo-cache="false"]') ] as any
-  }
-
   removeStaleElements() {
-    for (const element of this.staleElements) {
+    const staleElements = [ ...document.querySelectorAll('[data-turbo-cache="false"]') ]
+
+    for (const element of staleElements) {
        element.remove()
      }
   }
