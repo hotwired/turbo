@@ -30,19 +30,14 @@ export class StreamElement extends HTMLElement {
   }
  
   removeDuplicateTargetChildren() {
-    this.duplicateChildren.forEach(({targetChild}) => {
-      targetChild.remove();
-    })
+    this.duplicateChildren.forEach(c => c.remove())
   }
-
+  
   get duplicateChildren() {
     const existingChildren = this.targetElements.flatMap(e => [...e.children]).filter(c => !!c.id)
-    const newChildren      = [...this.templateContent?.children].filter(c => !!c.id)
-
-    return newChildren.map(templateChild => {
-      let targetChild = existingChildren.filter(c => c.id === templateChild.id)[0]
-      return { targetChild , templateChild }
-    }).filter(({targetChild}) => targetChild);
+    const newChildrenIds   = [...this.templateContent?.children].filter(c => !!c.id).map(c => c.id)
+  
+    return existingChildren.filter(c => newChildrenIds.includes(c.id))
   }
   
   get performAction() {
