@@ -54,20 +54,18 @@ export class StreamElement extends HTMLElement {
   }
 
   get targetElements(): Array<Element> {
-    // Try to get the target node by first looking it up by ID.
-    // If that fails, try using the target as a CSS Selector.
-    if (!this.target) {
-      this.raise("target attribute is missing")
-    }
-    const idTarget = this.ownerDocument?.getElementById(this.target)
-    if (idTarget !== null) {
-      return [idTarget]
-    }
-    const cssTarget = this.ownerDocument?.querySelectorAll(this.target)
-    if (cssTarget.length !== 0) {
-      return Array.prototype.slice.call(cssTarget)
-    }
-    this.raise(`target "${this.target}" not found`)
+    if (!this.target) this.raise("target attribute is missing")
+    return this.targetElementById() || this.targetElementsByClass() || []
+  }
+
+  get targetElementById(): Array<Element> | null {
+    const targetElement = this.ownerDocument?.getElementById(this.target)
+    if (targetElement !== null) return [ targetElement ]
+  }
+
+  get targetElementsByClass(): Array<Element> | null {
+    const targetElements = this.ownerDocument?.querySelectorAll(this.target)
+    if (targetElements.length !== 0) return Array.prototype.slice.call(targetElements)
   }
 
   get templateContent() {
