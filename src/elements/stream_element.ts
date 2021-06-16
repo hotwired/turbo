@@ -53,19 +53,12 @@ export class StreamElement extends HTMLElement {
     this.raise("action attribute is missing")
   }
 
-  get targetElements(): Array<Element> {
-    if (!this.target) this.raise("target attribute is missing")
-    return this.targetElementById() || this.targetElementsByClass() || []
-  }
-
-  get targetElementById(): Array<Element> | null {
-    const targetElement = this.ownerDocument?.getElementById(this.target)
-    if (targetElement !== null) return [ targetElement ]
-  }
-
-  get targetElementsByClass(): Array<Element> | null {
-    const targetElements = this.ownerDocument?.querySelectorAll(this.target)
-    if (targetElements.length !== 0) return Array.prototype.slice.call(targetElements)
+  get targetElements() {
+    if (!this.target) { 
+      this.raise("target attribute is missing")
+    } else {
+      return this.targetElementById || this.targetElementsByClass || []
+    }
   }
 
   get templateContent() {
@@ -97,5 +90,25 @@ export class StreamElement extends HTMLElement {
 
   private get beforeRenderEvent() {
     return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
+  }
+
+  private get targetElementById() {
+    if (this.target) {
+      const element = this.ownerDocument?.getElementById(this.target)
+
+      if (element !== null) {
+        return [ element ]
+      }
+    }
+  }
+
+  private get targetElementsByClass() {
+    if (this.target) {
+      const elements = this.ownerDocument?.querySelectorAll(this.target)
+
+      if (elements.length !== 0) {
+        return Array.prototype.slice.call(elements)
+      }
+    }
   }
 }
