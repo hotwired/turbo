@@ -52,10 +52,12 @@ export class StreamElement extends HTMLElement {
   }
 
   get targetElements() {
-    if (!this.target) { 
-      this.raise("target attribute is missing")
+    if (this.target) { 
+      return this.targetElementsById
+    } else if (this.targets) {
+      return this.targetElementsByQuery
     } else {
-      return this.targetElementById || this.targetElementsByClass || []
+      this.raise("target or targets attribute is missing")
     }
   }
 
@@ -78,6 +80,10 @@ export class StreamElement extends HTMLElement {
     return this.getAttribute("target")
   }
 
+  get targets() {
+    return this.getAttribute("targets")
+  }
+
   private raise(message: string): never {
     throw new Error(`${this.description}: ${message}`)
   }
@@ -90,19 +96,23 @@ export class StreamElement extends HTMLElement {
     return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
   }
 
-  private get targetElementById() {
+  private get targetElementsById() {
     const element = this.ownerDocument?.getElementById(this.target!)
 
     if (element !== null) {
       return [ element ]
+    } else {
+      return []
     }
   }
 
-  private get targetElementsByClass() {
-    const elements = this.ownerDocument?.querySelectorAll(this.target!)
+  private get targetElementsByQuery() {
+    const elements = this.ownerDocument?.querySelectorAll(this.targets!)
 
     if (elements.length !== 0) {
       return Array.prototype.slice.call(elements)
+    } else {
+      return []
     }
   }
 }
