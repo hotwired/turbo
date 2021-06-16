@@ -38,6 +38,11 @@ export class StreamElement extends HTMLElement {
   get duplicateChildren() {
     return [...this.templateContent?.children].filter(templateChild => !!templateChild.id).map(templateChild => {
       let targetChild = [...this.targetElements.flatMap(e => e.children)].filter(c => c.id === templateChild.id)[0]
+    const existingChildren = this.targetElements.flatMap(e => [...e.children]).filter(c => !!c.id)
+    const newChildren      = [...this.templateContent?.children].filter(c => !!c.id)
+
+    return newChildren.map(templateChild => {
+      let targetChild = existingChildren.filter(c => c.id === templateChild.id)[0]
       return { targetChild , templateChild }
     }).filter(({targetChild}) => targetChild);
   }
