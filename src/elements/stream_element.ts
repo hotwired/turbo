@@ -37,7 +37,7 @@ export class StreamElement extends HTMLElement {
 
   get duplicateChildren() {
     return [...this.templateContent?.children].filter(templateChild => !!templateChild.id).map(templateChild => {
-      let targetChild = [...this.targetElement!.children].filter(c => c.id === templateChild.id)[0]
+      let targetChild = [...this.targetElements.flatMap(e => e.children)].filter(c => c.id === templateChild.id)[0]
       return { targetChild , templateChild }
     }).filter(({targetChild}) => targetChild);
   }
