@@ -2,7 +2,7 @@ import { StreamElement } from "../../elements/stream_element"
 
 export const StreamActions: { [action: string]: (this: StreamElement) => void } = {
   after() {
-    this.targetElement?.parentElement?.insertBefore(this.templateContent,this.targetElement.nextSibling)
+    this.targetElements?.forEach(e => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
   },
 
   append() {
@@ -11,7 +11,7 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
   },
 
   before() {
-    this.targetElement?.parentElement?.insertBefore(this.templateContent,this.targetElement)
+    this.targetElements?.forEach(e => e.parentElement?.insertBefore(this.templateContent, e))
   },
 
   prepend() {
