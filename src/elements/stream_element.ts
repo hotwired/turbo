@@ -28,7 +28,20 @@ export class StreamElement extends HTMLElement {
   disconnect() {
     try { this.remove() } catch {}
   }
+ 
+  removeDuplicateTargetChildren() {
+    this.duplicateChildren.forEach(({targetChild}) => {
+      targetChild.remove();
+    })
+  }
 
+  get duplicateChildren() {
+    return [...this.templateContent?.children].filter(templateChild => !!templateChild.id).map(templateChild => {
+      let targetChild = [...this.targetElement!.children].filter(c => c.id === templateChild.id)[0]
+      return { targetChild , templateChild }
+    }).filter(({targetChild}) => targetChild);
+  }
+  
   get performAction() {
     if (this.action) {
       const actionFunction = StreamActions[this.action]

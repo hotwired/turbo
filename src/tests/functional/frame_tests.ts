@@ -116,6 +116,23 @@ export class FrameTests extends TurboDriveTestCase {
 
     await this.nextEventNamed("turbo:before-fetch-request")
   }
+
+  async "test redirecting in a form is still navigatable after redirect"() {
+    await this.nextBeat
+    await this.clickSelector("#navigate-form-redirect")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirect"))
+
+    await this.nextBeat
+    await this.clickSelector("#submit-form")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirected-header"))
+
+    await this.nextBeat
+    await this.clickSelector("#navigate-form-redirect")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirect-header"))
+  }
 }
 
 FrameTests.registerSuite()
