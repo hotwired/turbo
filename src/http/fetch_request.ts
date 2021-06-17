@@ -77,17 +77,12 @@ export class FetchRequest {
   }
 
   async perform(): Promise<FetchResponse> {
-    try {
-      const requestInterceptor = RequestInterceptor.get()
-      if (requestInterceptor) {
-        await requestInterceptor(this)
-      }
-    } catch (error) {
-      console.error(error)
-    }
-    const { fetchOptions } = this
+    await this.allowRequestToBeIntercepted()
     this.delegate.prepareHeadersForRequest?.(this.headers, this)
+
+    const { fetchOptions } = this
     dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
+
     try {
       this.delegate.requestStarted(this)
       const response = await fetch(this.url.href, fetchOptions)
@@ -140,6 +135,14 @@ export class FetchRequest {
 
   get abortSignal() {
     return this.abortController.signal
+  }
+
+  private async allowRequestToBeIntercepted() {
+    try {
+      RequestInterceptor.get()?.(this)
+    } catch (error) {
+      console.error(error)
+    }
   }
 }
 
