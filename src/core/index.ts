@@ -4,6 +4,7 @@ import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
 import { VisitOptions } from "./drive/visit"
+import { RequestInterceptor } from "./request_interceptor"
 
 const session = new Session
 const { navigator } = session
@@ -39,4 +40,12 @@ export function clearCache() {
 
 export function setProgressBarDelay(delay: number) {
   session.setProgressBarDelay(delay)
+}
+
+export function setRequestInterceptor(interceptor: (request: any) => void) {
+  RequestInterceptor.register(interceptor)
+}
+
+export function clearRequestInterceptor() {
+  RequestInterceptor.reset()
 }
