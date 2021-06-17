@@ -2,35 +2,35 @@ import { StreamElement } from "../../elements/stream_element"
 
 export const StreamActions: { [action: string]: (this: StreamElement) => void } = {
   after() {
-    this.targetElement?.parentElement?.insertBefore(this.templateContent,this.targetElement.nextSibling)
+    this.targetElements.forEach(e => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
   },
 
   append() {
     this.removeDuplicateTargetChildren()
-    this.targetElement?.append(this.templateContent)
+    this.targetElements.forEach(e => e.append(this.templateContent))
   },
 
   before() {
-    this.targetElement?.parentElement?.insertBefore(this.templateContent,this.targetElement)
+    this.targetElements.forEach(e => e.parentElement?.insertBefore(this.templateContent, e))
   },
 
   prepend() {
     this.removeDuplicateTargetChildren()
-    this.targetElement?.prepend(this.templateContent)
+    this.targetElements.forEach(e => e.prepend(this.templateContent))
   },
 
   remove() {
-    this.targetElement?.remove()
+    this.targetElements.forEach(e => e.remove())
   },
 
   replace() {
-    this.targetElement?.replaceWith(this.templateContent)
+    this.targetElements.forEach(e => e.replaceWith(this.templateContent))
   },
 
   update() {
-    if (this.targetElement) {
-      this.targetElement.innerHTML = ""
-      this.targetElement.append(this.templateContent)
-    }
+    this.targetElements.forEach(e => { 
+      e.innerHTML = ""
+      e.append(this.templateContent)
+    })
   }
 }

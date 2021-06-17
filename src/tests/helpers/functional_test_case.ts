@@ -32,6 +32,10 @@ export class FunctionalTestCase extends InternTestCase {
     return this.remote.findByCssSelector(selector)
   }
 
+  async querySelectorAll(selector: string) {
+    return this.remote.findAllByCssSelector(selector)
+  }
+
   async clickSelector(selector: string): Promise<void> {
     return this.remote.findByCssSelector(selector).click()
   }
