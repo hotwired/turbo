@@ -71,6 +71,14 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert(await this.changedBody)
   }
 
+  async "test turbo:before-fetch-request event.detail"() {
+    await this.clickSelector("#same-origin-link")
+    const { url, fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.equal(fetchOptions.method, "GET")
+    this.assert.include(url, "/src/tests/fixtures/one.html")
+  }
+
   async visitLocation(location: string) {
     this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }

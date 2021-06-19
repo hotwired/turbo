@@ -132,7 +132,7 @@ export class FetchRequest {
 
   private async allowRequestToBeIntercepted(fetchOptions: RequestInit) {
     const requestInterception = new Promise(resolve => this.resolveRequestPromise = resolve)
-    const event = dispatch("turbo:before-fetch-request", { cancelable: true, detail: { fetchOptions, resume: this.resolveRequestPromise } })
+    const event = dispatch("turbo:before-fetch-request", { cancelable: true, detail: { fetchOptions, url: this.url.href, resume: this.resolveRequestPromise } })
     if (event.defaultPrevented) await requestInterception
   }
 }
