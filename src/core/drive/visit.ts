@@ -39,7 +39,7 @@ export type VisitOptions = {
   historyChanged: boolean,
   referrer?: URL,
   snapshotHTML?: string,
-  response?: VisitResponse
+  response?: VisitResponse,
   restorationIdentifier?: string,
 }
 
