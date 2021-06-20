@@ -241,14 +241,10 @@ export class Visit implements FetchRequestDelegate {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        if (this.isSamePage) {
-          this.adapter.visitRendered(this)
-        } else {
-          await this.view.renderPage(snapshot)
-          this.adapter.visitRendered(this)
-          if (!isPreview) {
-            this.complete()
-          }
+        await this.view.renderPage(snapshot, isPreview)
+        this.adapter.visitRendered(this)
+        if (!isPreview) {
+          this.complete()
         }
       })
     }
@@ -330,9 +326,8 @@ export class Visit implements FetchRequestDelegate {
   }
 
   scrollToAnchor() {
-    const anchor = getAnchor(this.location)
-    if (anchor != null) {
-      this.view.scrollToAnchor(anchor)
+    if (getAnchor(this.location)) {
+      this.view.scrollToAnchor(getAnchor(this.location) as string)
       return true
     }
   }
