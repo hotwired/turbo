@@ -2,7 +2,7 @@ import { FetchResponse } from "./fetch_response"
 import { dispatch } from "../util"
 
 export interface FetchRequestDelegate {
-  additionalHeadersForRequest?(request: FetchRequest): { [header: string]: string }
+  prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
   requestStarted(request: FetchRequest): void
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): void
@@ -29,7 +29,7 @@ export function fetchMethodFromString(method: string) {
   }
 }
 
-export type FetchRequestBody = FormData
+export type FetchRequestBody = FormData | URLSearchParams
 
 export type FetchRequestHeaders = { [header: string]: string }
 
@@ -46,11 +46,15 @@ export class FetchRequest {
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
 
-  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body?: FetchRequestBody) {
+  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams) {
     this.delegate = delegate
     this.method = method
-    this.body = body
-    this.url = mergeFormDataEntries(location, this.entries)
+    if (this.isIdempotent) {
+      this.url = mergeFormDataEntries(location, [ ...body.entries() ])
+    } else {
+      this.body = body
+      this.url = location
+    }
   }
 
   get location(): URL {
@@ -103,7 +107,7 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.isIdempotent ? undefined : this.body,
+      body: this.body,
       signal: this.abortSignal
     }
   }
@@ -113,28 +117,36 @@ export class FetchRequest {
   }
 
   get headers() {
-    return {
-      "Accept": "text/html, application/xhtml+xml",
-      ...this.additionalHeaders
+    const headers = { ...this.defaultHeaders }
+    if (typeof this.delegate.prepareHeadersForRequest == "function") {
+      this.delegate.prepareHeadersForRequest(headers, this)
     }
-  }
-
-  get additionalHeaders() {
-    if (typeof this.delegate.additionalHeadersForRequest == "function") {
-      return this.delegate.additionalHeadersForRequest(this)
-    } else {
-      return {}
-    }
+    return headers
   }
 
   get abortSignal() {
     return this.abortController.signal
   }
+
+  get defaultHeaders() {
+    return {
+      "Accept": "text/html, application/xhtml+xml"
+    }
+  }
 }
 
 function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
+  const currentSearchParams = new URLSearchParams(url.search)
+
   for (const [ name, value ] of entries) {
-    url.searchParams.append(name, value.toString())
+    if (value instanceof File) continue
+
+    if (currentSearchParams.has(name)) {
+      currentSearchParams.delete(name)
+      url.searchParams.set(name, value)
+    } else {
+      url.searchParams.append(name, value)
+    }
   }
 
   return url

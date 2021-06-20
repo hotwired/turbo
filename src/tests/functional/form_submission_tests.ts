@@ -3,17 +3,38 @@ import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 export class FormSubmissionTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/form.html")
+    await this.remote.execute(() => {
+      addEventListener("turbo:submit-start", () => document.documentElement.setAttribute("data-form-submitted", ""), { once: true })
+    })
   }
 
   async "test standard form submission with redirect response"() {
-    this.listenForFormSubmissions()
-    const button = await this.querySelector("#standard form.redirect input[type=submit]")
-    await button.click()
+    await this.clickSelector("#standard form.redirect input[type=submit]")
     await this.nextBody
 
-    this.assert.ok(this.turboFormSubmitted)
+    this.assert.ok(await this.formSubmitted)
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.visitAction, "advance")
+    this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
+  }
+
+  async "test standard GET form submission"() {
+    await this.clickSelector("#standard form.greeting input[type=submit]")
+    await this.nextBody
+
+    this.assert.notOk(await this.formSubmitted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
+    this.assert.equal(await this.getSearchParam("greeting"), "Hello from a form")
+  }
+
+  async "test standard GET form submission appending keys"() {
+    await this.goToLocation("/src/tests/fixtures/form.html?query=1")
+    await this.clickSelector("#standard form.conflicting-values input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "2")
   }
 
   async "test standard form submission with empty created response"() {
@@ -34,6 +55,66 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const htmlAfter = await this.outerHTMLForSelector("body")
     this.assert.equal(htmlAfter, htmlBefore)
+  }
+
+  async "test standard POST form submission with multipart/form-data enctype"() {
+    await this.clickSelector("#standard form[method=post][enctype] input[type=submit]")
+    await this.nextBeat
+
+    const enctype = await this.getSearchParam("enctype")
+    this.assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
+  }
+
+  async "test standard GET form submission ignores enctype"() {
+    await this.clickSelector("#standard form[method=get][enctype] input[type=submit]")
+    await this.nextBeat
+
+    const enctype = await this.getSearchParam("enctype")
+    this.assert.notOk(enctype, "GET form submissions ignore enctype")
+  }
+
+  async "test standard POST form submission without an enctype"() {
+    await this.clickSelector("#standard form[method=post].no-enctype input[type=submit]")
+    await this.nextBeat
+
+    const enctype = await this.getSearchParam("enctype")
+    this.assert.ok(enctype?.startsWith("application/x-www-form-urlencoded"), "submits a application/x-www-form-urlencoded request")
+  }
+
+  async "test no-action form submission with single parameter"() {
+    await this.clickSelector("#no-action form.single input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "1")
+
+    await this.clickSelector("#no-action form.single input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "1")
+
+    await this.goToLocation("/src/tests/fixtures/form.html?query=2")
+    await this.clickSelector("#no-action form.single input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await await this.getSearchParam("query"), "1")
+  }
+
+  async "test no-action form submission with multiple parameters"() {
+    await this.goToLocation("/src/tests/fixtures/form.html?query=2")
+    await this.clickSelector("#no-action form.multiple input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
+
+    await this.clickSelector("#no-action form.multiple input[type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
   }
 
   async "test invalid form submission with unprocessable entity status"() {
@@ -61,6 +142,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/two.html")
     this.assert.equal(await this.visitAction, "advance")
+  }
+
+  async "test submitter POST form submission with multipart/form-data formenctype"() {
+    await this.clickSelector("#submitter form[method=post]:not([enctype]) input[formenctype]")
+    await this.nextBeat
+
+    const enctype = await this.getSearchParam("enctype")
+    this.assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
   }
 
   async "test frame form submission with redirect response"() {
@@ -134,48 +223,45 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test form submission with Turbo disabled on the form"() {
-    this.listenForFormSubmissions()
-    await this.clickSelector('#disabled form[data-turbo="false"] input[type=submit]')
+    await this.clickSelector('#turbo-false form[data-turbo="false"] input[type=submit]')
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
-  async "test form submission with Turbo disabled on the submitter"() {
-    this.listenForFormSubmissions()
-    await this.clickSelector('#disabled form:not([data-turbo]) input[data-turbo="false"]')
+  async "test form submission with [data-turbo=false] on the submitter"() {
+    await this.clickSelector('#turbo-false form:not([data-turbo]) input[data-turbo="false"]')
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
   async "test form submission skipped within method=dialog"() {
-    this.listenForFormSubmissions()
     await this.clickSelector('#dialog-method [type="submit"]')
     await this.nextBeat
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
   async "test form submission skipped with submitter formmethod=dialog"() {
-    this.listenForFormSubmissions()
     await this.clickSelector('#dialog-formmethod [formmethod="dialog"]')
     await this.nextBeat
 
-    this.assert.notOk(await this.turboFormSubmitted)
+    this.assert.notOk(await this.formSubmitted)
   }
 
-  listenForFormSubmissions() {
-    this.remote.execute(() => addEventListener("turbo:submit-start", function eventListener(event) {
-      removeEventListener("turbo:submit-start", eventListener, false)
-      document.head.insertAdjacentHTML("beforeend", `<meta name="turbo-form-submitted">`)
-    }, false))
+  async "test form submission targets disabled frame"() {
+    this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
+    await this.clickSelector('#targets-frame [type="submit"]')
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
   }
 
-  get turboFormSubmitted(): Promise<boolean> {
-    return this.hasSelector("meta[name=turbo-form-submitted]")
+  get formSubmitted(): Promise<boolean> {
+    return this.hasSelector("html[data-form-submitted]")
   }
 }
 

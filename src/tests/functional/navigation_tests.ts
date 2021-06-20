@@ -117,40 +117,11 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "restore")
   }
 
-  async "test skip link with hash-only path scrolls to the anchor"() {
-    await this.clickSelector('a[href="#main"]')
-    await this.nextBeat
-
-    const scrolledToMain = await this.isScrolledToSelector("#main")
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
-    this.assert.equal(await this.hash, "#main")
-    this.assert.notOk(await this.changedBody, "does not reload page")
-    this.assert.ok(scrolledToMain, "scrolled to #main")
-  }
-
-  async "test skip link with hash-only path moves focus and changes tab order"() {
-    await this.clickSelector('a[href="#main"]')
-    await this.pressTab()
-
-    const activeElement = await this.getActiveElement()
-    const equalsSkippedLink = await activeElement.equals(await this.querySelector("#ignored-link"))
-    const equalsFirstLinkWithinMain = await activeElement.equals(await this.querySelector("#main a:first-of-type"))
-
-    this.assert.notOk(equalsSkippedLink, "skips interactive elements before #main")
-    this.assert.ok(equalsFirstLinkWithinMain, "skips to first interactive element after #main")
-  }
-
-  async "test navigating back to anchored URL"() {
-    await this.clickSelector('a[href="#main"]')
-    await this.clickSelector("#same-origin-unannotated-link")
-    await this.nextBody
-    await this.goBack()
+  async "test link targeting a disabled turbo-frame navigates the page"() {
+    await this.clickSelector("#link-to-disabled-frame")
     await this.nextBody
 
-    const scrolledToMain = await this.isScrolledToSelector("#main")
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
-    this.assert.equal(await this.hash, "#main")
-    this.assert.ok(scrolledToMain, "scrolled to #main")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/hello.html")
   }
 }
 

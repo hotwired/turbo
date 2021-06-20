@@ -124,6 +124,26 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert(await permanentElement.equals(await this.permanentElement))
   }
 
+  async "test preserves permanent elements within turbo-frames"() {
+    let permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+
+    await this.clickSelector("#permanent-in-frame-element-link")
+    await this.nextBeat
+    permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+  }
+
+  async "test preserves permanent elements within turbo-frames rendered without layouts"() {
+    let permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+
+    await this.clickSelector("#permanent-in-frame-without-layout-element-link")
+    await this.nextBeat
+    permanentElement = await this.querySelector("#permanent-in-frame")
+    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+  }
+
   async "test before-cache event"() {
     this.beforeCache(body => body.innerHTML = "Modified")
     this.clickSelector("#same-origin-link")

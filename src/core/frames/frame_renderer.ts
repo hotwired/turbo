@@ -9,7 +9,9 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   async render() {
     await nextAnimationFrame()
-    this.loadFrameElement()
+    this.preservingPermanentElements(() => {
+      this.loadFrameElement()
+    })
     this.scrollFrameIntoView()
     await nextAnimationFrame()
     this.focusFirstAutofocusableElement()
@@ -39,24 +41,6 @@ export class FrameRenderer extends Renderer<FrameElement> {
       }
     }
     return false
-  }
-
-  focusFirstAutofocusableElement() {
-    const element = this.firstAutofocusableElement
-    if (element) {
-      element.focus()
-      return true
-    }
-    return false
-  }
-
-  get id() {
-    return this.currentElement.id
-  }
-
-  get firstAutofocusableElement() {
-    const element = this.currentElement.querySelector("[autofocus]")
-    return element instanceof HTMLElement ? element : null
   }
 }
 

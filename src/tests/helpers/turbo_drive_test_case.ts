@@ -54,7 +54,7 @@ export class TurboDriveTestCase extends FunctionalTestCase {
   get visitAction(): Promise<string> {
     return this.evaluate(() => {
       try {
-        return window.Turbo.navigator.currentVisit.action
+        return window.Turbo.navigator.currentVisit!.action
       } catch (error) {
         return "load"
       }
