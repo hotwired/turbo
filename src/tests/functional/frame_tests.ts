@@ -117,6 +117,24 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextEventNamed("turbo:before-fetch-request")
   }
 
+  async "test evaluates frame script elements on each render"() {
+    this.assert.equal(await this.frameScriptEvaluationCount, undefined)
+
+    this.clickSelector("#body-script-link")
+    await this.nextBeat
+    this.assert.equal(await this.frameScriptEvaluationCount, 1)
+
+    this.clickSelector("#body-script-link")
+    await this.nextBeat
+    this.assert.equal(await this.frameScriptEvaluationCount, 2)
+  }
+
+  async "test does not evaluate data-turbo-eval=false scripts"() {
+    this.clickSelector("#eval-false-script-link")
+    await this.nextBeat
+    this.assert.equal(await this.frameScriptEvaluationCount, undefined)
+  }
+
   async "test redirecting in a form is still navigatable after redirect"() {
     await this.nextBeat
     await this.clickSelector("#navigate-form-redirect")
@@ -133,6 +151,17 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextBeat
     this.assert.ok(await this.querySelector("#form-redirect-header"))
   }
+
+  get frameScriptEvaluationCount(): Promise<number | undefined> {
+    return this.evaluate(() => window.frameScriptEvaluationCount)
+  }
 }
+
+declare global {
+  interface Window {
+    frameScriptEvaluationCount?: number
+  }
+}
+
 
 FrameTests.registerSuite()
