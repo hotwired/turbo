@@ -6,7 +6,7 @@
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
   </head>
   <body>
-    <turbo-frame id="body-script" data-loaded-from="/src/tests/fixtures/frames/body_script.html">
+    <turbo-frame id="body-script" data-loaded-from="/src/tests/fixtures/frames/body_script_2.html">
       <script>
         if ("frameScriptEvaluationCount" in window) {
           window.frameScriptEvaluationCount++
@@ -14,7 +14,7 @@
           window.frameScriptEvaluationCount = 1
         }
       </script>
-      <a id="body-script-link" href="/src/tests/fixtures/frames/body_script_2.html">Load #body-script</a>
+      <a id="body-script-link" href="/src/tests/fixtures/frames/body_script.html">Load #body-script</a>
     </turbo-frame>
   </body>
 </html>
