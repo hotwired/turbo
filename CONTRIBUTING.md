@@ -49,7 +49,7 @@ yarn test
 ```
 
 ### Test files
-Please add your tests in the test files closely related to the feature itself. For example when touching the `src/core/drive/page_renderer.ts` youre test will probably endup in the `src/tests/functional/rendering_tests.ts`.
+Please add your tests in the test files closely related to the feature itself. For example when touching the `src/core/drive/page_renderer.ts` your test will probably endup in the `src/tests/functional/rendering_tests.ts`.
 
 The html files needed for the tests are stored in: `src/tests/fixtures/`
 
