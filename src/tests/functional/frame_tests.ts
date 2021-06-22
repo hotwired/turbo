@@ -135,6 +135,23 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await this.frameScriptEvaluationCount, undefined)
   }
 
+  async "test redirecting in a form is still navigatable after redirect"() {
+    await this.nextBeat
+    await this.clickSelector("#navigate-form-redirect")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirect"))
+
+    await this.nextBeat
+    await this.clickSelector("#submit-form")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirected-header"))
+
+    await this.nextBeat
+    await this.clickSelector("#navigate-form-redirect")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirect-header"))
+  }
+
   get frameScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.frameScriptEvaluationCount)
   }
