@@ -18,6 +18,22 @@ export class StreamTests extends FunctionalTestCase {
     element = await this.querySelector(selector)
     this.assert.equal(await element.getVisibleText(), "Hello world!")
   }
+
+  async "test receiving a stream message with css selector target"() {
+    let element
+    const selector = ".messages div.message:last-child"
+
+    element = await this.querySelectorAll(selector)
+    this.assert.equal(await element[0].getVisibleText(), "Second")
+    this.assert.equal(await element[1].getVisibleText(), "Third")
+
+    await this.clickSelector("#replace [type=submit]")
+    await this.nextBeat
+
+    element = await this.querySelectorAll(selector)
+    this.assert.equal(await element[0].getVisibleText(), "Hello CSS!")
+    this.assert.equal(await element[1].getVisibleText(), "Hello CSS!")
+  }
 }
 
 StreamTests.registerSuite()

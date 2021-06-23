@@ -83,6 +83,10 @@ export class FormSubmission {
     return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
   }
 
+  get isIdempotent() {
+    return this.fetchRequest.isIdempotent
+  }
+
   get stringFormData() {
     return [ ...this.formData ].reduce((entries, [ name, value ]) => {
       return entries.concat(typeof value == "string" ? [[ name, value ]] : [])
@@ -169,8 +173,8 @@ function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): F
   const name = submitter?.getAttribute("name")
   const value = submitter?.getAttribute("value")
 
-  if (name && formData.get(name) != value) {
-    formData.append(name, value || "")
+  if (name && value != null && formData.get(name) != value) {
+    formData.append(name, value)
   }
 
   return formData

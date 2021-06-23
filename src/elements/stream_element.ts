@@ -28,7 +28,18 @@ export class StreamElement extends HTMLElement {
   disconnect() {
     try { this.remove() } catch {}
   }
-
+ 
+  removeDuplicateTargetChildren() {
+    this.duplicateChildren.forEach(c => c.remove())
+  }
+  
+  get duplicateChildren() {
+    const existingChildren = this.targetElements.flatMap(e => [...e.children]).filter(c => !!c.id)
+    const newChildrenIds   = [...this.templateContent?.children].filter(c => !!c.id).map(c => c.id)
+  
+    return existingChildren.filter(c => newChildrenIds.includes(c.id))
+  }
+  
   get performAction() {
     if (this.action) {
       const actionFunction = StreamActions[this.action]
@@ -40,15 +51,18 @@ export class StreamElement extends HTMLElement {
     this.raise("action attribute is missing")
   }
 
-  get targetElement() {
-    if (this.target) {
-      return this.ownerDocument?.getElementById(this.target)
+  get targetElements() {
+    if (this.target) { 
+      return this.targetElementsById
+    } else if (this.targets) {
+      return this.targetElementsByQuery
+    } else {
+      this.raise("target or targets attribute is missing")
     }
-    this.raise("target attribute is missing")
   }
 
   get templateContent() {
-    return this.templateElement.content
+    return this.templateElement.content.cloneNode(true)
   }
 
   get templateElement() {
@@ -66,6 +80,10 @@ export class StreamElement extends HTMLElement {
     return this.getAttribute("target")
   }
 
+  get targets() {
+    return this.getAttribute("targets")
+  }
+
   private raise(message: string): never {
     throw new Error(`${this.description}: ${message}`)
   }
@@ -76,5 +94,25 @@ export class StreamElement extends HTMLElement {
 
   private get beforeRenderEvent() {
     return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
+  }
+
+  private get targetElementsById() {
+    const element = this.ownerDocument?.getElementById(this.target!)
+
+    if (element !== null) {
+      return [ element ]
+    } else {
+      return []
+    }
+  }
+
+  private get targetElementsByQuery() {
+    const elements = this.ownerDocument?.querySelectorAll(this.targets!)
+
+    if (elements.length !== 0) {
+      return Array.prototype.slice.call(elements)
+    } else {
+      return []
+    }
   }
 }

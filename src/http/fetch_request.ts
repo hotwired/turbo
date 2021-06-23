@@ -1,5 +1,6 @@
 import { FetchResponse } from "./fetch_response"
 import { dispatch } from "../util"
+import { RequestInterceptor } from "../core/request_interceptor"
 
 export interface FetchRequestDelegate {
   prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
@@ -42,6 +43,7 @@ export interface FetchRequestOptions {
 export class FetchRequest {
   readonly delegate: FetchRequestDelegate
   readonly method: FetchMethod
+  readonly headers: FetchRequestHeaders
   readonly url: URL
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
@@ -49,6 +51,7 @@ export class FetchRequest {
   constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams) {
     this.delegate = delegate
     this.method = method
+    this.headers = this.defaultHeaders
     if (this.isIdempotent) {
       this.url = mergeFormDataEntries(location, [ ...body.entries() ])
     } else {
@@ -74,8 +77,12 @@ export class FetchRequest {
   }
 
   async perform(): Promise<FetchResponse> {
+    await this.allowRequestToBeIntercepted()
+    this.delegate.prepareHeadersForRequest?.(this.headers, this)
+
     const { fetchOptions } = this
     dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
+
     try {
       this.delegate.requestStarted(this)
       const response = await fetch(this.url.href, fetchOptions)
@@ -112,25 +119,29 @@ export class FetchRequest {
     }
   }
 
-  get isIdempotent() {
-    return this.method == FetchMethod.get
+  get defaultHeaders() {
+    return {
+      "Accept": "text/html, application/xhtml+xml"
+    }
   }
 
-  get headers() {
-    const headers = { ...this.defaultHeaders }
-    if (typeof this.delegate.prepareHeadersForRequest == "function") {
-      this.delegate.prepareHeadersForRequest(headers, this)
-    }
-    return headers
+  addHeader(key: string, value: string) {
+    this.headers[key] = value
+  }
+
+  get isIdempotent() {
+    return this.method == FetchMethod.get
   }
 
   get abortSignal() {
     return this.abortController.signal
   }
 
-  get defaultHeaders() {
-    return {
-      "Accept": "text/html, application/xhtml+xml"
+  private async allowRequestToBeIntercepted() {
+    try {
+      RequestInterceptor.get()?.(this)
+    } catch (error) {
+      console.error(error)
     }
   }
 }

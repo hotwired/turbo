@@ -6,11 +6,12 @@ import { parseHTMLDocument } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
-import { expandURL, Locatable } from "../url"
+import { expandURL, urlsAreEqual, Locatable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
+import { elementIsNavigable } from "../session"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -18,9 +19,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
-  loadingURL?: string
+  currentURL?: string | null
   formSubmission?: FormSubmission
   private resolveVisitPromise = () => {}
+  private connected = false
+  private hasBeenLoaded = false
+  private settingSourceURL = false
 
   constructor(element: FrameElement) {
     this.element = element
@@ -31,21 +35,34 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   connect() {
-    if (this.loadingStyle == FrameLoadingStyle.lazy) {
-      this.appearanceObserver.start()
+    if (!this.connected) {
+      this.connected = true
+      if (this.loadingStyle == FrameLoadingStyle.lazy) {
+        this.appearanceObserver.start()
+      }
+      this.linkInterceptor.start()
+      this.formInterceptor.start()
+      this.sourceURLChanged()
     }
-    this.linkInterceptor.start()
-    this.formInterceptor.start()
   }
 
   disconnect() {
-    this.appearanceObserver.stop()
-    this.linkInterceptor.stop()
-    this.formInterceptor.stop()
+    if (this.connected) {
+      this.connected = false
+      this.appearanceObserver.stop()
+      this.linkInterceptor.stop()
+      this.formInterceptor.stop()
+    }
+  }
+
+  disabledChanged() {
+    if (this.loadingStyle == FrameLoadingStyle.eager) {
+      this.loadSourceURL()
+    }
   }
 
   sourceURLChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
+    if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
       this.loadSourceURL()
     }
   }
@@ -60,21 +77,30 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (this.isActive && this.sourceURL && this.sourceURL != this.loadingURL) {
-      try {
-        this.loadingURL = this.sourceURL
-        this.element.loaded = this.visit(this.sourceURL)
-        this.appearanceObserver.stop()
-        await this.element.loaded
-      } finally {
-        delete this.loadingURL
+    if (!this.settingSourceURL && this.enabled && this.isActive && this.sourceURL != this.currentURL) {
+      const previousURL = this.currentURL
+      this.currentURL = this.sourceURL
+      if (this.sourceURL) {
+        try {
+          this.element.loaded = this.visit(this.sourceURL)
+          this.appearanceObserver.stop()
+          await this.element.loaded
+          this.hasBeenLoaded = true
+        } catch (error) {
+          this.currentURL = previousURL
+          throw error
+        }
       }
     }
   }
 
-  async loadResponse(response: FetchResponse) {
+  async loadResponse(fetchResponse: FetchResponse) {
+    if (fetchResponse.redirected) {
+      this.sourceURL = fetchResponse.response.url
+    }
+
     try {
-      const html = await response.responseHTML
+      const html = await fetchResponse.responseHTML
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
@@ -105,8 +131,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Form interceptor delegate
 
-  shouldInterceptFormSubmission(element: HTMLFormElement) {
-    return this.shouldInterceptNavigation(element)
+  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: Element) {
+    return this.shouldInterceptNavigation(element, submitter)
   }
 
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
@@ -118,6 +144,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     if (this.formSubmission.fetchRequest.isIdempotent) {
       this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
     } else {
+      const { fetchRequest } = this.formSubmission
+      this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
       this.formSubmission.start()
     }
   }
@@ -158,7 +186,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    const frame = this.findFrameElement(formSubmission.formElement)
+    frame.setAttribute("busy", "")
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
@@ -171,11 +200,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-
+    console.error(error)
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    const frame = this.findFrameElement(formSubmission.formElement)
+    frame.removeAttribute("busy")
   }
 
   // View delegate
@@ -220,20 +250,25 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     let element
     const id = CSS.escape(this.id)
 
-    if (element = activateElement(container.querySelector(`turbo-frame#${id}`))) {
-      return element
+    try {
+      if (element = activateElement(container.querySelector(`turbo-frame#${id}`), this.currentURL)) {
+        return element
+      }
+
+      if (element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`), this.currentURL)) {
+        await element.loaded
+        return await this.extractForeignFrameElement(element)
+      }
+
+      console.error(`Response has no matching <turbo-frame id="${id}"> element`)
+    } catch (error) {
+      console.error(error)
     }
 
-    if (element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`))) {
-      await element.loaded
-      return await this.extractForeignFrameElement(element)
-    }
-
-    console.error(`Response has no matching <turbo-frame id="${id}"> element`)
     return new FrameElement()
   }
 
-  private shouldInterceptNavigation(element: Element) {
+  private shouldInterceptNavigation(element: Element, submitter?: Element) {
     const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
 
     if (!this.enabled || id == "_top") {
@@ -245,6 +280,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       if (frameElement) {
         return !frameElement.disabled
       }
+    }
+
+    if (!elementIsNavigable(element)) {
+      return false
+    }
+
+    if (submitter && !elementIsNavigable(submitter)) {
+      return false
     }
 
     return true
@@ -261,7 +304,16 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get sourceURL() {
-    return this.element.src
+    if (this.element.src) {
+      return this.element.src
+    }
+  }
+
+  set sourceURL(sourceURL: string | undefined) {
+    this.settingSourceURL = true
+    this.element.src = sourceURL ?? null
+    this.currentURL = this.element.src
+    this.settingSourceURL = false
   }
 
   get loadingStyle() {
@@ -269,11 +321,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get isLoading() {
-    return this.formSubmission !== undefined || this.loadingURL !== undefined
+    return this.formSubmission !== undefined || this.resolveVisitPromise() !== undefined
   }
 
   get isActive() {
-    return this.element.isActive
+    return this.element.isActive && this.connected
   }
 }
 
@@ -286,12 +338,19 @@ function getFrameElementById(id: string | null) {
   }
 }
 
-function activateElement(element: Node | null) {
-  if (element && element.ownerDocument !== document) {
-    element = document.importNode(element, true)
-  }
+function activateElement(element: Element | null, currentURL?: string | null) {
+  if (element) {
+    const src = element.getAttribute("src")
+    if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {
+      throw new Error(`Matching <turbo-frame id="${element.id}"> element has a source URL which references itself`)
+    }
+    if (element.ownerDocument !== document) {
+      element = document.importNode(element, true)
+    }
 
-  if (element instanceof FrameElement) {
-    return element
+    if (element instanceof FrameElement) {
+      element.connectedCallback()
+      return element
+    }
   }
 }

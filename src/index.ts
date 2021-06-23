@@ -3,5 +3,6 @@ import "./elements"
 import "./script_warning"
 
 export * from "./core"
-import { start } from "./core"
-start()
+import * as Turbo from "./core"
+window.Turbo = Turbo
+Turbo.start()

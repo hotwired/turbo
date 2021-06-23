@@ -14,7 +14,10 @@
     <section id="main" style="height: 200vh;">
       <h1>Navigation</h1>
       <p><a id="same-origin-unannotated-link" href="/src/tests/fixtures/one.html">Same-origin unannotated link</a></p>
+      <p><form id="same-origin-unannotated-form" method="get" action="/src/tests/fixtures/one.html"><button>Same-origin unannotated form</button></form></p>
       <p><a id="same-origin-replace-link" href="/src/tests/fixtures/one.html" data-turbo-action="replace">Same-origin data-turbo-action=replace link</a></p>
+      <p><form id="same-origin-replace-form" method="get" action="/src/tests/fixtures/one.html" data-turbo-action="replace"><button>Same-origin data-turbo-action=replace form</button></form></p>
+      <p><form id="same-origin-replace-form-submitter" method="get" action="/src/tests/fixtures/one.html"><button data-turbo-action="replace">Same-origin data-turbo-action=replace form</button></form></p>
       <p><a id="same-origin-false-link" href="/src/tests/fixtures/one.html" data-turbo="false">Same-origin data-turbo=false link</a></p>
       <p data-turbo="false"><a id="same-origin-unannotated-link-inside-false-container" href="/src/tests/fixtures/one.html">Same-origin unannotated link inside data-turbo=false container</a></p>
       <p data-turbo="false"><a id="same-origin-true-link-inside-false-container" href="/src/tests/fixtures/one.html" data-turbo="true">Same-origin data-turbo=true link inside data-turbo=false container</a></p>
@@ -26,6 +29,7 @@
       <svg width="600" height="100" viewbox="-300 -50 600 100"><text><a id="same-origin-link-inside-svg-element" href="/src/tests/fixtures/one.html">Same-origin link inside SVG element</a></text></svg>
       <svg width="600" height="100" viewbox="-300 -50 600 100"><text><a id="cross-origin-link-inside-svg-element" href="about:blank">Cross-origin link inside SVG element</a></text></svg>
       <p><a id="link-to-disabled-frame" href="/src/tests/fixtures/frames/hello.html" data-turbo-frame="hello">Disabled turbo-frame</a></p>
+      <p><a id="autofocus-link" href="/src/tests/fixtures/autofocus.html">autofocus.html link</a></p>
     </section>
 
     <turbo-frame id="hello" disabled></turbo-frame>
