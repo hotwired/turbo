@@ -76,6 +76,7 @@ export class VisitTests extends TurboDriveTestCase {
     await this.drainEventLog()
     await this.nextBeat
 
+    this.cancelNextVisit()
     await this.goBack()
     this.assert(await this.changedBody)
   }
