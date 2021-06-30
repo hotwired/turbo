@@ -109,9 +109,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location: URL) {
+  historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string) {
     if (this.enabled) {
-      this.navigator.proposeVisit(location, { action: "restore", historyChanged: true })
+      this.navigator.startVisit(location, restorationIdentifier, { action: "restore", historyChanged: true })
     } else {
       this.adapter.pageInvalidated()
     }
