@@ -82,11 +82,6 @@ export class Visit implements FetchRequestDelegate {
   constructor(delegate: VisitDelegate, location: URL, restorationIdentifier: string | undefined, options: Partial<VisitOptions> = {}) {
     this.delegate = delegate
     this.location = location
-    this.isSamePage = (
-      getAnchor(location) != null &&
-      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation)
-    )
-
     this.restorationIdentifier = restorationIdentifier || uuid()
 
     const { action, historyChanged, referrer, snapshotHTML, response } = { ...defaultOptions, ...options }
@@ -95,6 +90,11 @@ export class Visit implements FetchRequestDelegate {
     this.referrer = referrer
     this.snapshotHTML = snapshotHTML
     this.response = response
+
+    this.isSamePage = (
+      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+      (getAnchor(location) != null || this.action == "restore")
+    )
   }
 
   get adapter() {
