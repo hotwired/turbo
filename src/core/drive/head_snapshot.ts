@@ -7,7 +7,9 @@ type ElementDetails = { type?: ElementType, tracked: boolean, elements: Element[
 type ElementType = "script" | "stylesheet"
 
 export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
-  readonly detailsByOuterHTML = this.children.reduce((result, element) => {
+  readonly detailsByOuterHTML = this.children
+    .filter((element) => !elementIsNoscript(element))
+    .reduce((result, element) => {
     const { outerHTML } = element
     const details: ElementDetails
       = outerHTML in result
@@ -91,6 +93,11 @@ function elementIsTracked(element: Element) {
 function elementIsScript(element: Element) {
   const tagName = element.tagName.toLowerCase()
   return tagName == "script"
+}
+
+function elementIsNoscript(element: Element) {
+  const tagName = element.tagName.toLowerCase()
+  return tagName == "noscript"
 }
 
 function elementIsStylesheet(element: Element) {
