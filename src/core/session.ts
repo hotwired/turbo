@@ -133,8 +133,24 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    this.visit(location.href, { action })
+    this.convertLinkWithMethodClickToFormSubmission(link) || this.visit(location.href, { action })
   }
+
+  convertLinkWithMethodClickToFormSubmission(link: Element) {
+    const linkMethod = link.getAttribute("data-turbo-method") || link.getAttribute("data-method")
+
+    if (linkMethod) {
+      const form = document.createElement("form")
+      form.method = linkMethod
+      form.action = link.getAttribute("href") || "undefined"
+
+      link.parentNode?.insertBefore(form, link)
+      return dispatch("submit", { target: form })
+    } else {
+      return false
+    }
+  }
+
 
   // Navigator delegate
 

@@ -47,7 +47,6 @@
         <input type="hidden" name="query" value="2">
         <input type="submit">
       </form>
-      <a href="/__turbo/redirect?path=/src/tests/fixtures/form.html&greeting=Hello%20from%20a%20redirect" data-turbo-method="post" id="link-method-redirect">Redirect link</a>
     </div>
     <hr>
     <div id="no-action">
@@ -162,6 +161,7 @@
         <input type="hidden" name="content" value="Hello!">
         <input type="submit">
       </form>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-inside-frame">Stream link inside frame</a>
       <form action="/__turbo/messages/1" method="put" class="stream put">
         <input type="hidden" name="type" value="stream">
         <input type="hidden" name="content" value="Hello!">
@@ -170,5 +170,6 @@
       <div id="messages">
       </div>
     </turbo-frame>
+    <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-outside-frame">Stream link outside frame</a>
   </body>
 </html>

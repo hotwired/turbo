@@ -331,13 +331,22 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
   }
 
-  async "test link method form submission"() {
-    await this.clickSelector("#link-method-redirect")
-    await this.nextBody
+  async "test link method form submission inside frame"() {
+    await this.clickSelector("#link-method-inside-frame")
 
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.equal(await this.visitAction, "advance")
-    this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test link method form submission outside frame"() {
+    await this.clickSelector("#link-method-outside-frame")
+
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
   }
 
   get formSubmitted(): Promise<boolean> {

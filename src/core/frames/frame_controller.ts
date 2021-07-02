@@ -122,6 +122,10 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, url: string) {
+    const linkMethod = element.getAttribute("data-turbo-method") || element.getAttribute("data-method")
+    if (linkMethod)
+      return false
+
     return this.shouldInterceptNavigation(element)
   }
 

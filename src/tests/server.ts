@@ -44,7 +44,8 @@ router.post("/reject", (request, response) => {
 })
 
 router.post("/messages", (request, response) => {
-  const { content, status, type, target, targets } = request.body
+  const params = { ...request.body, ...request.query }
+  const { content, status, type, target, targets } = params
   if (typeof content == "string") {
     receiveMessage(content, target)
     if (type == "stream" && acceptsStreams(request)) {
