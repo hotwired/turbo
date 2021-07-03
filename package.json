@@ -25,7 +25,7 @@
   "bugs": {
     "url": "https://github.com/hotwired/turbo/issues"
   },
-  "homepage": "https://turbo.hotwire.dev",
+  "homepage": "https://turbo.hotwired.dev",
   "publishConfig": {
     "access": "public"
   },
