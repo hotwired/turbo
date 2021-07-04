@@ -137,7 +137,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   }
 
   convertLinkWithMethodClickToFormSubmission(link: Element) {
-    const linkMethod = link.getAttribute("data-turbo-method") || link.getAttribute("data-method")
+    const linkMethod = link.getAttribute("data-turbo-method")
 
     if (linkMethod) {
       const form = document.createElement("form")
