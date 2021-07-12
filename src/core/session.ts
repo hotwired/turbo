@@ -193,8 +193,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.notifyApplicationBeforeCachingSnapshot()
   }
 
-  viewWillRenderSnapshot({ element }: PageSnapshot, isPreview: boolean) {
-    this.notifyApplicationBeforeRender(element)
+  allowsImmediateRender({ element }: PageSnapshot, resume: (value: any) => void) {
+    const event = this.notifyApplicationBeforeRender(element, resume)
+    return !event.defaultPrevented
   }
 
   viewRenderedSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
@@ -234,8 +235,8 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement) {
-    return dispatch("turbo:before-render", { detail: { newBody }})
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, resume: (value: any) => void) {
+    return dispatch("turbo:before-render", { detail: { newBody, resume }, cancelable: true })
   }
 
   notifyApplicationAfterRender() {

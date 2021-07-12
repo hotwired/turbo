@@ -362,7 +362,7 @@ export class Visit implements FetchRequestDelegate {
     await new Promise<void>(resolve => {
       this.frame = requestAnimationFrame(() => resolve())
     })
-    callback()
+    await callback()
     delete this.frame
     this.performScroll()
   }

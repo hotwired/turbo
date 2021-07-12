@@ -129,4 +129,16 @@ export class FunctionalTestCase extends InternTestCase {
   get hash(): Promise<string> {
     return this.evaluate(() => location.hash)
   }
+
+  async acceptAlert(): Promise<void> {
+    return this.remote.acceptAlert()
+  }
+
+  async dismissAlert(): Promise<void> {
+    return this.remote.dismissAlert()
+  }
+
+  async getAlertText(): Promise<string> {
+    return this.remote.getAlertText()
+  }
 }

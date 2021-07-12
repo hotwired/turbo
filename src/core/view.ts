@@ -3,7 +3,7 @@ import { Snapshot } from "./snapshot"
 import { Position } from "./types"
 
 export interface ViewDelegate<S extends Snapshot> {
-  viewWillRenderSnapshot(snapshot: S, isPreview: boolean): void
+  allowsImmediateRender(snapshot: S, resume: (value: any) => void): boolean
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
   viewInvalidated(): void
 }
@@ -13,6 +13,7 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
   readonly element: E
   renderer?: R
   abstract readonly snapshot: S
+  private resolveRenderPromise = (value: any) => {}
 
   constructor(delegate: D, element: E) {
     this.delegate = delegate
@@ -54,7 +55,11 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
       try {
         this.renderer = renderer
         this.prepareToRenderSnapshot(renderer)
-        this.delegate.viewWillRenderSnapshot(snapshot, isPreview)
+
+        const renderInterception = new Promise(resolve => this.resolveRenderPromise = resolve)
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, this.resolveRenderPromise)
+        if (!immediateRender) await renderInterception
+
         await this.renderSnapshot(renderer)
         this.delegate.viewRenderedSnapshot(snapshot, isPreview)
         this.finishRenderingSnapshot(renderer)
