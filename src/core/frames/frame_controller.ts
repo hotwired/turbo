@@ -214,8 +214,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // View delegate
 
-  viewWillRenderSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
+  allowsImmediateRender(snapshot: Snapshot, resume: (value: any) => void) {
+    return true
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
