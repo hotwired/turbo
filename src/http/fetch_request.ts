@@ -46,6 +46,7 @@ export class FetchRequest {
   readonly url: URL
   readonly body?: FetchRequestBody
   readonly abortController = new AbortController
+  private resolveRequestPromise = (value: any) => {}
 
   constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams) {
     this.delegate = delegate
@@ -78,7 +79,7 @@ export class FetchRequest {
   async perform(): Promise<FetchResponse> {
     const { fetchOptions } = this
     this.delegate.prepareHeadersForRequest?.(this.headers, this)
-    dispatch("turbo:before-fetch-request", { detail: { fetchOptions } })
+    await this.allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
       const response = await fetch(this.url.href, fetchOptions)
@@ -127,6 +128,12 @@ export class FetchRequest {
 
   get abortSignal() {
     return this.abortController.signal
+  }
+
+  private async allowRequestToBeIntercepted(fetchOptions: RequestInit) {
+    const requestInterception = new Promise(resolve => this.resolveRequestPromise = resolve)
+    const event = dispatch("turbo:before-fetch-request", { cancelable: true, detail: { fetchOptions, resume: this.resolveRequestPromise } })
+    if (event.defaultPrevented) await requestInterception
   }
 }
 
