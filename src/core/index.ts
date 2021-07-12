@@ -4,11 +4,12 @@ import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
 import { VisitOptions } from "./drive/visit"
+import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 
 const session = new Session
 const { navigator } = session
-export { navigator, PageSnapshot }
+export { navigator, PageRenderer, PageSnapshot }
 
 export function start() {
   session.start()
