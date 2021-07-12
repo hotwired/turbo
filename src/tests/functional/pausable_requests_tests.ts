@@ -12,6 +12,7 @@ export class PausableRequestsTests extends TurboDriveTestCase {
     this.assert.strictEqual(await this.getAlertText(), 'Continue request?')
     await this.acceptAlert()
 
+    await this.nextBeat
     const h1 = await this.querySelector("h1")
     this.assert.equal(await h1.getVisibleText(), "One")
   }
@@ -27,6 +28,7 @@ export class PausableRequestsTests extends TurboDriveTestCase {
     this.assert.strictEqual(await this.getAlertText(), 'Request aborted')
     await this.acceptAlert()
 
+    await this.nextBeat
     const h1 = await this.querySelector("h1")
     this.assert.equal(await h1.getVisibleText(), "Pausable Requests")
   }
