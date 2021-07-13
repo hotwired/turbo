@@ -2,7 +2,7 @@ import { Action, isAction } from "../types"
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
-import { expandURL, Locatable } from "../url"
+import { expandURL, getAnchor, getRequestURL, Locatable } from "../url"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -117,6 +117,11 @@ export class Navigator {
 
   visitCompleted(visit: Visit) {
     this.delegate.visitCompleted(visit)
+  }
+
+  locationWithActionIsSamePage(location: URL, action: Action): boolean {
+    return getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+      (getAnchor(location) != null || action == "restore")
   }
 
   // Visits

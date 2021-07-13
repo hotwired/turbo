@@ -2,7 +2,7 @@ import { Adapter } from "../native/adapter"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
-import { getAnchor, getRequestURL } from "../url"
+import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
@@ -15,6 +15,7 @@ export interface VisitDelegate {
 
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
+  locationWithActionIsSamePage(location: URL, action: Action): boolean
 }
 
 export enum TimingMetric {
@@ -90,11 +91,7 @@ export class Visit implements FetchRequestDelegate {
     this.referrer = referrer
     this.snapshotHTML = snapshotHTML
     this.response = response
-
-    this.isSamePage = (
-      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
-      (getAnchor(location) != null || this.action == "restore")
-    )
+    this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
   }
 
   get adapter() {

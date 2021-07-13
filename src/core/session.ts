@@ -172,6 +172,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
+  locationWithActionIsSamePage(location: URL, action: Action): boolean {
+    return this.navigator.locationWithActionIsSamePage(location, action)
+  }
+
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {

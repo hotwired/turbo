@@ -1,6 +1,7 @@
 import { Renderer } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Position } from "./types"
+import { getAnchor } from "./url"
 
 export interface ViewDelegate<S extends Snapshot> {
   allowsImmediateRender(snapshot: S, resume: (value: any) => void): boolean
@@ -22,7 +23,7 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
 
   // Scrolling
 
-  scrollToAnchor(anchor: string) {
+  scrollToAnchor(anchor: string | undefined) {
     const element = this.snapshot.getElementForAnchor(anchor)
     if (element) {
       this.scrollToElement(element)
@@ -30,6 +31,10 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
     } else {
       this.scrollToPosition({ x: 0, y: 0 })
     }
+  }
+
+  scrollToAnchorFromLocation(location: URL) {
+    this.scrollToAnchor(getAnchor(location))
   }
 
   scrollToElement(element: Element) {
