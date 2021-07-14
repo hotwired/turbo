@@ -4,7 +4,8 @@ const intern = require("intern").default
 const arg = require("arg");
 
 const args = arg({
-  "--grep": String
+  "--grep": String,
+  "--environment": String
 });
 
 intern.configure(configuration)
@@ -12,6 +13,12 @@ intern.configure({ reporters: [ "runner" ] })
 
 if (args["--grep"]) {
   intern.configure({ grep: args["--grep"] })
+}
+
+if (args["--environment"]) {
+  const envName = args["--environment"]
+  const newEnvs = configuration.environments.filter(env => env.browserName === envName)
+  intern.configure({ environments : newEnvs })
 }
 
 const firstArg = args["_"][0]
