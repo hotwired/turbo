@@ -165,7 +165,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   visitStarted(visit: Visit) {
     extendURLWithDeprecatedProperties(visit.location)
-    this.notifyApplicationAfterVisitingLocation(visit.location)
+    this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
   }
 
   visitCompleted(visit: Visit) {
@@ -243,8 +243,8 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     return dispatch("turbo:before-visit", { detail: { url: location.href }, cancelable: true })
   }
 
-  notifyApplicationAfterVisitingLocation(location: URL) {
-    return dispatch("turbo:visit", { detail: { url: location.href } })
+  notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
+    return dispatch("turbo:visit", { detail: { url: location.href, action } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
