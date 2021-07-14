@@ -98,6 +98,8 @@ export class Navigator {
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
       await this.view.renderPage(snapshot)
+      // Ensures users don't miss any error messages at the top of the form
+      window.scroll(0, 0)
       this.view.clearSnapshotCache()
     }
   }
