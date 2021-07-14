@@ -84,6 +84,19 @@ export class LoadingTests extends TurboDriveTestCase {
     this.assert.equal(await contents.getVisibleText(), "Frames: #frame")
   }
 
+  async "test reloading a frame reloads the content"() {
+    await this.nextBeat
+
+    await this.clickSelector("#loading-eager summary")
+    await this.nextBeat
+
+    const frameContent = "#loading-eager turbo-frame#frame h2"
+    this.assert.ok(await this.hasSelector(frameContent))
+    // @ts-ignore
+    await this.remote.execute(() => document.querySelector("#loading-eager turbo-frame")?.reload())
+    this.assert.ok(await this.hasSelector(frameContent))
+  }
+
   async "test navigating away from a page does not reload its frames"() {
     await this.clickSelector("#one")
     await this.nextBody

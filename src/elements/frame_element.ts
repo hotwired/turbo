@@ -36,6 +36,12 @@ export class FrameElement extends HTMLElement {
     this.delegate.disconnect()
   }
 
+  reload() {
+    const { src } = this;
+    this.src = null;
+    this.src = src;
+  }
+
   attributeChangedCallback(name: string) {
     if (name == "loading") {
       this.delegate.loadingStyleChanged()
