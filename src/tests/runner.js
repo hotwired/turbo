@@ -3,8 +3,16 @@ const configuration = require("../../intern.json")
 const intern = require("intern").default
 const arg = require("arg");
 
+const args = arg({
+  "--grep": String
+});
+
 intern.configure(configuration)
 intern.configure({ reporters: [ "runner" ] })
+
+if (args["--grep"]) {
+  intern.configure({ grep: args["--grep"] })
+}
 
 const firstArg = args["_"][0]
 if (firstArg == "serveOnly") {

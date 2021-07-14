@@ -55,14 +55,14 @@ The html files needed for the tests are stored in: `src/tests/fixtures/`
 
 ### Run single test
 
-To focus on single test you need to add the following line in `src/tests/runner.js`:
+To focus on single test grep for it:
 ```javascript
-intern.configure({ grep: /TEST_CASE_NAME/ })
+yarn test --grep TEST_CASE_NAME
 ```
 
 Where the `TEST_CASE_NAME` is the name of test you want to run. For example:
 ```javascript
-intern.configure({ grep: /triggers before-render and render events/ })
+yarn test --grep 'triggers before-render and render events'
 ```
 
 ### Local webserver
