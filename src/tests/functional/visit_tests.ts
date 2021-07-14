@@ -5,7 +5,7 @@ declare const Turbo: any
 
 export class VisitTests extends TurboDriveTestCase {
   async setup() {
-    this.goToLocation("/src/tests/fixtures/visit.html")
+    await this.goToLocation("/src/tests/fixtures/visit.html")
   }
 
   async "test programmatically visiting a same-origin location"() {
