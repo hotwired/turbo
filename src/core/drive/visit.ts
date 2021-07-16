@@ -15,6 +15,8 @@ export interface VisitDelegate {
 
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
+  locationWithActionIsSamePage(location: URL, action: Action): boolean
+  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL): void
 }
 
 export enum TimingMetric {
@@ -70,6 +72,7 @@ export class Visit implements FetchRequestDelegate {
   frame?: number
   historyChanged = false
   location: URL
+  isSamePage: boolean
   redirectedToLocation?: URL
   request?: FetchRequest
   response?: VisitResponse
@@ -89,6 +92,7 @@ export class Visit implements FetchRequestDelegate {
     this.referrer = referrer
     this.snapshotHTML = snapshotHTML
     this.response = response
+    this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
   }
 
   get adapter() {
@@ -234,10 +238,14 @@ export class Visit implements FetchRequestDelegate {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        await this.view.renderPage(snapshot, isPreview)
-        this.adapter.visitRendered(this)
-        if (!isPreview) {
-          this.complete()
+        if (this.isSamePage) {
+          this.adapter.visitRendered(this)
+        } else {
+          await this.view.renderPage(snapshot, isPreview)
+          this.adapter.visitRendered(this)
+          if (!isPreview) {
+            this.complete()
+          }
         }
       })
     }
@@ -248,6 +256,15 @@ export class Visit implements FetchRequestDelegate {
       this.location = this.redirectedToLocation
       this.history.replace(this.redirectedToLocation, this.restorationIdentifier)
       this.followedRedirect = true
+    }
+  }
+
+  goToSamePageAnchor() {
+    if (this.isSamePage) {
+      this.render(async () => {
+        this.cacheSnapshot()
+        this.adapter.visitRendered(this)
+      })
     }
   }
 
@@ -293,10 +310,14 @@ export class Visit implements FetchRequestDelegate {
   performScroll() {
     if (!this.scrolled) {
       if (this.action == "restore") {
-        this.scrollToRestoredPosition() || this.scrollToTop()
+        this.scrollToRestoredPosition() || this.scrollToAnchor() || this.scrollToTop()
       } else {
         this.scrollToAnchor() || this.scrollToTop()
       }
+      if (this.isSamePage) {
+        this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
+      }
+
       this.scrolled = true
     }
   }
@@ -310,8 +331,9 @@ export class Visit implements FetchRequestDelegate {
   }
 
   scrollToAnchor() {
-    if (getAnchor(this.location)) {
-      this.view.scrollToAnchor(getAnchor(this.location))
+    const anchor = getAnchor(this.location)
+    if (anchor != null) {
+      this.view.scrollToAnchor(anchor)
       return true
     }
   }
@@ -345,9 +367,13 @@ export class Visit implements FetchRequestDelegate {
   }
 
   shouldIssueRequest() {
-    return this.action == "restore"
-      ? !this.hasCachedSnapshot()
-      : true
+    if (this.isSamePage) {
+      return false
+    } else if (this.action == "restore") {
+      return !this.hasCachedSnapshot()
+    } else {
+      return true
+    }
   }
 
   cacheSnapshot() {

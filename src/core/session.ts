@@ -172,6 +172,14 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
+  locationWithActionIsSamePage(location: URL, action: Action): boolean {
+    return this.navigator.locationWithActionIsSamePage(location, action)
+  }
+
+  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
+    this.notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL)
+  }
+
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
@@ -261,6 +269,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
     return dispatch("turbo:load", { detail: { url: this.location.href, timing }})
+  }
+
+  notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL) {
+    dispatchEvent(new HashChangeEvent("hashchange", { oldURL: oldURL.toString(), newURL: newURL.toString() }))
   }
 
   // Private

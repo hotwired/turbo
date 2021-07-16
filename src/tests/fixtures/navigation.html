@@ -7,7 +7,11 @@
     <script src="/src/tests/fixtures/test.js"></script>
   </head>
   <body>
-    <section>
+    <a href="#main">Skip Link</a>
+
+    <a href="#ignored-link" id="ignored-link">Skipped Content</a>
+
+    <section id="main" style="height: 200vh">
       <h1>Navigation</h1>
       <p><a id="same-origin-unannotated-link" href="/src/tests/fixtures/one.html">Same-origin unannotated link</a></p>
       <p><form id="same-origin-unannotated-form" method="get" action="/src/tests/fixtures/one.html"><button>Same-origin unannotated form</button></form></p>

@@ -28,6 +28,12 @@ export class FunctionalTestCase extends InternTestCase {
     return (await this.remote.findAllByCssSelector(selector)).length > 0
   }
 
+  async selectorHasFocus(selector: string) {
+    const activeElement = await this.remote.getActiveElement()
+
+    return activeElement.equals(await this.querySelector(selector))
+  }
+
   async querySelector(selector: string) {
     return this.remote.findByCssSelector(selector)
   }
@@ -43,6 +49,10 @@ export class FunctionalTestCase extends InternTestCase {
   async scrollToSelector(selector: string): Promise<void> {
     const element = await this.remote.findByCssSelector(selector)
     return this.evaluate(element => element.scrollIntoView(), element)
+  }
+
+  async pressTab(): Promise<void> {
+    return this.remote.getActiveElement().then(activeElement => activeElement.type(('\uE004'))) // TAB
   }
 
   async outerHTMLForSelector(selector: string): Promise<string> {

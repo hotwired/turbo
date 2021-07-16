@@ -10,8 +10,6 @@ export function getAnchor(url: URL) {
     return url.hash.slice(1)
   } else if (anchorMatch = url.href.match(/#(.*)$/)) {
     return anchorMatch[1]
-  } else {
-    return ""
   }
 }
 
@@ -28,13 +26,15 @@ export function isPrefixedBy(baseURL: URL, url: URL) {
   return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
 }
 
+export function getRequestURL(url: URL) {
+  const anchor = getAnchor(url)
+  return anchor != null
+    ? url.href.slice(0, -(anchor.length + 1))
+    : url.href
+}
+
 export function toCacheKey(url: URL) {
-  const anchorLength = url.hash.length
-  if (anchorLength < 2) {
-    return url.href
-  } else {
-    return url.href.slice(0, -anchorLength)
-  }
+  return getRequestURL(url)
 }
 
 export function urlsAreEqual(left: string, right: string) {
