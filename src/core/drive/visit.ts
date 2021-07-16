@@ -16,6 +16,7 @@ export interface VisitDelegate {
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
   locationWithActionIsSamePage(location: URL, action: Action): boolean
+  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL): void
 }
 
 export enum TimingMetric {
@@ -313,6 +314,10 @@ export class Visit implements FetchRequestDelegate {
       } else {
         this.scrollToAnchor() || this.scrollToTop()
       }
+      if (this.isSamePage) {
+        this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
+      }
+
       this.scrolled = true
     }
   }

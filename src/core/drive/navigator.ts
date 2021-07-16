@@ -9,6 +9,7 @@ import { PageSnapshot } from "./page_snapshot"
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocation(location: URL): boolean
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void
+  notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL): void
 }
 
 export class Navigator {
@@ -122,6 +123,10 @@ export class Navigator {
   locationWithActionIsSamePage(location: URL, action: Action): boolean {
     return getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
       (getAnchor(location) != null || action == "restore")
+  }
+
+  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
+    this.delegate.visitScrolledToSamePageLocation(oldURL, newURL)
   }
 
   // Visits
