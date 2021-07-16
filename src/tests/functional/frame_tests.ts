@@ -121,11 +121,11 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await this.frameScriptEvaluationCount, undefined)
 
     this.clickSelector("#body-script-link")
-    await this.nextBeat
+    await this.sleep(200)
     this.assert.equal(await this.frameScriptEvaluationCount, 1)
 
     this.clickSelector("#body-script-link")
-    await this.nextBeat
+    await this.sleep(200)
     this.assert.equal(await this.frameScriptEvaluationCount, 2)
   }
 
