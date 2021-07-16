@@ -22,7 +22,7 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
 
   renderError(snapshot: PageSnapshot) {
     const renderer = new ErrorRenderer(this.snapshot, snapshot, false)
-    this.render(renderer)
+    return this.render(renderer)
   }
 
   clearSnapshotCache() {
