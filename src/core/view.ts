@@ -14,7 +14,9 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
   readonly element: E
   renderer?: R
   abstract readonly snapshot: S
+  renderPromise?: Promise<void>
   private resolveRenderPromise = (value: any) => {}
+  private resolveInterceptionPromise = (value: any) => {}
 
   constructor(delegate: D, element: E) {
     this.delegate = delegate
@@ -64,25 +66,25 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
   // Rendering
 
   async render(renderer: R) {
-    if (this.renderer) {
-      throw new Error("rendering is already in progress")
-    }
-
     const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
+    const previewIsRendered = this.element.hasAttribute("data-turbo-preview")
     if (shouldRender) {
       try {
+        this.renderPromise = new Promise(resolve => this.resolveRenderPromise = resolve)
         this.renderer = renderer
         this.prepareToRenderSnapshot(renderer)
 
-        const renderInterception = new Promise(resolve => this.resolveRenderPromise = resolve)
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, this.resolveRenderPromise)
-        if (!immediateRender) await renderInterception
+        const renderInterception = new Promise(resolve => this.resolveInterceptionPromise = resolve)
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, this.resolveInterceptionPromise)
+        if (!immediateRender && !previewIsRendered) await renderInterception
 
         await this.renderSnapshot(renderer)
         this.delegate.viewRenderedSnapshot(snapshot, isPreview)
         this.finishRenderingSnapshot(renderer)
       } finally {
         delete this.renderer
+        this.resolveRenderPromise(undefined)
+        delete this.renderPromise
       }
     } else {
       this.invalidate()

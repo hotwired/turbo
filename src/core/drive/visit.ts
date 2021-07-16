@@ -199,6 +199,7 @@ export class Visit implements FetchRequestDelegate {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
         this.cacheSnapshot()
+        if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
           await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML))
           this.adapter.visitRendered(this)
@@ -241,6 +242,7 @@ export class Visit implements FetchRequestDelegate {
         if (this.isSamePage) {
           this.adapter.visitRendered(this)
         } else {
+          if (this.view.renderPromise) await this.view.renderPromise
           await this.view.renderPage(snapshot, isPreview)
           this.adapter.visitRendered(this)
           if (!isPreview) {
