@@ -67,7 +67,6 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
 
   async render(renderer: R) {
     const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
-    const previewIsRendered = this.element.hasAttribute("data-turbo-preview")
     if (shouldRender) {
       try {
         this.renderPromise = new Promise(resolve => this.resolveRenderPromise = resolve)
@@ -76,7 +75,7 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
 
         const renderInterception = new Promise(resolve => this.resolveInterceptionPromise = resolve)
         const immediateRender = this.delegate.allowsImmediateRender(snapshot, this.resolveInterceptionPromise)
-        if (!immediateRender && !previewIsRendered) await renderInterception
+        if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
         this.delegate.viewRenderedSnapshot(snapshot, isPreview)
