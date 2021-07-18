@@ -136,6 +136,8 @@ export class FormSubmission {
 
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     if (response.clientError || response.serverError) {
+      this.result = { success: false, fetchResponse: response }
+      dispatch("turbo:submit-failed", { target: this.formElement, detail: { formSubmission: this, ...this.result } })
       this.delegate.formSubmissionFailedWithResponse(this, response)
     } else if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response)) {
       const error = new Error("Form responses must redirect to another location")
@@ -149,6 +151,7 @@ export class FormSubmission {
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
     this.result = { success: false, fetchResponse: response }
+    dispatch("turbo:submit-failed", { target: this.formElement, detail: { formSubmission: this, ...this.result } })
     this.delegate.formSubmissionFailedWithResponse(this, response)
   }
 

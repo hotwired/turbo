@@ -5,6 +5,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/form.html")
     await this.remote.execute(() => {
       addEventListener("turbo:submit-start", () => document.documentElement.setAttribute("data-form-submitted", ""), { once: true })
+      addEventListener("turbo:submit-failed", () => document.documentElement.setAttribute("data-form-failed", ""), { once: true })
     })
   }
 
@@ -138,6 +139,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     const title = await this.querySelector("h1")
+    this.assert.ok(await this.formFailed)
     this.assert.equal(await title.getVisibleText(), "Unprocessable Entity", "renders the response HTML")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
   }
@@ -147,6 +149,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     const title = await this.querySelector("h1")
+    this.assert.ok(await this.formFailed)
     this.assert.equal(await title.getVisibleText(), "Internal Server Error", "renders the response HTML")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
   }
@@ -347,6 +350,10 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const message = await this.querySelector("#frame div.message")
     this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  get formFailed(): Promise<boolean> {
+    return this.hasSelector("html[data-form-failed]")
   }
 
   get formSubmitted(): Promise<boolean> {
