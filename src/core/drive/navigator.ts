@@ -121,7 +121,8 @@ export class Navigator {
   }
 
   locationWithActionIsSamePage(location: URL, action?: Action): boolean {
-    return getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+    return action !== "replace" &&
+      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
       (getAnchor(location) != null || action == "restore")
   }
 
