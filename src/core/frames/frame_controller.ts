@@ -2,7 +2,7 @@ import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../ele
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { parseHTMLDocument } from "../../util"
+import { parseHTMLDocument, dispatch } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -107,6 +107,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
+        const frame = this.element.id;
+        dispatch("turbo:after-frame-render", { cancelable: true, detail: { fetchResponse, frame } })
       }
     } catch (error) {
       console.error(error)

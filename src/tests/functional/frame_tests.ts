@@ -152,6 +152,16 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.querySelector("#form-redirect-header"))
   }
 
+  async "test 'turbo:after-frame-render' is triggered after frame has finished rendering"() {
+    await this.clickSelector("#frame-part")
+
+    await this.nextEventNamed("turbo:after-frame-render") // recursive.html
+    const { frame, fetchResponse } = await this.nextEventNamed("turbo:after-frame-render")
+
+    this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
+    this.assert.equal(frame, 'part')
+  }
+
   get frameScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.frameScriptEvaluationCount)
   }
