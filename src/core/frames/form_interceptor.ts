@@ -24,7 +24,9 @@ export class FormInterceptor {
     if (event.target instanceof HTMLFormElement) {
       const form = event.target
       const submitter = event.submitter || undefined
-      if (this.delegate.shouldInterceptFormSubmission(form, submitter)) {
+      const method = submitter?.getAttribute("formmethod") || form.method
+
+      if (method != "dialog" && this.delegate.shouldInterceptFormSubmission(form, submitter)) {
         event.preventDefault()
         event.stopImmediatePropagation()
         this.delegate.formSubmissionIntercepted(form, submitter)
