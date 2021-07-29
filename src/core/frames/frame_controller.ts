@@ -107,8 +107,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
-        const frame = this.element.id;
-        dispatch("turbo:after-frame-render", { cancelable: true, detail: { fetchResponse, frame } })
+        const frameId = this.element.id;
+        dispatch("turbo:after-frame-render", { cancelable: true, detail: { fetchResponse, frameId } })
       }
     } catch (error) {
       console.error(error)

@@ -156,10 +156,10 @@ export class FrameTests extends TurboDriveTestCase {
     await this.clickSelector("#frame-part")
 
     await this.nextEventNamed("turbo:after-frame-render") // recursive.html
-    const { frame, fetchResponse } = await this.nextEventNamed("turbo:after-frame-render")
+    const { frameId, fetchResponse } = await this.nextEventNamed("turbo:after-frame-render")
 
     this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
-    this.assert.equal(frame, 'part')
+    this.assert.equal(frameId, 'part')
   }
 
   get frameScriptEvaluationCount(): Promise<number | undefined> {
