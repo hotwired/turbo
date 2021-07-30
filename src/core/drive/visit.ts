@@ -136,6 +136,7 @@ export class Visit implements FetchRequestDelegate {
       this.state = VisitState.completed
       this.adapter.visitCompleted(this)
       this.delegate.visitCompleted(this)
+      this.followRedirect()
     }
   }
 
@@ -255,8 +256,10 @@ export class Visit implements FetchRequestDelegate {
 
   followRedirect() {
     if (this.redirectedToLocation && !this.followedRedirect) {
-      this.location = this.redirectedToLocation
-      this.history.replace(this.redirectedToLocation, this.restorationIdentifier)
+      this.adapter.visitProposedToLocation(this.redirectedToLocation, {
+        action: 'replace',
+        response: this.response
+      })
       this.followedRedirect = true
     }
   }
