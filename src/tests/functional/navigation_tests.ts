@@ -175,6 +175,23 @@ export class NavigationTests extends TurboDriveTestCase {
 
     this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
   }
+
+  async "test same-page anchor visits do not trigger visit events"() {
+    const events = [
+      "turbo:before-visit",
+      "turbo:visit",
+      "turbo:before-cache",
+      "turbo:before-render",
+      "turbo:render",
+      "turbo:load"
+    ]
+
+    for (const eventName in events) {
+      await this.goToLocation("/src/tests/fixtures/navigation.html")
+      await this.clickSelector('a[href="#main"]')
+      this.assert.ok(await this.noNextEventNamed(eventName), `same-page links do not trigger ${eventName} events`)
+    }
+  }
 }
 
 NavigationTests.registerSuite()
