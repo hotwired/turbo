@@ -154,8 +154,8 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   // Navigator delegate
 
-  allowsVisitingLocation(location: URL) {
-    return this.applicationAllowsVisitingLocation(location)
+  allowsVisitingLocationWithAction(location: URL, action?: Action) {
+    return this.locationWithActionIsSamePage(location, action) || this.applicationAllowsVisitingLocation(location)
   }
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
@@ -165,14 +165,16 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   visitStarted(visit: Visit) {
     extendURLWithDeprecatedProperties(visit.location)
-    this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+    if (!visit.silent) {
+      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+    }
   }
 
   visitCompleted(visit: Visit) {
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
-  locationWithActionIsSamePage(location: URL, action: Action): boolean {
+  locationWithActionIsSamePage(location: URL, action?: Action): boolean {
     return this.navigator.locationWithActionIsSamePage(location, action)
   }
 
@@ -214,7 +216,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Page view delegate
 
   viewWillCacheSnapshot() {
-    this.notifyApplicationBeforeCachingSnapshot()
+    if (!this.navigator.currentVisit?.silent) {
+      this.notifyApplicationBeforeCachingSnapshot()
+    }
   }
 
   allowsImmediateRender({ element }: PageSnapshot, resume: (value: any) => void) {
