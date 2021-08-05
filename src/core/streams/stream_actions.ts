@@ -27,6 +27,14 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
     this.targetElements.forEach(e => e.replaceWith(this.templateContent))
   },
 
+  reload() {
+    this.targetElements.forEach(e => {
+      if (typeof(e["reload"]) == "function") {
+        e.reload()
+      }
+    })
+  },
+
   update() {
     this.targetElements.forEach(e => { 
       e.innerHTML = ""
