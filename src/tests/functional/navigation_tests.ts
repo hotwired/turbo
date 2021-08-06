@@ -163,6 +163,12 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.ok(await this.selectorHasFocus("#main a:first-of-type"), "skips to first interactive element after #main")
   }
 
+  async "test same-page anchored replace link assumes the intention was a refresh"() {
+    await this.clickSelector('#refresh-link')
+    await this.nextBody
+    this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
+  }
+
   async "test navigating back to anchored URL"() {
     await this.clickSelector('a[href="#main"]')
     await this.nextBeat

@@ -121,8 +121,13 @@ export class Navigator {
   }
 
   locationWithActionIsSamePage(location: URL, action?: Action): boolean {
-    return getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
-      (getAnchor(location) != null || action == "restore")
+    const anchor = getAnchor(location)
+    const currentAnchor = getAnchor(this.view.lastRenderedLocation)
+    const isRestorationToTop = action === 'restore' && typeof anchor === 'undefined'
+
+    return action !== "replace" &&
+      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+      (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
   }
 
   visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
