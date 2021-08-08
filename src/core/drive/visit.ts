@@ -111,6 +111,10 @@ export class Visit implements FetchRequestDelegate {
     return this.history.getRestorationDataForIdentifier(this.restorationIdentifier)
   }
 
+  get silent() {
+    return this.isSamePage
+  }
+
   start() {
     if (this.state == VisitState.initialized) {
       this.recordTimingMetric(TimingMetric.visitStart)

@@ -9,7 +9,7 @@ import { PageSnapshot } from "./drive/page_snapshot"
 
 const session = new Session
 const { navigator } = session
-export { navigator, PageRenderer, PageSnapshot }
+export { navigator, session, PageRenderer, PageSnapshot }
 
 export function start() {
   session.start()

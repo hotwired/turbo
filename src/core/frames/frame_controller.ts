@@ -11,7 +11,7 @@ import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
-import { elementIsNavigable } from "../session"
+import { session } from "../index"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -287,11 +287,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       }
     }
 
-    if (!elementIsNavigable(element)) {
+    if (!session.elementDriveEnabled(element)) {
       return false
     }
 
-    if (submitter && !elementIsNavigable(submitter)) {
+    if (submitter && !session.elementDriveEnabled(submitter)) {
       return false
     }
 
