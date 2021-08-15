@@ -64,6 +64,10 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  get refill() {
+    return this.getAttribute("refill") == "true"
+  }
+
   get loading(): FrameLoadingStyle {
     return frameLoadingStyleFromString(this.getAttribute("loading") || "")
   }
