@@ -5,6 +5,26 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/navigation.html")
   }
 
+  async "test navigating renders a progress bar"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
+    await this.clickSelector("a:first-of-type")
+
+    await this.waitUntilSelector("progress")
+    this.assert.ok(await this.hasSelector("progress[value]"), "displays progress bar")
+
+    await this.nextBody
+    await this.waitUntilNoSelector("progress")
+
+    this.assert.notOk(await this.hasSelector("progress"), "hides progress bar")
+  }
+
+  async "test navigating does not render a progress bar before expiring the delay"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(1000))
+    await this.clickSelector("a:first-of-type")
+
+    this.assert.notOk(await this.hasSelector("progress"), "does not show progress bar before delay")
+  }
+
   async "test after loading the page"() {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.visitAction, "load")

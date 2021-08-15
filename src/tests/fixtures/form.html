@@ -43,6 +43,11 @@
         <input type="hidden" name="greeting" value="Hello from a form">
         <input type="submit">
       </form>
+      <form action="/__turbo/redirect" method="post" class="sleep">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="sleep" value="500">
+        <input type="submit">
+      </form>
       <form action="/src/tests/fixtures/form.html?query=1" method="get" class="conflicting-values">
         <input type="hidden" name="query" value="2">
         <input type="submit">

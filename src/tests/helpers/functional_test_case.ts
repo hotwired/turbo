@@ -38,6 +38,22 @@ export class FunctionalTestCase extends InternTestCase {
     return this.remote.findByCssSelector(selector)
   }
 
+  async waitUntilSelector(selector: string): Promise<void> {
+    return (async () => {
+      let hasSelector = false
+      do hasSelector = await this.hasSelector(selector)
+      while (!hasSelector)
+    })()
+  }
+
+  async waitUntilNoSelector(selector: string): Promise<void> {
+    return (async () => {
+      let hasSelector = true
+      do hasSelector = await this.hasSelector(selector)
+      while (hasSelector)
+    })()
+  }
+
   async querySelectorAll(selector: string) {
     return this.remote.findAllByCssSelector(selector)
   }
