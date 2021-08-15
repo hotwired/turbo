@@ -74,7 +74,10 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-    this.adapter.formSubmissionStarted(formSubmission)
+    // Not all adapaters implement formSubmissionStarted
+    if (typeof this.adapter.formSubmissionStarted === 'function') {
+      this.adapter.formSubmissionStarted(formSubmission)
+    }
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -107,7 +110,10 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-    this.adapter.formSubmissionFinished(formSubmission)
+    // Not all adapaters implement formSubmissionFinished
+    if (typeof this.adapter.formSubmissionFinished === 'function') {
+      this.adapter.formSubmissionFinished(formSubmission)
+    }
   }
 
   // Visit delegate
