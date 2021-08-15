@@ -152,6 +152,20 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.querySelector("#form-redirect-header"))
   }
 
+  async "test refollowing a link with target to frame with refill=true refills the frame"() {
+    await this.clickSelector("#navigate-frame-refill")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#frame-refill-header"))
+
+    // Here we need to clean the element #frame-refill
+    // Here we need to test if #frame-refill is empty
+    throw new Error('missing specs')
+
+    await this.clickSelector("#navigate-frame-refill")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#frame-refill-header"))
+  }
+
   get frameScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.frameScriptEvaluationCount)
   }
