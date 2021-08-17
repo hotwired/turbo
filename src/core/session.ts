@@ -145,13 +145,12 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
       form.method = linkMethod
       form.action = link.getAttribute("href") || "undefined"
 
-      link.parentNode?.insertBefore(form, link)
+      document.body.appendChild(form)
       return dispatch("submit", { cancelable: true, target: form })
     } else {
       return false
     }
   }
-
 
   // Navigator delegate
 
