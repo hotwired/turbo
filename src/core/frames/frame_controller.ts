@@ -78,7 +78,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   async loadSourceURL() {
     let canLoadSource = !this.settingSourceURL && this.enabled && this.isActive && 
-                        (this.refillable || this.sourceURL != this.currentURL)
+                        (this.reloadable || this.sourceURL != this.currentURL)
     if (canLoadSource) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
@@ -316,8 +316,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
-  get refillable() {
-    return this.element.refill
+  get reloadable() {
+    return this.element.reloadable
   }
 
   set sourceURL(sourceURL: string | undefined) {
