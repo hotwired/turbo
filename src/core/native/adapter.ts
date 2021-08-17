@@ -11,7 +11,7 @@ export interface Adapter {
   visitRequestFailedWithStatusCode(visit: Visit, statusCode: number): void
   visitRequestFinished(visit: Visit): void
   visitRendered(visit: Visit): void
-  formSubmissionStarted(formSubmission: FormSubmission): void
-  formSubmissionFinished(formSubmission: FormSubmission): void
+  formSubmissionStarted?(formSubmission: FormSubmission): void
+  formSubmissionFinished?(formSubmission: FormSubmission): void
   pageInvalidated(): void
 }
