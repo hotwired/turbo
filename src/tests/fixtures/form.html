@@ -65,6 +65,19 @@
       </form>
     </div>
     <hr>
+    <div id="action-input">
+      <form class="no-action">
+        <input type="hidden" name="action" value="1">
+        <input type="hidden" name="query" value="1">
+        <input type="submit">
+      </form>
+      <form class="action" action="/src/tests/fixtures/one.html">
+        <input type="hidden" name="action" value="1">
+        <input type="hidden" name="query" value="1">
+        <input type="submit">
+      </form>
+    </div>
+    <hr>
     <div id="reject">
       <form class="unprocessable_entity" action="/__turbo/reject" method="post">
         <input type="hidden" name="status" value="422">
