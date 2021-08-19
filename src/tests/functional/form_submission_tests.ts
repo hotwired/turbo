@@ -517,6 +517,15 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-response"))
   }
 
+  async "test link method form submission inside form"() {
+    await this.clickSelector("#link-method-inside-form")
+
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
   get formSubmitted(): Promise<boolean> {
     return this.hasSelector("html[data-form-submitted]")
   }

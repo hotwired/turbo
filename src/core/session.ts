@@ -152,13 +152,12 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
         form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
       }
 
-      link.parentNode?.insertBefore(form, link)
+      document.body.appendChild(form)
       return dispatch("submit", { cancelable: true, target: form })
     } else {
       return false
     }
   }
-
 
   // Navigator delegate
 
