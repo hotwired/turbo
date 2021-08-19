@@ -133,6 +133,24 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.deepEqual(await this.getAllSearchParams("button"), [])
   }
 
+  async "test input named action with no action attribute"() {
+    await this.clickSelector("#action-input form.no-action [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.getSearchParam("action"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+  }
+
+  async "test input named action with action attribute"() {
+    await this.clickSelector("#action-input form.action [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.getSearchParam("action"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+  }
+
   async "test invalid form submission with unprocessable entity status"() {
     await this.clickSelector("#reject form.unprocessable_entity input[type=submit]")
     await this.nextBody
