@@ -79,9 +79,13 @@
     </div>
     <hr>
     <div id="reject">
-      <form class="unprocessable_entity" action="/__turbo/reject" method="post">
+      <form class="unprocessable_entity" action="/__turbo/reject" method="post" style="margin-top:100vh">
         <input type="hidden" name="status" value="422">
         <input type="submit">
+      </form>
+      <form class="unprocessable_entity_with_tall_form" action="/__turbo/reject/tall" method="post">
+        <input type="hidden" name="status" value="422">
+        <input type="submit" style="margin-top:1000vh">
       </form>
       <form class="internal_server_error" action="/__turbo/reject" method="post">
         <input type="hidden" name="status" value="500">
