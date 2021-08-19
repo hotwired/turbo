@@ -160,6 +160,17 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
   }
 
+  async "test invalid form submission with long form"() {
+    await this.scrollToSelector("#reject form.unprocessable_entity_with_tall_form input[type=submit]")
+    await this.clickSelector("#reject form.unprocessable_entity_with_tall_form input[type=submit]")
+    await this.nextBody
+
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "Unprocessable Entity", "renders the response HTML")
+    this.assert(await this.isScrolledToTop(), "page is scrolled to the top")
+    this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
+  }
+
   async "test invalid form submission with server error status"() {
     await this.clickSelector("#reject form.internal_server_error input[type=submit]")
     await this.nextBody

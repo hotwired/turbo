@@ -81,6 +81,11 @@ export class FunctionalTestCase extends InternTestCase {
     return this.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
   }
 
+  async isScrolledToTop(): Promise<boolean> {
+    const { y: pageY } = await this.scrollPosition
+    return pageY === 0
+  }
+
   async isScrolledToSelector(selector: string): Promise<boolean> {
     const { y: pageY } = await this.scrollPosition
     const { y: elementY } = await this.remote.findByCssSelector(selector).getPosition()
