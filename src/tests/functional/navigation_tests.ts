@@ -7,7 +7,7 @@ export class NavigationTests extends TurboDriveTestCase {
 
   async "test navigating renders a progress bar"() {
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
-    await this.clickSelector("a:first-of-type")
+    await this.clickSelector("#same-origin-unannotated-link")
 
     await this.waitUntilSelector(".turbo-progress-bar")
     this.assert.ok(await this.hasSelector(".turbo-progress-bar"), "displays progress bar")
@@ -20,7 +20,7 @@ export class NavigationTests extends TurboDriveTestCase {
 
   async "test navigating does not render a progress bar before expiring the delay"() {
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(1000))
-    await this.clickSelector("a:first-of-type")
+    await this.clickSelector("#same-origin-unannotated-link")
 
     this.assert.notOk(await this.hasSelector(".turbo-progress-bar"), "does not show progress bar before delay")
   }
