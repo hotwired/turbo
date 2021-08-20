@@ -198,6 +198,7 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.nextBeat
 
     await this.goBack()
+    await this.nextBody
 
     this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
   }
@@ -217,6 +218,14 @@ export class NavigationTests extends TurboDriveTestCase {
       await this.clickSelector('a[href="#main"]')
       this.assert.ok(await this.noNextEventNamed(eventName), `same-page links do not trigger ${eventName} events`)
     }
+  }
+
+  async "test correct referrer header"() {
+    this.clickSelector("#headers-link")
+    await this.nextBody
+    const pre = await this.querySelector('pre')
+    const headers = await JSON.parse(await pre.getVisibleText())
+    this.assert.equal(headers.referer, 'http://localhost:9000/src/tests/fixtures/navigation.html', `referer header is correctly set`)
   }
 }
 

@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express"
 import multer from "multer"
 import path from "path"
 import url from "url"
+import fs from "fs";
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
@@ -48,6 +49,11 @@ router.post("/reject", (request, response) => {
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
 
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.get("/headers", (request, response) => {
+  const template = fs.readFileSync("src/tests/fixtures/headers.html").toString()
+  response.type("html").status(200).send(template.replace('$HEADERS', JSON.stringify(request.headers, null, 4)))
 })
 
 router.post("/messages", (request, response) => {

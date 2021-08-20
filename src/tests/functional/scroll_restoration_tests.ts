@@ -3,6 +3,7 @@ import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 export class ScrollRestorationTests extends TurboDriveTestCase {
   async "test landing on an anchor"() {
     await this.goToLocation("/src/tests/fixtures/scroll_restoration.html#three")
+    await this.nextBeat
     const { y: yAfterLoading } = await this.scrollPosition
     this.assert.notEqual(yAfterLoading, 0)
   }
