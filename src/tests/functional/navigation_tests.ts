@@ -198,6 +198,7 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.nextBeat
 
     await this.goBack()
+    await this.nextBody
 
     this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
   }
