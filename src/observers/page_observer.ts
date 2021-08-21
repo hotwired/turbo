@@ -26,6 +26,7 @@ export class PageObserver {
         this.stage = PageStage.loading
       }
       document.addEventListener("readystatechange", this.interpretReadyState, false)
+      this.interpretReadyState(document.readyState);
       addEventListener("pagehide", this.pageWillUnload, false)
       this.started = true
     }
