@@ -64,10 +64,6 @@ export class FrameElement extends HTMLElement {
     }
   }
 
-  get reloadable() {
-    return this.getAttribute("data-turbo-frame-reload") == "true"
-  }
-
   get loading(): FrameLoadingStyle {
     return frameLoadingStyleFromString(this.getAttribute("loading") || "")
   }

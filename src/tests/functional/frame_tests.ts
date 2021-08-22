@@ -152,18 +152,12 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.querySelector("#form-redirect-header"))
   }
 
-  async "test refollowing a link with target to frame with reload=true reloads the frame"() {
-    await this.clickSelector("#navigate-frame-reload")
-    await this.nextBeat
-    this.assert.ok(await this.querySelector("#frame-reload-header"))
+  async "test following a link reloads frame on every click"() {
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
 
-    // Here we need to clean the element #frame-refill
-    // Here we need to test if #frame-refill is empty
-    throw new Error('missing specs')
-
-    await this.clickSelector("#navigate-frame-reload")
-    await this.nextBeat
-    this.assert.ok(await this.querySelector("#frame-reload-header"))
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
   }
 
   get frameScriptEvaluationCount(): Promise<number | undefined> {
