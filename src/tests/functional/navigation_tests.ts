@@ -5,6 +5,26 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/navigation.html")
   }
 
+  async "test navigating renders a progress bar"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
+    await this.clickSelector("#same-origin-unannotated-link")
+
+    await this.waitUntilSelector(".turbo-progress-bar")
+    this.assert.ok(await this.hasSelector(".turbo-progress-bar"), "displays progress bar")
+
+    await this.nextBody
+    await this.waitUntilNoSelector(".turbo-progress-bar")
+
+    this.assert.notOk(await this.hasSelector(".turbo-progress-bar"), "hides progress bar")
+  }
+
+  async "test navigating does not render a progress bar before expiring the delay"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(1000))
+    await this.clickSelector("#same-origin-unannotated-link")
+
+    this.assert.notOk(await this.hasSelector(".turbo-progress-bar"), "does not show progress bar before delay")
+  }
+
   async "test after loading the page"() {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.visitAction, "load")
@@ -163,6 +183,12 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.ok(await this.selectorHasFocus("#main a:first-of-type"), "skips to first interactive element after #main")
   }
 
+  async "test same-page anchored replace link assumes the intention was a refresh"() {
+    await this.clickSelector('#refresh-link')
+    await this.nextBody
+    this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
+  }
+
   async "test navigating back to anchored URL"() {
     await this.clickSelector('a[href="#main"]')
     await this.nextBeat
@@ -172,8 +198,34 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.nextBeat
 
     await this.goBack()
+    await this.nextBody
 
     this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
+  }
+
+  async "test same-page anchor visits do not trigger visit events"() {
+    const events = [
+      "turbo:before-visit",
+      "turbo:visit",
+      "turbo:before-cache",
+      "turbo:before-render",
+      "turbo:render",
+      "turbo:load"
+    ]
+
+    for (const eventName in events) {
+      await this.goToLocation("/src/tests/fixtures/navigation.html")
+      await this.clickSelector('a[href="#main"]')
+      this.assert.ok(await this.noNextEventNamed(eventName), `same-page links do not trigger ${eventName} events`)
+    }
+  }
+
+  async "test correct referrer header"() {
+    this.clickSelector("#headers-link")
+    await this.nextBody
+    const pre = await this.querySelector('pre')
+    const headers = await JSON.parse(await pre.getVisibleText())
+    this.assert.equal(headers.referer, 'http://localhost:9000/src/tests/fixtures/navigation.html', `referer header is correctly set`)
   }
 }
 

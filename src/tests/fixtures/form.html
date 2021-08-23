@@ -43,6 +43,11 @@
         <input type="hidden" name="greeting" value="Hello from a form">
         <input type="submit">
       </form>
+      <form action="/__turbo/redirect" method="post" class="sleep">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="sleep" value="500">
+        <input type="submit">
+      </form>
       <form action="/src/tests/fixtures/form.html?query=1" method="get" class="conflicting-values">
         <input type="hidden" name="query" value="2">
         <input type="submit">
@@ -65,10 +70,27 @@
       </form>
     </div>
     <hr>
+    <div id="action-input">
+      <form class="no-action">
+        <input type="hidden" name="action" value="1">
+        <input type="hidden" name="query" value="1">
+        <input type="submit">
+      </form>
+      <form class="action" action="/src/tests/fixtures/one.html">
+        <input type="hidden" name="action" value="1">
+        <input type="hidden" name="query" value="1">
+        <input type="submit">
+      </form>
+    </div>
+    <hr>
     <div id="reject">
-      <form class="unprocessable_entity" action="/__turbo/reject" method="post">
+      <form class="unprocessable_entity" action="/__turbo/reject" method="post" style="margin-top:100vh">
         <input type="hidden" name="status" value="422">
         <input type="submit">
+      </form>
+      <form class="unprocessable_entity_with_tall_form" action="/__turbo/reject/tall" method="post">
+        <input type="hidden" name="status" value="422">
+        <input type="submit" style="margin-top:1000vh">
       </form>
       <form class="internal_server_error" action="/__turbo/reject" method="post">
         <input type="hidden" name="status" value="500">
@@ -171,5 +193,8 @@
       </div>
     </turbo-frame>
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-outside-frame">Stream link outside frame</a>
+    <form>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-inside-form">Stream link inside form</a>
+    </form>
   </body>
 </html>

@@ -162,6 +162,14 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(frameId, 'part')
   }
 
+   async "test following a link reloads frame on every click"() {
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
   get frameScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.frameScriptEvaluationCount)
   }

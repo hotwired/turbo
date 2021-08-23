@@ -59,6 +59,10 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
     this.scrollRoot.scrollTo(x, y)
   }
 
+  scrollToTop() {
+    this.scrollToPosition({ x: 0, y: 0 })
+  }
+
   get scrollRoot(): { scrollTo(x: number, y: number): void } {
     return window
   }

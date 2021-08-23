@@ -34,6 +34,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   readonly frameRedirector = new FrameRedirector(document.documentElement)
 
+  drive = true
   enabled = true
   progressBarDelay = 500
   started = false
@@ -126,7 +127,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: URL) {
-    return elementIsNavigable(link)
+    return this.elementDriveEnabled(link)
       && this.locationIsVisitable(location)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
@@ -144,18 +145,17 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
       form.method = linkMethod
       form.action = link.getAttribute("href") || "undefined"
 
-      link.parentNode?.insertBefore(form, link)
+      document.body.appendChild(form)
       return dispatch("submit", { cancelable: true, target: form })
     } else {
       return false
     }
   }
 
-
   // Navigator delegate
 
-  allowsVisitingLocation(location: URL) {
-    return this.applicationAllowsVisitingLocation(location)
+  allowsVisitingLocationWithAction(location: URL, action?: Action) {
+    return this.locationWithActionIsSamePage(location, action) || this.applicationAllowsVisitingLocation(location)
   }
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
@@ -165,14 +165,16 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   visitStarted(visit: Visit) {
     extendURLWithDeprecatedProperties(visit.location)
-    this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+    if (!visit.silent) {
+      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+    }
   }
 
   visitCompleted(visit: Visit) {
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
-  locationWithActionIsSamePage(location: URL, action: Action): boolean {
+  locationWithActionIsSamePage(location: URL, action?: Action): boolean {
     return this.navigator.locationWithActionIsSamePage(location, action)
   }
 
@@ -183,7 +185,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-    return elementIsNavigable(form) && elementIsNavigable(submitter)
+    return this.elementDriveEnabled(form) && this.elementDriveEnabled(submitter)
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
@@ -214,7 +216,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Page view delegate
 
   viewWillCacheSnapshot() {
-    this.notifyApplicationBeforeCachingSnapshot()
+    if (!this.navigator.currentVisit?.silent) {
+      this.notifyApplicationBeforeCachingSnapshot()
+    }
   }
 
   allowsImmediateRender({ element }: PageSnapshot, resume: (value: any) => void) {
@@ -275,6 +279,29 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     dispatchEvent(new HashChangeEvent("hashchange", { oldURL: oldURL.toString(), newURL: newURL.toString() }))
   }
 
+  // Helpers
+
+  elementDriveEnabled(element?: Element) {
+    const container = element?.closest("[data-turbo]")
+
+    // Check if Drive is enabled on the session.
+    if (this.drive) {
+      // Drive should be enabled by default, unless `data-turbo="false"`.
+      if (container) {
+        return container.getAttribute("data-turbo") != "false"
+      } else {
+        return true
+      }
+    } else {
+      // Drive should be disabled by default, unless `data-turbo="true"`.
+      if (container) {
+        return container.getAttribute("data-turbo") == "true"
+      } else {
+        return false
+      }
+    }
+  }
+
   // Private
 
   getActionForLink(link: Element): Action {
@@ -288,15 +315,6 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   get snapshot() {
     return this.view.snapshot
-  }
-}
-
-export function elementIsNavigable(element?: Element) {
-  const container = element?.closest("[data-turbo]")
-  if (container) {
-    return container.getAttribute("data-turbo") != "false"
-  } else {
-    return true
   }
 }
 

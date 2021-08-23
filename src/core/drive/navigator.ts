@@ -7,7 +7,7 @@ import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
 export type NavigatorDelegate = VisitDelegate & {
-  allowsVisitingLocation(location: URL): boolean
+  allowsVisitingLocationWithAction(location: URL, action?: Action): boolean
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void
   notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL): void
 }
@@ -22,7 +22,7 @@ export class Navigator {
   }
 
   proposeVisit(location: URL, options: Partial<VisitOptions> = {}) {
-    if (this.delegate.allowsVisitingLocation(location)) {
+    if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
       this.delegate.visitProposedToLocation(location, options)
     }
   }
@@ -74,7 +74,10 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    // Not all adapters implement formSubmissionStarted
+    if (typeof this.adapter.formSubmissionStarted === 'function') {
+      this.adapter.formSubmissionStarted(formSubmission)
+    }
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -98,6 +101,7 @@ export class Navigator {
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
       await this.view.renderPage(snapshot)
+      this.view.scrollToTop()
       this.view.clearSnapshotCache()
     }
   }
@@ -107,7 +111,10 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    // Not all adapters implement formSubmissionFinished
+    if (typeof this.adapter.formSubmissionFinished === 'function') {
+      this.adapter.formSubmissionFinished(formSubmission)
+    }
   }
 
   // Visit delegate
@@ -120,9 +127,14 @@ export class Navigator {
     this.delegate.visitCompleted(visit)
   }
 
-  locationWithActionIsSamePage(location: URL, action: Action): boolean {
-    return getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
-      (getAnchor(location) != null || action == "restore")
+  locationWithActionIsSamePage(location: URL, action?: Action): boolean {
+    const anchor = getAnchor(location)
+    const currentAnchor = getAnchor(this.view.lastRenderedLocation)
+    const isRestorationToTop = action === 'restore' && typeof anchor === 'undefined'
+
+    return action !== "replace" &&
+      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+      (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
   }
 
   visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
