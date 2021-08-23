@@ -77,7 +77,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (!this.settingSourceURL && this.enabled && this.isActive && this.sourceURL != this.currentURL) {
+    if (!this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || this.sourceURL != this.currentURL)) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -131,6 +131,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   linkClickIntercepted(element: Element, url: string) {
+    this.reloadable = true
     this.navigateFrame(element, url)
   }
 
@@ -311,6 +312,20 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   get sourceURL() {
     if (this.element.src) {
       return this.element.src
+    }
+  }
+
+  get reloadable() {
+    const frame = this.findFrameElement(this.element)
+    return frame.hasAttribute("reloadable")
+  }
+
+  set reloadable(value: boolean) {
+    const frame = this.findFrameElement(this.element)
+    if (value) {
+      frame.setAttribute("reloadable", "")
+    } else {
+      frame.removeAttribute("reloadable")
     }
   }
 
