@@ -19,7 +19,8 @@ export class FrameTests extends TurboDriveTestCase {
   async "test a frame whose src references itself does not infinitely loop"() {
     await this.clickSelector("#frame-self")
 
-    await this.nextEventNamed("turbo:before-fetch-response")
+    await this.nextEventNamed("turbo:frame-render") // recursive
+    await this.nextEventNamed("turbo:frame-render") // frame
 
     const otherEvents = await this.eventLogChannel.read()
     this.assert.equal(otherEvents.length, 0, "no more events")
@@ -152,11 +153,11 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.querySelector("#form-redirect-header"))
   }
 
-  async "test 'turbo:after-frame-render' is triggered after frame has finished rendering"() {
+  async "test 'turbo:frame-render' is triggered after frame has finished rendering"() {
     await this.clickSelector("#frame-part")
 
-    await this.nextEventNamed("turbo:after-frame-render") // recursive.html
-    const { frameId, fetchResponse } = await this.nextEventNamed("turbo:after-frame-render")
+    await this.nextEventNamed("turbo:frame-render") // recursive
+    const { frameId, fetchResponse } = await this.nextEventNamed("turbo:frame-render")
 
     this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
     this.assert.equal(frameId, 'part')
