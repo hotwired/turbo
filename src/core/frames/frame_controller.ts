@@ -37,6 +37,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   connect() {
     if (!this.connected) {
       this.connected = true
+      this.reloadable = false
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.appearanceObserver.start()
       }
@@ -146,6 +147,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.formSubmission.stop()
     }
 
+    this.reloadable = false
     this.formSubmission = new FormSubmission(this, element, submitter)
     if (this.formSubmission.fetchRequest.isIdempotent) {
       this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
