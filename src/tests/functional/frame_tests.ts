@@ -152,6 +152,36 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.querySelector("#form-redirect-header"))
   }
 
+  async "test following a link reloads frame on every click"() {
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test reconnecting after following a link does not reload the frame"() {
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.remote.execute(() => {
+      window.savedElement = document.querySelector("#frame")
+      window.savedElement?.remove()
+    })
+    await this.nextBeat
+
+    await this.remote.execute(() => {
+      if (window.savedElement) {
+        document.body.appendChild(window.savedElement)
+      }
+    })
+    await this.nextBeat
+
+    const eventLogs = await this.eventLogChannel.read()
+    const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
+    this.assert.equal(requestLogs.length, 0)
+  }
+
   get frameScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.frameScriptEvaluationCount)
   }

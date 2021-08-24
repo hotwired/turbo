@@ -8,6 +8,26 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     })
   }
 
+  async "test standard form submission renders a progress bar"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
+    await this.clickSelector("#standard form.sleep input[type=submit]")
+
+    await this.waitUntilSelector(".turbo-progress-bar")
+    this.assert.ok(await this.hasSelector(".turbo-progress-bar"), "displays progress bar")
+
+    await this.nextBody
+    await this.waitUntilNoSelector(".turbo-progress-bar")
+
+    this.assert.notOk(await this.hasSelector(".turbo-progress-bar"), "hides progress bar")
+  }
+
+  async "test standard form submission does not render a progress bar before expiring the delay"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(500))
+    await this.clickSelector("#standard form.redirect input[type=submit]")
+
+    this.assert.notOk(await this.hasSelector(".turbo-progress-bar"), "does not show progress bar before delay")
+  }
+
   async "test standard form submission with redirect response"() {
     await this.clickSelector("#standard form.redirect input[type=submit]")
     await this.nextBody
@@ -133,12 +153,41 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.deepEqual(await this.getAllSearchParams("button"), [])
   }
 
+  async "test input named action with no action attribute"() {
+    await this.clickSelector("#action-input form.no-action [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.getSearchParam("action"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+  }
+
+  async "test input named action with action attribute"() {
+    await this.clickSelector("#action-input form.action [type=submit]")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.getSearchParam("action"), "1")
+    this.assert.equal(await this.getSearchParam("query"), "1")
+  }
+
   async "test invalid form submission with unprocessable entity status"() {
     await this.clickSelector("#reject form.unprocessable_entity input[type=submit]")
     await this.nextBody
 
     const title = await this.querySelector("h1")
     this.assert.equal(await title.getVisibleText(), "Unprocessable Entity", "renders the response HTML")
+    this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
+  }
+
+  async "test invalid form submission with long form"() {
+    await this.scrollToSelector("#reject form.unprocessable_entity_with_tall_form input[type=submit]")
+    await this.clickSelector("#reject form.unprocessable_entity_with_tall_form input[type=submit]")
+    await this.nextBody
+
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "Unprocessable Entity", "renders the response HTML")
+    this.assert(await this.isScrolledToTop(), "page is scrolled to the top")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
   }
 
@@ -342,6 +391,15 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test link method form submission outside frame"() {
     await this.clickSelector("#link-method-outside-frame")
+
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test link method form submission inside form"() {
+    await this.clickSelector("#link-method-inside-form")
 
     await this.nextBeat
 

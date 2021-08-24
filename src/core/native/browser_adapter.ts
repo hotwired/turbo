@@ -1,6 +1,7 @@
 import { Adapter } from "./adapter"
 import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
+import { FormSubmission } from "../drive/form_submission"
 import { Session } from "../session"
 import { uuid } from "../../util"
 
@@ -68,6 +69,16 @@ export class BrowserAdapter implements Adapter {
 
   visitRendered(visit: Visit) {
 
+  }
+
+  formSubmissionStarted(formSubmission: FormSubmission) {
+    this.progressBar.setValue(0)
+    this.showProgressBarAfterDelay()
+  }
+
+  formSubmissionFinished(formSubmission: FormSubmission) {
+    this.progressBar.setValue(1)
+    this.hideProgressBar()
   }
 
   // Private

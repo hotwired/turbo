@@ -37,6 +37,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   connect() {
     if (!this.connected) {
       this.connected = true
+      this.reloadable = false
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.appearanceObserver.start()
       }
@@ -77,7 +78,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (!this.settingSourceURL && this.enabled && this.isActive && this.sourceURL != this.currentURL) {
+    if (!this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || this.sourceURL != this.currentURL)) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -131,6 +132,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   linkClickIntercepted(element: Element, url: string) {
+    this.reloadable = true
     this.navigateFrame(element, url)
   }
 
@@ -145,6 +147,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.formSubmission.stop()
     }
 
+    this.reloadable = false
     this.formSubmission = new FormSubmission(this, element, submitter)
     if (this.formSubmission.fetchRequest.isIdempotent) {
       this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
@@ -311,6 +314,20 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   get sourceURL() {
     if (this.element.src) {
       return this.element.src
+    }
+  }
+
+  get reloadable() {
+    const frame = this.findFrameElement(this.element)
+    return frame.hasAttribute("reloadable")
+  }
+
+  set reloadable(value: boolean) {
+    const frame = this.findFrameElement(this.element)
+    if (value) {
+      frame.setAttribute("reloadable", "")
+    } else {
+      frame.removeAttribute("reloadable")
     }
   }
 

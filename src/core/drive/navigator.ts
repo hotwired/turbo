@@ -74,7 +74,10 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    // Not all adapters implement formSubmissionStarted
+    if (typeof this.adapter.formSubmissionStarted === 'function') {
+      this.adapter.formSubmissionStarted(formSubmission)
+    }
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -98,6 +101,7 @@ export class Navigator {
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
       await this.view.renderPage(snapshot)
+      this.view.scrollToTop()
       this.view.clearSnapshotCache()
     }
   }
@@ -107,7 +111,10 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    // Not all adapters implement formSubmissionFinished
+    if (typeof this.adapter.formSubmissionFinished === 'function') {
+      this.adapter.formSubmissionFinished(formSubmission)
+    }
   }
 
   // Visit delegate

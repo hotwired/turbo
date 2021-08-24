@@ -2,6 +2,8 @@ import { FetchResponse } from "./fetch_response"
 import { dispatch } from "../util"
 
 export interface FetchRequestDelegate {
+  referrer?: URL
+
   prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
   requestStarted(request: FetchRequest): void
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
@@ -112,7 +114,8 @@ export class FetchRequest {
       headers: this.headers,
       redirect: "follow",
       body: this.body,
-      signal: this.abortSignal
+      signal: this.abortSignal,
+      referrer: this.delegate.referrer?.href
     }
   }
 

@@ -64,7 +64,8 @@ export class FormSubmission {
   }
 
   get action(): string {
-    return this.submitter?.getAttribute("formaction") || this.formElement.action
+    const formElementAction = typeof this.formElement.action === 'string' ? this.formElement.action : null
+    return this.submitter?.getAttribute("formaction") || this.formElement.getAttribute("action") || formElementAction || ""
   }
 
   get location(): URL {
