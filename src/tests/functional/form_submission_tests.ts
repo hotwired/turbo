@@ -44,7 +44,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.notOk(await this.formSubmitted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
-    this.assert.equal(await this.visitAction, "advance")
+    this.assert.equal(await this.visitAction, "replace")
     this.assert.equal(await this.getSearchParam("greeting"), "Hello from a form")
   }
 

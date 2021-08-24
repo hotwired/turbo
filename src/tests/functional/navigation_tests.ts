@@ -203,6 +203,21 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
   }
 
+  async "test following a redirection"() {
+    await this.clickSelector('#redirection-link')
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.visitAction, "replace")
+  }
+
+  async "test clicking the back button after redirection"() {
+    await this.clickSelector('#redirection-link')
+    await this.nextBody
+    await this.goBack()
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
+    this.assert.equal(await this.visitAction, "restore")
+  }
+
   async "test same-page anchor visits do not trigger visit events"() {
     const events = [
       "turbo:before-visit",
