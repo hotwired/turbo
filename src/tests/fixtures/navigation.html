@@ -5,6 +5,22 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      class CustomLinkElement extends HTMLElement {
+        constructor() {
+          super()
+          this.attachShadow({ mode: 'open' })
+        }
+        connectedCallback() {
+          this.shadowRoot.innerHTML = `
+            <a href="${this.getAttribute('link')}">
+              ${this.getAttribute('text')}
+            </a>
+          `
+        }
+      }
+      window.customElements.define('custom-link-element', CustomLinkElement)
+    </script>
     <meta name="referrer" content="origin-when-cross-origin">
   </head>
   <body>
@@ -35,6 +51,7 @@
       <p><a id="autofocus-link" href="/src/tests/fixtures/autofocus.html">autofocus.html link</a></p>
       <p><a id="redirection-link" href="/__turbo/redirect?path=/src/tests/fixtures/one.html">Redirection link</a></p>
       <p><a id="headers-link" href="/__turbo/headers">Headers link</a></p>
+      <p><custom-link-element id="same-origin-unannotated-custom-element-link" link="/src/tests/fixtures/one.html" text="Same-origin unannotated custom element link"></custom-link-element></p>
     </section>
 
     <turbo-frame id="hello" disabled></turbo-frame>
