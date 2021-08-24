@@ -37,6 +37,18 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
+  async "test following a same-origin unannotated custom element link"() {
+    await this.nextBeat
+    await this.remote.execute(() => {
+      const shadowRoot = document.querySelector("#custom-link-element")?.shadowRoot
+      const link = shadowRoot?.querySelector("a")
+      link?.click()
+    })
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
   async "test following a same-origin unannotated form[method=GET]"() {
     this.clickSelector("#same-origin-unannotated-form button")
     await this.nextBody
