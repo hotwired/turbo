@@ -33,12 +33,8 @@ export class LinkClickObserver {
   }
 
   clickBubbled = (event: MouseEvent) => {
-    // TODO: remove before any merge
-    console.log("event: ", event)
-    console.log("target is: ", event.target)
-    console.log("fixed target is: ", event.composedPath()[0])
     if (this.clickEventIsSignificant(event)) {
-      const target = event.composedPath()[0]
+      const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = this.findLinkFromClickTarget(target)
       if (link) {
         const location = this.getLocationForLink(link)
