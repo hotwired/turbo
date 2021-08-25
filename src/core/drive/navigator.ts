@@ -100,7 +100,11 @@ export class Navigator {
 
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
-      await this.view.renderPage(snapshot)
+      if (fetchResponse.serverError) {
+        await this.view.renderError(snapshot)
+      } else {
+        await this.view.renderPage(snapshot)
+      }
       this.view.scrollToTop()
       this.view.clearSnapshotCache()
     }

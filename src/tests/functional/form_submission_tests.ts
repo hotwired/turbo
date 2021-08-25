@@ -192,11 +192,13 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test invalid form submission with server error status"() {
+    this.assert(await this.hasSelector("head > #form-fixture-styles"))
     await this.clickSelector("#reject form.internal_server_error input[type=submit]")
     await this.nextBody
 
     const title = await this.querySelector("h1")
     this.assert.equal(await title.getVisibleText(), "Internal Server Error", "renders the response HTML")
+    this.assert.notOk(await this.hasSelector("head > #form-fixture-styles"), "replaces head")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
   }
 
