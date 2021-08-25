@@ -254,6 +254,15 @@ export class NavigationTests extends TurboDriveTestCase {
     const headers = await JSON.parse(await pre.getVisibleText())
     this.assert.equal(headers.referer, 'http://localhost:9000/src/tests/fixtures/navigation.html', `referer header is correctly set`)
   }
+
+  async "test double-clicking on a link"() {
+    this.clickSelector("#delayed-link")
+    this.clickSelector("#delayed-link")
+
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/__turbo/delayed_response")
+    this.assert.equal(await this.visitAction, "advance")
+  }
 }
 
 NavigationTests.registerSuite()

@@ -56,6 +56,11 @@ router.get("/headers", (request, response) => {
   response.type("html").status(200).send(template.replace('$HEADERS', JSON.stringify(request.headers, null, 4)))
 })
 
+router.get("/delayed_response", (request, response) => {
+  const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
+  setTimeout(() => response.status(200).sendFile(fixture), 1000)
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, status, type, target, targets } = params
