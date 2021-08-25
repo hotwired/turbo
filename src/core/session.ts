@@ -16,6 +16,8 @@ import { dispatch } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
+import { FrameElement } from "../elements/frame_element"
+import { FetchResponse } from "../http/fetch_response"
 
 export type TimingData = {}
 
@@ -235,6 +237,16 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.adapter.pageInvalidated()
   }
 
+  // Frame element
+
+  frameLoaded(frame: FrameElement) {
+    this.notifyApplicationAfterFrameLoad(frame)
+  }
+
+  frameRendered(fetchResponse: FetchResponse, frame: FrameElement) {
+    this.notifyApplicationAfterFrameRender(fetchResponse, frame);
+  }
+
   // Application events
 
   applicationAllowsFollowingLinkToLocation(link: Element, location: URL) {
@@ -277,6 +289,14 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL) {
     dispatchEvent(new HashChangeEvent("hashchange", { oldURL: oldURL.toString(), newURL: newURL.toString() }))
+  }
+
+  notifyApplicationAfterFrameLoad(frame: FrameElement) {
+    return dispatch("turbo:frame-load", { target: frame })
+  }
+
+  notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {
+    return dispatch("turbo:frame-render", { detail: { fetchResponse }, target: frame, cancelable: true })
   }
 
   // Helpers
