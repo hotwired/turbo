@@ -157,10 +157,9 @@ export class FrameTests extends TurboDriveTestCase {
     await this.clickSelector("#frame-part")
 
     await this.nextEventNamed("turbo:frame-render") // recursive
-    const { frameId, fetchResponse } = await this.nextEventNamed("turbo:frame-render")
+    const { fetchResponse } = await this.nextEventNamed("turbo:frame-render")
 
     this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
-    this.assert.equal(frameId, 'part')
   }
 
    async "test following a link reloads frame on every click"() {
