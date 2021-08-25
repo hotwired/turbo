@@ -78,7 +78,7 @@ export class FetchRequest {
     this.abortController.abort()
   }
 
-  async perform(): Promise<FetchResponse> {
+  async perform(): Promise<FetchResponse | void> {
     const { fetchOptions } = this
     this.delegate.prepareHeadersForRequest?.(this.headers, this)
     await this.allowRequestToBeIntercepted(fetchOptions)
@@ -87,8 +87,10 @@ export class FetchRequest {
       const response = await fetch(this.url.href, fetchOptions)
       return await this.receive(response)
     } catch (error) {
-      this.delegate.requestErrored(this, error)
-      throw error
+      if (error.name !== 'AbortError') {
+        this.delegate.requestErrored(this, error)
+        throw error
+      }
     } finally {
       this.delegate.requestFinished(this)
     }
