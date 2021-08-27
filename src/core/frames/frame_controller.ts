@@ -2,7 +2,7 @@ import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../ele
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { parseHTMLDocument } from "../../util"
+import { parseHTMLDocument, reportError } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -112,7 +112,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         session.frameRendered(fetchResponse, this.element);
       }
     } catch (error) {
-      console.error(error)
+      reportError(error)
       this.view.invalidate()
     }
   }
@@ -180,7 +180,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
-    console.error(response)
+    reportError(response)
     this.resolveVisitPromise()
   }
 

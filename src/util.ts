@@ -49,3 +49,8 @@ export function uuid() {
     }
   }).join("")
 }
+
+export function reportError(error) {
+  console.warn(error)
+  dispatch('turbo:error', { detail: { error } })
+}

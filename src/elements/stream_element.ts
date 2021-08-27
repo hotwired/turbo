@@ -1,5 +1,5 @@
 import { StreamActions } from "../core/streams/stream_actions"
-import { nextAnimationFrame } from "../util"
+import { nextAnimationFrame, reportError } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
@@ -8,7 +8,7 @@ export class StreamElement extends HTMLElement {
     try {
       await this.render()
     } catch (error) {
-      console.error(error)
+      reportError(error)
     } finally {
       this.disconnect()
     }
