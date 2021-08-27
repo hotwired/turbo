@@ -1,4 +1,5 @@
 import { Action, isAction } from "../types"
+import { reportError } from "../../util"
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
@@ -113,7 +114,7 @@ export class Navigator {
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-    console.error(error)
+    reportError(error)
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {

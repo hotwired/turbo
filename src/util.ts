@@ -82,3 +82,8 @@ export function clearBusyState(...elements: Element[]) {
     element.removeAttribute("aria-busy")
   }
 }
+
+export function reportError(error) {
+  console.warn(error)
+  dispatch('turbo:error', { detail: { error } })
+}
