@@ -187,7 +187,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestErrored(request: FetchRequest, error: Error) {
-    console.error(error)
+    reportError(error)
     this.resolveVisitPromise()
   }
 
@@ -214,7 +214,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-    console.error(error)
+    reportError(error)
   }
 
   formSubmissionFinished({ formElement }: FormSubmission) {
@@ -296,9 +296,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         return await this.extractForeignFrameElement(element)
       }
 
-      console.error(`Response has no matching <turbo-frame id="${id}"> element`)
+      reportError(`Response has no matching <turbo-frame id="${id}"> element`)
     } catch (error) {
-      console.error(error)
+      reportError(error)
     }
 
     return new FrameElement()
