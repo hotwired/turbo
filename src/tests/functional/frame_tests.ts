@@ -161,11 +161,19 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
   }
 
-   async "test following a link reloads frame on every click"() {
+   async "test following inner link reloads frame on every click"() {
     await this.clickSelector("#hello a")
     await this.nextEventNamed("turbo:before-fetch-request")
 
     await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test following outer link reloads frame on every click"() {
+    await this.clickSelector("#outer-frame-link")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#outer-frame-link")
     await this.nextEventNamed("turbo:before-fetch-request")
   }
 
