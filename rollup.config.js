@@ -33,13 +33,11 @@ export default [
         name: "Turbo",
         file: "dist/turbo.es2017-umd.js",
         format: "umd",
-        sourcemap: true,
         banner
       },
       {
         file: "dist/turbo.es2017-esm.js",
         format: "es",
-        sourcemap: true,
         banner
       }
     ],
