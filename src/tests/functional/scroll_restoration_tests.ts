@@ -5,6 +5,7 @@ export class ScrollRestorationTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/scroll_restoration.html#three")
     await this.nextBeat
     const { y: yAfterLoading } = await this.scrollPosition
+    await this.nextBeat
     this.assert.notEqual(yAfterLoading, 0)
   }
 
