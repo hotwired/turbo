@@ -352,6 +352,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.formSubmitted)
   }
 
+  async "test rejected form submission with [data-turbo=false] displays confirm dialog on reload"() {
+    await this.clickSelector('#turbo-false form[action="/__turbo/reject"] input[type=submit]')
+    await this.nextBody
+    await this.reload()
+    this.assert(await this.getAlertText(), "confirm dialog displayed")
+    await this.dismissAlert()
+  }
+
   async "test form submission skipped within method=dialog"() {
     await this.clickSelector('#dialog-method [type="submit"]')
     await this.nextBeat

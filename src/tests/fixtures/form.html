@@ -119,6 +119,11 @@
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <input type="submit" data-turbo="false">
       </form>
+
+      <form action="/__turbo/reject" method="post" data-turbo="false">
+        <input type="hidden" name="status" value="422">
+        <input type="submit">
+      </form>
     </div>
     <hr>
     <div id="skipped">
