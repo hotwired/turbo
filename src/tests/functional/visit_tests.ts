@@ -79,6 +79,27 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.include(url, "/src/tests/fixtures/one.html")
   }
 
+  async "test turbo:before-fetch-response open new site"() {
+    this.remote.execute(() => addEventListener("turbo:before-fetch-response", async function eventListener(event: any) {
+      removeEventListener("turbo:before-fetch-response", eventListener, false);
+
+      document.body.innerText = 'Received fetch response';
+
+      if (await event.detail.fetchResponse.responseHTML === 'Sample response') {
+        document.body.innerText += ' html';
+      }
+
+      if (await event.detail.fetchResponse.responseText === 'Sample response') {
+        document.body.innerText += ' text';
+      }
+    }, false))
+
+    await this.clickSelector("#sample-response")
+    const body = await this.nextBody;
+
+    this.assert(await body.getVisibleText(), "Received fetch response html text")
+  }
+
   async visitLocation(location: string) {
     this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }
