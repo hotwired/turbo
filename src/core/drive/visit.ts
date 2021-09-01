@@ -372,10 +372,14 @@ export class Visit implements FetchRequestDelegate {
   }
 
   shouldIssueRequest() {
-    if (this.isSamePage) {
+    const hasCachedSnapshot = this.hasCachedSnapshot()
+
+    if (this.action == "restore" && !hasCachedSnapshot) {
+      return true
+    } else if (this.isSamePage) {
       return false
     } else if (this.action == "restore") {
-      return !this.hasCachedSnapshot()
+      return false
     } else {
       return true
     }
