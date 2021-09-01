@@ -83,21 +83,19 @@ export class VisitTests extends TurboDriveTestCase {
     this.remote.execute(() => addEventListener("turbo:before-fetch-response", async function eventListener(event: any) {
       removeEventListener("turbo:before-fetch-response", eventListener, false);
 
-      document.body.innerText = 'Received fetch response';
-
-      if (await event.detail.fetchResponse.responseHTML === 'Sample response') {
-        document.body.innerText += ' html';
-      }
-
-      if (await event.detail.fetchResponse.responseText === 'Sample response') {
-        document.body.innerText += ' text';
-      }
-    }, false))
+      (window as any).fetchResponseResult = {
+        responseText: await event.detail.fetchResponse.responseText,
+        responseHTML: await event.detail.fetchResponse.responseHTML,
+      };
+    }, false));
 
     await this.clickSelector("#sample-response")
-    const body = await this.nextBody;
+    await this.nextEventNamed("turbo:before-fetch-response")
 
-    this.assert(await body.getVisibleText(), "Received fetch response html text")
+    const fetchResponseResult = await this.evaluate(() => (window as any).fetchResponseResult)
+
+    this.assert.isTrue(fetchResponseResult.responseText.indexOf('An element with an ID') > -1)
+    this.assert.isTrue(fetchResponseResult.responseHTML.indexOf('An element with an ID') > -1)
   }
 
   async visitLocation(location: string) {
