@@ -199,6 +199,16 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(requestLogs.length, 0)
   }
 
+  async "test turbo:before-fetch-request fires on the frame element"() {
+    await this.clickSelector("#hello a")
+    this.assert.ok(await this.nextEventOnTarget("frame", "turbo:before-fetch-request"))
+  }
+
+  async "test turbo:before-fetch-response fires on the frame element"() {
+    await this.clickSelector("#hello a")
+    this.assert.ok(await this.nextEventOnTarget("frame", "turbo:before-fetch-response"))
+  }
+
   get frameScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.frameScriptEvaluationCount)
   }

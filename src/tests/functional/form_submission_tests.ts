@@ -400,6 +400,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await message.getVisibleText(), "Link!")
   }
 
+  async "test turbo:before-fetch-request fires on the form element"() {
+    await this.clickSelector('#targets-frame form.one [type="submit"]')
+    this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-request"))
+  }
+
+  async "test turbo:before-fetch-response fires on the form element"() {
+    await this.clickSelector('#targets-frame form.one [type="submit"]')
+    this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-response"))
+  }
+
   get formSubmitted(): Promise<boolean> {
     return this.hasSelector("html[data-form-submitted]")
   }

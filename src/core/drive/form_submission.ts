@@ -54,7 +54,7 @@ export class FormSubmission {
     this.formElement = formElement
     this.submitter = submitter
     this.formData = buildFormData(formElement, submitter)
-    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body)
+    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body, this.formElement)
     this.mustRedirect = mustRedirect
   }
 

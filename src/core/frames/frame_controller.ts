@@ -233,7 +233,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Private
 
   private async visit(url: Locatable) {
-    const request = new FetchRequest(this, FetchMethod.get, expandURL(url))
+    const request = new FetchRequest(this, FetchMethod.get, expandURL(url), undefined, this.element)
 
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
