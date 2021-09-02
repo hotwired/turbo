@@ -22,6 +22,10 @@
     <turbo-frame id="nested-root" target="frame">
       <h2>Frames: #nested-root</h2>
       <a id="inner-outer-frame-link" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="nested-child">Inner/Outer frame link</a>
+      <form data-turbo-frame="nested-child" method="get" action="/src/tests/fixtures/frames/frame.html">
+        <input id="inner-outer-frame-submit" type="submit" value="Inner/Outer form submit">
+      </form>
+
       <turbo-frame id="nested-child">
         <h2>Frames: #nested-child</h2>
         <a href="/src/tests/fixtures/frames/frame.html">Load #nested-child</a>
@@ -59,5 +63,8 @@
     </turbo-frame>
 
     <a id="outer-frame-link" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame">Outer frame link</a>
+    <form data-turbo-frame="frame" method="get" action="/src/tests/fixtures/frames/frame.html">
+      <input id="outer-frame-submit" type="submit" value="Outer form submit">
+    </form>
   </body>
 </html>
