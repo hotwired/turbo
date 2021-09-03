@@ -246,6 +246,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   private navigateFrame(element: Element, url: string) {
     const frame = this.findFrameElement(element)
+    frame.setAttribute("reloadable", "")
     frame.src = url
   }
 
