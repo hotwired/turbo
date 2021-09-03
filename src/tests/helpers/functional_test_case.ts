@@ -59,7 +59,7 @@ export class FunctionalTestCase extends InternTestCase {
   }
 
   async clickSelector(selector: string): Promise<void> {
-    return this.remote.findByCssSelector(selector).click()
+    return (await this.remote.findByCssSelector(selector)).click()
   }
 
   async scrollToSelector(selector: string): Promise<void> {
