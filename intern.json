@@ -17,5 +17,5 @@
       }
     }
   ],
-  "defaultTimeout": 2500
+  "defaultTimeout": 5000
 }

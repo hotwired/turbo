@@ -238,6 +238,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test frame form submission toggles the ancestor frame's [busy] attribute"() {
     await this.clickSelector("#frame form.redirect input[type=submit]")
+    await this.nextBeat
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
@@ -245,6 +246,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test frame form submission toggles the target frame's [busy] attribute"() {
     await this.clickSelector('#targets-frame form.frame [type="submit"]')
+    await this.nextBeat
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
 
