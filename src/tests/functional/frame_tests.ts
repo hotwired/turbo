@@ -78,12 +78,25 @@ export class FrameTests extends TurboDriveTestCase {
   async "test following a link within a frame with target=_top navigates the page"() {
     this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
 
-    await this.clickSelector("#navigate-top a")
+    await this.clickSelector("#navigate-top a:not([data-turbo-frame])")
     await this.nextBeat
 
     const frameText = await this.querySelector("body > h1")
     this.assert.equal(await frameText.getVisibleText(), "One")
-    this.assert.notOk(await this.hasSelector("#navigate-top"))
+    this.assert.notOk(await this.hasSelector("#navigate-top a"))
+  }
+
+  async "test following a link that declares data-turbo-frame='_self' within a frame with target=_top navigates the frame itself"() {
+    this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
+
+    await this.clickSelector("#navigate-top a[data-turbo-frame='_self']")
+    await this.nextBeat
+
+    const title = await this.querySelector("body > h1")
+    this.assert.equal(await title.getVisibleText(), "Frames")
+    this.assert.ok(await this.hasSelector("#navigate-top"))
+    const frame = await this.querySelector("#navigate-top")
+    this.assert.equal(await frame.getVisibleText(), "Replaced only the frame")
   }
 
   async "test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame"() {

@@ -11,6 +11,12 @@ export class FrameNavigationTests extends TurboDriveTestCase {
     await this.nextEventOnTarget("frame", "turbo:frame-load")
   }
 
+  async "test frame navigation with self link"() {
+    await this.clickSelector("#self")
+
+    await this.nextEventOnTarget("frame", "turbo:frame-load")
+  }
+
   async "test frame navigation with exterior link"() {
     await this.clickSelector("#outside")
 
