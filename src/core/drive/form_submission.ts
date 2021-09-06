@@ -94,10 +94,24 @@ export class FormSubmission {
     }, [] as [string, string][])
   }
 
+  get confirmationMessage() {
+    return this.formElement.getAttribute("data-turbo-confirm")
+  }
+
+  get needsConfirmation() {
+    return this.confirmationMessage !== null
+  }
+
   // The submission process
 
   async start() {
     const { initialized, requesting } = FormSubmissionState
+
+    if (this.needsConfirmation) {
+      const answer = confirm(this.confirmationMessage!)
+      if (!answer) { return }
+    }
+
     if (this.state == initialized) {
       this.state = requesting
       return this.fetchRequest.perform()

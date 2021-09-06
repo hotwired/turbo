@@ -21,6 +21,22 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector(".turbo-progress-bar"), "hides progress bar")
   }
 
+  async "test form submission with confirmation confirmed"() {
+    await this.clickSelector("#standard form.confirm input[type=submit]")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.acceptAlert()
+    this.assert.ok(await this.formSubmitted)
+  }
+
+  async "test form submission with confirmation cancelled"() {
+    await this.clickSelector("#standard form.confirm input[type=submit]")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.dismissAlert()
+    this.assert.notOk(await this.formSubmitted)
+  }
+
   async "test standard form submission does not render a progress bar before expiring the delay"() {
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(500))
     await this.clickSelector("#standard form.redirect input[type=submit]")
