@@ -19,7 +19,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
-  currentURL?: string | null
+  currentURL: string | null = null
   formSubmission?: FormSubmission
   private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
@@ -38,7 +38,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   connect() {
     if (!this.connected) {
       this.connected = true
-      this.reloadable = false
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.willEagerLoad = false
         this.appearanceObserver.start()
@@ -80,7 +79,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (!this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || this.sourceURL != this.currentURL)) {
+    if (!this.settingSourceURL && this.enabled && this.isActive && this.sourceURL != this.currentURL) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -136,7 +135,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   linkClickIntercepted(element: Element, url: string) {
-    this.reloadable = true
     this.navigateFrame(element, url)
   }
 
@@ -151,7 +149,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.formSubmission.stop()
     }
 
-    this.reloadable = false
+    this.currentURL = null
     this.formSubmission = new FormSubmission(this, element, submitter)
     const { fetchRequest } = this.formSubmission
     this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
@@ -248,7 +246,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
-    frame.setAttribute("reloadable", "")
+    frame.delegate.currentURL = null
     frame.src = url
   }
 
@@ -327,27 +325,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   get sourceURL() {
     if (this.element.src) {
       return this.element.src
-    }
-  }
-
-  get reloadable() {
-    const frame = this.findFrameElement(this.element)
-    return frame.hasAttribute("reloadable")
-  }
-
-  set reloadable(value: boolean) {
-    const frame = this.findFrameElement(this.element)
-    if (value) {
-      frame.setAttribute("reloadable", "")
     } else {
-      frame.removeAttribute("reloadable")
+      return null
     }
   }
 
-  set sourceURL(sourceURL: string | undefined) {
+  set sourceURL(sourceURL: string | null) {
     this.settingSourceURL = true
     this.element.src = sourceURL ?? null
-    this.currentURL = sourceURL
     this.settingSourceURL = false
   }
 

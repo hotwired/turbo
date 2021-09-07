@@ -11,6 +11,7 @@ export interface FrameElementDelegate {
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
   loadResponse(response: FetchResponse): void
   isLoading: boolean
+  currentURL: string | null
 }
 
 /**
