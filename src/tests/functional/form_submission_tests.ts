@@ -412,6 +412,15 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-response"))
   }
 
+  async "test form submission with disable and non-permanent form"() {
+    await this.clickSelector("#disabled form.redirect input[type=submit]")
+    const elemDisabled = await this.querySelector("#disabled form.redirect input[type=submit]")
+    this.assert.notOk(await elemDisabled.isEnabled())
+
+    await this.nextBody
+    this.assert.ok(await this.formSubmitted)
+  }
+
   get formSubmitted(): Promise<boolean> {
     return this.hasSelector("html[data-form-submitted]")
   }

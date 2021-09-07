@@ -193,5 +193,11 @@
       </div>
     </turbo-frame>
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-outside-frame">Stream link outside frame</a>
+    <hr>
+    <div id="disabled">
+      <form action="/__turbo/redirect" method="post" class="redirect" data-turbo-disable-with="Processing...">
+        <input type="submit">
+      </form>
+    </div>
   </body>
 </html>

@@ -27,15 +27,15 @@ export enum FormSubmissionState {
 
 enum FormEnctype {
   urlEncoded = "application/x-www-form-urlencoded",
-  multipart  = "multipart/form-data",
-  plain      = "text/plain"
+  multipart = "multipart/form-data",
+  plain = "text/plain"
 }
 
 function formEnctypeFromString(encoding: string): FormEnctype {
-  switch(encoding.toLowerCase()) {
+  switch (encoding.toLowerCase()) {
     case FormEnctype.multipart: return FormEnctype.multipart
-    case FormEnctype.plain:     return FormEnctype.plain
-    default:                    return FormEnctype.urlEncoded
+    case FormEnctype.plain: return FormEnctype.plain
+    default: return FormEnctype.urlEncoded
   }
 }
 
@@ -89,9 +89,21 @@ export class FormSubmission {
   }
 
   get stringFormData() {
-    return [ ...this.formData ].reduce((entries, [ name, value ]) => {
-      return entries.concat(typeof value == "string" ? [[ name, value ]] : [])
+    return [...this.formData].reduce((entries, [name, value]) => {
+      return entries.concat(typeof value == "string" ? [[name, value]] : [])
     }, [] as [string, string][])
+  }
+
+  get disabledMessage() {
+    return this.formElement.getAttribute("data-turbo-disable-with")
+  }
+
+  get needsDisabled() {
+    return this.disabledMessage !== null
+  }
+
+  get submitElements(): NodeListOf<HTMLInputElement> {
+    return this.formElement.querySelectorAll("input[type='submit']")
   }
 
   // The submission process
@@ -99,6 +111,12 @@ export class FormSubmission {
   async start() {
     const { initialized, requesting } = FormSubmissionState
     if (this.state == initialized) {
+      if (this.needsDisabled) {
+        this.submitElements.forEach((submitElement) => {
+          submitElement.disabled = true
+          submitElement.value = this.disabledMessage!
+        })
+      }
       this.state = requesting
       return this.fetchRequest.perform()
     }
@@ -121,7 +139,7 @@ export class FormSubmission {
       if (token) {
         headers["X-CSRF-Token"] = token
       }
-      headers["Accept"] = [ StreamMessage.contentType, headers["Accept"] ].join(", ")
+      headers["Accept"] = [StreamMessage.contentType, headers["Accept"]].join(", ")
     }
   }
 
@@ -160,7 +178,7 @@ export class FormSubmission {
 
   requestFinished(request: FetchRequest) {
     this.state = FormSubmissionState.stopped
-    dispatch("turbo:submit-end", { target: this.formElement, detail: { formSubmission: this, ...this.result }})
+    dispatch("turbo:submit-end", { target: this.formElement, detail: { formSubmission: this, ...this.result } })
     this.delegate.formSubmissionFinished(this)
   }
 
