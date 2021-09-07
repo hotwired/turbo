@@ -214,7 +214,6 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextEventNamed("turbo:before-fetch-request")
   }
 
-
   async "test reconnecting after following a link does not reload the frame"() {
     await this.clickSelector("#hello a")
     await this.nextEventNamed("turbo:before-fetch-request")
