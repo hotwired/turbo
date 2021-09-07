@@ -53,6 +53,10 @@ router.post("/reject", (request, response) => {
 
 router.get("/headers", (request, response) => {
   const template = fs.readFileSync("src/tests/fixtures/headers.html").toString()
+  const { turbo_frame } = request.query
+
+  if (typeof turbo_frame == "string") response.set("Turbo-Frame", turbo_frame)
+
   response.type("html").status(200).send(template.replace('$HEADERS', JSON.stringify(request.headers, null, 4)))
 })
 

@@ -451,6 +451,18 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frame: Unprocessable Entity")
   }
 
+  async "test frame form submission response with Turbo-Frame=_top header"() {
+    await this.clickSelector("#frame form.redirect.turbo-frame-header button")
+    await this.nextEventNamed("turbo:before-fetch-request")
+    await this.nextEventNamed("turbo:before-fetch-response")
+    const eventLog = await this.eventLogChannel.read()
+    await this.nextBody
+
+    this.assert.notOk(await this.hasSelector("#frame"), "Navigates entire page")
+    this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Request Headers")
+    this.assert.notOk(eventLog.some(([ name ]) => name == "turbo:before-fetch-request" || name == "turbo:before-fetch-response"), "does not make subsequent requests")
+  }
+
   async "test invalid frame form submission with internal server errror status"() {
     await this.clickSelector("#frame form.internal_server_error input[type=submit]")
     await this.nextBeat

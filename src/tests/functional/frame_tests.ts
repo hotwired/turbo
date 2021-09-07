@@ -25,6 +25,18 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
+  async "test a frame request with Turbo-Frame=_top header in response"() {
+    await this.clickSelector("#navigate-form-redirect-top")
+    await this.nextEventOnTarget("frame", "turbo:before-fetch-request")
+    await this.nextEventOnTarget("frame", "turbo:before-fetch-response")
+    const eventLog = await this.eventLogChannel.read()
+    await this.nextBody
+
+    this.assert.notOk(await this.hasSelector("#frame"), "Navigates entire page")
+    this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Request Headers")
+    this.assert.notOk(eventLog.some(([ name ]) => name == "turbo:before-fetch-request" || name == "turbo:before-fetch-response"), "does not make subsequent requests")
+  }
+
   async "test following a link driving a frame toggles the [busy] attribute"() {
     await this.clickSelector("#hello a")
 

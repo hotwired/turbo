@@ -172,8 +172,16 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-    await this.loadResponse(response)
-    this.resolveVisitPromise()
+    const { location, redirected, statusCode } = response
+
+    if (redirected && response.header("Turbo-Frame") == "_top") {
+      const responseHTML = await response.responseHTML
+
+      session.visit(location, { response: { statusCode, redirected, responseHTML } })
+    } else {
+      await this.loadResponse(response)
+      this.resolveVisitPromise()
+    }
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
@@ -197,9 +205,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     frame.setAttribute("busy", "")
   }
 
-  formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
-    const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
-    frame.delegate.loadResponse(response)
+  async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
+    const { location, redirected, statusCode } = response
+
+    if (redirected && response.header("Turbo-Frame") == "_top") {
+      const responseHTML = await response.responseHTML
+
+      session.view.clearSnapshotCache()
+      session.visit(location, { response: { statusCode, redirected, responseHTML } })
+    } else {
+      const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
+      frame.delegate.loadResponse(response)
+    }
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
