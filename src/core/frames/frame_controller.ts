@@ -347,7 +347,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   set sourceURL(sourceURL: string | undefined) {
     this.settingSourceURL = true
     this.element.src = sourceURL ?? null
-    this.currentURL = this.element.src
+    this.currentURL = sourceURL
     this.settingSourceURL = false
   }
 

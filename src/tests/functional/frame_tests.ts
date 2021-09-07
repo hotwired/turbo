@@ -141,6 +141,16 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.querySelector("#recursive details:not([open])"))
   }
 
+  async "test following a link to the frame's current src refreshes the frame"() {
+    await this.clickSelector("#navigates-frame")
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    await this.clickSelector("#navigates-frame")
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+  }
+
   async "test submitting a form that redirects to a page with a <turbo-frame recurse> which lazily loads a matching frame"() {
     await this.nextBeat
     await this.clickSelector("#recursive summary")
