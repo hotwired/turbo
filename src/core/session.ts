@@ -148,6 +148,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
       form.action = link.getAttribute("href") || "undefined"
       form.hidden = true
 
+      if (link.hasAttribute("data-turbo-confirm")) {
+        form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
+      }
+
       link.parentNode?.insertBefore(form, link)
       return dispatch("submit", { cancelable: true, target: form })
     } else {

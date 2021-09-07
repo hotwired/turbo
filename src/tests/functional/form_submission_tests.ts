@@ -465,6 +465,29 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await message.getVisibleText(), "Link!")
   }
 
+  async "test link method form submission inside frame with confirmation confirmed"() {
+    await this.clickSelector("#link-method-inside-frame-with-confirmation")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.acceptAlert()
+
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test link method form submission inside frame with confirmation cancelled"() {
+    await this.clickSelector("#link-method-inside-frame-with-confirmation")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.dismissAlert()
+
+    await this.nextBeat
+
+    this.assert.notOk(await this.hasSelector("#frame div.message"), "Not confirming form submission does not submit the form")
+  }
+
   async "test link method form submission outside frame"() {
     await this.clickSelector("#link-method-outside-frame")
 
