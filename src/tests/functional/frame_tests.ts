@@ -190,6 +190,30 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextEventNamed("turbo:before-fetch-request")
   }
 
+  async "test following outer form reloads frame on every submit"() {
+    await this.clickSelector("#outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test an inner/outer link reloads frame on every click"() {
+    await this.clickSelector("#inner-outer-frame-link")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#inner-outer-frame-link")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test an inner/outer form reloads frame on every submit"() {
+    await this.clickSelector("#inner-outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#inner-outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
   async "test reconnecting after following a link does not reload the frame"() {
     await this.clickSelector("#hello a")
     await this.nextEventNamed("turbo:before-fetch-request")
