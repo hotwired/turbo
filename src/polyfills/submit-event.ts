@@ -18,6 +18,7 @@ function clickCaptured(event: Event) {
 
 (function() {
   if ("SubmitEvent" in window) return
+  if ("submitter" in Event.prototype) return
 
   addEventListener("click", clickCaptured, true)
 
