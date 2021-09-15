@@ -9,6 +9,7 @@ type ElementType = "script" | "stylesheet"
 export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
   readonly detailsByOuterHTML = this.children
     .filter((element) => !elementIsNoscript(element))
+    .map((element) => elementWithoutNonce(element))
     .reduce((result, element) => {
     const { outerHTML } = element
     const details: ElementDetails
@@ -32,7 +33,6 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
     return Object.keys(this.detailsByOuterHTML)
       .filter(outerHTML => this.detailsByOuterHTML[outerHTML].tracked)
       .join("")
-      .replace(/nonce=["'][^"']*["']/, "nonce=\"\"")
   }
 
   getScriptElementsNotInSnapshot(snapshot: HeadSnapshot) {
@@ -109,4 +109,12 @@ function elementIsStylesheet(element: Element) {
 function elementIsMetaElementWithName(element: Element, name: string) {
   const tagName = element.tagName.toLowerCase()
   return tagName == "meta" && element.getAttribute("name") == name
+}
+
+function elementWithoutNonce(element: Element) {
+  if (element.hasAttribute("nonce")) {
+    element.setAttribute("nonce", "")
+  }
+  
+  return element  
 }
