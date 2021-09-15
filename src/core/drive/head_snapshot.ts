@@ -32,6 +32,7 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
     return Object.keys(this.detailsByOuterHTML)
       .filter(outerHTML => this.detailsByOuterHTML[outerHTML].tracked)
       .join("")
+      .replace(/nonce=["'][^"']*["']/, "nonce=\"\"")
   }
 
   getScriptElementsNotInSnapshot(snapshot: HeadSnapshot) {
