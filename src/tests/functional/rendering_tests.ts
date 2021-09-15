@@ -55,6 +55,20 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.deepEqual(finalElements, newElements)
   }
 
+  async "test accumulates assets elements in head when new tracked element introduced"() {
+    const originalElements = await this.assetElements
+
+    this.clickSelector("#new-tracked-asset-link")
+    await this.nextBody
+    const newElements = await this.assetElements
+    this.assert.notDeepEqual(newElements, originalElements)
+
+    this.goBack()
+    await this.nextBody
+    const finalElements = await this.assetElements
+    this.assert.deepEqual(finalElements, newElements)
+  }
+
   async "test replaces provisional elements in head"() {
     const originalElements = await this.provisionalElements
     this.assert(!await this.hasSelector("meta[name=test]"))
