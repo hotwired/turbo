@@ -34,6 +34,13 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "load")
   }
 
+  async "test wont reload when tracked elements has a nonce"() {
+    this.clickSelector("#tracked-nonce-tag-link")
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_nonce_tag.html")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
   async "test reloads when turbo-visit-control setting is reload"() {
     this.clickSelector("#visit-control-reload-link")
     await this.nextBody
