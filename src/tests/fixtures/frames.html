@@ -5,14 +5,41 @@
     <title>Frame</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      addEventListener("click", ({ target }) => {
+        if (target.id == "add-turbo-action-to-frame") {
+          target.closest("turbo-frame")?.setAttribute("data-turbo-action", "advance")
+        }
+      })
+    </script>
   </head>
   <body>
     <h1>Frames</h1>
 
     <turbo-frame id="frame" data-loaded-from="/src/tests/fixtures/frames.html">
       <h2>Frames: #frame</h2>
+
+      <button id="add-turbo-action-to-frame" type="button">Add [data-turbo-action="advance"] to frame</button>
+      <a id="link-frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame from within</a>
+      <a id="link-nested-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-action="advance">Navigate #frame from within with a[data-turbo-action="advance"]</a>
     </turbo-frame>
     <a id="outside-frame-form" href="/src/tests/fixtures/frames/form.html" data-turbo-frame="frame">Navigate #frame to /frames/form.html</a>
+
+    <a id="link-outside-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame" data-turbo-action="advance">Navigate #frame from outside with a[data-turbo-action="advance"]</a>
+    <form id="form-get-frame-action-advance" action="/__turbo/redirect" data-turbo-frame="frame" data-turbo-action="advance">
+      <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+      <button>Navigate #frame with GET form[data-turbo-action="advance"]</button>
+    </form>
+
+    <form id="form-post-frame-action-advance" method="post" action="/__turbo/redirect" data-turbo-frame="frame" data-turbo-action="advance">
+      <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+      <button>Navigate #frame with POST form[data-turbo-action="advance"]</button>
+    </form>
+
+    <form method="post" action="/__turbo/redirect" data-turbo-frame="frame" data-turbo-action="advance">
+      <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+      <button id="button-frame-action-advance" data-turbo-action="advance">Navigate #frame with button[data-turbo-action="advance"]</button>
+    </form>
 
     <turbo-frame id="hello" target="frame">
       <h2>Frames: #hello</h2>
