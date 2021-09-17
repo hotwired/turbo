@@ -37,6 +37,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.formSubmitted)
   }
 
+  async "test from submission with confirmation overriden"() {
+    await this.remote.execute(() => window.Turbo.setConfirmMethod((message, element) => confirm("Overriden message")))
+
+    await this.clickSelector("#standard form.confirm input[type=submit]")
+
+    this.assert.equal(await this.getAlertText(), "Overriden message")
+    await this.acceptAlert()
+    this.assert.ok(await this.formSubmitted)
+  }
+
   async "test standard form submission does not render a progress bar before expiring the delay"() {
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(500))
     await this.clickSelector("#standard form.redirect input[type=submit]")

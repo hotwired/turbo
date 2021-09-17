@@ -49,6 +49,10 @@ export class FormSubmission {
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
+  static confirmMethod(message: string, element: HTMLFormElement):boolean {
+    return confirm(message)
+  }
+
   constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement, mustRedirect = false) {
     this.delegate = delegate
     this.formElement = formElement
@@ -108,7 +112,7 @@ export class FormSubmission {
     const { initialized, requesting } = FormSubmissionState
 
     if (this.needsConfirmation) {
-      const answer = confirm(this.confirmationMessage!)
+      const answer = FormSubmission.confirmMethod(this.confirmationMessage!, this.formElement)
       if (!answer) { return }
     }
 
