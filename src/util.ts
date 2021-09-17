@@ -55,3 +55,11 @@ export function uuid() {
     }
   }).join("")
 }
+
+export function getAttribute(attributeName: string, ...elements: (Element | undefined)[]): string | null {
+  for (const value of elements.map(element => element?.getAttribute(attributeName))) {
+    if (typeof value == "string") return value
+  }
+
+  return null
+}
