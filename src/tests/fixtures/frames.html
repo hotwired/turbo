@@ -31,6 +31,12 @@
         <a href="/src/tests/fixtures/frames/frame.html">Load #nested-child</a>
         <a href="/src/tests/fixtures/one.html" data-turbo-frame="_top">Visit one.html</a>
       </turbo-frame>
+
+      <turbo-frame id="nested-child-navigate-top" target="_top">
+        <form method="get" action="/src/tests/fixtures/one.html">
+          <input id="nested-child-navigate-top-submit" type="submit" value="Nested Child form submit">
+        </form>
+      </turbo-frame>
     </turbo-frame>
 
     <turbo-frame id="navigate-top" target="_top">
