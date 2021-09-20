@@ -75,7 +75,18 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("#nested-child"))
   }
 
-  async "test following a form within a nested frame with target top"() {
+  async "test following a form within a nested frame with form target top"() {
+    await this.clickSelector("#nested-child-navigate-form-top-submit")
+    await this.nextBeat
+
+    const frameText = await this.querySelector("body > h1")
+    this.assert.equal(await frameText.getVisibleText(), "One")
+    this.assert.notOk(await this.hasSelector("#frame"))
+    this.assert.notOk(await this.hasSelector("#nested-root"))
+    this.assert.notOk(await this.hasSelector("#nested-child"))
+  }
+
+  async "test following a form within a nested frame with child frame target top"() {
     await this.clickSelector("#nested-child-navigate-top-submit")
     await this.nextBeat
 
