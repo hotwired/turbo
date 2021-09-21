@@ -1,14 +1,15 @@
 import { FetchResponse } from "../http/fetch_response"
+import { FormInterceptorDelegate } from "../core/frames/form_interceptor"
+import { LinkInterceptorDelegate } from "../core/frames/link_interceptor"
 
 export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
 
-export interface FrameElementDelegate {
+export interface FrameElementDelegate extends LinkInterceptorDelegate, FormInterceptorDelegate {
   connect(): void
   disconnect(): void
   loadingStyleChanged(): void
   sourceURLChanged(): void
   disabledChanged(): void
-  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
   loadResponse(response: FetchResponse): void
   isLoading: boolean
 }
