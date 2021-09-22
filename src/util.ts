@@ -4,9 +4,9 @@ export function dispatch(eventName: string, { target, cancelable, detail }: Part
   const event = new CustomEvent(eventName, { cancelable, bubbles: true, detail })
 
   if (target && document.body.contains(target as Element)) {
-    void target.dispatchEvent(event);
+    target.dispatchEvent(event);
   } else {
-    void document.documentElement.dispatchEvent(event);
+    document.documentElement.dispatchEvent(event);
   }
 
   return event
