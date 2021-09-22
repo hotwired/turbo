@@ -3,7 +3,7 @@ export type DispatchOptions = { target: EventTarget, cancelable: boolean, detail
 export function dispatch(eventName: string, { target, cancelable, detail }: Partial<DispatchOptions> = {}) {
   const event = new CustomEvent(eventName, { cancelable, bubbles: true, detail })
 
-  if (target && document.body.contains(target as Element)) {
+  if (target && (target as Element).isConnected) {
     target.dispatchEvent(event);
   } else {
     document.documentElement.dispatchEvent(event);
