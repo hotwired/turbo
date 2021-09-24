@@ -5,6 +5,19 @@
     <title>Drive (Disabled by Default)</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script type="module">
+      addEventListener("click", event => {
+        if (event.target.id == "requestSubmit") {
+          event.preventDefault()
+          const form = event.target.closest('form')
+          if(typeof form.requestSubmit === "function"){
+            form.requestSubmit()
+          } else {
+            form.submit()
+          }
+        }
+      })
+    </script>
     <script>
       Turbo.session.drive = false
     </script>
@@ -19,5 +32,11 @@
     <div>
       <a id="drive_disabled" href="/src/tests/fixtures/drive_disabled.html">Drive disabled link</a>
     </div>
+
+    <form action="/__turbo/redirect" method="post" id="no_submitter_drive_enabled" data-turbo="true">
+      <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+      <input type="hidden" name="greeting" value="Hello from a redirect">
+      <a href="#" id="requestSubmit">Drive enabled submit via JS</a>
+    </form>
   </body>
 </html>
