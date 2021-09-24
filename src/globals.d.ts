@@ -9,4 +9,5 @@ interface Node {
 
 interface Window {
   Turbo: typeof import("./core/index")
+  SubmitEvent: typeof Event
 }
