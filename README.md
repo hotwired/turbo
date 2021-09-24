@@ -11,6 +11,4 @@ It's all done by sending HTML over the wire. And for those instances when that's
 
 Read more on [turbo.hotwired.dev](https://turbo.hotwired.dev).
 
-_Note: Turbo is currently in beta. We're using it in production with [HEY](https://hey.com), but expect that significant changes might be made in response to early feedback ✌️❤️_
-
 © 2021 Basecamp, LLC.
