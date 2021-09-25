@@ -20,7 +20,12 @@
     "browser",
     "pushstate"
   ],
-  "author": "javan, packagethief, sstephenson",
+  "author": "Basecamp",
+  "contributors": [
+    "Jeffrey Hardy <jeff@basecamp.com>",
+    "Javan Makhmali <javan@javan.us>",
+    "Sam Stephenson <sstephenson@gmail.com>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/hotwired/turbo/issues"
