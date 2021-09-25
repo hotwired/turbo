@@ -13,6 +13,22 @@ export interface FrameElementDelegate {
   isLoading: boolean
 }
 
+/**
+ * Contains a fragment of HTML which is updated based on navigation within
+ * it (e.g. via links or form submissions).
+ *
+ * @customElement turbo-frame
+ * @example
+ *   <turbo-frame id="messages">
+ *     <a href="/messages/expanded">
+ *       Show all expanded messages in this frame.
+ *     </a>
+ *
+ *     <form action="/messages">
+ *       Show response from this form within this frame.
+ *     </form>
+ *   </turbo-frame>
+ */
 export class FrameElement extends HTMLElement {
   static delegateConstructor: new (element: FrameElement) => FrameElementDelegate
 
@@ -52,10 +68,16 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  /**
+   * Gets the URL to lazily load source HTML from
+   */
   get src() {
     return this.getAttribute("src")
   }
 
+  /**
+   * Sets the URL to lazily load source HTML from
+   */
   set src(value: string | null) {
     if (value) {
       this.setAttribute("src", value)
@@ -64,10 +86,16 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  /**
+   * Determines if the element is loading
+   */
   get loading(): FrameLoadingStyle {
     return frameLoadingStyleFromString(this.getAttribute("loading") || "")
   }
 
+  /**
+   * Sets the value of if the element is loading
+   */
   set loading(value: FrameLoadingStyle) {
     if (value) {
       this.setAttribute("loading", value)
@@ -76,10 +104,20 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  /**
+   * Gets the disabled state of the frame.
+   *
+   * If disabled, no requests will be intercepted by the frame.
+   */
   get disabled() {
     return this.hasAttribute("disabled")
   }
 
+  /**
+   * Sets the disabled state of the frame.
+   *
+   * If disabled, no requests will be intercepted by the frame.
+   */
   set disabled(value: boolean) {
     if (value) {
       this.setAttribute("disabled", "")
@@ -88,10 +126,20 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  /**
+   * Gets the autoscroll state of the frame.
+   *
+   * If true, the frame will be scrolled into view automatically on update.
+   */
   get autoscroll() {
     return this.hasAttribute("autoscroll")
   }
 
+  /**
+   * Sets the autoscroll state of the frame.
+   *
+   * If true, the frame will be scrolled into view automatically on update.
+   */
   set autoscroll(value: boolean) {
     if (value) {
       this.setAttribute("autoscroll", "")
@@ -100,14 +148,27 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  /**
+   * Determines if the element has finished loading
+   */
   get complete() {
     return !this.delegate.isLoading
   }
 
+  /**
+   * Gets the active state of the frame.
+   *
+   * If inactive, source changes will not be observed.
+   */
   get isActive() {
     return this.ownerDocument === document && !this.isPreview
   }
 
+  /**
+   * Sets the active state of the frame.
+   *
+   * If inactive, source changes will not be observed.
+   */
   get isPreview() {
     return this.ownerDocument?.documentElement?.hasAttribute("data-turbo-preview")
   }
