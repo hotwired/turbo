@@ -12,6 +12,8 @@ import { nextAnimationFrame } from "../util"
  * - `prepend` - prepends the result to the container
  * - `replace` - replaces the contents of the container
  * - `remove` - removes the container
+ * - `before` - inserts the result before the target
+ * - `after` - inserts the result after the target
  *
  * @customElement turbo-stream
  * @example
