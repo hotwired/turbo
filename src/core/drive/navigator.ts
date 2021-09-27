@@ -92,8 +92,9 @@ export class Navigator {
           this.view.clearSnapshotCache()
         }
 
+        const action = this.getActionForFormSubmission(formSubmission)
         const { statusCode } = fetchResponse
-        const visitOptions = { response: { statusCode, responseHTML } }
+        const visitOptions = { action, response: { statusCode, responseHTML } }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
