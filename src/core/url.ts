@@ -26,7 +26,7 @@ export function isPrefixedBy(baseURL: URL, url: URL) {
   return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
 }
 
-export function locationIsVisitable(location: URL, rootLocation: string) {
+export function locationIsVisitable(location: URL, rootLocation: URL) {
   return isPrefixedBy(location, rootLocation) && isHTML(location)
 }
 
