@@ -14,6 +14,14 @@ export class DriveTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
+  async "test drive to external link"() {
+    this.clickSelector("#drive_enabled_external")
+    await this.nextBody
+    this.assert.equal(
+      await this.remote.execute(() => window.location.href), "https://example.com/"
+    )
+  }
+
   async "test drive enabled by default; click link inside data-turbo='false'"() {
     this.clickSelector("#drive_disabled")
     await this.nextBody
