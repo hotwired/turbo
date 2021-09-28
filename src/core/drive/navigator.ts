@@ -2,7 +2,7 @@ import { Action, isAction } from "../types"
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
-import { expandURL, getAnchor, getRequestURL, Locatable, isPrefixedBy, isHTML } from "../url"
+import { expandURL, getAnchor, getRequestURL, Locatable, locationIsVisitable } from "../url"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -23,7 +23,7 @@ export class Navigator {
 
   proposeVisit(location: URL, options: Partial<VisitOptions> = {}) {
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
-      if (isPrefixedBy(location, this.view.snapshot.rootLocation) && isHTML(location)) {
+      if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
         this.delegate.visitProposedToLocation(location, options)
       } else {
         window.location.href = location.toString()
