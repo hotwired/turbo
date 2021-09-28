@@ -130,7 +130,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   willFollowLinkToLocation(link: Element, location: URL) {
     return this.elementDriveEnabled(link)
-      && this.locationIsVisitable(location, this.snapshot.rootLocation)
+      && locationIsVisitable(location, this.snapshot.rootLocation)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
 
