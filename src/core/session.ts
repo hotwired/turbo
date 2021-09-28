@@ -5,7 +5,7 @@ import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/for
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
-import { expandURL, isPrefixedBy, isHTML, Locatable } from "./url"
+import { expandURL, locationIsVisitable, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -130,7 +130,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   willFollowLinkToLocation(link: Element, location: URL) {
     return this.elementDriveEnabled(link)
-      && this.locationIsVisitable(location)
+      && locationIsVisitable(location, this.snapshot.rootLocation)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
 
@@ -329,10 +329,6 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   getActionForLink(link: Element): Action {
     const action = link.getAttribute("data-turbo-action")
     return isAction(action) ? action : "advance"
-  }
-
-  locationIsVisitable(location: URL) {
-    return isPrefixedBy(location, this.snapshot.rootLocation) && isHTML(location)
   }
 
   get snapshot() {
