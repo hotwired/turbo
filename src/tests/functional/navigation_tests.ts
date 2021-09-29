@@ -63,15 +63,15 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "replace")
   }
 
-  async "test following a same-origin data-turbo-action=replace form[method=GET]"() {
-    this.clickSelector("#same-origin-replace-form button")
+  async "test following a same-origin GET form[data-turbo-action=replace]"() {
+    this.clickSelector("#same-origin-replace-form-get button")
     await this.nextBody
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "replace")
   }
 
-  async "test following a same-origin form with button[data-turbo-action=replace]"() {
-    this.clickSelector("#same-origin-replace-form-submitter button")
+  async "test following a same-origin GET form button[data-turbo-action=replace]"() {
+    this.clickSelector("#same-origin-replace-form-submitter-get button")
     await this.nextBody
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "replace")
