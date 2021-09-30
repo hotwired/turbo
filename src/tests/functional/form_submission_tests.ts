@@ -468,7 +468,41 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test link method form submission inside frame"() {
     await this.clickSelector("#link-method-inside-frame")
+    await this.nextBeat
 
+    const title = await this.querySelector("#frame h2")
+    this.assert.equal(await title.getVisibleText(), "Frame: Loaded")
+    this.assert.notOk(await this.hasSelector("#nested-child"))
+  }
+
+  async "test link method form submission inside frame with data-turbo-frame=_top"() {
+    await this.clickSelector("#link-method-inside-frame-target-top")
+    await this.nextBody
+
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "Hello")
+  }
+
+  async "test link method form submission inside frame with data-turbo-frame target"() {
+    await this.clickSelector("#link-method-inside-frame-with-target")
+    await this.nextBeat
+
+    const title = await this.querySelector("h1")
+    const frameTitle = await this.querySelector("#hello h2")
+    this.assert.equal(await frameTitle.getVisibleText(), "Hello from a frame")
+    this.assert.equal(await title.getVisibleText(), "Form")
+  }
+
+  async "test stream link method form submission inside frame"() {
+    await this.clickSelector("#stream-link-method-inside-frame")
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test link method form submission within form inside frame"() {
+    await this.clickSelector("#stream-link-method-within-form-inside-frame")
     await this.nextBeat
 
     const message = await this.querySelector("#frame div.message")
@@ -500,7 +534,30 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test link method form submission outside frame"() {
     await this.clickSelector("#link-method-outside-frame")
+    await this.nextBody
 
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "Hello")
+  }
+
+  async "test stream link method form submission outside frame"() {
+    await this.clickSelector("#stream-link-method-outside-frame")
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test link method form submission within form outside frame"() {
+    await this.clickSelector("#link-method-within-form-outside-frame")
+    await this.nextBody
+
+    const title = await this.querySelector("h1")
+    this.assert.equal(await title.getVisibleText(), "Hello")
+  }
+
+  async "test stream link method form submission within form outside frame"() {
+    await this.clickSelector("#stream-link-method-within-form-outside-frame")
     await this.nextBeat
 
     const message = await this.querySelector("#frame div.message")
@@ -515,15 +572,6 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   async "test turbo:before-fetch-response fires on the form element"() {
     await this.clickSelector('#targets-frame form.one [type="submit"]')
     this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-response"))
-  }
-
-  async "test link method form submission inside form"() {
-    await this.clickSelector("#link-method-inside-form")
-
-    await this.nextBeat
-
-    const message = await this.querySelector("#frame div.message")
-    this.assert.equal(await message.getVisibleText(), "Link!")
   }
 
   get formSubmitted(): Promise<boolean> {

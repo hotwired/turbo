@@ -152,6 +152,14 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
         form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
       }
 
+      const frame = this.getTargetFrameForLink(link)
+      if (frame) {
+        form.setAttribute("data-turbo-frame", frame)
+        form.addEventListener("turbo:submit-start", () => form.remove())
+      } else {
+        form.addEventListener("submit", () => form.remove())
+      }
+
       document.body.appendChild(form)
       return dispatch("submit", { cancelable: true, target: form })
     } else {
@@ -332,6 +340,19 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   getActionForLink(link: Element): Action {
     const action = link.getAttribute("data-turbo-action")
     return isAction(action) ? action : "advance"
+  }
+
+  getTargetFrameForLink(link: Element) {
+    const frame = link.getAttribute("data-turbo-frame")
+
+    if (frame) {
+      return frame
+    } else {
+      const container = link.closest("turbo-frame")
+      if (container) {
+        return container.id
+      }
+    }
   }
 
   get snapshot() {
