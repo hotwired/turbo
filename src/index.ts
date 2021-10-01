@@ -8,3 +8,4 @@ window.Turbo = Turbo
 Turbo.start()
 
 export * from "./core"
+export { FetchRequest } from "./http/fetch_request"
