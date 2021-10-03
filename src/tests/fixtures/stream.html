@@ -19,6 +19,11 @@
       <button type="submit">Replace</button>
     </form>
 
+    <form id="async" method="post" action="/__turbo/messages">
+      <input type="hidden" name="content" value="Hello world!">
+      <button>Receive Message</button>
+    </form>
+
     <div id="messages">
       <div class="message">First</div>
     </div>

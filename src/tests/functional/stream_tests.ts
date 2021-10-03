@@ -34,6 +34,23 @@ export class StreamTests extends FunctionalTestCase {
     this.assert.equal(await element[0].getVisibleText(), "Hello CSS!")
     this.assert.equal(await element[1].getVisibleText(), "Hello CSS!")
   }
+
+  async "test receiving a stream message asynchronously"() {
+    let messages = await this.querySelectorAll("#messages > *")
+
+    this.assert.ok(messages[0])
+    this.assert.notOk(messages[1], "receives streams when connected")
+    this.assert.notOk(messages[2], "receives streams when connected")
+
+    await this.clickSelector("#async button")
+    await this.nextBeat
+
+    messages = await this.querySelectorAll("#messages > *")
+
+    this.assert.ok(messages[0])
+    this.assert.ok(messages[1], "receives streams when connected")
+    this.assert.notOk(messages[2], "receives streams when connected")
+  }
 }
 
 StreamTests.registerSuite()
