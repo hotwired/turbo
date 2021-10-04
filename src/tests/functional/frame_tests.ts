@@ -46,6 +46,15 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await frameText.getVisibleText(), "Frame: Loaded")
   }
 
+  async "test following a link in rapid succession cancels the previous request"() {
+    await this.clickSelector("#outside-frame-form")
+    await this.clickSelector("#outer-frame-link")
+    await this.nextBeat
+
+    const frameText = await this.querySelector("#frame h2")
+    this.assert.equal(await frameText.getVisibleText(), "Frame: Loaded")
+  }
+
   async "test following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame"() {
     const link = await this.querySelector("#nested-root[target=frame] #nested-child a:not([data-turbo-frame])")
     const href = await link.getProperty("href")

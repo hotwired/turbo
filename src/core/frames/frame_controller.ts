@@ -21,6 +21,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly formInterceptor: FormInterceptor
   currentURL?: string | null
   formSubmission?: FormSubmission
+  private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
   private connected = false
   private hasBeenLoaded = false
@@ -233,11 +234,15 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Private
 
   private async visit(url: Locatable) {
-    const request = new FetchRequest(this, FetchMethod.get, expandURL(url), undefined, this.element)
+    const request = new FetchRequest(this, FetchMethod.get, expandURL(url), new URLSearchParams, this.element)
+
+    this.currentFetchRequest?.cancel()
+    this.currentFetchRequest = request
 
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
+        this.currentFetchRequest = null
         resolve()
       }
       request.perform()
