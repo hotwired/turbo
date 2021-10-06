@@ -858,6 +858,27 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await message.getVisibleText(), "Link!")
   }
 
+  async "test form submission with form mode off"() {
+    await this.remote.execute(() => window.Turbo.setFormMode("off"))
+    await this.clickSelector("#standard form.turbo-enabled input[type=submit]")
+
+    this.assert.notOk(await this.formSubmitStarted)
+  }
+
+  async "test form submission with form mode optin and form not enabled"() {
+    await this.remote.execute(() => window.Turbo.setFormMode("optin"))
+    await this.clickSelector("#standard form.redirect input[type=submit]")
+
+    this.assert.notOk(await this.formSubmitStarted)
+  }
+
+  async "test form submission with form mode optin and form enabled"() {
+    await this.remote.execute(() => window.Turbo.setFormMode("optin"))
+    await this.clickSelector("#standard form.turbo-enabled input[type=submit]")
+
+    this.assert.ok(await this.formSubmitStarted)
+  }
+
   async "test turbo:before-fetch-request fires on the form element"() {
     await this.clickSelector('#targets-frame form.one [type="submit"]')
     this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-request"))

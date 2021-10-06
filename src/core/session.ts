@@ -48,6 +48,7 @@ export class Session
   enabled = true
   progressBarDelay = 500
   started = false
+  formMode = "on"
 
   start() {
     if (!this.started) {
@@ -108,6 +109,10 @@ export class Session
 
   setProgressBarDelay(delay: number) {
     this.progressBarDelay = delay
+  }
+
+  setFormMode(mode: string) {
+    this.formMode = mode
   }
 
   get location() {
@@ -219,7 +224,7 @@ export class Session
 
     return (
       this.elementDriveEnabled(form) &&
-      (!submitter || this.elementDriveEnabled(submitter)) &&
+      (!submitter || this.formElementDriveEnabled(submitter)) &&
       locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
     )
   }
@@ -357,6 +362,17 @@ export class Session
   }
 
   // Helpers
+
+  formElementDriveEnabled(element?: Element) {
+    if (this.formMode == "off") {
+      return false
+    }
+    if (this.formMode == "optin") {
+      const form = element?.closest("form[data-turbo]")
+      return form?.getAttribute("data-turbo") == "true"
+    }
+    return this.elementDriveEnabled(element)
+  }
 
   elementDriveEnabled(element?: Element) {
     const container = element?.closest("[data-turbo]")
