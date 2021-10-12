@@ -37,6 +37,21 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
+  async "test following a same-origin location link"() {
+    await this.drainEventLog
+
+    const link = await this.querySelector("#same-origin-unannotated-link")
+    const href = await link.getProperty("href")
+    await link.click()
+    await this.nextBody
+
+    const [ eventName, { url }, id ] = await this.nextEvent()
+
+    this.assert.equal(eventName, "turbo:click")
+    this.assert.equal(url, href, "turbo:click detail.url is href")
+    this.assert.equal(id, "same-origin-unannotated-link", "turbo:click target is link")
+  }
+
   async "test following a same-origin unannotated custom element link"() {
     await this.nextBeat
     await this.remote.execute(() => {
@@ -49,11 +64,42 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "advance")
   }
 
-  async "test following a same-origin unannotated form[method=GET]"() {
-    this.clickSelector("#same-origin-unannotated-form button")
+  async "test submitting a same-origin unannotated form[method=GET]"() {
+    this.clickSelector("#same-origin-unannotated-submitter")
     await this.nextBody
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
+  }
+
+  async "test submitting a same-origin form by clicking a submitter"() {
+    await this.drainEventLog
+
+    const form = await this.querySelector("#same-origin-unannotated-form")
+    const action = await form.getProperty("action")
+    const button = await this.querySelector("#same-origin-unannotated-submitter")
+    await button.click()
+    await this.nextBody
+
+    const [ eventName, { url }, id ] = await this.nextEvent()
+
+    this.assert.equal(eventName, "turbo:click")
+    this.assert.equal(url, action, "turbo:click detail.url is href")
+    this.assert.equal(id, "same-origin-unannotated-submitter", "turbo:click target is submitter")
+  }
+
+  async "test submitting a same-origin form by clicking a submitter with formaction"() {
+    await this.drainEventLog
+
+    const button = await this.querySelector("#same-origin-submitter-formaction")
+    const action = await this.expandURL(await button.getProperty("formAction"))
+    await button.click()
+    await this.nextBody
+
+    const [ eventName, { url }, id ] = await this.nextEvent()
+
+    this.assert.equal(eventName, "turbo:click")
+    this.assert.equal(url, action, "turbo:click detail.url is formaction")
+    this.assert.equal(id, "same-origin-submitter-formaction", "turbo:click target is submitter")
   }
 
   async "test following a same-origin data-turbo-action=replace link"() {
@@ -232,6 +278,7 @@ export class NavigationTests extends TurboDriveTestCase {
 
   async "test same-page anchor visits do not trigger visit events"() {
     const events = [
+      "turbo:click",
       "turbo:before-visit",
       "turbo:visit",
       "turbo:before-cache",
@@ -241,7 +288,6 @@ export class NavigationTests extends TurboDriveTestCase {
     ]
 
     for (const eventName in events) {
-      await this.goToLocation("/src/tests/fixtures/navigation.html")
       await this.clickSelector('a[href="#main"]')
       this.assert.ok(await this.noNextEventNamed(eventName), `same-page links do not trigger ${eventName} events`)
     }

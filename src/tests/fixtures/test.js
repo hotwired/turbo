@@ -19,6 +19,7 @@
      }
    }).observe(document, { subtree: true, childList: true, attributes: true })
 })([
+  "turbo:click",
   "turbo:before-cache",
   "turbo:before-render",
   "turbo:before-visit",

@@ -40,15 +40,10 @@ export class Navigator {
     this.currentVisit.start()
   }
 
-  submitForm(form: HTMLFormElement, submitter?: HTMLElement) {
+  submitForm(formSubmission: FormSubmission) {
     this.stop()
-    this.formSubmission = new FormSubmission(this, form, submitter, true)
-
-    if (this.formSubmission.isIdempotent) {
-      this.proposeVisit(this.formSubmission.fetchRequest.url, { action: this.getActionForFormSubmission(this.formSubmission) })
-    } else {
-      this.formSubmission.start()
-    }
+    this.formSubmission = formSubmission
+    this.formSubmission.start()
   }
 
   stop() {

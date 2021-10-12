@@ -121,8 +121,16 @@ export class FunctionalTestCase extends InternTestCase {
     return await this.remote.execute(callback, args)
   }
 
+  async expandURL(pathname: string | null | undefined) {
+    return await this.evaluate((pathname) => new URL(pathname || "", document.baseURI), [pathname])
+  }
+
   get head(): Promise<Element> {
     return this.evaluate(() => document.head as any)
+  }
+
+  get url(): Promise<URL> {
+    return this.evaluate(() => new URL(location.href))
   }
 
   get body(): Promise<Element> {

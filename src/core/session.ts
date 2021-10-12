@@ -15,6 +15,7 @@ import { Action, Position, StreamSource, isAction } from "./types"
 import { dispatch } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
+import { FormSubmission } from "./drive/form_submission"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
 import { FetchResponse } from "../http/fetch_response"
@@ -135,7 +136,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   }
 
   followedLinkToLocation(link: Element, location: URL) {
-    const action = this.getActionForLink(link)
+    const action = this.getActionForLink(link) || "advance"
     this.convertLinkWithMethodClickToFormSubmission(link) || this.visit(location.href, { action })
   }
 
@@ -197,7 +198,18 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
-    this.navigator.submitForm(form, submitter)
+    const formSubmission = new FormSubmission(this.navigator, form, submitter, true)
+    const { isIdempotent, fetchRequest: { url } } = formSubmission
+
+    if (isIdempotent) {
+      const action = submitter && this.applicationAllowsFollowingLinkToLocation(submitter, url) ?
+        this.getActionForLink(submitter) || this.getActionForLink(form) :
+        this.getActionForLink(form)
+
+      this.visit(url, { action: action || "advance" })
+    } else {
+      this.navigator.submitForm(formSubmission)
+    }
   }
 
   // Page observer delegate
@@ -330,9 +342,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   // Private
 
-  getActionForLink(link: Element): Action {
+  private getActionForLink(link: Element): Action | null {
     const action = link.getAttribute("data-turbo-action")
-    return isAction(action) ? action : "advance"
+    return isAction(action) ? action : null
   }
 
   get snapshot() {
