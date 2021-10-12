@@ -53,6 +53,9 @@
         <input type="hidden" name="query" value="2">
         <input type="submit">
       </form>
+      <form action="/__turbo/redirect" method="post" class="confirm" data-turbo-confirm="Are you sure?">
+        <input type="submit">
+      </form>
     </div>
     <hr>
     <div id="no-action">
@@ -194,6 +197,7 @@
         <input type="submit">
       </form>
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-inside-frame">Stream link inside frame</a>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" data-turbo-confirm="Are you sure?" id="link-method-inside-frame-with-confirmation"data-turbo-confirm="Are you sure?">Stream link inside frame with confirmation</a>
       <form action="/__turbo/messages/1" method="put" class="stream put">
         <input type="hidden" name="type" value="stream">
         <input type="hidden" name="content" value="Hello!">

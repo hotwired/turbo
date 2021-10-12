@@ -21,6 +21,32 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector(".turbo-progress-bar"), "hides progress bar")
   }
 
+  async "test form submission with confirmation confirmed"() {
+    await this.clickSelector("#standard form.confirm input[type=submit]")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.acceptAlert()
+    this.assert.ok(await this.formSubmitted)
+  }
+
+  async "test form submission with confirmation cancelled"() {
+    await this.clickSelector("#standard form.confirm input[type=submit]")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.dismissAlert()
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test from submission with confirmation overriden"() {
+    await this.remote.execute(() => window.Turbo.setConfirmMethod((message, element) => confirm("Overriden message")))
+
+    await this.clickSelector("#standard form.confirm input[type=submit]")
+
+    this.assert.equal(await this.getAlertText(), "Overriden message")
+    await this.acceptAlert()
+    this.assert.ok(await this.formSubmitted)
+  }
+
   async "test standard form submission does not render a progress bar before expiring the delay"() {
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(500))
     await this.clickSelector("#standard form.redirect input[type=submit]")
@@ -447,6 +473,29 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const message = await this.querySelector("#frame div.message")
     this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test link method form submission inside frame with confirmation confirmed"() {
+    await this.clickSelector("#link-method-inside-frame-with-confirmation")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.acceptAlert()
+
+    await this.nextBeat
+
+    const message = await this.querySelector("#frame div.message")
+    this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test link method form submission inside frame with confirmation cancelled"() {
+    await this.clickSelector("#link-method-inside-frame-with-confirmation")
+
+    this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.dismissAlert()
+
+    await this.nextBeat
+
+    this.assert.notOk(await this.hasSelector("#frame div.message"), "Not confirming form submission does not submit the form")
   }
 
   async "test link method form submission outside frame"() {

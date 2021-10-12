@@ -49,6 +49,10 @@ export class FormSubmission {
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
+  static confirmMethod(message: string, element: HTMLFormElement):boolean {
+    return confirm(message)
+  }
+
   constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement, mustRedirect = false) {
     this.delegate = delegate
     this.formElement = formElement
@@ -94,10 +98,24 @@ export class FormSubmission {
     }, [] as [string, string][])
   }
 
+  get confirmationMessage() {
+    return this.formElement.getAttribute("data-turbo-confirm")
+  }
+
+  get needsConfirmation() {
+    return this.confirmationMessage !== null
+  }
+
   // The submission process
 
   async start() {
     const { initialized, requesting } = FormSubmissionState
+
+    if (this.needsConfirmation) {
+      const answer = FormSubmission.confirmMethod(this.confirmationMessage!, this.formElement)
+      if (!answer) { return }
+    }
+
     if (this.state == initialized) {
       this.state = requesting
       return this.fetchRequest.perform()
