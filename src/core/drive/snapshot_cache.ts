@@ -1,13 +1,18 @@
 import { toCacheKey } from "../url"
 import { PageSnapshot } from "./page_snapshot"
 
+const PERSISTENCE_KEY = '@hotwired/turbo/snapshots'
+
 export class SnapshotCache {
   readonly keys: string[] = []
   readonly size: number
+  readonly shouldPersist: boolean
   snapshots: { [url: string]: PageSnapshot } = {}
 
-  constructor(size: number) {
+  constructor(size: number, shouldPersist = true) {
     this.size = size
+    this.shouldPersist = shouldPersist
+    this.hydrate()
   }
 
   has(location: URL) {
@@ -25,11 +30,13 @@ export class SnapshotCache {
   put(location: URL, snapshot: PageSnapshot) {
     this.write(location, snapshot)
     this.touch(location)
+    this.persist()
     return snapshot
   }
 
   clear() {
     this.snapshots = {}
+    localStorage.removeItem(PERSISTENCE_KEY)
   }
 
   // Private
@@ -51,8 +58,34 @@ export class SnapshotCache {
   }
 
   trim() {
-    for (const key of this.keys.splice(this.size)) {
+    const overflow = this.keys.splice(this.size);
+    for (const key of overflow) {
       delete this.snapshots[key]
     }
+    if(overflow.length > 0){
+      this.persist()
+    }
+  }
+
+  persist() {
+    if(!this.shouldPersist) {
+      return
+    }
+    const serializableSnapshots: {[key: string]: string} = {}
+    this.keys.forEach((key) => {
+      serializableSnapshots[key] = this.snapshots[key].toString()
+    })
+    localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(serializableSnapshots))
+  }
+
+  hydrate() {
+    const serializedSnapshots = localStorage.getItem(PERSISTENCE_KEY)
+    if(!serializedSnapshots || !this.shouldPersist) {
+      return
+    }
+    const deserializedSnapshots: {[key: string]: string} = JSON.parse(serializedSnapshots)
+    Object.keys(deserializedSnapshots).forEach((key) => {
+      this.snapshots[key] = PageSnapshot.fromHTMLString(deserializedSnapshots[key])
+    })
   }
 }
