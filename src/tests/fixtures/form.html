@@ -18,7 +18,12 @@
       <form action="/__turbo/redirect" method="post" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="hidden" name="greeting" value="Hello from a redirect">
-        <input type="submit">
+        <input id="standard-post-form-submit" type="submit" value="form[method=post]">
+      </form>
+      <form action="/__turbo/redirect" method="get" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <input id="standard-get-form-submit" type="submit" value="form[method=get]">
       </form>
       <form action="/__turbo/messages" method="post" class="created">
         <input type="hidden" name="content" value="Hello!">
@@ -153,6 +158,16 @@
       <form id="form_one" action="/__turbo/redirect" method="post" data-turbo-frame="frame" class="one">
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <button type="submit">Submit</button>
+      </form>
+
+      <form action="/__turbo/redirect" method="post" data-turbo-frame="frame">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+        <button id="targets-frame-post-form-submit" type="submit">targets-frame form[method=post]</button>
+      </form>
+
+      <form action="/__turbo/redirect" method="get" data-turbo-frame="frame">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+        <button id="targets-frame-get-form-submit" type="submit">targets-frame form[method=get]</button>
       </form>
 
       <form action="/__turbo/redirect" method="post" data-turbo-frame="frame" class="frame">

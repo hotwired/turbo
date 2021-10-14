@@ -44,11 +44,7 @@ export class Navigator {
     this.stop()
     this.formSubmission = new FormSubmission(this, form, submitter, true)
 
-    if (this.formSubmission.isIdempotent) {
-      this.proposeVisit(this.formSubmission.fetchRequest.url, { action: this.getActionForFormSubmission(this.formSubmission) })
-    } else {
-      this.formSubmission.start()
-    }
+    this.formSubmission.start()
   }
 
   stop() {
@@ -92,8 +88,9 @@ export class Navigator {
           this.view.clearSnapshotCache()
         }
 
-        const { statusCode } = fetchResponse
-        const visitOptions = { response: { statusCode, responseHTML } }
+        const { statusCode, redirected } = fetchResponse
+        const action = this.getActionForFormSubmission(formSubmission)
+        const visitOptions = { action, response: { statusCode, responseHTML, redirected } }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
