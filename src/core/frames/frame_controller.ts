@@ -88,7 +88,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           this.appearanceObserver.stop()
           await this.element.loaded
           this.hasBeenLoaded = true
-          session.frameLoaded(this.element)
         } catch (error) {
           this.currentURL = previousURL
           throw error
@@ -110,7 +109,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
-        session.frameRendered(fetchResponse, this.element);
+        session.frameRendered(fetchResponse, this.element)
+        session.frameLoaded(this.element)
       }
     } catch (error) {
       console.error(error)

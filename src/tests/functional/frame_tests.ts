@@ -19,6 +19,7 @@ export class FrameTests extends TurboDriveTestCase {
   async "test a frame whose src references itself does not infinitely loop"() {
     await this.clickSelector("#frame-self")
 
+    await this.nextEventOnTarget("frame", "turbo:frame-render")
     await this.nextEventOnTarget("frame", "turbo:frame-load")
 
     const otherEvents = await this.eventLogChannel.read()
@@ -203,6 +204,18 @@ export class FrameTests extends TurboDriveTestCase {
     const { fetchResponse } = await this.nextEventNamed("turbo:frame-render")
 
     this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
+  }
+
+  async "test navigating a frame fires events"() {
+    await this.clickSelector("#outside-frame-form")
+
+    const { fetchResponse } = await this.nextEventOnTarget("frame", "turbo:frame-render")
+    this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/form.html")
+
+    await this.nextEventOnTarget("frame", "turbo:frame-load")
+
+    const otherEvents = await this.eventLogChannel.read()
+    this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
    async "test following inner link reloads frame on every click"() {
