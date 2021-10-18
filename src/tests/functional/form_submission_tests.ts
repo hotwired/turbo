@@ -4,7 +4,8 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/form.html")
     await this.remote.execute(() => {
-      addEventListener("turbo:submit-start", () => document.documentElement.setAttribute("data-form-submitted", ""), { once: true })
+      addEventListener("turbo:submit-start", () => document.documentElement.setAttribute("data-form-submit-start", ""), { once: true })
+      addEventListener("turbo:submit-end", () => document.documentElement.setAttribute("data-form-submit-end", ""), { once: true })
     })
   }
 
@@ -26,7 +27,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.getAlertText(), "Are you sure?")
     await this.acceptAlert()
-    this.assert.ok(await this.formSubmitted)
+    this.assert.ok(await this.formSubmitStarted)
   }
 
   async "test form submission with confirmation cancelled"() {
@@ -34,7 +35,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.getAlertText(), "Are you sure?")
     await this.dismissAlert()
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.notOk(await this.formSubmitStarted)
   }
 
   async "test from submission with confirmation overriden"() {
@@ -44,7 +45,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.getAlertText(), "Overriden message")
     await this.acceptAlert()
-    this.assert.ok(await this.formSubmitted)
+    this.assert.ok(await this.formSubmitStarted)
   }
 
   async "test standard form submission does not render a progress bar before expiring the delay"() {
@@ -58,20 +59,62 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.clickSelector("#standard form.redirect input[type=submit]")
     await this.nextBody
 
-    this.assert.ok(await this.formSubmitted)
+    this.assert.ok(await this.formSubmitStarted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.equal(await this.visitAction, "advance")
     this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
+  }
+
+  async "test standard POST form submission events"() {
+    await this.clickSelector("#standard-post-form-submit")
+
+    this.assert.ok(await this.formSubmitStarted, "fires turbo:submit-start")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
+
+    await this.nextEventNamed("turbo:before-visit")
+    await this.nextEventNamed("turbo:visit")
+    await this.nextEventNamed("turbo:before-cache")
+    await this.nextEventNamed("turbo:before-render")
+    await this.nextEventNamed("turbo:render")
+    await this.nextEventNamed("turbo:load")
   }
 
   async "test standard GET form submission"() {
     await this.clickSelector("#standard form.greeting input[type=submit]")
     await this.nextBody
 
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.ok(await this.formSubmitStarted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
-    this.assert.equal(await this.visitAction, "replace")
+    this.assert.equal(await this.visitAction, "advance")
     this.assert.equal(await this.getSearchParam("greeting"), "Hello from a form")
+  }
+
+  async "test standard GET form submission events"() {
+    await this.clickSelector("#standard-get-form-submit")
+
+    this.assert.ok(await this.formSubmitStarted, "fires turbo:submit-start")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.notOk(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
+
+    await this.nextEventNamed("turbo:before-visit")
+    await this.nextEventNamed("turbo:visit")
+    await this.nextEventNamed("turbo:before-cache")
+    await this.nextEventNamed("turbo:before-render")
+    await this.nextEventNamed("turbo:render")
+    await this.nextEventNamed("turbo:load")
   }
 
   async "test standard GET form submission appending keys"() {
@@ -281,6 +324,40 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "One")
   }
 
+  async "test frame POST form targetting frame submission"() {
+    await this.clickSelector("#targets-frame-post-form-submit")
+
+    this.assert.ok(await this.formSubmitStarted, "fires turbo:submit-start")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+    this.assert.equal("frame", fetchOptions.headers["Turbo-Frame"])
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
+
+    await this.nextEventNamed("turbo:frame-render")
+  }
+
+  async "test frame GET form targetting frame submission"() {
+    await this.clickSelector("#targets-frame-get-form-submit")
+
+    this.assert.ok(await this.formSubmitStarted, "fires turbo:submit-start")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.notOk(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+    this.assert.equal("frame", fetchOptions.headers["Turbo-Frame"])
+
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
+
+    await this.nextEventNamed("turbo:frame-render")
+  }
+
   async "test frame form GET submission from submitter referencing another frame"() {
     await this.clickSelector("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
     await this.nextBeat
@@ -409,7 +486,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.notOk(await this.formSubmitStarted)
   }
 
   async "test frame form submission with [data-turbo=false] on the submitter"() {
@@ -417,7 +494,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.notOk(await this.formSubmitStarted)
   }
 
   async "test form submission with [data-turbo=false] on the form"() {
@@ -425,7 +502,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.notOk(await this.formSubmitStarted)
   }
 
   async "test form submission with [data-turbo=false] on the submitter"() {
@@ -433,25 +510,25 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
     await this.querySelector("#element-id")
 
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.notOk(await this.formSubmitStarted)
   }
 
   async "test form submission skipped within method=dialog"() {
     await this.clickSelector('#dialog-method [type="submit"]')
     await this.nextBeat
 
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.notOk(await this.formSubmitStarted)
   }
 
   async "test form submission skipped with submitter formmethod=dialog"() {
     await this.clickSelector('#dialog-formmethod [formmethod="dialog"]')
     await this.nextBeat
 
-    this.assert.notOk(await this.formSubmitted)
+    this.assert.notOk(await this.formSubmitStarted)
   }
 
   async "test form submission targets disabled frame"() {
-    this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
+    await this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
     await this.clickSelector('#targets-frame form.one [type="submit"]')
     await this.nextBody
 
@@ -574,8 +651,12 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-response"))
   }
 
-  get formSubmitted(): Promise<boolean> {
-    return this.hasSelector("html[data-form-submitted]")
+  get formSubmitStarted(): Promise<boolean> {
+    return this.hasSelector("html[data-form-submit-start]")
+  }
+
+  get formSubmitEnded(): Promise<boolean> {
+    return this.hasSelector("html[data-form-submit-end]")
   }
 }
 

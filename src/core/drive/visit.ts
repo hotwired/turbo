@@ -51,6 +51,7 @@ const defaultOptions: VisitOptions = {
 
 export type VisitResponse = {
   statusCode: number,
+  redirected: boolean,
   responseHTML?: string
 }
 
@@ -259,7 +260,7 @@ export class Visit implements FetchRequestDelegate {
   }
 
   followRedirect() {
-    if (this.redirectedToLocation && !this.followedRedirect) {
+    if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
         action: 'replace',
         response: this.response
@@ -289,25 +290,27 @@ export class Visit implements FetchRequestDelegate {
 
   async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     const responseHTML = await response.responseHTML
+    const { redirected, statusCode } = response
     if (responseHTML == undefined) {
-      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch, redirected })
     } else {
       this.redirectedToLocation = response.redirected ? response.location : undefined
-      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+      this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
     }
   }
 
   async requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
     const responseHTML = await response.responseHTML
+    const { redirected, statusCode } = response
     if (responseHTML == undefined) {
-      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch, redirected })
     } else {
-      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+      this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
     }
   }
 
   requestErrored(request: FetchRequest, error: Error) {
-    this.recordResponse({ statusCode: SystemStatusCode.networkFailure })
+    this.recordResponse({ statusCode: SystemStatusCode.networkFailure, redirected: false })
   }
 
   requestFinished() {
