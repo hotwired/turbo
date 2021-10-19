@@ -5,9 +5,32 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      class CustomLinkElement extends HTMLElement {
+        constructor() {
+          super()
+          this.attachShadow({ mode: 'open' })
+        }
+        connectedCallback() {
+          this.shadowRoot.innerHTML = `
+            <a href="${this.getAttribute('link')}">
+              ${this.getAttribute('text')}
+            </a>
+          `
+        }
+      }
+      window.customElements.define('custom-link-element', CustomLinkElement)
+    </script>
+    <meta name="referrer" content="origin-when-cross-origin">
   </head>
   <body>
-    <section>
+    <a href="#main">Skip Link</a>
+
+    <a href="#main" id="refresh-link" data-turbo-action="replace">Refresh Link</a>
+
+    <a href="#ignored-link" id="ignored-link">Skipped Content</a>
+
+    <section id="main" style="height: 200vh">
       <h1>Navigation</h1>
       <p><a id="same-origin-unannotated-link" href="/src/tests/fixtures/one.html">Same-origin unannotated link</a></p>
       <p><form id="same-origin-unannotated-form" method="get" action="/src/tests/fixtures/one.html"><button>Same-origin unannotated form</button></form></p>
@@ -26,6 +49,10 @@
       <svg width="600" height="100" viewbox="-300 -50 600 100"><text><a id="cross-origin-link-inside-svg-element" href="about:blank">Cross-origin link inside SVG element</a></text></svg>
       <p><a id="link-to-disabled-frame" href="/src/tests/fixtures/frames/hello.html" data-turbo-frame="hello">Disabled turbo-frame</a></p>
       <p><a id="autofocus-link" href="/src/tests/fixtures/autofocus.html">autofocus.html link</a></p>
+      <p><a id="redirection-link" href="/__turbo/redirect?path=/src/tests/fixtures/one.html">Redirection link</a></p>
+      <p><a id="headers-link" href="/__turbo/headers">Headers link</a></p>
+      <p><custom-link-element id="custom-link-element" link="/src/tests/fixtures/one.html" text="Same-origin unannotated custom element link"></custom-link-element></p>
+      <p><a id="delayed-link" href="/__turbo/delayed_response">Delayed link</a></p>
     </section>
 
     <turbo-frame id="hello" disabled></turbo-frame>

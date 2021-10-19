@@ -9,16 +9,12 @@ export class Snapshot<E extends Element = Element> {
     return [ ...this.element.children ]
   }
 
-  hasAnchor(anchor: string) {
+  hasAnchor(anchor: string | undefined) {
     return this.getElementForAnchor(anchor) != null
   }
 
-  getElementForAnchor(anchor: string) {
-    try {
-      return this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`)
-    } catch {
-      return null
-    }
+  getElementForAnchor(anchor: string | undefined) {
+    return anchor ? this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`) : null
   }
 
   get isConnected() {

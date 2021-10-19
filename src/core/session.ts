@@ -1,11 +1,12 @@
 import { Adapter } from "./native/adapter"
 import { BrowserAdapter } from "./native/browser_adapter"
+import { CacheObserver } from "../observers/cache_observer"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { defineCustomFrameElement } from "../elements"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
-import { expandURL, isPrefixedBy, isHTML, Locatable } from "./url"
+import { expandURL, locationIsVisitable, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -16,6 +17,8 @@ import { dispatch } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
+import { FrameElement } from "../elements/frame_element"
+import { FetchResponse } from "../http/fetch_response"
 
 export type TimingData = {}
 
@@ -26,6 +29,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   adapter: Adapter = new BrowserAdapter(this)
 
   readonly pageObserver = new PageObserver(this)
+  readonly cacheObserver = new CacheObserver()
   readonly linkClickObserver = new LinkClickObserver(this)
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
@@ -33,6 +37,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   readonly frameRedirector = new FrameRedirector(document.documentElement)
 
+  drive = true
   enabled = true
   progressBarDelay = 500
   started = false
@@ -40,6 +45,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   start() {
     if (!this.started) {
       this.pageObserver.start()
+      this.cacheObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
       this.scrollObserver.start()
@@ -58,6 +64,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   stop() {
     if (this.started) {
       this.pageObserver.stop()
+      this.cacheObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
       this.scrollObserver.stop()
@@ -110,9 +117,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location: URL) {
+  historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string) {
     if (this.enabled) {
-      this.navigator.proposeVisit(location, { action: "restore", historyChanged: true })
+      this.navigator.startVisit(location, restorationIdentifier, { action: "restore", historyChanged: true })
     } else {
       this.adapter.pageInvalidated()
     }
@@ -127,20 +134,48 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: URL) {
-    return elementIsNavigable(link)
-      && this.locationIsVisitable(location)
+    return this.elementDriveEnabled(link)
+      && locationIsVisitable(location, this.snapshot.rootLocation)
       && this.applicationAllowsFollowingLinkToLocation(link, location)
   }
 
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    this.visit(location.href, { action })
+    this.convertLinkWithMethodClickToFormSubmission(link) || this.visit(location.href, { action })
+  }
+
+  convertLinkWithMethodClickToFormSubmission(link: Element) {
+    const linkMethod = link.getAttribute("data-turbo-method")
+
+    if (linkMethod) {
+      const form = document.createElement("form")
+      form.method = linkMethod
+      form.action = link.getAttribute("href") || "undefined"
+      form.hidden = true
+
+      if (link.hasAttribute("data-turbo-confirm")) {
+        form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
+      }
+
+      const frame = this.getTargetFrameForLink(link)
+      if (frame) {
+        form.setAttribute("data-turbo-frame", frame)
+        form.addEventListener("turbo:submit-start", () => form.remove())
+      } else {
+        form.addEventListener("submit", () => form.remove())
+      }
+
+      document.body.appendChild(form)
+      return dispatch("submit", { cancelable: true, target: form })
+    } else {
+      return false
+    }
   }
 
   // Navigator delegate
 
-  allowsVisitingLocation(location: URL) {
-    return this.applicationAllowsVisitingLocation(location)
+  allowsVisitingLocationWithAction(location: URL, action?: Action) {
+    return this.locationWithActionIsSamePage(location, action) || this.applicationAllowsVisitingLocation(location)
   }
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
@@ -150,17 +185,27 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   visitStarted(visit: Visit) {
     extendURLWithDeprecatedProperties(visit.location)
-    this.notifyApplicationAfterVisitingLocation(visit.location)
+    if (!visit.silent) {
+      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+    }
   }
 
   visitCompleted(visit: Visit) {
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
+  locationWithActionIsSamePage(location: URL, action?: Action): boolean {
+    return this.navigator.locationWithActionIsSamePage(location, action)
+  }
+
+  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
+    this.notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL)
+  }
+
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-    return elementIsNavigable(form) && elementIsNavigable(submitter)
+    return this.elementDriveEnabled(form) && (!submitter || this.elementDriveEnabled(submitter))
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
@@ -191,11 +236,14 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Page view delegate
 
   viewWillCacheSnapshot() {
-    this.notifyApplicationBeforeCachingSnapshot()
+    if (!this.navigator.currentVisit?.silent) {
+      this.notifyApplicationBeforeCachingSnapshot()
+    }
   }
 
-  viewWillRenderSnapshot({ element }: PageSnapshot, isPreview: boolean) {
-    this.notifyApplicationBeforeRender(element)
+  allowsImmediateRender({ element }: PageSnapshot, resume: (value: any) => void) {
+    const event = this.notifyApplicationBeforeRender(element, resume)
+    return !event.defaultPrevented
   }
 
   viewRenderedSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
@@ -205,6 +253,16 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   viewInvalidated() {
     this.adapter.pageInvalidated()
+  }
+
+  // Frame element
+
+  frameLoaded(frame: FrameElement) {
+    this.notifyApplicationAfterFrameLoad(frame)
+  }
+
+  frameRendered(fetchResponse: FetchResponse, frame: FrameElement) {
+    this.notifyApplicationAfterFrameRender(fetchResponse, frame);
   }
 
   // Application events
@@ -227,16 +285,16 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     return dispatch("turbo:before-visit", { detail: { url: location.href }, cancelable: true })
   }
 
-  notifyApplicationAfterVisitingLocation(location: URL) {
-    return dispatch("turbo:visit", { detail: { url: location.href } })
+  notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
+    return dispatch("turbo:visit", { detail: { url: location.href, action } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement) {
-    return dispatch("turbo:before-render", { detail: { newBody }})
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, resume: (value: any) => void) {
+    return dispatch("turbo:before-render", { detail: { newBody, resume }, cancelable: true })
   }
 
   notifyApplicationAfterRender() {
@@ -247,6 +305,41 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     return dispatch("turbo:load", { detail: { url: this.location.href, timing }})
   }
 
+  notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL) {
+    dispatchEvent(new HashChangeEvent("hashchange", { oldURL: oldURL.toString(), newURL: newURL.toString() }))
+  }
+
+  notifyApplicationAfterFrameLoad(frame: FrameElement) {
+    return dispatch("turbo:frame-load", { target: frame })
+  }
+
+  notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {
+    return dispatch("turbo:frame-render", { detail: { fetchResponse }, target: frame, cancelable: true })
+  }
+
+  // Helpers
+
+  elementDriveEnabled(element?: Element) {
+    const container = element?.closest("[data-turbo]")
+
+    // Check if Drive is enabled on the session.
+    if (this.drive) {
+      // Drive should be enabled by default, unless `data-turbo="false"`.
+      if (container) {
+        return container.getAttribute("data-turbo") != "false"
+      } else {
+        return true
+      }
+    } else {
+      // Drive should be disabled by default, unless `data-turbo="true"`.
+      if (container) {
+        return container.getAttribute("data-turbo") == "true"
+      } else {
+        return false
+      }
+    }
+  }
+
   // Private
 
   getActionForLink(link: Element): Action {
@@ -254,21 +347,21 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     return isAction(action) ? action : "advance"
   }
 
-  locationIsVisitable(location: URL) {
-    return isPrefixedBy(location, this.snapshot.rootLocation) && isHTML(location)
+  getTargetFrameForLink(link: Element) {
+    const frame = link.getAttribute("data-turbo-frame")
+
+    if (frame) {
+      return frame
+    } else {
+      const container = link.closest("turbo-frame")
+      if (container) {
+        return container.id
+      }
+    }
   }
 
   get snapshot() {
     return this.view.snapshot
-  }
-}
-
-export function elementIsNavigable(element?: Element) {
-  const container = element?.closest("[data-turbo]")
-  if (container) {
-    return container.getAttribute("data-turbo") != "false"
-  } else {
-    return true
   }
 }
 

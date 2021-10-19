@@ -34,6 +34,13 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "load")
   }
 
+  async "test wont reload when tracked elements has a nonce"() {
+    this.clickSelector("#tracked-nonce-tag-link")
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_nonce_tag.html")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
   async "test reloads when turbo-visit-control setting is reload"() {
     this.clickSelector("#visit-control-reload-link")
     await this.nextBody
@@ -70,6 +77,22 @@ export class RenderingTests extends TurboDriveTestCase {
     const finalElements = await this.provisionalElements
     this.assert.notDeepEqual(finalElements, newElements)
     this.assert(!await this.hasSelector("meta[name=test]"))
+  }
+
+  async "test evaluates head stylesheet elements"() {
+    this.assert.equal(await this.isStylesheetEvaluated, false)
+
+    this.clickSelector("#additional-assets-link")
+    await this.nextEventNamed("turbo:render")
+    this.assert.equal(await this.isStylesheetEvaluated, true)
+  }
+
+  async "test does not evaluate head stylesheet elements inside noscript elements"() {
+    this.assert.equal(await this.isNoscriptStylesheetEvaluated, false)
+
+    this.clickSelector("#additional-assets-link")
+    await this.nextEventNamed("turbo:render")
+    this.assert.equal(await this.isNoscriptStylesheetEvaluated, false)
   }
 
   async "skip evaluates head script elements once"() {
@@ -207,6 +230,14 @@ export class RenderingTests extends TurboDriveTestCase {
 
   get bodyScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.bodyScriptEvaluationCount)
+  }
+
+  get isStylesheetEvaluated(): Promise<boolean> {
+    return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black")
+  }
+
+  get isNoscriptStylesheetEvaluated(): Promise<boolean> {
+    return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black")
   }
 
   async modifyBodyBeforeCaching() {

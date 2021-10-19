@@ -76,6 +76,22 @@ export function frameElementFactory(Base: new() => HTMLElement) {
       }
     }
 
+    reload() {
+      const { src } = this;
+      this.src = null;
+      this.src = src;
+    }
+
+    attributeChangedCallback(name: string) {
+      if (name == "loading") {
+        this.delegate.loadingStyleChanged()
+      } else if (name == "src") {
+        this.delegate.sourceURLChanged()
+      } else {
+        this.delegate.disabledChanged()
+      }
+    }
+
     get isValue(): string {
       return `turbo-frame-${this.localName}`
     }
@@ -84,10 +100,16 @@ export function frameElementFactory(Base: new() => HTMLElement) {
       return Base === HTMLElement
     }
 
+    /**
+     * Gets the URL to lazily load source HTML from
+     */
     get src() {
       return this.getAttribute("src")
     }
 
+    /**
+     * Sets the URL to lazily load source HTML from
+     */
     set src(value: string | null) {
       if (value) {
         this.setAttribute("src", value)
@@ -96,10 +118,16 @@ export function frameElementFactory(Base: new() => HTMLElement) {
       }
     }
 
+    /**
+     * Determines if the element is loading
+     */
     get loading(): FrameLoadingStyle {
       return frameLoadingStyleFromString(this.getAttribute("loading") || "")
     }
 
+    /**
+     * Sets the value of if the element is loading
+     */
     set loading(value: FrameLoadingStyle) {
       if (value) {
         this.setAttribute("loading", value)
@@ -108,10 +136,20 @@ export function frameElementFactory(Base: new() => HTMLElement) {
       }
     }
 
+    /**
+     * Gets the disabled state of the frame.
+     *
+     * If disabled, no requests will be intercepted by the frame.
+     */
     get disabled() {
       return this.hasAttribute("disabled")
     }
 
+    /**
+     * Sets the disabled state of the frame.
+     *
+     * If disabled, no requests will be intercepted by the frame.
+     */
     set disabled(value: boolean) {
       if (value) {
         this.setAttribute("disabled", "")
@@ -120,10 +158,20 @@ export function frameElementFactory(Base: new() => HTMLElement) {
       }
     }
 
+    /**
+     * Gets the autoscroll state of the frame.
+     *
+     * If true, the frame will be scrolled into view automatically on update.
+     */
     get autoscroll() {
       return this.hasAttribute("autoscroll")
     }
 
+    /**
+     * Sets the autoscroll state of the frame.
+     *
+     * If true, the frame will be scrolled into view automatically on update.
+     */
     set autoscroll(value: boolean) {
       if (value) {
         this.setAttribute("autoscroll", "")
@@ -132,14 +180,27 @@ export function frameElementFactory(Base: new() => HTMLElement) {
       }
     }
 
+    /**
+     * Determines if the element has finished loading
+     */
     get complete() {
       return !this.delegate.isLoading
     }
 
+    /**
+     * Gets the active state of the frame.
+     *
+     * If inactive, source changes will not be observed.
+     */
     get isActive() {
       return this.ownerDocument === document && !this.isPreview
     }
 
+    /**
+     * Sets the active state of the frame.
+     *
+     * If inactive, source changes will not be observed.
+     */
     get isPreview() {
       return this.ownerDocument?.documentElement?.hasAttribute("data-turbo-preview")
     }

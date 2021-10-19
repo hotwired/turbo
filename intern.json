@@ -6,7 +6,7 @@
       "browserName": "chrome",
       "fixSessionCapabilities": true,
       "goog:chromeOptions": {
-        "args": [ "headless", "disable-gpu" ]
+        "args": [ "headless", "disable-gpu", "no-sandbox" ]
       }
     },
     {
@@ -17,5 +17,5 @@
       }
     }
   ],
-  "defaultTimeout": 2500
+  "defaultTimeout": 5000
 }

@@ -1,12 +1,28 @@
 const { TestServer } = require("../../dist/tests/server")
 const configuration = require("../../intern.json")
 const intern = require("intern").default
+const arg = require("arg");
+
+const args = arg({
+  "--grep": String,
+  "--environment": String
+});
 
 intern.configure(configuration)
 intern.configure({ reporters: [ "runner" ] })
 
-const arg = process.argv[2]
-if (arg == "serveOnly") {
+if (args["--grep"]) {
+  intern.configure({ grep: args["--grep"] })
+}
+
+if (args["--environment"]) {
+  const envName = args["--environment"]
+  const newEnvs = configuration.environments.filter(env => env.browserName === envName)
+  intern.configure({ environments : newEnvs })
+}
+
+const firstArg = args["_"][0]
+if (firstArg == "serveOnly") {
   intern.configure({ serveOnly: true })
 } else {
   const { spawnSync } = require("child_process")

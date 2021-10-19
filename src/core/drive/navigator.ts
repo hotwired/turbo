@@ -2,13 +2,14 @@ import { Action, isAction } from "../types"
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
-import { expandURL, Locatable } from "../url"
+import { expandURL, getAnchor, getRequestURL, Locatable, locationIsVisitable } from "../url"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
 export type NavigatorDelegate = VisitDelegate & {
-  allowsVisitingLocation(location: URL): boolean
+  allowsVisitingLocationWithAction(location: URL, action?: Action): boolean
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void
+  notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL): void
 }
 
 export class Navigator {
@@ -21,8 +22,12 @@ export class Navigator {
   }
 
   proposeVisit(location: URL, options: Partial<VisitOptions> = {}) {
-    if (this.delegate.allowsVisitingLocation(location)) {
-      this.delegate.visitProposedToLocation(location, options)
+    if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
+      if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
+        this.delegate.visitProposedToLocation(location, options)
+      } else {
+        window.location.href = location.toString()
+      }
     }
   }
 
@@ -39,11 +44,7 @@ export class Navigator {
     this.stop()
     this.formSubmission = new FormSubmission(this, form, submitter, true)
 
-    if (this.formSubmission.isIdempotent) {
-      this.proposeVisit(this.formSubmission.fetchRequest.url, { action: this.getActionForFormSubmission(this.formSubmission) })
-    } else {
-      this.formSubmission.start()
-    }
+    this.formSubmission.start()
   }
 
   stop() {
@@ -73,7 +74,10 @@ export class Navigator {
   // Form submission delegate
 
   formSubmissionStarted(formSubmission: FormSubmission) {
-
+    // Not all adapters implement formSubmissionStarted
+    if (typeof this.adapter.formSubmissionStarted === 'function') {
+      this.adapter.formSubmissionStarted(formSubmission)
+    }
   }
 
   async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -84,8 +88,9 @@ export class Navigator {
           this.view.clearSnapshotCache()
         }
 
-        const { statusCode } = fetchResponse
-        const visitOptions = { response: { statusCode, responseHTML } }
+        const { statusCode, redirected } = fetchResponse
+        const action = this.getActionForFormSubmission(formSubmission)
+        const visitOptions = { action, response: { statusCode, responseHTML, redirected } }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
@@ -96,7 +101,12 @@ export class Navigator {
 
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
-      await this.view.renderPage(snapshot)
+      if (fetchResponse.serverError) {
+        await this.view.renderError(snapshot)
+      } else {
+        await this.view.renderPage(snapshot)
+      }
+      this.view.scrollToTop()
       this.view.clearSnapshotCache()
     }
   }
@@ -106,7 +116,10 @@ export class Navigator {
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {
-
+    // Not all adapters implement formSubmissionFinished
+    if (typeof this.adapter.formSubmissionFinished === 'function') {
+      this.adapter.formSubmissionFinished(formSubmission)
+    }
   }
 
   // Visit delegate
@@ -117,6 +130,20 @@ export class Navigator {
 
   visitCompleted(visit: Visit) {
     this.delegate.visitCompleted(visit)
+  }
+
+  locationWithActionIsSamePage(location: URL, action?: Action): boolean {
+    const anchor = getAnchor(location)
+    const currentAnchor = getAnchor(this.view.lastRenderedLocation)
+    const isRestorationToTop = action === 'restore' && typeof anchor === 'undefined'
+
+    return action !== "replace" &&
+      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+      (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
+  }
+
+  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
+    this.delegate.visitScrolledToSamePageLocation(oldURL, newURL)
   }
 
   // Visits

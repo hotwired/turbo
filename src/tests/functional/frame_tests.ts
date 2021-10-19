@@ -19,7 +19,7 @@ export class FrameTests extends TurboDriveTestCase {
   async "test a frame whose src references itself does not infinitely loop"() {
     await this.clickSelector("#frame-self")
 
-    await this.nextEventNamed("turbo:before-fetch-response")
+    await this.nextEventOnTarget("frame", "turbo:frame-load")
 
     const otherEvents = await this.eventLogChannel.read()
     this.assert.equal(otherEvents.length, 0, "no more events")
@@ -40,6 +40,15 @@ export class FrameTests extends TurboDriveTestCase {
 
   async "test following a link within a frame with a target set navigates the target frame"() {
     await this.clickSelector("#hello a")
+    await this.nextBeat
+
+    const frameText = await this.querySelector("#frame h2")
+    this.assert.equal(await frameText.getVisibleText(), "Frame: Loaded")
+  }
+
+  async "test following a link in rapid succession cancels the previous request"() {
+    await this.clickSelector("#outside-frame-form")
+    await this.clickSelector("#outer-frame-link")
     await this.nextBeat
 
     const frameText = await this.querySelector("#frame h2")
@@ -75,15 +84,50 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("#nested-child"))
   }
 
-  async "test following a link within a frame with target=_top navigates the page"() {
-    this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
-
-    await this.clickSelector("#navigate-top a")
+  async "test following a form within a nested frame with form target top"() {
+    await this.clickSelector("#nested-child-navigate-form-top-submit")
     await this.nextBeat
 
     const frameText = await this.querySelector("body > h1")
     this.assert.equal(await frameText.getVisibleText(), "One")
-    this.assert.notOk(await this.hasSelector("#navigate-top"))
+    this.assert.notOk(await this.hasSelector("#frame"))
+    this.assert.notOk(await this.hasSelector("#nested-root"))
+    this.assert.notOk(await this.hasSelector("#nested-child"))
+  }
+
+  async "test following a form within a nested frame with child frame target top"() {
+    await this.clickSelector("#nested-child-navigate-top-submit")
+    await this.nextBeat
+
+    const frameText = await this.querySelector("body > h1")
+    this.assert.equal(await frameText.getVisibleText(), "One")
+    this.assert.notOk(await this.hasSelector("#frame"))
+    this.assert.notOk(await this.hasSelector("#nested-root"))
+    this.assert.notOk(await this.hasSelector("#nested-child-navigate-top"))
+  }
+
+  async "test following a link within a frame with target=_top navigates the page"() {
+    this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
+
+    await this.clickSelector("#navigate-top a:not([data-turbo-frame])")
+    await this.nextBeat
+
+    const frameText = await this.querySelector("body > h1")
+    this.assert.equal(await frameText.getVisibleText(), "One")
+    this.assert.notOk(await this.hasSelector("#navigate-top a"))
+  }
+
+  async "test following a link that declares data-turbo-frame='_self' within a frame with target=_top navigates the frame itself"() {
+    this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
+
+    await this.clickSelector("#navigate-top a[data-turbo-frame='_self']")
+    await this.nextBeat
+
+    const title = await this.querySelector("body > h1")
+    this.assert.equal(await title.getVisibleText(), "Frames")
+    this.assert.ok(await this.hasSelector("#navigate-top"))
+    const frame = await this.querySelector("#navigate-top")
+    this.assert.equal(await frame.getVisibleText(), "Replaced only the frame")
   }
 
   async "test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame"() {
@@ -117,6 +161,122 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextEventNamed("turbo:before-fetch-request")
   }
 
+  async "test evaluates frame script elements on each render"() {
+    this.assert.equal(await this.frameScriptEvaluationCount, undefined)
+
+    this.clickSelector("#body-script-link")
+    await this.sleep(200)
+    this.assert.equal(await this.frameScriptEvaluationCount, 1)
+
+    this.clickSelector("#body-script-link")
+    await this.sleep(200)
+    this.assert.equal(await this.frameScriptEvaluationCount, 2)
+  }
+
+  async "test does not evaluate data-turbo-eval=false scripts"() {
+    this.clickSelector("#eval-false-script-link")
+    await this.nextBeat
+    this.assert.equal(await this.frameScriptEvaluationCount, undefined)
+  }
+
+  async "test redirecting in a form is still navigatable after redirect"() {
+    await this.nextBeat
+    await this.clickSelector("#navigate-form-redirect")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirect"))
+
+    await this.nextBeat
+    await this.clickSelector("#submit-form")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirected-header"))
+
+    await this.nextBeat
+    await this.clickSelector("#navigate-form-redirect")
+    await this.nextBeat
+    this.assert.ok(await this.querySelector("#form-redirect-header"))
+  }
+
+  async "test 'turbo:frame-render' is triggered after frame has finished rendering"() {
+    await this.clickSelector("#frame-part")
+
+    await this.nextEventNamed("turbo:frame-render") // recursive
+    const { fetchResponse } = await this.nextEventNamed("turbo:frame-render")
+
+    this.assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
+  }
+
+   async "test following inner link reloads frame on every click"() {
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test following outer link reloads frame on every click"() {
+    await this.clickSelector("#outer-frame-link")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#outer-frame-link")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test following outer form reloads frame on every submit"() {
+    await this.clickSelector("#outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test an inner/outer link reloads frame on every click"() {
+    await this.clickSelector("#inner-outer-frame-link")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#inner-outer-frame-link")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test an inner/outer form reloads frame on every submit"() {
+    await this.clickSelector("#inner-outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.clickSelector("#inner-outer-frame-submit")
+    await this.nextEventNamed("turbo:before-fetch-request")
+  }
+
+  async "test reconnecting after following a link does not reload the frame"() {
+    await this.clickSelector("#hello a")
+    await this.nextEventNamed("turbo:before-fetch-request")
+
+    await this.remote.execute(() => {
+      window.savedElement = document.querySelector("#frame")
+      window.savedElement?.remove()
+    })
+    await this.nextBeat
+
+    await this.remote.execute(() => {
+      if (window.savedElement) {
+        document.body.appendChild(window.savedElement)
+      }
+    })
+    await this.nextBeat
+
+    const eventLogs = await this.eventLogChannel.read()
+    const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
+    this.assert.equal(requestLogs.length, 0)
+  }
+
+  async "test turbo:before-fetch-request fires on the frame element"() {
+    await this.clickSelector("#hello a")
+    this.assert.ok(await this.nextEventOnTarget("frame", "turbo:before-fetch-request"))
+  }
+
+  async "test turbo:before-fetch-response fires on the frame element"() {
+    await this.clickSelector("#hello a")
+    this.assert.ok(await this.nextEventOnTarget("frame", "turbo:before-fetch-response"))
+  }
+
   async "test loading a tbody element"() {
     await this.clickSelector("#tbody0 a")
     await this.nextBeat
@@ -127,6 +287,17 @@ export class FrameTests extends TurboDriveTestCase {
     const contentsTh = await this.querySelector("#thead0 th")
     this.assert.equal(await contentsTh.getVisibleText(), "table thead0")
   }
+  
+  get frameScriptEvaluationCount(): Promise<number | undefined> {
+    return this.evaluate(() => window.frameScriptEvaluationCount)
+  }
 }
+
+declare global {
+  interface Window {
+    frameScriptEvaluationCount?: number
+  }
+}
+
 
 FrameTests.registerSuite()

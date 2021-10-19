@@ -42,6 +42,9 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
       return element
     } else {
       const createdScriptElement = document.createElement("script")
+      if (this.cspNonce) {
+        createdScriptElement.nonce = this.cspNonce
+      }
       createdScriptElement.textContent = element.textContent
       createdScriptElement.async = false
       copyElementAttributes(createdScriptElement, element)
@@ -74,6 +77,10 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
 
   get permanentElementMap() {
     return this.currentSnapshot.getPermanentElementMapForSnapshot(this.newSnapshot)
+  }
+
+  get cspNonce() {
+    return document.head.querySelector('meta[name="csp-nonce"]')?.getAttribute("content")
   }
 }
 

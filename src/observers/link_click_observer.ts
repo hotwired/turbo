@@ -34,7 +34,8 @@ export class LinkClickObserver {
 
   clickBubbled = (event: MouseEvent) => {
     if (this.clickEventIsSignificant(event)) {
-      const link = this.findLinkFromClickTarget(event.target)
+      const target = (event.composedPath && event.composedPath()[0]) || event.target
+      const link = this.findLinkFromClickTarget(target)
       if (link) {
         const location = this.getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location)) {

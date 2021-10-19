@@ -11,7 +11,7 @@ import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
-import { elementIsNavigable } from "../session"
+import { session } from "../index"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -19,8 +19,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
-  currentURL?: string
+  currentURL?: string | null
   formSubmission?: FormSubmission
+  private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
   private connected = false
   private hasBeenLoaded = false
@@ -37,6 +38,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   connect() {
     if (!this.connected) {
       this.connected = true
+      this.reloadable = false
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.appearanceObserver.start()
       }
@@ -77,7 +79,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (!this.settingSourceURL && this.enabled && this.isActive && this.sourceURL != this.currentURL) {
+    if (!this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || this.sourceURL != this.currentURL)) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -86,6 +88,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           this.appearanceObserver.stop()
           await this.element.loaded
           this.hasBeenLoaded = true
+          session.frameLoaded(this.element)
         } catch (error) {
           this.currentURL = previousURL
           throw error
@@ -105,7 +108,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
+        if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
+        session.frameRendered(fetchResponse, this.element);
       }
     } catch (error) {
       console.error(error)
@@ -122,10 +127,15 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, url: string) {
-    return this.shouldInterceptNavigation(element)
+    if (element.hasAttribute("data-turbo-method")) {
+      return false
+    } else {
+      return this.shouldInterceptNavigation(element)
+    }
   }
 
   linkClickIntercepted(element: Element, url: string) {
+    this.reloadable = true
     this.navigateFrame(element, url)
   }
 
@@ -140,14 +150,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.formSubmission.stop()
     }
 
+    this.reloadable = false
     this.formSubmission = new FormSubmission(this, element, submitter)
-    if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
-    } else {
-      const { fetchRequest } = this.formSubmission
-      this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
-      this.formSubmission.start()
-    }
+    const { fetchRequest } = this.formSubmission
+    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
+    this.formSubmission.start()
   }
 
   // Fetch request delegate
@@ -191,7 +198,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
-    const frame = this.findFrameElement(formSubmission.formElement)
+    const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
     frame.delegate.loadResponse(response)
   }
 
@@ -210,39 +217,42 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // View delegate
 
-  viewWillRenderSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
+  allowsImmediateRender(snapshot: Snapshot, resume: (value: any) => void) {
+    return true
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
   }
 
   viewInvalidated() {
-
   }
 
   // Private
 
   private async visit(url: Locatable) {
-    const request = new FetchRequest(this, FetchMethod.get, expandURL(url))
+    const request = new FetchRequest(this, FetchMethod.get, expandURL(url), new URLSearchParams, this.element)
+
+    this.currentFetchRequest?.cancel()
+    this.currentFetchRequest = request
 
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
+        this.currentFetchRequest = null
         resolve()
       }
       request.perform()
     })
   }
 
-  private navigateFrame(element: Element, url: string) {
-    const frame = this.findFrameElement(element)
+  private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
+    const frame = this.findFrameElement(element, submitter)
+    frame.setAttribute("reloadable", "")
     frame.src = url
   }
 
-  private findFrameElement(element: Element) {
-    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+  private findFrameElement(element: Element, submitter?: HTMLElement) {
+    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
@@ -269,7 +279,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   private shouldInterceptNavigation(element: Element, submitter?: Element) {
-    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
 
     if (!this.enabled || id == "_top") {
       return false
@@ -282,11 +292,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       }
     }
 
-    if (!elementIsNavigable(element)) {
+    if (!session.elementDriveEnabled(element)) {
       return false
     }
 
-    if (submitter && !elementIsNavigable(submitter)) {
+    if (submitter && !session.elementDriveEnabled(submitter)) {
       return false
     }
 
@@ -313,9 +323,24 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
+  get reloadable() {
+    const frame = this.findFrameElement(this.element)
+    return frame.hasAttribute("reloadable")
+  }
+
+  set reloadable(value: boolean) {
+    const frame = this.findFrameElement(this.element)
+    if (value) {
+      frame.setAttribute("reloadable", "")
+    } else {
+      frame.removeAttribute("reloadable")
+    }
+  }
+
   set sourceURL(sourceURL: string | undefined) {
     this.settingSourceURL = true
     this.element.src = sourceURL ?? null
+    this.currentURL = this.element.src
     this.settingSourceURL = false
   }
 
@@ -324,7 +349,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get isLoading() {
-    return this.formSubmission !== undefined || this.resolveVisitPromise !== undefined
+    return this.formSubmission !== undefined || this.resolveVisitPromise() !== undefined
   }
 
   get isActive() {
@@ -341,7 +366,7 @@ function getFrameElementById(id: string | null) {
   }
 }
 
-function activateElement(element: Element | null, currentURL?: string) {
+function activateElement(element: Element | null, currentURL?: string | null) {
   if (element) {
     const src = element.getAttribute("src")
     if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {

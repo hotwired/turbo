@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Turbo</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <script type="module">
+      addEventListener('turbo:before-render', function(event) {
+        event.preventDefault()
+        if (confirm('Continue rendering?')) {
+          event.detail.resume()
+        } else {
+          alert('Rendering aborted')
+        }
+      })
+    </script>
+  </head>
+  <body>
+    <section>
+      <h1>Pausable Rendering</h1>
+      <p><a id="link" href="/src/tests/fixtures/one.html">Link</a></p>
+    </section>
+  </body>
+</html>

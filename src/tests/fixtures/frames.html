@@ -12,6 +12,7 @@
     <turbo-frame id="frame" data-loaded-from="/src/tests/fixtures/frames.html">
       <h2>Frames: #frame</h2>
     </turbo-frame>
+    <a id="outside-frame-form" href="/src/tests/fixtures/frames/form.html" data-turbo-frame="frame">Navigate #frame to /frames/form.html</a>
 
     <turbo-frame id="hello" target="frame">
       <h2>Frames: #hello</h2>
@@ -21,25 +22,61 @@
 
     <turbo-frame id="nested-root" target="frame">
       <h2>Frames: #nested-root</h2>
+      <a id="inner-outer-frame-link" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="nested-child">Inner/Outer frame link</a>
+      <form data-turbo-frame="nested-child" method="get" action="/src/tests/fixtures/frames/frame.html">
+        <input id="inner-outer-frame-submit" type="submit" value="Inner/Outer form submit">
+      </form>
+
       <turbo-frame id="nested-child">
         <h2>Frames: #nested-child</h2>
         <a href="/src/tests/fixtures/frames/frame.html">Load #nested-child</a>
         <a href="/src/tests/fixtures/one.html" data-turbo-frame="_top">Visit one.html</a>
+
+        <form method="get" action="/src/tests/fixtures/one.html" data-turbo-frame="_top">
+          <input id="nested-child-navigate-form-top-submit" type="submit" value="Nested Child form submit">
+        </form>
+      </turbo-frame>
+
+      <turbo-frame id="nested-child-navigate-top" target="_top">
+        <form method="get" action="/src/tests/fixtures/one.html">
+          <input id="nested-child-navigate-top-submit" type="submit" value="Nested Child form submit">
+        </form>
       </turbo-frame>
     </turbo-frame>
 
     <turbo-frame id="navigate-top" target="_top">
       <a href="/src/tests/fixtures/one.html">Visit one.html</a>
+      <a href="/src/tests/fixtures/one.html" data-turbo-frame="_self">Visit self</a>
     </turbo-frame>
 
     <turbo-frame id="missing">
       <a href="/src/tests/fixtures/frames/frame.html">Missing frame</a>
     </turbo-frame>
 
+    <turbo-frame id="body-script" target="body-script">
+      <a id="body-script-link" href="/src/tests/fixtures/frames/body_script.html">Load body-script</a>
+    </turbo-frame>
+
+    <turbo-frame id="eval-false-script" target="eval-false-script">
+      <a id="eval-false-script-link" href="/src/tests/fixtures/frames/eval_false_script.html">data-turbo-eval=false script</a></p>
+    </turbo-frame>
+
     <turbo-frame id="recursive" recurse="composer" src="/src/tests/fixtures/frames/recursive.html">
     </turbo-frame>
 
     <a id="frame-self" href="/src/tests/fixtures/frames/self.html" data-turbo-frame="frame">Visit self.html</a>
+
+    <a id="navigate-form-redirect" href="/src/tests/fixtures/frames/form-redirect.html" data-turbo-frame="form-redirect">Visit form-redirect.html</a>
+    <turbo-frame id="form-redirect"></turbo-frame>
+
+    <turbo-frame id="part">
+      <a id="frame-part" href="/src/tests/fixtures/frames/part.html">Load #part</a>
+    </turbo-frame>
+
+    <a id="outer-frame-link" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame">Outer frame link</a>
+    <form data-turbo-frame="frame" method="get" action="/src/tests/fixtures/frames/frame.html">
+      <input id="outer-frame-submit" type="submit" value="Outer form submit">
+    </form>
 
     <table>
       <thead id="thead0">
@@ -49,5 +86,5 @@
         <tr><td><a href="/src/tests/fixtures/frames/table.html">Set table</a></td></tr>
       </tbody>
     </table>
-  </body>
+</body>
 </html>

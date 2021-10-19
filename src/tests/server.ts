@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express"
 import multer from "multer"
 import path from "path"
 import url from "url"
+import fs from "fs";
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
@@ -17,13 +18,13 @@ router.use((request, response, next) => {
 })
 
 router.post("/redirect", (request, response) => {
-  const { path, ...query } = request.body
+  const { path, sleep, ...query } = request.body
   const pathname = path ?? "/src/tests/fixtures/one.html"
   const enctype = request.get("Content-Type")
   if (enctype) {
     query.enctype = enctype
   }
-  response.redirect(303, url.format({ pathname, query }))
+  setTimeout(() => response.redirect(303, url.format({ pathname, query })), parseInt(sleep || "0", 10))
 })
 
 router.get("/redirect", (request, response) => {
@@ -36,6 +37,13 @@ router.get("/redirect", (request, response) => {
   response.redirect(301, url.format({ pathname, query }))
 })
 
+router.post("/reject/tall", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_tall.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
@@ -43,13 +51,24 @@ router.post("/reject", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.get("/headers", (request, response) => {
+  const template = fs.readFileSync("src/tests/fixtures/headers.html").toString()
+  response.type("html").status(200).send(template.replace('$HEADERS', JSON.stringify(request.headers, null, 4)))
+})
+
+router.get("/delayed_response", (request, response) => {
+  const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
+  setTimeout(() => response.status(200).sendFile(fixture), 1000)
+})
+
 router.post("/messages", (request, response) => {
-  const { content, status, type } = request.body
+  const params = { ...request.body, ...request.query }
+  const { content, status, type, target, targets } = params
   if (typeof content == "string") {
-    receiveMessage(content)
+    receiveMessage(content, target)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(renderMessage(content))
+      response.send(targets ? renderMessageForTargets(content, targets) : renderMessage(content, target))
     } else {
       response.sendStatus(parseInt(status || "201", 10))
     }
@@ -91,17 +110,25 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
-function receiveMessage(content: string) {
-  const data = renderSSEData(renderMessage(content))
+function receiveMessage(content: string, target?: string) {
+  const data = renderSSEData(renderMessage(content, target))
   for (const response of streamResponses) {
     intern.log("delivering message to stream", response.socket?.remotePort)
     response.write(data)
   }
 }
 
-function renderMessage(content: string) {
+function renderMessage(content: string, target = "messages") {
   return `
-    <turbo-stream action="append" target="messages"><template>
+    <turbo-stream action="append" target="${target}"><template>
+      <div class="message">${escapeHTML(content)}</div>
+    </template></turbo-stream>
+  `
+}
+
+function renderMessageForTargets(content: string, targets: string) {
+  return `
+    <turbo-stream action="append" targets="${targets}"><template>
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `

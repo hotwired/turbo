@@ -5,7 +5,7 @@ declare const Turbo: any
 
 export class VisitTests extends TurboDriveTestCase {
   async setup() {
-    this.goToLocation("/src/tests/fixtures/visit.html")
+    await this.goToLocation("/src/tests/fixtures/visit.html")
   }
 
   async "test programmatically visiting a same-origin location"() {
@@ -37,7 +37,7 @@ export class VisitTests extends TurboDriveTestCase {
 
   async "test visiting a location served with a non-HTML content type"() {
     const urlBeforeVisit = await this.location
-    await this.visitLocation("/src/tests/fixtures/svg")
+    await this.visitLocation("/src/tests/fixtures/svg.svg")
     await this.nextBeat
 
     const url = await this.remote.getCurrentUrl()
@@ -66,8 +66,36 @@ export class VisitTests extends TurboDriveTestCase {
     await this.drainEventLog()
     await this.nextBeat
 
+    this.cancelNextVisit()
     await this.goBack()
     this.assert(await this.changedBody)
+  }
+
+  async "test turbo:before-fetch-request event.detail"() {
+    await this.clickSelector("#same-origin-link")
+    const { url, fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.equal(fetchOptions.method, "GET")
+    this.assert.include(url, "/src/tests/fixtures/one.html")
+  }
+
+  async "test turbo:before-fetch-response open new site"() {
+    this.remote.execute(() => addEventListener("turbo:before-fetch-response", async function eventListener(event: any) {
+      removeEventListener("turbo:before-fetch-response", eventListener, false);
+
+      (window as any).fetchResponseResult = {
+        responseText: await event.detail.fetchResponse.responseText,
+        responseHTML: await event.detail.fetchResponse.responseHTML,
+      };
+    }, false));
+
+    await this.clickSelector("#sample-response")
+    await this.nextEventNamed("turbo:before-fetch-response")
+
+    const fetchResponseResult = await this.evaluate(() => (window as any).fetchResponseResult)
+
+    this.assert.isTrue(fetchResponseResult.responseText.indexOf('An element with an ID') > -1)
+    this.assert.isTrue(fetchResponseResult.responseHTML.indexOf('An element with an ID') > -1)
   }
 
   async visitLocation(location: string) {
