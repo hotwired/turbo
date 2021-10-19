@@ -30,5 +30,3 @@
   "turbo:frame-load",
   "turbo:frame-render",
 ])
-
-Turbo.defineCustomFrameElement('tbody')
