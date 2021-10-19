@@ -68,27 +68,17 @@ export function frameElementFactory(Base: new() => HTMLElement) {
       }
     }
 
-    get selector(): string {
-      if (this.autonomous) {
-        return this.localName
-      } else {
-        return `${this.localName}[is="${this.isValue}"]`
-      }
-    }
-
     reload() {
       const { src } = this;
       this.src = null;
       this.src = src;
     }
 
-    attributeChangedCallback(name: string) {
-      if (name == "loading") {
-        this.delegate.loadingStyleChanged()
-      } else if (name == "src") {
-        this.delegate.sourceURLChanged()
+    get selector(): string {
+      if (this.autonomous) {
+        return this.localName
       } else {
-        this.delegate.disabledChanged()
+        return `${this.localName}[is="${this.isValue}"]`
       }
     }
 
