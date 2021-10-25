@@ -1,4 +1,5 @@
 import { FetchResponse } from "../http/fetch_response"
+import { FrameVisitOptions } from "../core/frames/frame_visit"
 
 export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
 
@@ -8,10 +9,8 @@ export interface FrameElementDelegate {
   loadingStyleChanged(): void
   sourceURLChanged(): void
   disabledChanged(): void
-  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
-  linkClickIntercepted(element: Element, url: string): void
-  loadResponse(response: FetchResponse): void
-  fetchResponseLoaded: (fetchResponse: FetchResponse) => void
+  visit(options: Partial<FrameVisitOptions>): void
+  submit(options: Partial<FrameVisitOptions>): void
   isLoading: boolean
 }
 

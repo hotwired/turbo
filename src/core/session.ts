@@ -11,10 +11,10 @@ import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
-import { Action, Position, StreamSource, isAction } from "./types"
+import { Action, Position, StreamSource } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
-import { Visit, VisitOptions } from "./drive/visit"
+import { Visit, VisitOptions, getVisitAction } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
 import { FetchResponse } from "../http/fetch_response"
@@ -344,8 +344,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Private
 
   getActionForLink(link: Element): Action {
-    const action = link.getAttribute("data-turbo-action")
-    return isAction(action) ? action : "advance"
+    return getVisitAction(link) || "advance"
   }
 
   getTargetFrameForLink(link: Element) {

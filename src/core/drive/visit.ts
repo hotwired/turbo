@@ -5,8 +5,8 @@ import { History } from "./history"
 import { getAnchor } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
-import { Action } from "../types"
-import { uuid } from "../../util"
+import { Action, isAction } from "../types"
+import { getAttribute, uuid } from "../../util"
 import { PageView } from "./page_view"
 
 export interface VisitDelegate {
@@ -417,6 +417,12 @@ export class Visit implements FetchRequestDelegate {
       delete this.frame
     }
   }
+}
+
+export function getVisitAction(...elements: (Element|undefined)[]): Action | null {
+  const action = getAttribute("data-turbo-action", ...elements)
+
+  return isAction(action) ? action : null
 }
 
 function isSuccessful(statusCode: number) {

@@ -1,7 +1,7 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
-import { dispatch } from "../../util"
+import { clearBusyState, dispatch, markAsBusy } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 
 export interface FormSubmissionDelegate {
@@ -146,6 +146,7 @@ export class FormSubmission {
 
   requestStarted(request: FetchRequest) {
     this.state = FormSubmissionState.waiting
+    markAsBusy(this.formElement)
     this.submitter?.setAttribute("disabled", "")
     dispatch("turbo:submit-start", { target: this.formElement, detail: { formSubmission: this } })
     this.delegate.formSubmissionStarted(this)
@@ -181,6 +182,7 @@ export class FormSubmission {
   requestFinished(request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
+    clearBusyState(this.formElement)
     dispatch("turbo:submit-end", { target: this.formElement, detail: { formSubmission: this, ...this.result }})
     this.delegate.formSubmissionFinished(this)
   }

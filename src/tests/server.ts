@@ -51,6 +51,13 @@ router.post("/reject", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.get("/internal_server_error", (request, response) => {
+  const status = request.params.status || "500"
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
+
+  response.status(parseInt(status, 10)).sendFile(fixture)
+})
+
 router.get("/headers", (request, response) => {
   const template = fs.readFileSync("src/tests/fixtures/headers.html").toString()
   response.type("html").status(200).send(template.replace('$HEADERS', JSON.stringify(request.headers, null, 4)))

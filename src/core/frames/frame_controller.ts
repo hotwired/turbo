@@ -1,9 +1,8 @@
 import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../elements/frame_element"
-import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
+import { FrameVisit, FrameVisitDelegate, FrameVisitOptions } from "./frame_visit"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
-import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
@@ -12,19 +11,16 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
-import { isAction } from "../types"
+import { Action } from "../types"
 
-export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
+export class FrameController implements AppearanceObserverDelegate, FormInterceptorDelegate, FrameElementDelegate, FrameVisitDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
   currentURL?: string | null
-  formSubmission?: FormSubmission
-  fetchResponseLoaded = (fetchResponse: FetchResponse) => {}
-  private currentFetchRequest: FetchRequest | null = null
-  private resolveVisitPromise = () => {}
+  frameVisit?: FrameVisit
   private connected = false
   private hasBeenLoaded = false
   private settingSourceURL = false
@@ -61,13 +57,13 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   disabledChanged() {
     if (this.loadingStyle == FrameLoadingStyle.eager) {
-      this.loadSourceURL()
+      this.visit({ url: this.sourceURL })
     }
   }
 
   sourceURLChanged() {
     if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
-      this.loadSourceURL()
+      this.visit({ url: this.sourceURL })
     }
   }
 
@@ -76,29 +72,65 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.appearanceObserver.start()
     } else {
       this.appearanceObserver.stop()
-      this.loadSourceURL()
+      this.visit({ url: this.sourceURL })
     }
   }
 
-  async loadSourceURL() {
-    if (!this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || this.sourceURL != this.currentURL)) {
-      const previousURL = this.currentURL
-      this.currentURL = this.sourceURL
-      if (this.sourceURL) {
-        try {
-          this.element.loaded = this.visit(expandURL(this.sourceURL))
-          this.appearanceObserver.stop()
-          await this.element.loaded
-          this.hasBeenLoaded = true
-        } catch (error) {
-          this.currentURL = previousURL
-          throw error
-        }
-      }
+  visit(options: Partial<FrameVisitOptions> = {}) {
+    const frameVisit = new FrameVisit(this, this.element, options)
+    frameVisit.start()
+  }
+
+  submit(options: Partial<FrameVisitOptions> = {}) {
+    const { submit } = options
+
+    if (submit) {
+      const frameVisit = new FrameVisit(this, this.element, options)
+      frameVisit.start()
     }
   }
 
-  async loadResponse(fetchResponse: FetchResponse) {
+  // Frame visit delegate
+
+  shouldVisit({ isFormSubmission }: FrameVisit) {
+    return !this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || (this.sourceURL != this.currentURL || isFormSubmission))
+  }
+
+  visitStarted(frameVisit: FrameVisit) {
+    this.frameVisit?.stop()
+    this.frameVisit = frameVisit
+
+    if (frameVisit.options.url) {
+      this.currentURL = frameVisit.options.url
+    }
+
+    this.appearanceObserver.stop()
+    markAsBusy(this.element)
+  }
+
+  async visitSucceeded({ action }: FrameVisit, response: FetchResponse) {
+    await this.loadResponse(response, action)
+  }
+
+  async visitFailed({ action }: FrameVisit, response: FetchResponse) {
+    await this.loadResponse(response, action)
+  }
+
+  visitErrored(frameVisit: FrameVisit, error: Error) {
+    console.error(error)
+    this.currentURL = frameVisit.previousURL
+    this.view.invalidate()
+    throw error
+  }
+
+  visitCompleted(frameVisit: FrameVisit) {
+    clearBusyState(this.element)
+    this.hasBeenLoaded = true
+  }
+
+  async loadResponse(fetchResponse: FetchResponse, action: Action | null) {
+    const fetchResponseLoaded = this.proposeVisitIfNavigatedWithAction(this.element, action)
+
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       this.sourceURL = fetchResponse.response.url
     }
@@ -113,20 +145,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         await this.view.render(renderer)
         session.frameRendered(fetchResponse, this.element)
         session.frameLoaded(this.element)
-        this.fetchResponseLoaded(fetchResponse)
+        fetchResponseLoaded(fetchResponse)
       }
     } catch (error) {
       console.error(error)
       this.view.invalidate()
-    } finally {
-      this.fetchResponseLoaded = () => {}
     }
   }
 
   // Appearance observer delegate
 
   elementAppearedInViewport(element: Element) {
-    this.loadSourceURL()
+    this.visit({ url: this.sourceURL })
   }
 
   // Link interceptor delegate
@@ -151,74 +181,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
-    if (this.formSubmission) {
-      this.formSubmission.stop()
-    }
-
-    this.reloadable = false
-    this.formSubmission = new FormSubmission(this, element, submitter)
-    const { fetchRequest } = this.formSubmission
-    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
-    this.formSubmission.start()
-  }
-
-  // Fetch request delegate
-
-  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
-    headers["Turbo-Frame"] = this.id
-  }
-
-  requestStarted(request: FetchRequest) {
-    markAsBusy(this.element)
-  }
-
-  requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
-    this.resolveVisitPromise()
-  }
-
-  async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
-    await this.loadResponse(response)
-    this.resolveVisitPromise()
-  }
-
-  requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
-    console.error(response)
-    this.resolveVisitPromise()
-  }
-
-  requestErrored(request: FetchRequest, error: Error) {
-    console.error(error)
-    this.resolveVisitPromise()
-  }
-
-  requestFinished(request: FetchRequest) {
-    clearBusyState(this.element)
-  }
-
-  // Form submission delegate
-
-  formSubmissionStarted({ formElement }: FormSubmission) {
-    markAsBusy(formElement, this.findFrameElement(formElement))
-  }
-
-  formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
-    const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
-
-    this.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
-
-    frame.delegate.loadResponse(response)
-  }
-
-  formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
-    this.element.delegate.loadResponse(fetchResponse)
-  }
-
-  formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-    console.error(error)
-  }
-
-  formSubmissionFinished({ formElement }: FormSubmission) {
-    clearBusyState(formElement, this.findFrameElement(formElement))
+    const frame = this.findFrameElement(element, submitter)
+    frame.removeAttribute("reloadable")
+    frame.delegate.submit(FrameVisit.optionsForSubmit(element, submitter))
   }
 
   // View delegate
@@ -235,37 +200,16 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Private
 
-  private async visit(url: URL) {
-    const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams, this.element)
-
-    this.currentFetchRequest?.cancel()
-    this.currentFetchRequest = request
-
-    return new Promise<void>(resolve => {
-      this.resolveVisitPromise = () => {
-        this.resolveVisitPromise = () => {}
-        this.currentFetchRequest = null
-        resolve()
-      }
-      request.perform()
-    })
-  }
-
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
-
-    this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
-
     frame.setAttribute("reloadable", "")
-    frame.src = url
+    frame.delegate.visit(FrameVisit.optionsForClick(element, url))
   }
 
-  private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
-    const action = getAttribute("data-turbo-action", submitter, element, frame)
-
-    if (isAction(action)) {
+  private proposeVisitIfNavigatedWithAction(frame: FrameElement, action: Action | null): (fetchResponse: FetchResponse) => void {
+    if (action) {
       const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
-      frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
+      return (fetchResponse: FetchResponse) => {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
           const responseHTML = frame.ownerDocument.documentElement.outerHTML
@@ -274,6 +218,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           session.visit(frame.src, { action, response, visitCachedSnapshot, willRender: false })
         }
       }
+    } else {
+      return () => {}
     }
   }
 
@@ -381,7 +327,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   get isLoading() {
-    return this.formSubmission !== undefined || this.resolveVisitPromise() !== undefined
+    return this.frameVisit !== undefined
   }
 
   get isActive() {

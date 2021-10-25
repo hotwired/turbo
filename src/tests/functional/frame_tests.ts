@@ -53,6 +53,22 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
+  async "test following a link within a frame renders an error response"() {
+    await this.clickSelector("#inside-frame-500")
+    await this.nextBeat
+
+    const title = await this.querySelector("#frame h2")
+    this.assert.equal(await title.getVisibleText(), "Frame: Internal Server Error")
+  }
+
+  async "test following a link targetting a frame renders an error response"() {
+    await this.clickSelector("#outside-frame-500")
+    await this.nextBeat
+
+    const title = await this.querySelector("#frame h2")
+    this.assert.equal(await title.getVisibleText(), "Frame: Internal Server Error")
+  }
+
   async "test following a link driving a frame toggles the [aria-busy=true] attribute"() {
     await this.clickSelector("#hello a")
 

@@ -31,8 +31,11 @@
       <a id="link-frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame from within</a>
       <a id="link-frame-with-search-params" href="/src/tests/fixtures/frames/frame.html?key=value">Navigate #frame with ?key=value</a>
       <a id="link-nested-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-action="advance">Navigate #frame from within with a[data-turbo-action="advance"]</a>
+      <a id="inside-frame-500" href="/__turbo/internal_server_error">inside #frame: 500</a>
     </turbo-frame>
     <a id="outside-frame-form" href="/src/tests/fixtures/frames/form.html" data-turbo-frame="frame">Navigate #frame to /frames/form.html</a>
+    <a id="outside-frame-500" href="/__turbo/internal_server_error" data-turbo-frame="frame">outside #frame: 500</a>
+
 
     <a id="link-outside-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame" data-turbo-action="advance">Navigate #frame from outside with a[data-turbo-action="advance"]</a>
     <form id="form-get-frame-action-advance" action="/__turbo/redirect" data-turbo-frame="frame" data-turbo-action="advance">
