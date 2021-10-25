@@ -29,19 +29,31 @@ test.beforeEach(async ({ page }) => {
 })
 
 test("navigating a frame with Turbo.visit", async ({ page }) => {
-  const pathname = "/src/tests/fixtures/frames/frame.html"
+  const path = "/src/tests/fixtures/frames/frame.html"
 
   await page.locator("#frame").evaluate((frame) => frame.setAttribute("disabled", ""))
-  await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
+  await page.evaluate((path) => window.Turbo.visit(path, { frame: "frame" }), path)
   await nextBeat()
 
   assert.equal(await page.textContent("#frame h2"), "Frames: #frame", "does not navigate a disabled frame")
 
   await page.locator("#frame").evaluate((frame) => frame.removeAttribute("disabled"))
-  await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
-  await nextBeat()
+  await page.evaluate((path) => window.Turbo.visit(path, { frame: "frame" }), path)
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   assert.equal(await page.textContent("#frame h2"), "Frame: Loaded", "navigates the target frame")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
+  assert.equal(pathname((await attributeForSelector(page, "#frame", "src")) || ""), path)
+})
+
+test("navigating a frame with Turbo.visit and an action: option", async ({ page }) => {
+  const path = "/src/tests/fixtures/frames/frame.html"
+  await page.evaluate((path) => window.Turbo.visit(path, { frame: "frame", action: "advance" }), path)
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  assert.equal(await page.textContent("#frame h2"), "Frame: Loaded", "navigates the target frame")
+  assert.equal(pathname(page.url()), path)
+  assert.equal(pathname((await attributeForSelector(page, "#frame", "src")) || ""), path)
 })
 
 test("navigating a frame a second time does not leak event listeners", async ({ page }) => {
