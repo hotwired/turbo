@@ -29,7 +29,7 @@ export class FrameController
     FrameElementDelegate,
     FormLinkInterceptorDelegate,
     LinkInterceptorDelegate,
-    ViewDelegate<Snapshot<FrameElement>>
+    ViewDelegate<FrameElement, Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
@@ -44,7 +44,7 @@ export class FrameController
   private connected = false
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
-  private previousContents?: DocumentFragment
+  private previousFrameElement?: FrameElement
 
   constructor(element: FrameElement) {
     this.element = element
@@ -131,7 +131,14 @@ export class FrameController
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, false, false)
+        const renderer = new FrameRenderer(
+          this,
+          this.view.snapshot,
+          snapshot,
+          FrameRenderer.renderElement,
+          false,
+          false
+        )
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
         this.complete = true
@@ -265,19 +272,18 @@ export class FrameController
   viewInvalidated() {}
 
   // Frame renderer delegate
-  frameContentsExtracted(fragment: DocumentFragment) {
-    this.previousContents = fragment
+  frameExtracted(element: FrameElement) {
+    this.previousFrameElement = element
   }
 
   visitCachedSnapshot = ({ element }: Snapshot) => {
     const frame = element.querySelector("#" + this.element.id)
 
-    if (frame && this.previousContents) {
-      frame.innerHTML = ""
-      frame.append(this.previousContents)
+    if (frame && this.previousFrameElement) {
+      frame.replaceChildren(...this.previousFrameElement.children)
     }
 
-    delete this.previousContents
+    delete this.previousFrameElement
   }
 
   // Private

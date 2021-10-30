@@ -46,7 +46,7 @@ export class Session
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly preloader = new Preloader(this)
-  readonly view = new PageView(this, document.documentElement)
+  readonly view = new PageView(this, document.documentElement as HTMLBodyElement)
   adapter: Adapter = new BrowserAdapter(this)
 
   readonly pageObserver = new PageObserver(this)

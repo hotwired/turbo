@@ -4,7 +4,7 @@ import { Snapshot } from "./snapshot"
 import { Position } from "./types"
 import { getAnchor } from "./url"
 
-export interface ViewDelegate<S extends Snapshot> {
+export interface ViewDelegate<E extends Element, S extends Snapshot<E>> {
   allowsImmediateRender(snapshot: S, resume: (value: any) => void): boolean
   preloadOnLoadLinksForView(element: Element): void
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
@@ -15,7 +15,7 @@ export abstract class View<
   E extends Element,
   S extends Snapshot<E> = Snapshot<E>,
   R extends Renderer<E, S> = Renderer<E, S>,
-  D extends ViewDelegate<S> = ViewDelegate<S>
+  D extends ViewDelegate<E, S> = ViewDelegate<E, S>
 > {
   readonly delegate: D
   readonly element: E
