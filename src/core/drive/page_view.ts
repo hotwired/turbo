@@ -1,10 +1,12 @@
 import { nextEventLoopTick } from "../../util"
-import { View, ViewDelegate } from "../view"
+import { View, ViewDelegate, ViewRenderOptions } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { Visit } from "./visit"
+
+export type PageViewRenderOptions = ViewRenderOptions
 
 export interface PageViewDelegate extends ViewDelegate<HTMLBodyElement, PageSnapshot> {
   viewWillCacheSnapshot(): void

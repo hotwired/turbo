@@ -4,8 +4,12 @@ import { Snapshot } from "./snapshot"
 import { Position } from "./types"
 import { getAnchor } from "./url"
 
+export interface ViewRenderOptions {
+  resume: (value: any) => void
+}
+
 export interface ViewDelegate<E extends Element, S extends Snapshot<E>> {
-  allowsImmediateRender(snapshot: S, resume: (value: any) => void): boolean
+  allowsImmediateRender(snapshot: S, options: ViewRenderOptions): boolean
   preloadOnLoadLinksForView(element: Element): void
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
   viewInvalidated(reason: ReloadReason): void
@@ -85,7 +89,8 @@ export abstract class View<
         this.prepareToRenderSnapshot(renderer)
 
         const renderInterception = new Promise((resolve) => (this.resolveInterceptionPromise = resolve))
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, this.resolveInterceptionPromise)
+        const options = { resume: this.resolveInterceptionPromise }
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)

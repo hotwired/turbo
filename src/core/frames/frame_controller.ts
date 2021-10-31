@@ -10,7 +10,7 @@ import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/
 import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { ViewDelegate } from "../view"
+import { ViewDelegate, ViewRenderOptions } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
@@ -259,7 +259,7 @@ export class FrameController
 
   // View delegate
 
-  allowsImmediateRender(_snapshot: Snapshot, _resume: (value: any) => void) {
+  allowsImmediateRender(_snapshot: Snapshot, _options: ViewRenderOptions) {
     return true
   }
 

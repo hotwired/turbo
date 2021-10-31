@@ -14,7 +14,7 @@ import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
-import { PageView, PageViewDelegate } from "./drive/page_view"
+import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
@@ -259,8 +259,8 @@ export class Session
     }
   }
 
-  allowsImmediateRender({ element }: PageSnapshot, resume: (value: any) => void) {
-    const event = this.notifyApplicationBeforeRender(element, resume)
+  allowsImmediateRender({ element }: PageSnapshot, options: PageViewRenderOptions) {
+    const event = this.notifyApplicationBeforeRender(element, options)
     return !event.defaultPrevented
   }
 
@@ -323,9 +323,9 @@ export class Session
     return dispatch<TurboBeforeCacheEvent>("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement, resume: (value: any) => void) {
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, options: PageViewRenderOptions) {
     return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
-      detail: { newBody, resume },
+      detail: { newBody, ...options },
       cancelable: true,
     })
   }
