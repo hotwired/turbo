@@ -18,6 +18,7 @@ import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
+import { FrameViewRenderOptions } from "./frames/frame_view"
 import { FetchResponse } from "../http/fetch_response"
 import { Preloader, PreloaderDelegate } from "./drive/preloader"
 
@@ -27,6 +28,7 @@ export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & 
 export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
 export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
 export type TurboFrameLoadEvent = CustomEvent
+export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
 export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
 export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
 export type TurboRenderEvent = CustomEvent

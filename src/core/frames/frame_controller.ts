@@ -7,7 +7,7 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
+import { clearBusyState, dispatch, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate, ViewRenderOptions } from "../view"
@@ -19,6 +19,7 @@ import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observer
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction } from "../types"
+import { TurboBeforeFrameRenderEvent } from "../session"
 
 export class FrameController
   implements
@@ -259,8 +260,22 @@ export class FrameController
 
   // View delegate
 
-  allowsImmediateRender(_snapshot: Snapshot, _options: ViewRenderOptions<FrameElement>) {
-    return true
+  allowsImmediateRender({ element: newFrame }: Snapshot<FrameElement>, options: ViewRenderOptions<FrameElement>) {
+    const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
+      target: this.element,
+      detail: { newFrame, ...options },
+      cancelable: true,
+    })
+    const {
+      defaultPrevented,
+      detail: { render },
+    } = event
+
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}

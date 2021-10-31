@@ -1,6 +1,8 @@
 import { FrameElement } from "../../elements"
 import { Snapshot } from "../snapshot"
-import { View } from "../view"
+import { View, ViewRenderOptions } from "../view"
+
+export type FrameViewRenderOptions = ViewRenderOptions<FrameElement>
 
 export class FrameView extends View<FrameElement> {
   invalidate() {

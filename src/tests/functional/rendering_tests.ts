@@ -255,6 +255,26 @@ test("test restores focus during page rendering when transposing an ancestor of 
   assert.ok(await selectorHasFocus(page, "#permanent-descendant-input"), "restores focus after page loads")
 })
 
+test("test before-frame-render event supports custom render function within turbo-frames", async ({ page }) => {
+  const frame = await page.locator("#frame")
+  await frame.evaluate((frame) =>
+    frame.addEventListener("turbo:before-frame-render", (event) => {
+      const { detail } = event as CustomEvent
+      const { render } = detail
+      detail.render = (currentElement: Element, newElement: Element) => {
+        newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered Frame</span>`)
+        render(currentElement, newElement)
+      }
+    })
+  )
+
+  await page.click("#permanent-in-frame-element-link")
+  await nextBeat()
+
+  const customRendered = await page.locator("#frame #custom-rendered")
+  assert.equal(await customRendered.textContent(), "Custom Rendered Frame", "renders with custom function")
+})
+
 test("test preserves permanent elements within turbo-frames", async ({ page }) => {
   assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
 
