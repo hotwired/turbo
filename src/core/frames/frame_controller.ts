@@ -259,7 +259,7 @@ export class FrameController
 
   // View delegate
 
-  allowsImmediateRender(_snapshot: Snapshot, _options: ViewRenderOptions) {
+  allowsImmediateRender(_snapshot: Snapshot, _options: ViewRenderOptions<FrameElement>) {
     return true
   }
 

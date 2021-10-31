@@ -1,15 +1,16 @@
 import { ReloadReason } from "./native/browser_adapter"
-import { Renderer } from "./renderer"
+import { Renderer, Render } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Position } from "./types"
 import { getAnchor } from "./url"
 
-export interface ViewRenderOptions {
+export interface ViewRenderOptions<E> {
   resume: (value: any) => void
+  render: Render<E>
 }
 
 export interface ViewDelegate<E extends Element, S extends Snapshot<E>> {
-  allowsImmediateRender(snapshot: S, options: ViewRenderOptions): boolean
+  allowsImmediateRender(snapshot: S, options: ViewRenderOptions<E>): boolean
   preloadOnLoadLinksForView(element: Element): void
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
   viewInvalidated(reason: ReloadReason): void
@@ -89,7 +90,7 @@ export abstract class View<
         this.prepareToRenderSnapshot(renderer)
 
         const renderInterception = new Promise((resolve) => (this.resolveInterceptionPromise = resolve))
-        const options = { resume: this.resolveInterceptionPromise }
+        const options = { resume: this.resolveInterceptionPromise, render: this.renderer.renderElement }
         const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
         if (!immediateRender) await renderInterception
 

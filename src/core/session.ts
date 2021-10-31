@@ -23,7 +23,7 @@ import { Preloader, PreloaderDelegate } from "./drive/preloader"
 
 export type TimingData = unknown
 export type TurboBeforeCacheEvent = CustomEvent
-export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement; resume: (value: any) => void }>
+export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
 export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
 export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
 export type TurboFrameLoadEvent = CustomEvent
@@ -261,7 +261,16 @@ export class Session
 
   allowsImmediateRender({ element }: PageSnapshot, options: PageViewRenderOptions) {
     const event = this.notifyApplicationBeforeRender(element, options)
-    return !event.defaultPrevented
+    const {
+      defaultPrevented,
+      detail: { render },
+    } = event
+
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot: PageSnapshot, _isPreview: boolean) {

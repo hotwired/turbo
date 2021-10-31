@@ -6,7 +6,7 @@ import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { Visit } from "./visit"
 
-export type PageViewRenderOptions = ViewRenderOptions
+export type PageViewRenderOptions = ViewRenderOptions<HTMLBodyElement>
 
 export interface PageViewDelegate extends ViewDelegate<HTMLBodyElement, PageSnapshot> {
   viewWillCacheSnapshot(): void
