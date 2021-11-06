@@ -651,6 +651,30 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-response"))
   }
 
+  async "test POST to external action ignored"() {
+    await this.clickSelector("#submit-external")
+    await this.noNextEventNamed("turbo:before-fetch-request")
+    await this.nextBody
+
+    this.assert.equal(await this.location, "https://httpbin.org/post")
+  }
+
+  async "test POST to external action within frame ignored"() {
+    await this.clickSelector("#submit-external-within-ignored")
+    await this.noNextEventNamed("turbo:before-fetch-request")
+    await this.nextBody
+
+    this.assert.equal(await this.location, "https://httpbin.org/post")
+  }
+
+  async "test POST to external action targetting frame ignored"() {
+    await this.clickSelector("#submit-external-target-ignored")
+    await this.noNextEventNamed("turbo:before-fetch-request")
+    await this.nextBody
+
+    this.assert.equal(await this.location, "https://httpbin.org/post")
+  }
+
   get formSubmitStarted(): Promise<boolean> {
     return this.hasSelector("html[data-form-submit-start]")
   }

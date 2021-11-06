@@ -249,6 +249,24 @@
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-within-form-outside-frame">Stream link within form outside frame</a>
     </form>
     <hr>
+    <form method="post" action="https://httpbin.org/post">
+      <button id="submit-external">POST to https://httpbin.org/post</button>
+    </form>
     <turbo-frame id="hello"></turbo-frame>
+    <hr>
+
+    <turbo-frame id="ignored">
+      <form method="post" action="https://httpbin.org/post">
+        <button id="submit-external-within-ignored">POST to https://httpbin.org/post within #hello</button>
+      </form>
+    </turbo-frame>
+
+    <form method="post" action="https://httpbin.org/post">
+      <button id="submit-external">POST to https://httpbin.org/post</button>
+    </form>
+
+    <form method="post" action="https://httpbin.org/post" data-turbo-frame="ignored">
+      <button id="submit-external-target-ignored">POST to https://httpbin.org/post targeting #hello</button>
+    </form>
   </body>
 </html>

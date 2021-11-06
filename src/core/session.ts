@@ -5,7 +5,7 @@ import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/for
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
-import { expandURL, locationIsVisitable, Locatable } from "./url"
+import { getAction, expandURL, locationIsVisitable, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -200,7 +200,11 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-    return this.elementDriveEnabled(form) && (!submitter || this.elementDriveEnabled(submitter))
+    const action = getAction(form, submitter)
+
+    return this.elementDriveEnabled(form)
+      && (!submitter || this.elementDriveEnabled(submitter))
+      && locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
