@@ -6,6 +6,7 @@ import { StreamSource } from "./types"
 import { VisitOptions } from "./drive/visit"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
+import { FormSubmission } from "./drive/form_submission"
 
 const session = new Session
 const { navigator } = session
@@ -95,4 +96,8 @@ export function clearCache() {
  */
 export function setProgressBarDelay(delay: number) {
   session.setProgressBarDelay(delay)
+}
+
+export function setConfirmMethod(confirmMethod: (message: string, element: HTMLFormElement)=>boolean) {
+  FormSubmission.confirmMethod = confirmMethod
 }

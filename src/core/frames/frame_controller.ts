@@ -6,7 +6,7 @@ import { parseHTMLDocument } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
-import { expandURL, urlsAreEqual, Locatable } from "../url"
+import { getAction, expandURL, urlsAreEqual, locationIsVisitable, Locatable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
@@ -21,6 +21,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly formInterceptor: FormInterceptor
   currentURL?: string | null
   formSubmission?: FormSubmission
+  private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
   private connected = false
   private hasBeenLoaded = false
@@ -87,7 +88,6 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           this.appearanceObserver.stop()
           await this.element.loaded
           this.hasBeenLoaded = true
-          session.frameLoaded(this.element)
         } catch (error) {
           this.currentURL = previousURL
           throw error
@@ -109,7 +109,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
-        session.frameRendered(fetchResponse, this.element);
+        session.frameRendered(fetchResponse, this.element)
+        session.frameLoaded(this.element)
       }
     } catch (error) {
       console.error(error)
@@ -140,7 +141,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Form interceptor delegate
 
-  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: Element) {
+  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: HTMLElement) {
     return this.shouldInterceptNavigation(element, submitter)
   }
 
@@ -151,13 +152,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
     this.reloadable = false
     this.formSubmission = new FormSubmission(this, element, submitter)
-    if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href, submitter)
-    } else {
-      const { fetchRequest } = this.formSubmission
-      this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
-      this.formSubmission.start()
-    }
+    const { fetchRequest } = this.formSubmission
+    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
+    this.formSubmission.start()
   }
 
   // Fetch request delegate
@@ -233,11 +230,15 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Private
 
   private async visit(url: Locatable) {
-    const request = new FetchRequest(this, FetchMethod.get, expandURL(url), undefined, this.element)
+    const request = new FetchRequest(this, FetchMethod.get, expandURL(url), new URLSearchParams, this.element)
+
+    this.currentFetchRequest?.cancel()
+    this.currentFetchRequest = request
 
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
+        this.currentFetchRequest = null
         resolve()
       }
       request.perform()
@@ -277,8 +278,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return new FrameElement()
   }
 
-  private shouldInterceptNavigation(element: Element, submitter?: Element) {
+  private formActionIsVisitable(form: HTMLFormElement, submitter?: HTMLElement) {
+    const action = getAction(form, submitter)
+
+    return locationIsVisitable(expandURL(action), this.rootLocation)
+  }
+
+  private shouldInterceptNavigation(element: Element, submitter?: HTMLElement) {
     const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+
+    if (element instanceof HTMLFormElement && !this.formActionIsVisitable(element, submitter)) {
+      return false
+    }
 
     if (!this.enabled || id == "_top") {
       return false
@@ -349,6 +360,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   get isActive() {
     return this.element.isActive && this.connected
+  }
+
+  get rootLocation() {
+    const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
+    const root = meta?.content ?? "/"
+    return expandURL(root)
   }
 }
 

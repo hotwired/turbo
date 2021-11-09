@@ -5,7 +5,7 @@ import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/for
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
-import { expandURL, locationIsVisitable, Locatable } from "./url"
+import { getAction, expandURL, locationIsVisitable, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -148,13 +148,24 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
       form.action = link.getAttribute("href") || "undefined"
       form.hidden = true
 
-      link.parentNode?.insertBefore(form, link)
+      if (link.hasAttribute("data-turbo-confirm")) {
+        form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
+      }
+
+      const frame = this.getTargetFrameForLink(link)
+      if (frame) {
+        form.setAttribute("data-turbo-frame", frame)
+        form.addEventListener("turbo:submit-start", () => form.remove())
+      } else {
+        form.addEventListener("submit", () => form.remove())
+      }
+
+      document.body.appendChild(form)
       return dispatch("submit", { cancelable: true, target: form })
     } else {
       return false
     }
   }
-
 
   // Navigator delegate
 
@@ -189,7 +200,11 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Form submit observer delegate
 
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-    return this.elementDriveEnabled(form) && (!submitter || this.elementDriveEnabled(submitter))
+    const action = getAction(form, submitter)
+
+    return this.elementDriveEnabled(form)
+      && (!submitter || this.elementDriveEnabled(submitter))
+      && locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
@@ -329,6 +344,19 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   getActionForLink(link: Element): Action {
     const action = link.getAttribute("data-turbo-action")
     return isAction(action) ? action : "advance"
+  }
+
+  getTargetFrameForLink(link: Element) {
+    const frame = link.getAttribute("data-turbo-frame")
+
+    if (frame) {
+      return frame
+    } else {
+      const container = link.closest("turbo-frame")
+      if (container) {
+        return container.id
+      }
+    }
   }
 
   get snapshot() {
