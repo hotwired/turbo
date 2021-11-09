@@ -6,7 +6,7 @@ import { parseHTMLDocument } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
-import { expandURL, urlsAreEqual, Locatable } from "../url"
+import { getAction, expandURL, urlsAreEqual, locationIsVisitable, Locatable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
@@ -141,7 +141,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Form interceptor delegate
 
-  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: Element) {
+  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: HTMLElement) {
     return this.shouldInterceptNavigation(element, submitter)
   }
 
@@ -278,8 +278,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return new FrameElement()
   }
 
-  private shouldInterceptNavigation(element: Element, submitter?: Element) {
+  private formActionIsVisitable(form: HTMLFormElement, submitter?: HTMLElement) {
+    const action = getAction(form, submitter)
+
+    return locationIsVisitable(expandURL(action), this.rootLocation)
+  }
+
+  private shouldInterceptNavigation(element: Element, submitter?: HTMLElement) {
     const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+
+    if (element instanceof HTMLFormElement && !this.formActionIsVisitable(element, submitter)) {
+      return false
+    }
 
     if (!this.enabled || id == "_top") {
       return false
@@ -350,6 +360,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   get isActive() {
     return this.element.isActive && this.connected
+  }
+
+  get rootLocation() {
+    const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
+    const root = meta?.content ?? "/"
+    return expandURL(root)
   }
 }
 
