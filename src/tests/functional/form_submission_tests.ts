@@ -339,6 +339,10 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
 
     await this.nextEventNamed("turbo:frame-render")
+    await this.nextEventNamed("turbo:frame-load")
+
+    const otherEvents = await this.eventLogChannel.read()
+    this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
   async "test frame GET form targetting frame submission"() {
@@ -356,6 +360,10 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
 
     await this.nextEventNamed("turbo:frame-render")
+    await this.nextEventNamed("turbo:frame-load")
+
+    const otherEvents = await this.eventLogChannel.read()
+    this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
   async "test frame form GET submission from submitter referencing another frame"() {
@@ -444,7 +452,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test invalid frame form submission with unprocessable entity status"() {
     await this.clickSelector("#frame form.unprocessable_entity input[type=submit]")
-    await this.nextBeat
+
+    this.assert.ok(await this.formSubmitStarted, "fires turbo:submit-start")
+    await this.nextEventNamed("turbo:before-fetch-request")
+    await this.nextEventNamed("turbo:before-fetch-response")
+    this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
+    await this.nextEventNamed("turbo:frame-render")
+    await this.nextEventNamed("turbo:frame-load")
+
+    const otherEvents = await this.eventLogChannel.read()
+    this.assert.equal(otherEvents.length, 0, "no more events")
 
     const title = await this.querySelector("#frame h2")
     this.assert.ok(await this.hasSelector("#reject form"), "only replaces frame")
@@ -453,7 +470,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
   async "test invalid frame form submission with internal server errror status"() {
     await this.clickSelector("#frame form.internal_server_error input[type=submit]")
-    await this.nextBeat
+
+    this.assert.ok(await this.formSubmitStarted, "fires turbo:submit-start")
+    await this.nextEventNamed("turbo:before-fetch-request")
+    await this.nextEventNamed("turbo:before-fetch-response")
+    this.assert.ok(await this.formSubmitEnded, "fires turbo:submit-end")
+    await this.nextEventNamed("turbo:frame-render")
+    await this.nextEventNamed("turbo:frame-load")
+
+    const otherEvents = await this.eventLogChannel.read()
+    this.assert.equal(otherEvents.length, 0, "no more events")
 
     const title = await this.querySelector("#frame h2")
     this.assert.ok(await this.hasSelector("#reject form"), "only replaces frame")
