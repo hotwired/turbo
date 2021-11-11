@@ -2,7 +2,7 @@ import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../ele
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { parseHTMLDocument } from "../../util"
+import { getAttribute, parseHTMLDocument } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -12,6 +12,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
+import { isAction } from "../types"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -199,6 +200,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
     const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
+
+    this.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
+
     frame.delegate.loadResponse(response)
   }
 
@@ -247,12 +251,30 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
+
+    this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
+
     frame.setAttribute("reloadable", "")
     frame.src = url
   }
 
+  private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
+    const action = getAttribute("data-turbo-action", submitter, element, frame)
+
+    if (isAction(action)) {
+      const proposeVisit = async (event: Event) => {
+        const { detail: { fetchResponse: { location, redirected, statusCode } } } = event as CustomEvent
+        const responseHTML = document.documentElement.outerHTML
+
+        session.visit(location, { willRender: false, action, response: { redirected, responseHTML, statusCode } })
+      }
+
+      frame.addEventListener("turbo:frame-render", proposeVisit , { once: true })
+    }
+  }
+
   private findFrameElement(element: Element, submitter?: HTMLElement) {
-    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+    const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
@@ -285,7 +307,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   private shouldInterceptNavigation(element: Element, submitter?: HTMLElement) {
-    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+    const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
 
     if (element instanceof HTMLFormElement && !this.formActionIsVisitable(element, submitter)) {
       return false

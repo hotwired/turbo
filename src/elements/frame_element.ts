@@ -9,6 +9,7 @@ export interface FrameElementDelegate {
   sourceURLChanged(): void
   disabledChanged(): void
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
+  linkClickIntercepted(element: Element, url: string): void
   loadResponse(response: FetchResponse): void
   isLoading: boolean
 }

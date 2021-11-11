@@ -31,8 +31,7 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
   linkClickIntercepted(element: Element, url: string) {
     const frame = this.findFrameElement(element)
     if (frame) {
-      frame.setAttribute("reloadable", "")
-      frame.src = url
+      frame.delegate.linkClickIntercepted(element, url)
     }
   }
 

@@ -3,6 +3,7 @@ import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
 import { expandURL, getAnchor, getRequestURL, Locatable, locationIsVisitable } from "../url"
+import { getAttribute } from "../../util"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -158,7 +159,7 @@ export class Navigator {
 
   getActionForFormSubmission(formSubmission: FormSubmission): Action {
     const { formElement, submitter } = formSubmission
-    const action = submitter?.getAttribute("data-turbo-action") || formElement.getAttribute("data-turbo-action")
+    const action = getAttribute("data-turbo-action", submitter, formElement)
     return isAction(action) ? action : "advance"
   }
 }
