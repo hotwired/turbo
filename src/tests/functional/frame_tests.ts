@@ -113,10 +113,59 @@ test("test following a link driving a frame toggles the [aria-busy=true] attribu
   )
 })
 
-test("test following a link to a page without a matching frame results in an empty frame", async ({ page }) => {
+test("test following a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
+  page,
+}) => {
   await page.click("#missing a")
-  await nextBeat()
-  assert.notOk(await innerHTMLForSelector(page, "#missing"))
+  await noNextEventOnTarget(page, "missing", "turbo:frame-render")
+  await noNextEventOnTarget(page, "missing", "turbo:frame-load")
+  const { fetchResponse } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.ok(fetchResponse, "dispatchs turbo:frame-missing with event.detail.fetchResponse")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html", "navigates the page")
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
+  assert.ok(await innerHTMLForSelector(page, "#missing"))
+})
+
+test("test following a link to a page without a matching frame dispatches a turbo:frame-missing event that can be cancelled", async ({
+  page,
+}) => {
+  await page.locator("#missing").evaluate((frame) => {
+    frame.addEventListener(
+      "turbo:frame-missing",
+      (event) => {
+        event.preventDefault()
+
+        if (event.target instanceof HTMLElement) {
+          event.target.textContent = "Overridden"
+        }
+      },
+      { once: true }
+    )
+  })
+  await page.click("#missing a")
+  await nextEventOnTarget(page, "missing", "turbo:frame-missing")
+
+  assert.equal(await page.textContent("#missing"), "Overridden")
+})
+
+test("test following a link to a page with a matching frame does not dispatch a turbo:frame-missing event", async ({
+  page,
+}) => {
+  await page.click("#link-frame")
+  await noNextEventNamed(page, "turbo:frame-missing")
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  const src = await attributeForSelector(page, "#frame", "src")
+  assert(
+    src?.includes("/src/tests/fixtures/frames/frame.html"),
+    "navigates frame without dispatching turbo:frame-missing"
+  )
 })
 
 test("test following a link within a frame with a target set navigates the target frame", async ({ page }) => {

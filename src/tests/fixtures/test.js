@@ -50,5 +50,6 @@
   "turbo:before-frame-render",
   "turbo:frame-load",
   "turbo:frame-render",
+  "turbo:frame-missing",
   "turbo:reload"
 ])
