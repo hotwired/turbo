@@ -63,6 +63,8 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.equal(await this.visitAction, "advance")
     this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
+    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets [aria-busy] on the document element")
+    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), null, "removes [aria-busy] from the document element")
   }
 
   async "test standard POST form submission events"() {
@@ -431,23 +433,29 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.attributeForSelector("#frame", "src"), url.href, "redirects the target frame")
   }
 
-  async "test frame form submission toggles the ancestor frame's [busy] attribute"() {
+  async "test frame form submission toggles the ancestor frame's [aria-busy] attribute"() {
     await this.clickSelector("#frame form.redirect input[type=submit]")
     await this.nextBeat
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets [aria-busy] on the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets [aria-busy] on the document element")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), null, "removes [aria-busy] from the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), null, "removes [aria-busy] from the document element")
   }
 
-  async "test frame form submission toggles the target frame's [busy] attribute"() {
+  async "test frame form submission toggles the target frame's [aria-busy] attribute"() {
     await this.clickSelector('#targets-frame form.frame [type="submit"]')
     await this.nextBeat
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets [aria-busy] on the #frame")
 
     const title = await this.querySelector("#frame h2")
     this.assert.equal(await title.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), null, "removes [aria-busy] from the #frame")
   }
 
   async "test frame form submission with empty created response"() {
