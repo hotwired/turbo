@@ -15,6 +15,7 @@ export interface VisitDelegate {
 
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
+  visitCachedSnapshot(visit: Visit): void
   locationWithActionIsSamePage(location: URL, action: Action): boolean
   visitScrolledToSamePageLocation(oldURL: URL, newURL: URL): void
 }
@@ -38,6 +39,7 @@ export enum VisitState {
 
 export type VisitOptions = {
   action: Action,
+  delegate: Partial<VisitDelegate>
   historyChanged: boolean,
   willRender: boolean
   referrer?: URL,
@@ -47,6 +49,7 @@ export type VisitOptions = {
 
 const defaultOptions: VisitOptions = {
   action: "advance",
+  delegate: {},
   historyChanged: false,
   willRender: true
 }
@@ -70,6 +73,7 @@ export class Visit implements FetchRequestDelegate {
   readonly action: Action
   readonly referrer?: URL
   readonly timingMetrics: TimingMetrics = {}
+  readonly optionalDelegate: Partial<VisitDelegate>
 
   willRender: boolean
   followedRedirect = false
@@ -90,7 +94,7 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, willRender } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, snapshotHTML, response, willRender, delegate: optionalDelegate } = { ...defaultOptions, ...options }
     this.willRender = willRender
     this.action = action
     this.historyChanged = historyChanged
@@ -98,6 +102,7 @@ export class Visit implements FetchRequestDelegate {
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
+    this.optionalDelegate = optionalDelegate
   }
 
   get adapter() {
@@ -126,6 +131,7 @@ export class Visit implements FetchRequestDelegate {
       this.state = VisitState.started
       this.adapter.visitStarted(this)
       this.delegate.visitStarted(this)
+      if (this.optionalDelegate.visitStarted) this.optionalDelegate.visitStarted(this)
     }
   }
 
@@ -392,6 +398,7 @@ export class Visit implements FetchRequestDelegate {
     if (!this.snapshotCached) {
       this.view.cacheSnapshot()
       this.snapshotCached = true
+      if (this.optionalDelegate.visitCachedSnapshot) this.optionalDelegate.visitCachedSnapshot(this)
     }
   }
 

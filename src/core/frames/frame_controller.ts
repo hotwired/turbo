@@ -4,6 +4,7 @@ import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
+import { Visit } from "../drive/visit"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable, Locatable } from "../url"
@@ -260,11 +261,24 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     const action = getAttribute("data-turbo-action", submitter, element, frame)
 
     if (isAction(action)) {
-      const proposeVisit = async (event: Event) => {
-        const { detail: { fetchResponse: { location, redirected, statusCode } } } = event as CustomEvent
-        const responseHTML = document.documentElement.outerHTML
+      const clone = frame.cloneNode(true)
+      const proposeVisit = () => {
+        const { ownerDocument, id, src } = frame
+        if (src) {
+          const snapshotHTML = ownerDocument.documentElement.outerHTML
+          let snapshot: Snapshot
 
-        session.visit(location, { willRender: false, action, response: { redirected, responseHTML, statusCode } })
+          const delegate = {
+            visitStarted(visit: Visit) {
+              snapshot = visit.view.snapshot
+            },
+            visitCachedSnapshot() {
+              snapshot.element.querySelector("#" + id)?.replaceWith(clone)
+            }
+          }
+
+          session.visit(src, { willRender: false, action, snapshotHTML, delegate })
+        }
       }
 
       frame.addEventListener("turbo:frame-render", proposeVisit , { once: true })

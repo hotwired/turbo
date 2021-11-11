@@ -189,6 +189,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
+  visitCachedSnapshot(visit: Visit) {
+  }
+
   locationWithActionIsSamePage(location: URL, action?: Action): boolean {
     return this.navigator.locationWithActionIsSamePage(location, action)
   }
