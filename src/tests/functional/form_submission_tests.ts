@@ -439,10 +439,8 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets [aria-busy] on the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets [aria-busy] on the document element")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), null, "removes [aria-busy] from the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), null, "removes [aria-busy] from the document element")
   }
 
   async "test frame form submission toggles the target frame's [aria-busy] attribute"() {

@@ -64,17 +64,21 @@ export function getAttribute(attributeName: string, ...elements: (Element | unde
   return null
 }
 
-export function markAsBusy(element: Element) {
-  if (element.localName == "turbo-frame") {
-    element.setAttribute("busy", "")
+export function markAsBusy(...elements: Element[]) {
+  for (const element of elements) {
+    if (element.localName == "turbo-frame") {
+      element.setAttribute("busy", "")
+    }
+    element.setAttribute("aria-busy", "true")
   }
-  element.setAttribute("aria-busy", "true")
 }
 
-export function clearBusyState(element: Element) {
-  if (element.localName == "turbo-frame") {
-    element.removeAttribute("busy")
-  }
+export function clearBusyState(...elements: Element[]) {
+  for (const element of elements) {
+    if (element.localName == "turbo-frame") {
+      element.removeAttribute("busy")
+    }
 
-  element.removeAttribute("aria-busy")
+    element.removeAttribute("aria-busy")
+  }
 }
