@@ -31,10 +31,8 @@ export class FrameTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets [aria-busy=true] on the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets [aria-busy=true] on the document element")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] on the #frame")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), null, "removes [aria-busy] from the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), null, "removes [aria-busy] from the document element")
   }
 
   async "test following a link to a page without a matching frame results in an empty frame"() {

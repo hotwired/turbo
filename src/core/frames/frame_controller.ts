@@ -165,7 +165,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestStarted(request: FetchRequest) {
-    [ this.element, document.documentElement ].forEach(markAsBusy)
+    markAsBusy(this.element)
   }
 
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
@@ -188,13 +188,13 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestFinished(request: FetchRequest) {
-    [ this.element, document.documentElement ].forEach(clearBusyState)
+    clearBusyState(this.element)
   }
 
   // Form submission delegate
 
   formSubmissionStarted({ formElement }: FormSubmission) {
-    [ formElement, this.findFrameElement(formElement), document.documentElement ].forEach(markAsBusy)
+    markAsBusy(formElement, this.findFrameElement(formElement))
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
@@ -214,7 +214,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionFinished({ formElement }: FormSubmission) {
-    [ formElement, this.findFrameElement(formElement), document.documentElement ].forEach(clearBusyState)
+    clearBusyState(formElement, this.findFrameElement(formElement))
   }
 
   // View delegate
