@@ -24,7 +24,9 @@ export class FormInterceptor {
     const form = event.target
     if (form instanceof HTMLFormElement && form.closest("turbo-frame, html") == this.element) {
       const submitter = event.submitter || undefined
-      if (this.delegate.shouldInterceptFormSubmission(form, submitter)) {
+      const method = submitter?.getAttribute("formmethod") || form.method
+
+      if (method != "dialog" && this.delegate.shouldInterceptFormSubmission(form, submitter)) {
         event.preventDefault()
         event.stopImmediatePropagation()
         this.delegate.formSubmissionIntercepted(form, submitter)

@@ -581,11 +581,26 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test form submission skipped with submitter formmethod=dialog"() {
+    await this.clickSelector('#dialog-formmethod-turbo-frame [formmethod="dialog"]')
+    await this.nextBeat
+
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test form submission targetting frame skipped within method=dialog"() {
+    await this.clickSelector('#dialog-method-turbo-frame button')
+    await this.nextBeat
+
+    this.assert.notOk(await this.formSubmitted)
+  }
+
+  async "test form submission targetting frame skipped with submitter formmethod=dialog"() {
     await this.clickSelector('#dialog-formmethod [formmethod="dialog"]')
     await this.nextBeat
 
     this.assert.notOk(await this.formSubmitStarted)
   }
+
 
   async "test form submission targets disabled frame"() {
     await this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
