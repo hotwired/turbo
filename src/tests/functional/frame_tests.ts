@@ -282,6 +282,26 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(requestLogs.length, 0)
   }
 
+  async "test navigating pushing URL state from a frame navigation fires events"() {
+    await this.clickSelector("#link-outside-frame-action-advance")
+
+    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets aria-busy on the <turbo-frame>")
+    await this.nextEventOnTarget("frame", "turbo:before-fetch-request")
+    await this.nextEventOnTarget("frame", "turbo:before-fetch-response")
+    await this.nextEventOnTarget("html", "turbo:before-visit")
+    await this.nextEventOnTarget("html", "turbo:visit")
+    await this.nextEventOnTarget("frame", "turbo:frame-render")
+    await this.nextEventOnTarget("frame", "turbo:frame-load")
+    this.assert.notOk(await this.nextAttributeMutationNamed("frame", "aria-busy"), "removes aria-busy from the <turbo-frame>")
+
+    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets aria-busy on the <html>")
+    await this.nextEventOnTarget("html", "turbo:before-cache")
+    await this.nextEventOnTarget("html", "turbo:before-render")
+    await this.nextEventOnTarget("html", "turbo:render")
+    await this.nextEventOnTarget("html", "turbo:load")
+    this.assert.notOk(await this.nextAttributeMutationNamed("html", "aria-busy"), "removes aria-busy from the <html>")
+  }
+
   async "test navigating turbo-frame[data-turbo-action=advance] from within pushes URL state"() {
     await this.clickSelector("#add-turbo-action-to-frame")
     await this.clickSelector("#link-frame")
@@ -358,7 +378,7 @@ export class FrameTests extends TurboDriveTestCase {
   async "test navigating back after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames previous contents"() {
     await this.clickSelector("#add-turbo-action-to-frame")
     await this.clickSelector("#link-frame")
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
     await this.goBack()
     await this.nextBody
 
@@ -373,7 +393,7 @@ export class FrameTests extends TurboDriveTestCase {
   async "test navigating back then forward after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames next contents"() {
     await this.clickSelector("#add-turbo-action-to-frame")
     await this.clickSelector("#link-frame")
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
     await this.goBack()
     await this.nextBody
     await this.goForward()

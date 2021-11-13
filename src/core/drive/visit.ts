@@ -41,7 +41,6 @@ export type VisitOptions = {
   action: Action,
   delegate: Partial<VisitDelegate>
   historyChanged: boolean,
-  willRender: boolean
   referrer?: URL,
   snapshotHTML?: string,
   response?: VisitResponse
@@ -51,7 +50,6 @@ const defaultOptions: VisitOptions = {
   action: "advance",
   delegate: {},
   historyChanged: false,
-  willRender: true
 }
 
 export type VisitResponse = {
@@ -75,7 +73,6 @@ export class Visit implements FetchRequestDelegate {
   readonly timingMetrics: TimingMetrics = {}
   readonly optionalDelegate: Partial<VisitDelegate>
 
-  willRender: boolean
   followedRedirect = false
   frame?: number
   historyChanged = false
@@ -94,8 +91,7 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, willRender, delegate: optionalDelegate } = { ...defaultOptions, ...options }
-    this.willRender = willRender
+    const { action, historyChanged, referrer, snapshotHTML, response, delegate: optionalDelegate } = { ...defaultOptions, ...options }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
@@ -211,7 +207,7 @@ export class Visit implements FetchRequestDelegate {
   }
 
   loadResponse() {
-    if (this.response && this.willRender) {
+    if (this.response) {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
         this.cacheSnapshot()

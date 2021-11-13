@@ -262,11 +262,14 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
     if (isAction(action)) {
       const delegate = new SnapshotSubstitution(frame)
-      const proposeVisit = () => {
-        if (frame.src) {
-          const snapshotHTML = frame.ownerDocument.documentElement.outerHTML
+      const proposeVisit = (event: Event) => {
+        const { target, detail: { fetchResponse } } = event as CustomEvent
+        if (target instanceof FrameElement && target.src) {
+          const { statusCode, redirected } = fetchResponse
+          const responseHTML = target.ownerDocument.documentElement.outerHTML
+          const response = { statusCode, redirected, responseHTML }
 
-          session.visit(frame.src, { willRender: false, action, snapshotHTML, delegate })
+          session.visit(target.src, { action, response, delegate })
         }
       }
 
