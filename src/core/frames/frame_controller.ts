@@ -4,7 +4,7 @@ import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
-import { Visit } from "../drive/visit"
+import { Visit, VisitDelegate } from "../drive/visit"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable, Locatable } from "../url"
@@ -261,23 +261,15 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     const action = getAttribute("data-turbo-action", submitter, element, frame)
 
     if (isAction(action)) {
-      const clone = frame.cloneNode(true)
-      const proposeVisit = () => {
-        const { ownerDocument, id, src } = frame
-        if (src) {
-          const snapshotHTML = ownerDocument.documentElement.outerHTML
-          let snapshot: Snapshot
+      const delegate = new SnapshotSubstitution(frame)
+      const proposeVisit = (event: Event) => {
+        const { target, detail: { fetchResponse } } = event as CustomEvent
+        if (target instanceof FrameElement && target.src) {
+          const { statusCode, redirected } = fetchResponse
+          const responseHTML = target.ownerDocument.documentElement.outerHTML
+          const response = { statusCode, redirected, responseHTML }
 
-          const delegate = {
-            visitStarted(visit: Visit) {
-              snapshot = visit.view.snapshot
-            },
-            visitCachedSnapshot() {
-              snapshot.element.querySelector("#" + id)?.replaceWith(clone)
-            }
-          }
-
-          session.visit(src, { willRender: false, action, snapshotHTML, delegate })
+          session.visit(target.src, { action, response, delegate })
         }
       }
 
@@ -400,6 +392,29 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
     const root = meta?.content ?? "/"
     return expandURL(root)
+  }
+}
+
+class SnapshotSubstitution implements Partial<VisitDelegate> {
+  private readonly clone: Node
+  private readonly id: string
+  private snapshot?: Snapshot
+
+  constructor(element: FrameElement) {
+    this.clone = element.cloneNode(true)
+    this.id = element.id
+  }
+
+  visitStarted(visit: Visit) {
+    this.snapshot = visit.view.snapshot
+  }
+
+  visitCachedSnapshot() {
+    const { snapshot, id, clone } = this
+
+    if (snapshot) {
+      snapshot.element.querySelector("#" + id)?.replaceWith(clone)
+    }
   }
 }
 
