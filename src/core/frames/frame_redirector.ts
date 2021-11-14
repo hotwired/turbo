@@ -1,5 +1,5 @@
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
-import { FrameElement } from "../../elements/frame_element"
+import { isTurboFrameElement } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { expandURL, getAction, locationIsVisitable } from "../url"
 
@@ -57,14 +57,14 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
 
   private shouldRedirect(element: Element, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
-    return frame ? frame != element.closest("turbo-frame") : false
+    return frame ? frame != element.closest(`turbo-frame, [is^="turbo-frame-"]`) : false
   }
 
   private findFrameElement(element: Element, submitter?: HTMLElement) {
     const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame")
     if (id && id != "_top") {
       const frame = this.element.querySelector(`#${id}:not([disabled])`)
-      if (frame instanceof FrameElement) {
+      if (isTurboFrameElement(frame)) {
         return frame
       }
     }

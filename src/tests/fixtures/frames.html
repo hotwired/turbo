@@ -104,5 +104,14 @@
     <form data-turbo-frame="frame" method="get" action="/src/tests/fixtures/frames/frame.html">
       <input id="outer-frame-submit" type="submit" value="Outer form submit">
     </form>
-  </body>
+
+    <table>
+      <thead id="thead0">
+        <tr><th>table thead0</th></tr>
+      </thead>
+      <tbody id="tbody0" is="turbo-frame-tbody">
+        <tr><td><a href="/src/tests/fixtures/frames/table.html">Set table</a></td></tr>
+      </tbody>
+    </table>
+</body>
 </html>

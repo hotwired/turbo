@@ -55,6 +55,6 @@ export class LinkInterceptor {
         : target instanceof Node
         ? target.parentElement
           : null
-    return element && element.closest("turbo-frame, html") == this.element
+    return element && element.closest(`turbo-frame, [is^="turbo-frame-"], html`) == this.element
   }
 }
