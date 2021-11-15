@@ -19,6 +19,9 @@
     <turbo-frame id="frame" data-loaded-from="/src/tests/fixtures/frames.html">
       <h2>Frames: #frame</h2>
 
+      <form action="/src/tests/fixtures/frames/frame.html">
+        <button id="frame-form-get-no-redirect">Navigate #frame without a redirect</button>
+      </form>
       <button id="add-turbo-action-to-frame" type="button">Add [data-turbo-action="advance"] to frame</button>
       <a id="link-frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame from within</a>
       <a id="link-nested-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-action="advance">Navigate #frame from within with a[data-turbo-action="advance"]</a>

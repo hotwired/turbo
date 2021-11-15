@@ -302,6 +302,22 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.notOk(await this.nextAttributeMutationNamed("html", "aria-busy"), "removes aria-busy from the <html>")
   }
 
+  async "test navigating a frame with a form[method=get] that does not redirect still updates the [src]"() {
+    await this.clickSelector("#frame-form-get-no-redirect")
+    await this.nextEventNamed("turbo:before-fetch-request")
+    await this.nextEventNamed("turbo:before-fetch-response")
+    await this.nextEventOnTarget("frame", "turbo:frame-render")
+    await this.nextEventOnTarget("frame", "turbo:frame-load")
+    await this.noNextEventNamed("turbo:before-fetch-request")
+
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
+
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
+    this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Frames")
+    this.assert.equal(await (await this.querySelector("#frame h2")).getVisibleText(), "Frame: Loaded")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/frames.html")
+  }
+
   async "test navigating turbo-frame[data-turbo-action=advance] from within pushes URL state"() {
     await this.clickSelector("#add-turbo-action-to-frame")
     await this.clickSelector("#link-frame")
@@ -309,7 +325,9 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -321,7 +339,9 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -333,7 +353,9 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -345,7 +367,9 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -357,7 +381,9 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -369,7 +395,9 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -380,7 +408,7 @@ export class FrameTests extends TurboDriveTestCase {
     await this.clickSelector("#link-frame")
     await this.nextEventNamed("turbo:load")
     await this.goBack()
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
@@ -388,6 +416,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frames: #frame")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames.html")
+    this.assert.equal(await this.propertyForSelector("#frame", "src"), null)
   }
 
   async "test navigating back then forward after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames next contents"() {
@@ -395,13 +424,15 @@ export class FrameTests extends TurboDriveTestCase {
     await this.clickSelector("#link-frame")
     await this.nextEventNamed("turbo:load")
     await this.goBack()
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
     await this.goForward()
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
