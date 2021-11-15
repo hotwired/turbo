@@ -133,10 +133,6 @@ export class Navigator {
     this.delegate.visitCompleted(visit)
   }
 
-  visitCachedSnapshot(visit: Visit) {
-    this.delegate.visitCachedSnapshot(visit)
-  }
-
   locationWithActionIsSamePage(location: URL, action?: Action): boolean {
     const anchor = getAnchor(location)
     const currentAnchor = getAnchor(this.view.lastRenderedLocation)

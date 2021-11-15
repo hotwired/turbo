@@ -7,7 +7,9 @@
   }
 
   function eventListener(event) {
-    eventLogs.push([event.type, event.detail, event.target.id])
+    const skipped = document.documentElement.getAttribute("data-skip-event-details") || ""
+
+    eventLogs.push([event.type, skipped.includes(event.type) ? {} : event.detail, event.target.id])
   }
   window.mutationLogs = []
 
