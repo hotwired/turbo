@@ -29,6 +29,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
     if (sourceRange) {
       sourceRange.selectNodeContents(frameElement)
       this.currentElement.appendChild(sourceRange.extractContents())
+      frameElement.disconnectedCallback()
     }
   }
 
