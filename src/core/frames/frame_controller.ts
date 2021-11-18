@@ -439,6 +439,7 @@ function activateElement(element: Element | null, currentURL?: string | null) {
 
     if (element instanceof FrameElement) {
       element.connectedCallback()
+      element.disconnectedCallback()
       return element
     }
   }
