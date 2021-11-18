@@ -5,6 +5,17 @@ export class FrameTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/frames.html")
   }
 
+  async "test navigating a frame a second time does not leak event listeners"() {
+    await this.withoutChangingEventListenersCount(async () => {
+      await this.clickSelector("#outer-frame-link")
+      await this.nextEventOnTarget("frame", "turbo:frame-load")
+      await this.clickSelector("#outside-frame-form")
+      await this.nextEventOnTarget("frame", "turbo:frame-load")
+      await this.clickSelector("#outer-frame-link")
+      await this.nextEventOnTarget("frame", "turbo:frame-load")
+    })
+  }
+
   async "test following a link preserves the current <turbo-frame> element's attributes"() {
     const currentPath = await this.pathname
 
@@ -415,6 +426,47 @@ export class FrameTests extends TurboDriveTestCase {
   async "test turbo:before-fetch-response fires on the frame element"() {
     await this.clickSelector("#hello a")
     this.assert.ok(await this.nextEventOnTarget("frame", "turbo:before-fetch-response"))
+  }
+
+  async withoutChangingEventListenersCount(callback: () => void) {
+    const name = "eventListenersAttachedToDocument"
+    const setup = () => {
+      return this.evaluate((name: string) => {
+        const context = window as any
+        context[name] = 0
+        context.originals = { addEventListener: document.addEventListener, removeEventListener: document.removeEventListener }
+
+        document.addEventListener = (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+          context.originals.addEventListener.call(document, type, listener, options)
+          context[name] += 1
+        }
+
+        document.removeEventListener = (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+          context.originals.removeEventListener.call(document, type, listener, options)
+          context[name] -= 1
+        }
+
+        return context[name] || 0
+      }, [name])
+    }
+
+    const teardown = () => {
+      return this.evaluate((name: string) => {
+        const context = window as any
+        const { addEventListener, removeEventListener } = context.originals
+
+        document.addEventListener = addEventListener
+        document.removeEventListener = removeEventListener
+
+        return context[name] || 0
+      }, [name])
+    }
+
+    const originalCount = await setup()
+    await callback()
+    const finalCount = await teardown()
+
+    this.assert.equal(finalCount, originalCount, "expected callback not to leak event listeners")
   }
 
   get frameScriptEvaluationCount(): Promise<number | undefined> {
