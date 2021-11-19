@@ -99,7 +99,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadResponse(fetchResponse: FetchResponse) {
-    if (fetchResponse.redirected) {
+    if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       this.sourceURL = fetchResponse.response.url
     }
 
