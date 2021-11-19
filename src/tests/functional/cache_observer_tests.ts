@@ -13,6 +13,15 @@ export class CacheObserverTests extends TurboDriveTestCase {
     await this.nextBody
     this.assert.notOk(await this.hasSelector("#flash"))
   }
+  async "test cache does not override preloaded response"() {
+    this.assert(await this.hasSelector("#flash"))
+    this.clickSelector("#link")
+    await this.nextBody
+    await this.clickSelector("#redirection-link-to-cache")
+    await this.nextBody // redirect/cache preview
+    await this.nextBody // final
+    this.assert.ok(await this.hasSelector("#flash"))
+  }
 }
 
 CacheObserverTests.registerSuite()

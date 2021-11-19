@@ -98,16 +98,6 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.isTrue(fetchResponseResult.responseHTML.indexOf('An element with an ID') > -1)
   }
 
-  async "test cache does not override preloaded response"() {
-    this.assert(await this.hasSelector("#flash"))
-    this.clickSelector("#link")
-    await this.nextBody
-    await this.clickSelector("#redirection-link-to-cache")
-    await this.nextBody // redirect/cache preview
-    await this.nextBody // final
-    this.assert.ok(await this.hasSelector("#flash"))
-  }
-
   async visitLocation(location: string) {
     this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }
