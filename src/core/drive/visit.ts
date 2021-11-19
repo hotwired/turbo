@@ -251,7 +251,7 @@ export class Visit implements FetchRequestDelegate {
 
   loadCachedSnapshot() {
     const snapshot = this.getCachedSnapshot()
-    if (snapshot && !this.hasPreloadedResponse()) {
+    if (snapshot) {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
