@@ -98,6 +98,16 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.isTrue(fetchResponseResult.responseHTML.indexOf('An element with an ID') > -1)
   }
 
+  async "test cache does not override response after redirect"() {
+    this.assert(await this.hasSelector("#flash"))
+    this.clickSelector("#same-origin-link")
+    await this.nextBeat
+    this.clickSelector("#redirection-link")
+    await this.nextBeat // 301 redirect response
+    await this.nextBeat // 200 response
+    this.assert.ok(await this.hasSelector("#flash"))
+  }
+
   async visitLocation(location: string) {
     this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }
