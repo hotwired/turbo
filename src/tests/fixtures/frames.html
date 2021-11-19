@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html id="html">
+<html id="html" data-skip-event-details="turbo:before-render">
   <head>
     <meta charset="utf-8">
     <title>Frame</title>
@@ -9,9 +9,14 @@
       addEventListener("click", ({ target }) => {
         if (target.id == "add-turbo-action-to-frame") {
           target.closest("turbo-frame")?.setAttribute("data-turbo-action", "advance")
+        } else if (target.id == "remove-target-from-hello") {
+          document.getElementById("hello").removeAttribute("target")
         }
       })
     </script>
+    <style>
+      .push-off-screen { margin-top: 1000px; }
+    </style>
   </head>
   <body>
     <h1>Frames</h1>
@@ -19,6 +24,9 @@
     <turbo-frame id="frame" data-loaded-from="/src/tests/fixtures/frames.html">
       <h2>Frames: #frame</h2>
 
+      <form action="/src/tests/fixtures/frames/frame.html">
+        <button id="frame-form-get-no-redirect">Navigate #frame without a redirect</button>
+      </form>
       <button id="add-turbo-action-to-frame" type="button">Add [data-turbo-action="advance"] to frame</button>
       <a id="link-frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame from within</a>
       <a id="link-nested-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-action="advance">Navigate #frame from within with a[data-turbo-action="advance"]</a>
@@ -45,7 +53,11 @@
       <h2>Frames: #hello</h2>
 
       <a href="/src/tests/fixtures/frames/frame.html">Load #frame</a>
+      <button type="button" id="remove-target-from-hello">Remove #hello[target]</button>
+
     </turbo-frame>
+
+    <a id="link-hello-advance" href="/src/tests/fixtures/frames/hello.html" data-turbo-frame="hello" data-turbo-action="advance">advance #hello</a>
 
     <turbo-frame id="nested-root" target="frame">
       <h2>Frames: #nested-root</h2>
@@ -104,5 +116,9 @@
     <form data-turbo-frame="frame" method="get" action="/src/tests/fixtures/frames/frame.html">
       <input id="outer-frame-submit" type="submit" value="Outer form submit">
     </form>
+
+    <hr class="push-off-screen">
+    <input id="below-the-fold-input">
+    <a id="below-the-fold-link-frame-action" data-turbo-action="advance" data-turbo-frame="frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame</a>
   </body>
 </html>

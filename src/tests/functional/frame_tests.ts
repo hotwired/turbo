@@ -299,13 +299,13 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets aria-busy on the <turbo-frame>")
     await this.nextEventOnTarget("frame", "turbo:before-fetch-request")
     await this.nextEventOnTarget("frame", "turbo:before-fetch-response")
-    await this.nextEventOnTarget("html", "turbo:before-visit")
-    await this.nextEventOnTarget("html", "turbo:visit")
     await this.nextEventOnTarget("frame", "turbo:frame-render")
     await this.nextEventOnTarget("frame", "turbo:frame-load")
     this.assert.notOk(await this.nextAttributeMutationNamed("frame", "aria-busy"), "removes aria-busy from the <turbo-frame>")
 
     this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets aria-busy on the <html>")
+    await this.nextEventOnTarget("html", "turbo:before-visit")
+    await this.nextEventOnTarget("html", "turbo:visit")
     await this.nextEventOnTarget("html", "turbo:before-cache")
     await this.nextEventOnTarget("html", "turbo:before-render")
     await this.nextEventOnTarget("html", "turbo:render")
@@ -313,10 +313,26 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.notOk(await this.nextAttributeMutationNamed("html", "aria-busy"), "removes aria-busy from the <html>")
   }
 
+  async "test navigating a frame with a form[method=get] that does not redirect still updates the [src]"() {
+    await this.clickSelector("#frame-form-get-no-redirect")
+    await this.nextEventNamed("turbo:before-fetch-request")
+    await this.nextEventNamed("turbo:before-fetch-response")
+    await this.nextEventOnTarget("frame", "turbo:frame-render")
+    await this.nextEventOnTarget("frame", "turbo:frame-load")
+    await this.noNextEventNamed("turbo:before-fetch-request")
+
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
+
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
+    this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Frames")
+    this.assert.equal(await (await this.querySelector("#frame h2")).getVisibleText(), "Frame: Loaded")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/frames.html")
+  }
+
   async "test navigating turbo-frame[data-turbo-action=advance] from within pushes URL state"() {
     await this.clickSelector("#add-turbo-action-to-frame")
     await this.clickSelector("#link-frame")
-    await this.nextBeat
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
@@ -326,13 +342,65 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
   }
 
-  async "test navigating turbo-frame from within with a[data-turbo-action=advance] pushes URL state"() {
-    await this.clickSelector("#link-nested-frame-action-advance")
-    await this.nextBeat
+  async "test navigating turbo-frame[data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state"() {
+    await this.clickSelector("#link-outside-frame-action-advance")
+    await this.nextEventNamed("turbo:load")
+    await this.clickSelector("#link-outside-frame-action-advance")
+    await this.nextEventNamed("turbo:load")
+    await this.clickSelector("#link-outside-frame-action-advance")
+    await this.nextEventNamed("turbo:load")
+
+    this.assert.equal(await this.attributeForSelector("#frame", "aria-busy"), null, "clears turbo-frame[aria-busy]")
+    this.assert.equal(await this.attributeForSelector("#html", "aria-busy"), null, "clears html[aria-busy]")
+    this.assert.equal(await this.attributeForSelector("#html", "data-turbo-preview"), null, "clears html[aria-busy]")
+  }
+
+  async "test navigating a turbo-frame with an a[data-turbo-action=advance] preserves page state"() {
+    await this.scrollToSelector("#below-the-fold-input")
+    await this.fillInSelector("#below-the-fold-input", "a value")
+    await this.clickSelector("#below-the-fold-link-frame-action")
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
+    this.assert.equal(await title.getVisibleText(), "Frames")
+    this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.equal(await this.propertyForSelector("#below-the-fold-input", "value"), "a value", "preserves page state")
+
+    const { y } = await this.scrollPosition
+    this.assert.notEqual(y, 0, "preserves Y scroll position")
+  }
+
+  async "test a turbo-frame that has been driven by a[data-turbo-action] can be navigated normally"() {
+    await this.clickSelector("#remove-target-from-hello")
+    await this.clickSelector("#link-hello-advance")
+    await this.nextEventNamed("turbo:load")
+
+    this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Frames")
+    this.assert.equal(await (await this.querySelector("#hello h2")).getVisibleText(), "Hello from a frame")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/hello.html")
+
+    await this.clickSelector("#hello a")
+    await this.nextEventOnTarget("hello", "turbo:frame-load")
+    await this.noNextEventNamed("turbo:load")
+
+    this.assert.equal(await (await this.querySelector("#hello h2")).getVisibleText(), "Frames: #hello")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/hello.html")
+  }
+
+  async "test navigating turbo-frame from within with a[data-turbo-action=advance] pushes URL state"() {
+    await this.clickSelector("#link-nested-frame-action-advance")
+    await this.nextEventNamed("turbo:load")
+
+    const title = await this.querySelector("h1")
+    const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
+
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -340,11 +408,13 @@ export class FrameTests extends TurboDriveTestCase {
 
   async "test navigating frame with a[data-turbo-action=advance] pushes URL state"() {
     await this.clickSelector("#link-outside-frame-action-advance")
-    await this.nextBeat
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -352,35 +422,67 @@ export class FrameTests extends TurboDriveTestCase {
 
   async "test navigating frame with form[method=get][data-turbo-action=advance] pushes URL state"() {
     await this.clickSelector("#form-get-frame-action-advance button")
-    await this.nextBeat
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+  }
+
+  async "test navigating frame with form[method=get][data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state"() {
+    await this.clickSelector("#form-get-frame-action-advance button")
+    await this.nextEventNamed("turbo:load")
+    await this.clickSelector("#form-get-frame-action-advance button")
+    await this.nextEventNamed("turbo:load")
+    await this.clickSelector("#form-get-frame-action-advance button")
+    await this.nextEventNamed("turbo:load")
+
+    this.assert.equal(await this.attributeForSelector("#frame", "aria-busy"), null, "clears turbo-frame[aria-busy]")
+    this.assert.equal(await this.attributeForSelector("#html", "aria-busy"), null, "clears html[aria-busy]")
+    this.assert.equal(await this.attributeForSelector("#html", "data-turbo-preview"), null, "clears html[aria-busy]")
   }
 
   async "test navigating frame with form[method=post][data-turbo-action=advance] pushes URL state"() {
     await this.clickSelector("#form-post-frame-action-advance button")
-    await this.nextBeat
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
   }
 
+  async "test navigating frame with form[method=post][data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state"() {
+    await this.clickSelector("#form-post-frame-action-advance button")
+    await this.nextEventNamed("turbo:load")
+    await this.clickSelector("#form-post-frame-action-advance button")
+    await this.nextEventNamed("turbo:load")
+    await this.clickSelector("#form-post-frame-action-advance button")
+    await this.nextEventNamed("turbo:load")
+
+    this.assert.equal(await this.attributeForSelector("#frame", "aria-busy"), null, "clears turbo-frame[aria-busy]")
+    this.assert.equal(await this.attributeForSelector("#html", "aria-busy"), null, "clears html[aria-busy]")
+    this.assert.equal(await this.attributeForSelector("#html", "data-turbo-preview"), null, "clears html[aria-busy]")
+  }
+
   async "test navigating frame with button[data-turbo-action=advance] pushes URL state"() {
     await this.clickSelector("#button-frame-action-advance")
-    await this.nextBeat
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -391,7 +493,7 @@ export class FrameTests extends TurboDriveTestCase {
     await this.clickSelector("#link-frame")
     await this.nextEventNamed("turbo:load")
     await this.goBack()
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
@@ -399,6 +501,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frames: #frame")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames.html")
+    this.assert.equal(await this.propertyForSelector("#frame", "src"), null)
   }
 
   async "test navigating back then forward after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames next contents"() {
@@ -406,13 +509,15 @@ export class FrameTests extends TurboDriveTestCase {
     await this.clickSelector("#link-frame")
     await this.nextEventNamed("turbo:load")
     await this.goBack()
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
     await this.goForward()
-    await this.nextBody
+    await this.nextEventNamed("turbo:load")
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
+    const src = await this.attributeForSelector("#frame", "src") ?? ""
 
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
@@ -467,6 +572,14 @@ export class FrameTests extends TurboDriveTestCase {
     const finalCount = await teardown()
 
     this.assert.equal(finalCount, originalCount, "expected callback not to leak event listeners")
+  }
+
+  async fillInSelector(selector: string, value: string) {
+    const element = await this.querySelector(selector)
+
+    await element.click()
+
+    return element.type(value)
   }
 
   get frameScriptEvaluationCount(): Promise<number | undefined> {

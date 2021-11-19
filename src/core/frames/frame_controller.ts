@@ -4,7 +4,6 @@ import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
-import { Visit, VisitDelegate } from "../drive/visit"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable, Locatable } from "../url"
@@ -23,6 +22,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly formInterceptor: FormInterceptor
   currentURL?: string | null
   formSubmission?: FormSubmission
+  fetchResponseLoaded = (fetchResponse: FetchResponse) => {}
   private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
   private connected = false
@@ -99,7 +99,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadResponse(fetchResponse: FetchResponse) {
-    if (fetchResponse.redirected) {
+    if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       this.sourceURL = fetchResponse.response.url
     }
 
@@ -108,15 +108,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
+        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
         session.frameRendered(fetchResponse, this.element)
         session.frameLoaded(this.element)
+        this.fetchResponseLoaded(fetchResponse)
       }
     } catch (error) {
       console.error(error)
       this.view.invalidate()
+    } finally {
+      this.fetchResponseLoaded = () => {}
     }
   }
 
@@ -261,19 +264,16 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     const action = getAttribute("data-turbo-action", submitter, element, frame)
 
     if (isAction(action)) {
-      const delegate = new SnapshotSubstitution(frame)
-      const proposeVisit = (event: Event) => {
-        const { target, detail: { fetchResponse } } = event as CustomEvent
-        if (target instanceof FrameElement && target.src) {
+      const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
+      frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
+        if (frame.src) {
           const { statusCode, redirected } = fetchResponse
-          const responseHTML = target.ownerDocument.documentElement.outerHTML
+          const responseHTML = frame.ownerDocument.documentElement.outerHTML
           const response = { statusCode, redirected, responseHTML }
 
-          session.visit(target.src, { action, response, delegate })
+          session.visit(frame.src, { action, response, visitCachedSnapshot, willRender: false })
         }
       }
-
-      frame.addEventListener("turbo:frame-render", proposeVisit , { once: true })
     }
   }
 
@@ -395,26 +395,19 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 }
 
-class SnapshotSubstitution implements Partial<VisitDelegate> {
+class SnapshotSubstitution {
   private readonly clone: Node
   private readonly id: string
-  private snapshot?: Snapshot
 
   constructor(element: FrameElement) {
     this.clone = element.cloneNode(true)
     this.id = element.id
   }
 
-  visitStarted(visit: Visit) {
-    this.snapshot = visit.view.snapshot
-  }
+  visitCachedSnapshot = ({ element }: Snapshot) => {
+    const { id, clone } = this
 
-  visitCachedSnapshot() {
-    const { snapshot, id, clone } = this
-
-    if (snapshot) {
-      snapshot.element.querySelector("#" + id)?.replaceWith(clone)
-    }
+    element.querySelector("#" + id)?.replaceWith(clone)
   }
 }
 

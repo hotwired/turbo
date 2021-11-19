@@ -359,6 +359,9 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const otherEvents = await this.eventLogChannel.read()
     this.assert.equal(otherEvents.length, 0, "no more events")
+
+    const src = await (await this.querySelector("#frame")).getAttribute("src") || ""
+    this.assert.equal((new URL(src)).pathname, "/src/tests/fixtures/frames/frame.html")
   }
 
   async "test frame POST form targetting frame toggles submitter's [disabled] attribute"() {
@@ -387,6 +390,9 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const otherEvents = await this.eventLogChannel.read()
     this.assert.equal(otherEvents.length, 0, "no more events")
+
+    const src = await (await this.querySelector("#frame")).getAttribute("src") || ""
+    this.assert.equal((new URL(src)).pathname, "/src/tests/fixtures/frames/frame.html")
   }
 
   async "test frame GET form targetting frame toggles submitter's [disabled] attribute"() {
@@ -529,6 +535,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(await this.hasSelector("#frame form.redirect"))
     this.assert.equal(await message.getVisibleText(), "Hello!")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.notOk(await this.propertyForSelector("#frame", "src"), "does not change frame's src")
   }
 
   async "test frame form submission with HTTP verb other than GET or POST"() {

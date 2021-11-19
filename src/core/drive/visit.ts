@@ -3,6 +3,7 @@ import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetc
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
+import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
@@ -15,7 +16,6 @@ export interface VisitDelegate {
 
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
-  visitCachedSnapshot(visit: Visit): void
   locationWithActionIsSamePage(location: URL, action: Action): boolean
   visitScrolledToSamePageLocation(oldURL: URL, newURL: URL): void
 }
@@ -39,17 +39,19 @@ export enum VisitState {
 
 export type VisitOptions = {
   action: Action,
-  delegate: Partial<VisitDelegate>
   historyChanged: boolean,
   referrer?: URL,
   snapshotHTML?: string,
   response?: VisitResponse
+  visitCachedSnapshot(snapshot: Snapshot): void
+  willRender: boolean
 }
 
 const defaultOptions: VisitOptions = {
   action: "advance",
-  delegate: {},
   historyChanged: false,
+  visitCachedSnapshot: () => {},
+  willRender: true,
 }
 
 export type VisitResponse = {
@@ -71,7 +73,8 @@ export class Visit implements FetchRequestDelegate {
   readonly action: Action
   readonly referrer?: URL
   readonly timingMetrics: TimingMetrics = {}
-  readonly optionalDelegate: Partial<VisitDelegate>
+  readonly visitCachedSnapshot: (snapshot: Snapshot) => void
+  readonly willRender: boolean
 
   followedRedirect = false
   frame?: number
@@ -91,14 +94,16 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, delegate: optionalDelegate } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender } = { ...defaultOptions, ...options }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
-    this.optionalDelegate = optionalDelegate
+    this.visitCachedSnapshot = visitCachedSnapshot
+    this.willRender = willRender
+    this.scrolled = !willRender
   }
 
   get adapter() {
@@ -127,7 +132,6 @@ export class Visit implements FetchRequestDelegate {
       this.state = VisitState.started
       this.adapter.visitStarted(this)
       this.delegate.visitStarted(this)
-      if (this.optionalDelegate.visitStarted) this.optionalDelegate.visitStarted(this)
     }
   }
 
@@ -213,7 +217,7 @@ export class Visit implements FetchRequestDelegate {
         this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML))
+          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender)
           this.adapter.visitRendered(this)
           this.complete()
         } else {
@@ -255,7 +259,7 @@ export class Visit implements FetchRequestDelegate {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
-          await this.view.renderPage(snapshot, isPreview)
+          await this.view.renderPage(snapshot, isPreview, this.willRender)
           this.adapter.visitRendered(this)
           if (!isPreview) {
             this.complete()
@@ -386,15 +390,14 @@ export class Visit implements FetchRequestDelegate {
     } else if (this.action == "restore") {
       return !this.hasCachedSnapshot()
     } else {
-      return true
+      return this.willRender
     }
   }
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot()
+      this.view.cacheSnapshot().then(snapshot => snapshot && this.visitCachedSnapshot(snapshot))
       this.snapshotCached = true
-      if (this.optionalDelegate.visitCachedSnapshot) this.optionalDelegate.visitCachedSnapshot(this)
     }
   }
 
