@@ -15,8 +15,8 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
   readonly snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
 
-  renderPage(snapshot: PageSnapshot, isPreview = false) {
-    const renderer = new PageRenderer(this.snapshot, snapshot, isPreview)
+  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true) {
+    const renderer = new PageRenderer(this.snapshot, snapshot, isPreview, willRender)
     return this.render(renderer)
   }
 
@@ -34,7 +34,9 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
       this.delegate.viewWillCacheSnapshot()
       const { snapshot, lastRenderedLocation: location } = this
       await nextEventLoopTick()
-      this.snapshotCache.put(location, snapshot.clone())
+      const cachedSnapshot = snapshot.clone()
+      this.snapshotCache.put(location, cachedSnapshot)
+      return cachedSnapshot
     }
   }
 
