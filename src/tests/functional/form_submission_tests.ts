@@ -601,6 +601,15 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.notOk(await this.formSubmitStarted)
   }
 
+  async "test frame form submission ignores submissions with their defaultPrevented"() {
+    await this.evaluate(() => document.addEventListener("submit", (event) => event.preventDefault(), true))
+    await this.clickSelector("#frame .redirect [type=submit]")
+    await this.nextBeat
+
+    this.assert.equal(await (await this.querySelector("#frame h2")).getVisibleText(), "Frame: Form")
+    this.assert.equal(await this.attributeForSelector("#frame", "src"), null, "does not navigate frame")
+  }
+
   async "test form submission with [data-turbo=false] on the form"() {
     await this.clickSelector('#turbo-false form[data-turbo="false"] input[type=submit]')
     await this.nextBody
