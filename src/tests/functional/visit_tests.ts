@@ -98,6 +98,21 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.isTrue(fetchResponseResult.responseHTML.indexOf('An element with an ID') > -1)
   }
 
+  async "test cache does not override response after redirect"() {
+    await this.remote.execute(() => {
+      const cachedElement = document.createElement("some-cached-element")
+      document.body.appendChild(cachedElement)
+    })
+
+    this.assert(await this.hasSelector("some-cached-element"))
+    this.clickSelector("#same-origin-link")
+    await this.nextBeat
+    this.clickSelector("#redirection-link")
+    await this.nextBeat // 301 redirect response
+    await this.nextBeat // 200 response
+    this.assert.notOk(await this.hasSelector("some-cached-element"))
+  }
+
   async visitLocation(location: string) {
     this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }

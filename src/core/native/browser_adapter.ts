@@ -21,10 +21,10 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitStarted(visit: Visit) {
+    visit.loadCachedSnapshot()
     visit.issueRequest()
     visit.changeHistory()
     visit.goToSamePageAnchor()
-    visit.loadCachedSnapshot()
   }
 
   visitRequestStarted(visit: Visit) {
