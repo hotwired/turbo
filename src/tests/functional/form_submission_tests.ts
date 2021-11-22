@@ -136,7 +136,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test standard GET form submission does not incorporate the current page's URLSearchParams values into the submission"() {
-    await this.clickSelector("#form-action-self-submit")
+    await this.clickSelector("#form-action-self-sort")
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
@@ -150,7 +150,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test standard GET form submission does not merge values into the [action] attribute"() {
-    await this.clickSelector("#form-action-self-submit")
+    await this.clickSelector("#form-action-self-sort")
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
@@ -161,6 +161,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.equal(await this.search, "?q=b", "navigates without omitted keys")
+  }
+
+  async "test standard GET form submission omits the [action] value's URLSearchParams from the submission"() {
+    await this.clickSelector("#form-action-self-submit")
+    await this.nextBody
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+    this.assert.equal(await this.search, "")
   }
 
   async "test standard GET form submission toggles submitter [disabled] attribute"() {

@@ -29,9 +29,12 @@
       <form>
         <button id="form-action-none-q-a" name="q" value="a">Submit ?q=a to form:not([action])</button>
       </form>
-      <form action="/src/tests/fixtures/form.html?sort=asc">
-        <button id="form-action-self-submit">Submit form[action]</button>
+      <form action="/src/tests/fixtures/form.html">
+        <button id="form-action-self-sort" name="sort" value="asc">Submit ?sort=asc to form[action]</button>
         <button id="form-action-self-q-b" name="q" value="b">Submit ?q=b to form[action]</button>
+      </form>
+      <form action="/src/tests/fixtures/form.html?q=c">
+        <button id="form-action-self-submit">Submit form[action]</button>
       </form>
       <form action="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fform.html%3Fsort%3Dasc" method="post">
         <button id="form-action-post-redirect-self-q-b" name="q" value="b">POST q=b to form[action]</button>
