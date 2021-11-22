@@ -144,7 +144,7 @@ export class FetchRequest {
       cancelable: true,
       detail: {
         fetchOptions,
-        url: this.url.href,
+        url: this.url,
         resume: this.resolveRequestPromise
       },
       target: this.target as EventTarget

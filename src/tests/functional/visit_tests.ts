@@ -76,7 +76,7 @@ export class VisitTests extends TurboDriveTestCase {
     const { url, fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
 
     this.assert.equal(fetchOptions.method, "GET")
-    this.assert.include(url, "/src/tests/fixtures/one.html")
+    this.assert.ok(url.toString().includes("/src/tests/fixtures/one.html"))
   }
 
   async "test turbo:before-fetch-response open new site"() {
