@@ -19,12 +19,12 @@ router.use((request, response, next) => {
 
 router.post("/redirect", (request, response) => {
   const { path, sleep, ...query } = request.body
-  const pathname = path ?? "/src/tests/fixtures/one.html"
+  const { pathname, query: searchParams } = url.parse(path ?? request.query.path ?? "/src/tests/fixtures/one.html", true)
   const enctype = request.get("Content-Type")
   if (enctype) {
     query.enctype = enctype
   }
-  setTimeout(() => response.redirect(303, url.format({ pathname, query })), parseInt(sleep || "0", 10))
+  setTimeout(() => response.redirect(303, url.format({ pathname, query: { ...query, ...searchParams } })), parseInt(sleep || "0", 10))
 })
 
 router.get("/redirect", (request, response) => {

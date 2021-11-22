@@ -6,7 +6,7 @@ import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable, Locatable } from "../url"
+import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
@@ -86,7 +86,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
         try {
-          this.element.loaded = this.visit(this.sourceURL)
+          this.element.loaded = this.visit(expandURL(this.sourceURL))
           this.appearanceObserver.stop()
           await this.element.loaded
           this.hasBeenLoaded = true
@@ -235,8 +235,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   // Private
 
-  private async visit(url: Locatable) {
-    const request = new FetchRequest(this, FetchMethod.get, expandURL(url), new URLSearchParams, this.element)
+  private async visit(url: URL) {
+    const request = new FetchRequest(this, FetchMethod.get, url, url.searchParams, this.element)
 
     this.currentFetchRequest?.cancel()
     this.currentFetchRequest = request

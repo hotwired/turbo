@@ -56,12 +56,10 @@ export class FetchRequest {
     this.delegate = delegate
     this.method = method
     this.headers = this.defaultHeaders
-    if (this.isIdempotent) {
-      this.url = mergeFormDataEntries(location, [ ...body.entries() ])
-    } else {
-      this.body = body
-      this.url = location
-    }
+    this.body = body
+    this.url = this.isIdempotent && this.entries.length ?
+      mergeFormDataEntries(new URL(location.href), this.entries) :
+      location
     this.target = target
   }
 
@@ -118,7 +116,7 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.body,
+      body: this.isIdempotent ? null : this.body,
       signal: this.abortSignal,
       referrer: this.delegate.referrer?.href
     }
@@ -155,6 +153,7 @@ export class FetchRequest {
 
 function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
   const currentSearchParams = new URLSearchParams(url.search)
+  deleteAll(url.searchParams)
 
   for (const [ name, value ] of entries) {
     if (value instanceof File) continue
@@ -168,4 +167,10 @@ function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][])
   }
 
   return url
+}
+
+function deleteAll(searchParams: URLSearchParams) {
+  for (const name of searchParams.keys()) {
+    searchParams.delete(name)
+  }
 }
