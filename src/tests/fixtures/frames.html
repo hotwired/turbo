@@ -29,6 +29,7 @@
       </form>
       <button id="add-turbo-action-to-frame" type="button">Add [data-turbo-action="advance"] to frame</button>
       <a id="link-frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame from within</a>
+      <a id="link-frame-with-search-params" href="/src/tests/fixtures/frames/frame.html?key=value">Navigate #frame with ?key=value</a>
       <a id="link-nested-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-action="advance">Navigate #frame from within with a[data-turbo-action="advance"]</a>
     </turbo-frame>
     <a id="outside-frame-form" href="/src/tests/fixtures/frames/form.html" data-turbo-frame="frame">Navigate #frame to /frames/form.html</a>
@@ -84,7 +85,7 @@
     </turbo-frame>
 
     <turbo-frame id="navigate-top" target="_top">
-      <a href="/src/tests/fixtures/one.html">Visit one.html</a>
+      <a href="/src/tests/fixtures/one.html?key=value">Visit one.html?key=value</a>
       <a href="/src/tests/fixtures/one.html" data-turbo-frame="_self">Visit self</a>
     </turbo-frame>
 

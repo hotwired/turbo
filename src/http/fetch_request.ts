@@ -57,9 +57,7 @@ export class FetchRequest {
     this.method = method
     this.headers = this.defaultHeaders
     this.body = body
-    this.url = this.isIdempotent ?
-      mergeFormDataEntries(new URL(location.href), this.entries) :
-      location
+    this.url = location
     this.target = target
   }
 
@@ -149,18 +147,4 @@ export class FetchRequest {
     })
     if (event.defaultPrevented) await requestInterception
   }
-}
-
-function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
-  const searchParams = new URLSearchParams
-
-  for (const [ name, value ] of entries) {
-    if (value instanceof File) continue
-
-    searchParams.append(name, value)
-  }
-
-  url.search = searchParams.toString()
-
-  return url
 }

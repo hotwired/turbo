@@ -27,6 +27,22 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await frame.getAttribute("src"), await this.propertyForSelector("#hello a", "href"))
   }
 
+  async "test following a link sets the frame element's [src]"() {
+    await this.clickSelector("#link-frame-with-search-params")
+
+    const { url } = await this.nextEventOnTarget("frame", "turbo:before-fetch-request")
+    const fetchRequestUrl = new URL(url)
+
+    this.assert.equal(fetchRequestUrl.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.equal(fetchRequestUrl.searchParams.get("key"), "value", "fetch request encodes query parameters")
+
+    await this.nextBeat
+    const src = new URL(await this.attributeForSelector("#frame", "src") || "")
+
+    this.assert.equal(src.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.equal(src.searchParams.get("key"), "value", "[src] attribute encodes query parameters")
+  }
+
   async "test a frame whose src references itself does not infinitely loop"() {
     await this.clickSelector("#frame-self")
 
@@ -129,6 +145,8 @@ export class FrameTests extends TurboDriveTestCase {
     const frameText = await this.querySelector("body > h1")
     this.assert.equal(await frameText.getVisibleText(), "One")
     this.assert.notOk(await this.hasSelector("#navigate-top a"))
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.getSearchParam("key"), "value")
   }
 
   async "test following a link that declares data-turbo-frame='_self' within a frame with target=_top navigates the frame itself"() {
