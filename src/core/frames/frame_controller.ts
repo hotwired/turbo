@@ -236,7 +236,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   // Private
 
   private async visit(url: URL) {
-    const request = new FetchRequest(this, FetchMethod.get, url, url.searchParams, this.element)
+    const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams, this.element)
 
     this.currentFetchRequest?.cancel()
     this.currentFetchRequest = request

@@ -79,6 +79,13 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.ok(url.toString().includes("/src/tests/fixtures/one.html"))
   }
 
+  async "test turbo:before-fetch-request event.detail encodes searchParams"() {
+    await this.clickSelector("#same-origin-link-search-params")
+    const { url } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(url.includes("/src/tests/fixtures/one.html?key=value"))
+  }
+
   async "test turbo:before-fetch-response open new site"() {
     this.remote.execute(() => addEventListener("turbo:before-fetch-response", async function eventListener(event: any) {
       removeEventListener("turbo:before-fetch-response", eventListener, false);

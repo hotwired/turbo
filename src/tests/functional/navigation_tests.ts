@@ -48,6 +48,15 @@ export class NavigationTests extends TurboDriveTestCase {
     })
     await this.nextBody
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.search, "")
+    this.assert.equal(await this.visitAction, "advance")
+  }
+
+  async "test following a same-origin unannotated link with search params"() {
+    this.clickSelector("#same-origin-unannotated-link-search-params")
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.search, "?key=value")
     this.assert.equal(await this.visitAction, "advance")
   }
 
