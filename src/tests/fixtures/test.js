@@ -31,4 +31,6 @@
   "turbo:visit",
   "turbo:frame-load",
   "turbo:frame-render",
+  "turbo:before-stream-render",
+  "turbo:after-stream-render",
 ])
