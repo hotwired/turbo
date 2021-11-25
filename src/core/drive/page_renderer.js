@@ -10,6 +10,11 @@ export class PageRenderer extends Renderer {
     }
   }
 
+  constructor(currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
+    super(currentSnapshot, newSnapshot, renderElement, isPreview)
+    this.willRender = willRender
+  }
+
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
