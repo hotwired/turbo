@@ -108,7 +108,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
+        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
         session.frameRendered(fetchResponse, this.element)

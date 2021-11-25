@@ -2,6 +2,13 @@ import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
+  private readonly willRender: boolean
+
+  constructor(currentSnapshot: PageSnapshot, newSnapshot: PageSnapshot, isPreview: boolean, willRender = true) {
+    super(currentSnapshot, newSnapshot, isPreview)
+    this.willRender = willRender
+  }
+
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
