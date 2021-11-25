@@ -32,5 +32,9 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
       e.innerHTML = ""
       e.append(this.templateContent)
     })
+  },
+
+  updateAttribute() {
+    console.log("😋")
   }
 }

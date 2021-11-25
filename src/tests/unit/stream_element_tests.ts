@@ -139,12 +139,23 @@ export class StreamElementTests extends DOMTestCase {
     this.assert.ok(this.find("h1#before"))
     this.assert.isNull(element.parentElement)
   }
+
+  async "test action=update-attribute"() {
+    const element = createStreamElement("update-attribute", "hello", createTemplateElement("true"), "data-updated-value")
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.getAttribute("data-updated-value"), "true")
+  }
 }
 
-function createStreamElement(action: string | null, target: string | null, templateElement?: HTMLTemplateElement) {
+function createStreamElement(action: string | null, target: string | null, templateElement?: HTMLTemplateElement, attribute?: string | null) {
   const element = new StreamElement()
   if (action) element.setAttribute("action", action)
   if (target) element.setAttribute("target", target)
+  if (attribute) element.setAttribute("attribute", attribute)
   if (templateElement) element.appendChild(templateElement)
   return element
 }

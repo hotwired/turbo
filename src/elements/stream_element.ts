@@ -1,5 +1,5 @@
 import { StreamActions } from "../core/streams/stream_actions"
-import { nextAnimationFrame } from "../util"
+import { nextAnimationFrame, camelize } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
@@ -42,7 +42,8 @@ export class StreamElement extends HTMLElement {
   
   get performAction() {
     if (this.action) {
-      const actionFunction = StreamActions[this.action]
+      const actionFunction = (this.action.split("-").length > 1) ? StreamActions[camelize(this.action)] : StreamActions[this.action]
+
       if (actionFunction) {
         return actionFunction
       }
@@ -82,6 +83,10 @@ export class StreamElement extends HTMLElement {
 
   get targets() {
     return this.getAttribute("targets")
+  }
+
+  get attributeToUpdate() {
+    return this.getAttribute("attribute")
   }
 
   private raise(message: string): never {

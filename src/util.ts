@@ -49,3 +49,8 @@ export function uuid() {
     }
   }).join("")
 }
+
+export function camelize(string: String) {
+  return string.replace(/-./g, x=>x[1].toUpperCase())
+}
+
