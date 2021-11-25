@@ -35,6 +35,8 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
   },
 
   updateAttribute() {
-    console.log("😋")
+    this.targetElements.forEach(e => { 
+      console.log(e)
+    })
   }
 }
