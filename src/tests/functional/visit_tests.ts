@@ -1,7 +1,16 @@
 import { Page, test } from "@playwright/test"
 import { assert } from "chai"
 import { get } from "http"
-import { nextBeat, nextEventNamed, readEventLogs, visitAction, willChangeBody } from "../helpers/page"
+import {
+  isScrolledToSelector,
+  isScrolledToTop,
+  nextBeat,
+  nextEventNamed,
+  readEventLogs,
+  scrollToSelector,
+  visitAction,
+  willChangeBody,
+} from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/visit.html")
@@ -195,6 +204,35 @@ function contentTypeOfURL(url: string): Promise<string | undefined> {
     get(url, ({ headers }) => resolve(headers["content-type"]))
   })
 }
+
+test("test can scroll to element after click-initiated turbo:visit", async ({ page }) => {
+  const id = "below-the-fold-link"
+  await page.evaluate((id) => {
+    addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
+  }, id)
+
+  assert(await isScrolledToTop(page), "starts unscrolled")
+
+  await page.click("#same-page-link")
+  await nextEventNamed(page, "turbo:load")
+
+  assert(await isScrolledToSelector(page, "#" + id), "scrolls after click-initiated turbo:load")
+})
+
+test("test can scroll to element after history-initiated turbo:visit", async ({ page }) => {
+  const id = "below-the-fold-link"
+  await page.evaluate((id) => {
+    addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
+  }, id)
+
+  await scrollToSelector(page, "#" + id)
+  await page.click("#" + id)
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  assert(await isScrolledToSelector(page, "#" + id), "scrolls after history-initiated turbo:load")
+})
 
 async function visitLocation(page: Page, location: string) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
