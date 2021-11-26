@@ -450,6 +450,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.ok(await this.hasSelector("#frame[loaded]"), "marks the frame as [loaded]")
   }
 
   async "test navigating frame with a[data-turbo-action=advance] pushes URL state"() {
@@ -464,6 +465,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.ok(await this.hasSelector("#frame[loaded]"), "marks the frame as [loaded]")
   }
 
   async "test navigating frame with form[method=get][data-turbo-action=advance] pushes URL state"() {
@@ -478,6 +480,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.ok(await this.hasSelector("#frame[loaded]"), "marks the frame as [loaded]")
   }
 
   async "test navigating frame with form[method=get][data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state"() {
@@ -505,6 +508,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.ok(await this.hasSelector("#frame[loaded]"), "marks the frame as [loaded]")
   }
 
   async "test navigating frame with form[method=post][data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state"() {
@@ -518,6 +522,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await this.attributeForSelector("#frame", "aria-busy"), null, "clears turbo-frame[aria-busy]")
     this.assert.equal(await this.attributeForSelector("#html", "aria-busy"), null, "clears html[aria-busy]")
     this.assert.equal(await this.attributeForSelector("#html", "data-turbo-preview"), null, "clears html[aria-busy]")
+    this.assert.ok(await this.hasSelector("#frame[loaded]"), "marks the frame as [loaded]")
   }
 
   async "test navigating frame with button[data-turbo-action=advance] pushes URL state"() {
@@ -532,6 +537,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.ok(await this.hasSelector("#frame[loaded]"), "marks the frame as [loaded]")
   }
 
   async "test navigating back after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames previous contents"() {
@@ -567,6 +573,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
+    this.assert.ok(await this.hasSelector("#frame[loaded]"), "marks the frame as [loaded]")
   }
 
   async "test turbo:before-fetch-request fires on the frame element"() {

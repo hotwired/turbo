@@ -5,9 +5,12 @@ export enum FrameLoadingStyle {
   lazy = "lazy",
 }
 
+export type FrameElementObservedAttribute = keyof FrameElement & ("disabled" | "loaded" | "loading" | "src")
+
 export interface FrameElementDelegate {
   connect(): void
   disconnect(): void
+  loadedChanged(): void
   loadingStyleChanged(): void
   sourceURLChanged(): void
   disabledChanged(): void
@@ -40,8 +43,8 @@ export class FrameElement extends HTMLElement {
   loaded: Promise<FetchResponse | void> = Promise.resolve()
   readonly delegate: FrameElementDelegate
 
-  static get observedAttributes() {
-    return ["disabled", "loading", "src"]
+  static get observedAttributes(): FrameElementObservedAttribute[] {
+    return ["disabled", "loaded", "loading", "src"]
   }
 
   constructor() {
@@ -59,6 +62,7 @@ export class FrameElement extends HTMLElement {
 
   reload() {
     const { src } = this
+    this.removeAttribute("loaded")
     this.src = null
     this.src = src
   }
@@ -66,6 +70,8 @@ export class FrameElement extends HTMLElement {
   attributeChangedCallback(name: string) {
     if (name == "loading") {
       this.delegate.loadingStyleChanged()
+    } else if (name == "loaded") {
+      this.delegate.loadedChanged()
     } else if (name == "src") {
       this.delegate.sourceURLChanged()
     } else {
