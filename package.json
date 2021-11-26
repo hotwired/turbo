@@ -1,9 +1,9 @@
 {
   "name": "@hotwired/turbo",
-  "version": "7.0.0-rc.1",
+  "version": "7.1.0",
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
-  "main": "dist/turbo.es5-umd.js",
+  "main": "dist/turbo.es2017-umd.js",
   "types": "dist/types/index.d.ts",
   "files": [
     "dist/*.js",
@@ -20,7 +20,12 @@
     "browser",
     "pushstate"
   ],
-  "author": "javan, packagethief, sstephenson",
+  "author": "Basecamp, LLC",
+  "contributors": [
+    "Jeffrey Hardy <jeff@basecamp.com>",
+    "Javan Makhmali <javan@javan.us>",
+    "Sam Stephenson <sstephenson@gmail.com>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/hotwired/turbo/issues"

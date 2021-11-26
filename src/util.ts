@@ -2,7 +2,13 @@ export type DispatchOptions = { target: EventTarget, cancelable: boolean, detail
 
 export function dispatch(eventName: string, { target, cancelable, detail }: Partial<DispatchOptions> = {}) {
   const event = new CustomEvent(eventName, { cancelable, bubbles: true, detail })
-  void (target || document.documentElement).dispatchEvent(event)
+
+  if (target && (target as Element).isConnected) {
+    target.dispatchEvent(event);
+  } else {
+    document.documentElement.dispatchEvent(event);
+  }
+
   return event
 }
 
@@ -50,7 +56,33 @@ export function uuid() {
   }).join("")
 }
 
+export function getAttribute(attributeName: string, ...elements: (Element | undefined)[]): string | null {
+  for (const value of elements.map(element => element?.getAttribute(attributeName))) {
+    if (typeof value == "string") return value
+  }
+
+  return null
+}
+
+export function markAsBusy(...elements: Element[]) {
+  for (const element of elements) {
+    if (element.localName == "turbo-frame") {
+      element.setAttribute("busy", "")
+    }
+    element.setAttribute("aria-busy", "true")
+  }
+}
+
+export function clearBusyState(...elements: Element[]) {
+  for (const element of elements) {
+    if (element.localName == "turbo-frame") {
+      element.removeAttribute("busy")
+    }
+
+    element.removeAttribute("aria-busy")
+  }
+}
+
 export function camelize(string: String) {
   return string.replace(/-./g, x=>x[1].toUpperCase())
 }
-

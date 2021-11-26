@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html id="html">
   <head>
     <meta charset="utf-8">
     <title>Form</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
-    <style>
+    <style id="form-fixture-styles">
       dialog {
         display: block;
         position: static;
@@ -13,12 +13,33 @@
     </style>
   </head>
   <body>
+    <h1>Form</h1>
     <div id="standard">
       <form action="/__turbo/redirect" method="post" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="hidden" name="greeting" value="Hello from a redirect">
-        <input type="submit">
+        <input id="standard-post-form-submit" type="submit" value="form[method=post]">
       </form>
+      <form action="/__turbo/redirect" method="get" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <input id="standard-get-form-submit" type="submit" value="form[method=get]">
+      </form>
+      <hr>
+      <form>
+        <button id="form-action-none-q-a" name="q" value="a">Submit ?q=a to form:not([action])</button>
+      </form>
+      <form action="/src/tests/fixtures/form.html">
+        <button id="form-action-self-sort" name="sort" value="asc">Submit ?sort=asc to form[action]</button>
+        <button id="form-action-self-q-b" name="q" value="b">Submit ?q=b to form[action]</button>
+      </form>
+      <form action="/src/tests/fixtures/form.html?q=c">
+        <button id="form-action-self-submit">Submit form[action]</button>
+      </form>
+      <form action="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fform.html%3Fsort%3Dasc" method="post">
+        <button id="form-action-post-redirect-self-q-b" name="q" value="b">POST q=b to form[action]</button>
+      </form>
+      <hr>
       <form action="/__turbo/messages" method="post" class="created">
         <input type="hidden" name="content" value="Hello!">
         <input type="submit" style="">
@@ -43,8 +64,16 @@
         <input type="hidden" name="greeting" value="Hello from a form">
         <input type="submit">
       </form>
+      <form action="/__turbo/redirect" method="post" class="sleep">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="sleep" value="500">
+        <input type="submit">
+      </form>
       <form action="/src/tests/fixtures/form.html?query=1" method="get" class="conflicting-values">
         <input type="hidden" name="query" value="2">
+        <input type="submit">
+      </form>
+      <form action="/__turbo/redirect" method="post" class="confirm" data-turbo-confirm="Are you sure?">
         <input type="submit">
       </form>
     </div>
@@ -65,10 +94,27 @@
       </form>
     </div>
     <hr>
+    <div id="action-input">
+      <form class="no-action">
+        <input type="hidden" name="action" value="1">
+        <input type="hidden" name="query" value="1">
+        <input type="submit">
+      </form>
+      <form class="action" action="/src/tests/fixtures/one.html">
+        <input type="hidden" name="action" value="1">
+        <input type="hidden" name="query" value="1">
+        <input type="submit">
+      </form>
+    </div>
+    <hr>
     <div id="reject">
-      <form class="unprocessable_entity" action="/__turbo/reject" method="post">
+      <form class="unprocessable_entity" action="/__turbo/reject" method="post" style="margin-top:100vh">
         <input type="hidden" name="status" value="422">
         <input type="submit">
+      </form>
+      <form class="unprocessable_entity_with_tall_form" action="/__turbo/reject/tall" method="post">
+        <input type="hidden" name="status" value="422">
+        <input type="submit" style="margin-top:1000vh">
       </form>
       <form class="internal_server_error" action="/__turbo/reject" method="post">
         <input type="hidden" name="status" value="500">
@@ -84,6 +130,15 @@
       <form action="/__turbo/redirect" method="post">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="submit" formenctype="multipart/form-data">
+      </form>
+
+      <form action="/src/tests/fixtures/frames/form.html" method="get">
+        <button type="submit" data-turbo-frame="frame">GET to Frame</button>
+      </form>
+
+      <form action="/__turbo/redirect" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/form.html">
+        <button type="submit" data-turbo-frame="frame">POST to Frame</button>
       </form>
     </div>
     <hr>
@@ -112,12 +167,36 @@
           <button formmethod="dialog">Close</button>
         </form>
       </dialog>
+
+      <dialog id="dialog-method-turbo-frame" open>
+        <form action="/__turbo/redirect" method="dialog">
+          <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+          <button>Close</button>
+        </form>
+      </dialog>
+
+      <dialog id="dialog-formmethod-turbo-frame" open>
+        <form action="/__turbo/redirect" method="post" data-turbo-frame="frame">
+          <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+          <button formmethod="dialog">Close</button>
+        </form>
+      </dialog>
     </div>
     <hr>
     <div id="targets-frame">
-      <form action="/__turbo/redirect" method="post" data-turbo-frame="frame" class="one">
+      <form id="form_one" action="/__turbo/redirect" method="post" data-turbo-frame="frame" class="one">
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <button type="submit">Submit</button>
+      </form>
+
+      <form action="/__turbo/redirect" method="post" data-turbo-frame="frame">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+        <button id="targets-frame-post-form-submit" type="submit">targets-frame form[method=post]</button>
+      </form>
+
+      <form action="/__turbo/redirect" method="get" data-turbo-frame="frame">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+        <button id="targets-frame-get-form-submit" type="submit">targets-frame form[method=get]</button>
       </form>
 
       <form action="/__turbo/redirect" method="post" data-turbo-frame="frame" class="frame">
@@ -161,15 +240,62 @@
         <input type="hidden" name="content" value="Hello!">
         <input type="submit">
       </form>
-      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-inside-frame">Stream link inside frame</a>
+      <a href="/src/tests/fixtures/frames/frame.html" data-turbo-method="get" id="link-method-inside-frame">Method link inside frame</a><br />
+      <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" data-turbo-frame="_top" id="link-method-inside-frame-target-top">Break-out of frame with method link inside frame</a><br />
+      <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" data-turbo-frame="hello" id="link-method-inside-frame-with-target">Method link inside frame targeting another frame</a><br />
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-inside-frame">Stream link inside frame</a>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" data-turbo-confirm="Are you sure?" id="link-method-inside-frame-with-confirmation"data-turbo-confirm="Are you sure?">Stream link inside frame with confirmation</a>
+      <form>
+        <a href="/src/tests/fixtures/frames/frame.html" data-turbo-method="get" id="method-link-within-form-inside-frame">Method link within form inside frame</a><br />
+        <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-within-form-inside-frame">Stream link within form inside frame</a>
+      </form>
       <form action="/__turbo/messages/1" method="put" class="stream put">
         <input type="hidden" name="type" value="stream">
         <input type="hidden" name="content" value="Hello!">
         <input type="submit">
       </form>
+      <form action="/src/tests/fixtures/one.html" method="get">
+        <button type="submit" data-turbo-frame="_top">Break-out of Frame with GET</button>
+      </form>
+      <form action="/__turbo/redirect" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <button type="submit" data-turbo-frame="_top">Break-out of Frame with POST</button>
+      </form>
+      <form action="/src/tests/fixtures/frames/hello.html" method="get">
+        <button type="submit" data-turbo-frame="hello">Navigate other Frame with GET</button>
+      </form>
+      <form action="/__turbo/redirect" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/hello.html">
+        <button type="submit" data-turbo-frame="hello">Navigate other Frame with POST</button>
+      </form>
       <div id="messages">
       </div>
     </turbo-frame>
-    <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="link-method-outside-frame">Stream link outside frame</a>
+    <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
+    <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>
+    <form>
+      <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-within-form-outside-frame">Method link within form outside frame</a><br />
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-within-form-outside-frame">Stream link within form outside frame</a>
+    </form>
+    <hr>
+    <form method="post" action="https://httpbin.org/post">
+      <button id="submit-external">POST to https://httpbin.org/post</button>
+    </form>
+    <turbo-frame id="hello"></turbo-frame>
+    <hr>
+
+    <turbo-frame id="ignored">
+      <form method="post" action="https://httpbin.org/post">
+        <button id="submit-external-within-ignored">POST to https://httpbin.org/post within #hello</button>
+      </form>
+    </turbo-frame>
+
+    <form method="post" action="https://httpbin.org/post">
+      <button id="submit-external">POST to https://httpbin.org/post</button>
+    </form>
+
+    <form method="post" action="https://httpbin.org/post" data-turbo-frame="ignored">
+      <button id="submit-external-target-ignored">POST to https://httpbin.org/post targeting #hello</button>
+    </form>
   </body>
 </html>

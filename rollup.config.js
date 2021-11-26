@@ -11,35 +11,13 @@ export default [
     output: [
       {
         name: "Turbo",
-        file: "dist/turbo.es5-umd.js",
-        format: "umd",
-        sourcemap: true,
-        banner
-      }
-    ],
-    plugins: [
-      resolve(),
-      typescript({ target: "es5", downlevelIteration: true })
-    ],
-    watch: {
-      include: "src/**"
-    }
-  },
-
-  {
-    input: "src/index.ts",
-    output: [
-      {
-        name: "Turbo",
         file: "dist/turbo.es2017-umd.js",
         format: "umd",
-        sourcemap: true,
         banner
       },
       {
         file: "dist/turbo.es2017-esm.js",
         format: "es",
-        sourcemap: true,
         banner
       }
     ],
@@ -116,7 +94,8 @@ export default [
       "express",
       "multer",
       "path",
-      "url"
+      "url",
+      "fs"
     ],
     watch: {
       include: "src/tests/**"

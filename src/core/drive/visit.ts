@@ -3,6 +3,7 @@ import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetc
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
+import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
@@ -42,15 +43,20 @@ export type VisitOptions = {
   referrer?: URL,
   snapshotHTML?: string,
   response?: VisitResponse
+  visitCachedSnapshot(snapshot: Snapshot): void
+  willRender: boolean
 }
 
 const defaultOptions: VisitOptions = {
   action: "advance",
-  historyChanged: false
+  historyChanged: false,
+  visitCachedSnapshot: () => {},
+  willRender: true,
 }
 
 export type VisitResponse = {
   statusCode: number,
+  redirected: boolean,
   responseHTML?: string
 }
 
@@ -67,6 +73,8 @@ export class Visit implements FetchRequestDelegate {
   readonly action: Action
   readonly referrer?: URL
   readonly timingMetrics: TimingMetrics = {}
+  readonly visitCachedSnapshot: (snapshot: Snapshot) => void
+  readonly willRender: boolean
 
   followedRedirect = false
   frame?: number
@@ -86,13 +94,16 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender } = { ...defaultOptions, ...options }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
+    this.visitCachedSnapshot = visitCachedSnapshot
+    this.willRender = willRender
+    this.scrolled = !willRender
   }
 
   get adapter() {
@@ -109,6 +120,10 @@ export class Visit implements FetchRequestDelegate {
 
   get restorationData() {
     return this.history.getRestorationDataForIdentifier(this.restorationIdentifier)
+  }
+
+  get silent() {
+    return this.isSamePage
   }
 
   start() {
@@ -136,6 +151,7 @@ export class Visit implements FetchRequestDelegate {
       this.state = VisitState.completed
       this.adapter.visitCompleted(this)
       this.delegate.visitCompleted(this)
+      this.followRedirect()
     }
   }
 
@@ -201,7 +217,7 @@ export class Visit implements FetchRequestDelegate {
         this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML))
+          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender)
           this.adapter.visitRendered(this)
           this.complete()
         } else {
@@ -243,7 +259,7 @@ export class Visit implements FetchRequestDelegate {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
-          await this.view.renderPage(snapshot, isPreview)
+          await this.view.renderPage(snapshot, isPreview, this.willRender)
           this.adapter.visitRendered(this)
           if (!isPreview) {
             this.complete()
@@ -254,9 +270,11 @@ export class Visit implements FetchRequestDelegate {
   }
 
   followRedirect() {
-    if (this.redirectedToLocation && !this.followedRedirect) {
-      this.location = this.redirectedToLocation
-      this.history.replace(this.redirectedToLocation, this.restorationIdentifier)
+    if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
+      this.adapter.visitProposedToLocation(this.redirectedToLocation, {
+        action: 'replace',
+        response: this.response
+      })
       this.followedRedirect = true
     }
   }
@@ -282,25 +300,27 @@ export class Visit implements FetchRequestDelegate {
 
   async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     const responseHTML = await response.responseHTML
+    const { redirected, statusCode } = response
     if (responseHTML == undefined) {
-      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch, redirected })
     } else {
       this.redirectedToLocation = response.redirected ? response.location : undefined
-      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+      this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
     }
   }
 
   async requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
     const responseHTML = await response.responseHTML
+    const { redirected, statusCode } = response
     if (responseHTML == undefined) {
-      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch, redirected })
     } else {
-      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+      this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
     }
   }
 
   requestErrored(request: FetchRequest, error: Error) {
-    this.recordResponse({ statusCode: SystemStatusCode.networkFailure })
+    this.recordResponse({ statusCode: SystemStatusCode.networkFailure, redirected: false })
   }
 
   requestFinished() {
@@ -312,9 +332,9 @@ export class Visit implements FetchRequestDelegate {
   performScroll() {
     if (!this.scrolled) {
       if (this.action == "restore") {
-        this.scrollToRestoredPosition() || this.scrollToAnchor() || this.scrollToTop()
+        this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
       } else {
-        this.scrollToAnchor() || this.scrollToTop()
+        this.scrollToAnchor() || this.view.scrollToTop()
       }
       if (this.isSamePage) {
         this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
@@ -338,10 +358,6 @@ export class Visit implements FetchRequestDelegate {
       this.view.scrollToAnchor(anchor)
       return true
     }
-  }
-
-  scrollToTop() {
-    this.view.scrollToPosition({ x: 0, y: 0 })
   }
 
   // Instrumentation
@@ -374,13 +390,13 @@ export class Visit implements FetchRequestDelegate {
     } else if (this.action == "restore") {
       return !this.hasCachedSnapshot()
     } else {
-      return true
+      return this.willRender
     }
   }
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot()
+      this.view.cacheSnapshot().then(snapshot => snapshot && this.visitCachedSnapshot(snapshot))
       this.snapshotCached = true
     }
   }

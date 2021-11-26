@@ -11,7 +11,9 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   async render() {
-    this.replaceBody()
+    if (this.willRender) {
+      this.replaceBody()
+    }
   }
 
   finishRendering() {

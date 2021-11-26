@@ -1,4 +1,5 @@
 import { VisitOptions, Visit } from "../../core/drive/visit"
+import { FormSubmission } from "../../core/drive/form_submission"
 import { Adapter } from "../../core/native/adapter"
 import * as Turbo from "../../index"
 import { DOMTestCase } from "../helpers/dom_test_case"
@@ -67,6 +68,14 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
   }
 
   visitRendered(visit: Visit): void {
+
+  }
+
+  formSubmissionStarted(formSubmission: FormSubmission): void {
+
+  }
+
+  formSubmissionFinished(formSubmission: FormSubmission): void {
 
   }
 

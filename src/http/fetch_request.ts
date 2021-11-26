@@ -1,7 +1,10 @@
 import { FetchResponse } from "./fetch_response"
+import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
 
 export interface FetchRequestDelegate {
+  referrer?: URL
+
   prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
   requestStarted(request: FetchRequest): void
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
@@ -45,19 +48,17 @@ export class FetchRequest {
   readonly headers: FetchRequestHeaders
   readonly url: URL
   readonly body?: FetchRequestBody
+  readonly target?: FrameElement | HTMLFormElement | null
   readonly abortController = new AbortController
   private resolveRequestPromise = (value: any) => {}
 
-  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams) {
+  constructor(delegate: FetchRequestDelegate, method: FetchMethod, location: URL, body: FetchRequestBody = new URLSearchParams, target: FrameElement | HTMLFormElement | null = null) {
     this.delegate = delegate
     this.method = method
     this.headers = this.defaultHeaders
-    if (this.isIdempotent) {
-      this.url = mergeFormDataEntries(location, [ ...body.entries() ])
-    } else {
-      this.body = body
-      this.url = location
-    }
+    this.body = body
+    this.url = location
+    this.target = target
   }
 
   get location(): URL {
@@ -76,7 +77,7 @@ export class FetchRequest {
     this.abortController.abort()
   }
 
-  async perform(): Promise<FetchResponse> {
+  async perform(): Promise<FetchResponse | void> {
     const { fetchOptions } = this
     this.delegate.prepareHeadersForRequest?.(this.headers, this)
     await this.allowRequestToBeIntercepted(fetchOptions)
@@ -85,8 +86,10 @@ export class FetchRequest {
       const response = await fetch(this.url.href, fetchOptions)
       return await this.receive(response)
     } catch (error) {
-      this.delegate.requestErrored(this, error)
-      throw error
+      if (error.name !== 'AbortError') {
+        this.delegate.requestErrored(this, error)
+        throw error
+      }
     } finally {
       this.delegate.requestFinished(this)
     }
@@ -94,7 +97,7 @@ export class FetchRequest {
 
   async receive(response: Response): Promise<FetchResponse> {
     const fetchResponse = new FetchResponse(response)
-    const event = dispatch("turbo:before-fetch-response", { cancelable: true, detail: { fetchResponse } })
+    const event = dispatch("turbo:before-fetch-response", { cancelable: true, detail: { fetchResponse }, target: this.target as EventTarget })
     if (event.defaultPrevented) {
       this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
     } else if (fetchResponse.succeeded) {
@@ -111,8 +114,9 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.body,
-      signal: this.abortSignal
+      body: this.isIdempotent ? null : this.body,
+      signal: this.abortSignal,
+      referrer: this.delegate.referrer?.href
     }
   }
 
@@ -132,24 +136,15 @@ export class FetchRequest {
 
   private async allowRequestToBeIntercepted(fetchOptions: RequestInit) {
     const requestInterception = new Promise(resolve => this.resolveRequestPromise = resolve)
-    const event = dispatch("turbo:before-fetch-request", { cancelable: true, detail: { fetchOptions, url: this.url.href, resume: this.resolveRequestPromise } })
+    const event = dispatch("turbo:before-fetch-request", {
+      cancelable: true,
+      detail: {
+        fetchOptions,
+        url: this.url,
+        resume: this.resolveRequestPromise
+      },
+      target: this.target as EventTarget
+    })
     if (event.defaultPrevented) await requestInterception
   }
-}
-
-function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
-  const currentSearchParams = new URLSearchParams(url.search)
-
-  for (const [ name, value ] of entries) {
-    if (value instanceof File) continue
-
-    if (currentSearchParams.has(name)) {
-      currentSearchParams.delete(name)
-      url.searchParams.set(name, value)
-    } else {
-      url.searchParams.append(name, value)
-    }
-  }
-
-  return url
 }

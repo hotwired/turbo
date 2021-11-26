@@ -2,16 +2,17 @@ import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../ele
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { parseHTMLDocument } from "../../util"
+import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
-import { expandURL, urlsAreEqual, Locatable } from "../url"
+import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
-import { elementIsNavigable } from "../session"
+import { session } from "../index"
+import { isAction } from "../types"
 
 export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
   readonly element: FrameElement
@@ -21,6 +22,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   readonly formInterceptor: FormInterceptor
   currentURL?: string | null
   formSubmission?: FormSubmission
+  fetchResponseLoaded = (fetchResponse: FetchResponse) => {}
+  private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
   private connected = false
   private hasBeenLoaded = false
@@ -37,6 +40,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   connect() {
     if (!this.connected) {
       this.connected = true
+      this.reloadable = false
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.appearanceObserver.start()
       }
@@ -77,12 +81,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (!this.settingSourceURL && this.enabled && this.isActive && this.sourceURL != this.currentURL) {
+    if (!this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || this.sourceURL != this.currentURL)) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
         try {
-          this.element.loaded = this.visit(this.sourceURL)
+          this.element.loaded = this.visit(expandURL(this.sourceURL))
           this.appearanceObserver.stop()
           await this.element.loaded
           this.hasBeenLoaded = true
@@ -95,7 +99,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadResponse(fetchResponse: FetchResponse) {
-    if (fetchResponse.redirected) {
+    if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       this.sourceURL = fetchResponse.response.url
     }
 
@@ -104,13 +108,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false)
+        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
+        session.frameRendered(fetchResponse, this.element)
+        session.frameLoaded(this.element)
+        this.fetchResponseLoaded(fetchResponse)
       }
     } catch (error) {
       console.error(error)
       this.view.invalidate()
+    } finally {
+      this.fetchResponseLoaded = () => {}
     }
   }
 
@@ -131,12 +140,13 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   linkClickIntercepted(element: Element, url: string) {
+    this.reloadable = true
     this.navigateFrame(element, url)
   }
 
   // Form interceptor delegate
 
-  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: Element) {
+  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: HTMLElement) {
     return this.shouldInterceptNavigation(element, submitter)
   }
 
@@ -145,14 +155,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       this.formSubmission.stop()
     }
 
+    this.reloadable = false
     this.formSubmission = new FormSubmission(this, element, submitter)
-    if (this.formSubmission.fetchRequest.isIdempotent) {
-      this.navigateFrame(element, this.formSubmission.fetchRequest.url.href)
-    } else {
-      const { fetchRequest } = this.formSubmission
-      this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
-      this.formSubmission.start()
-    }
+    const { fetchRequest } = this.formSubmission
+    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
+    this.formSubmission.start()
   }
 
   // Fetch request delegate
@@ -162,7 +169,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestStarted(request: FetchRequest) {
-    this.element.setAttribute("busy", "")
+    markAsBusy(this.element)
   }
 
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
@@ -185,18 +192,20 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestFinished(request: FetchRequest) {
-    this.element.removeAttribute("busy")
+    clearBusyState(this.element)
   }
 
   // Form submission delegate
 
-  formSubmissionStarted(formSubmission: FormSubmission) {
-    const frame = this.findFrameElement(formSubmission.formElement)
-    frame.setAttribute("busy", "")
+  formSubmissionStarted({ formElement }: FormSubmission) {
+    markAsBusy(formElement, this.findFrameElement(formElement))
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
-    const frame = this.findFrameElement(formSubmission.formElement)
+    const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
+
+    this.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
+
     frame.delegate.loadResponse(response)
   }
 
@@ -208,9 +217,8 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     console.error(error)
   }
 
-  formSubmissionFinished(formSubmission: FormSubmission) {
-    const frame = this.findFrameElement(formSubmission.formElement)
-    frame.removeAttribute("busy")
+  formSubmissionFinished({ formElement }: FormSubmission) {
+    clearBusyState(formElement, this.findFrameElement(formElement))
   }
 
   // View delegate
@@ -220,34 +228,57 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   viewRenderedSnapshot(snapshot: Snapshot, isPreview: boolean) {
-
   }
 
   viewInvalidated() {
-
   }
 
   // Private
 
-  private async visit(url: Locatable) {
-    const request = new FetchRequest(this, FetchMethod.get, expandURL(url))
+  private async visit(url: URL) {
+    const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams, this.element)
+
+    this.currentFetchRequest?.cancel()
+    this.currentFetchRequest = request
 
     return new Promise<void>(resolve => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
+        this.currentFetchRequest = null
         resolve()
       }
       request.perform()
     })
   }
 
-  private navigateFrame(element: Element, url: string) {
-    const frame = this.findFrameElement(element)
+  private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
+    const frame = this.findFrameElement(element, submitter)
+
+    this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
+
+    frame.setAttribute("reloadable", "")
     frame.src = url
   }
 
-  private findFrameElement(element: Element) {
-    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+  private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
+    const action = getAttribute("data-turbo-action", submitter, element, frame)
+
+    if (isAction(action)) {
+      const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
+      frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
+        if (frame.src) {
+          const { statusCode, redirected } = fetchResponse
+          const responseHTML = frame.ownerDocument.documentElement.outerHTML
+          const response = { statusCode, redirected, responseHTML }
+
+          session.visit(frame.src, { action, response, visitCachedSnapshot, willRender: false })
+        }
+      }
+    }
+  }
+
+  private findFrameElement(element: Element, submitter?: HTMLElement) {
+    const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
@@ -273,8 +304,18 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return new FrameElement()
   }
 
-  private shouldInterceptNavigation(element: Element, submitter?: Element) {
-    const id = element.getAttribute("data-turbo-frame") || this.element.getAttribute("target")
+  private formActionIsVisitable(form: HTMLFormElement, submitter?: HTMLElement) {
+    const action = getAction(form, submitter)
+
+    return locationIsVisitable(expandURL(action), this.rootLocation)
+  }
+
+  private shouldInterceptNavigation(element: Element, submitter?: HTMLElement) {
+    const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
+
+    if (element instanceof HTMLFormElement && !this.formActionIsVisitable(element, submitter)) {
+      return false
+    }
 
     if (!this.enabled || id == "_top") {
       return false
@@ -287,11 +328,11 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
       }
     }
 
-    if (!elementIsNavigable(element)) {
+    if (!session.elementDriveEnabled(element)) {
       return false
     }
 
-    if (submitter && !elementIsNavigable(submitter)) {
+    if (submitter && !session.elementDriveEnabled(submitter)) {
       return false
     }
 
@@ -314,6 +355,20 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     }
   }
 
+  get reloadable() {
+    const frame = this.findFrameElement(this.element)
+    return frame.hasAttribute("reloadable")
+  }
+
+  set reloadable(value: boolean) {
+    const frame = this.findFrameElement(this.element)
+    if (value) {
+      frame.setAttribute("reloadable", "")
+    } else {
+      frame.removeAttribute("reloadable")
+    }
+  }
+
   set sourceURL(sourceURL: string | undefined) {
     this.settingSourceURL = true
     this.element.src = sourceURL ?? null
@@ -331,6 +386,28 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
 
   get isActive() {
     return this.element.isActive && this.connected
+  }
+
+  get rootLocation() {
+    const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
+    const root = meta?.content ?? "/"
+    return expandURL(root)
+  }
+}
+
+class SnapshotSubstitution {
+  private readonly clone: Node
+  private readonly id: string
+
+  constructor(element: FrameElement) {
+    this.clone = element.cloneNode(true)
+    this.id = element.id
+  }
+
+  visitCachedSnapshot = ({ element }: Snapshot) => {
+    const { id, clone } = this
+
+    element.querySelector("#" + id)?.replaceWith(clone)
   }
 }
 
@@ -355,6 +432,7 @@ function activateElement(element: Element | null, currentURL?: string | null) {
 
     if (element instanceof FrameElement) {
       element.connectedCallback()
+      element.disconnectedCallback()
       return element
     }
   }

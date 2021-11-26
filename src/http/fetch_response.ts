@@ -44,12 +44,12 @@ export class FetchResponse {
   }
 
   get responseText(): Promise<string> {
-    return this.response.text()
+    return this.response.clone().text()
   }
 
   get responseHTML(): Promise<string | undefined> {
     if (this.isHTML) {
-      return this.response.text()
+      return this.response.clone().text()
     } else {
       return Promise.resolve(undefined)
     }

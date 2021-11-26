@@ -7,7 +7,9 @@
   }
 
   function eventListener(event) {
-    eventLogs.push([event.type, event.detail])
+    const skipped = document.documentElement.getAttribute("data-skip-event-details") || ""
+
+    eventLogs.push([event.type, skipped.includes(event.type) ? {} : event.detail, event.target.id])
   }
   window.mutationLogs = []
 
@@ -26,5 +28,7 @@
   "turbo:render",
   "turbo:before-fetch-request",
   "turbo:before-fetch-response",
-  "turbo:visit"
+  "turbo:visit",
+  "turbo:frame-load",
+  "turbo:frame-render",
 ])

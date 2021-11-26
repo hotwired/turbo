@@ -38,12 +38,28 @@ export class FunctionalTestCase extends InternTestCase {
     return this.remote.findByCssSelector(selector)
   }
 
+  async waitUntilSelector(selector: string): Promise<void> {
+    return (async () => {
+      let hasSelector = false
+      do hasSelector = await this.hasSelector(selector)
+      while (!hasSelector)
+    })()
+  }
+
+  async waitUntilNoSelector(selector: string): Promise<void> {
+    return (async () => {
+      let hasSelector = true
+      do hasSelector = await this.hasSelector(selector)
+      while (hasSelector)
+    })()
+  }
+
   async querySelectorAll(selector: string) {
     return this.remote.findAllByCssSelector(selector)
   }
 
   async clickSelector(selector: string): Promise<void> {
-    return this.remote.findByCssSelector(selector).click()
+    return (await this.remote.findByCssSelector(selector)).click()
   }
 
   async scrollToSelector(selector: string): Promise<void> {
@@ -79,6 +95,11 @@ export class FunctionalTestCase extends InternTestCase {
 
   get scrollPosition(): Promise<{ x: number, y: number }> {
     return this.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
+  }
+
+  async isScrolledToTop(): Promise<boolean> {
+    const { y: pageY } = await this.scrollPosition
+    return pageY === 0
   }
 
   async isScrolledToSelector(selector: string): Promise<boolean> {

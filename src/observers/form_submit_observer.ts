@@ -36,7 +36,7 @@ export class FormSubmitObserver {
       const submitter = event.submitter || undefined
 
       if (form) {
-        const method = submitter?.getAttribute("formmethod") || form.method
+        const method = submitter?.getAttribute("formmethod") || form.getAttribute("method")
 
         if (method != "dialog" && this.delegate.willSubmitForm(form, submitter)) {
           event.preventDefault()

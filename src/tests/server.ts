@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express"
 import multer from "multer"
 import path from "path"
 import url from "url"
+import fs from "fs";
 
 const router = Router()
 const streamResponses: Set<Response> = new Set
@@ -17,13 +18,13 @@ router.use((request, response, next) => {
 })
 
 router.post("/redirect", (request, response) => {
-  const { path, ...query } = request.body
-  const pathname = path ?? "/src/tests/fixtures/one.html"
+  const { path, sleep, ...query } = request.body
+  const { pathname, query: searchParams } = url.parse(path ?? request.query.path ?? "/src/tests/fixtures/one.html", true)
   const enctype = request.get("Content-Type")
   if (enctype) {
     query.enctype = enctype
   }
-  response.redirect(303, url.format({ pathname, query }))
+  setTimeout(() => response.redirect(303, url.format({ pathname, query: { ...query, ...searchParams } })), parseInt(sleep || "0", 10))
 })
 
 router.get("/redirect", (request, response) => {
@@ -36,11 +37,28 @@ router.get("/redirect", (request, response) => {
   response.redirect(301, url.format({ pathname, query }))
 })
 
+router.post("/reject/tall", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_tall.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
 
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.get("/headers", (request, response) => {
+  const template = fs.readFileSync("src/tests/fixtures/headers.html").toString()
+  response.type("html").status(200).send(template.replace('$HEADERS', JSON.stringify(request.headers, null, 4)))
+})
+
+router.get("/delayed_response", (request, response) => {
+  const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
+  setTimeout(() => response.status(200).sendFile(fixture), 1000)
 })
 
 router.post("/messages", (request, response) => {
