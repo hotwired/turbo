@@ -36,7 +36,7 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
 
   updateAttribute() {
     this.targetElements.forEach(e => { 
-      console.log(e)
+      e.setAttribute(this.attributeToUpdate, this.templateContent)
     })
   }
 }
