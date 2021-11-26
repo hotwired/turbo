@@ -141,7 +141,7 @@ export class StreamElementTests extends DOMTestCase {
   }
 
   async "test action=update-attribute"() {
-    const element = createStreamElement("update-attribute", "hello", createTemplateElement("true"), "data-updated-value")
+    const element = createStreamElement("update-attribute", "hello", createTemplateElement(""), "data-updated-value", true)
     this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
 
     this.append(element)
@@ -151,11 +151,12 @@ export class StreamElementTests extends DOMTestCase {
   }
 }
 
-function createStreamElement(action: string | null, target: string | null, templateElement?: HTMLTemplateElement, attribute?: string | null) {
+function createStreamElement(action: string | null, target: string | null, templateElement?: HTMLTemplateElement, attribute?: string | null, value?: any | null) {
   const element = new StreamElement()
   if (action) element.setAttribute("action", action)
   if (target) element.setAttribute("target", target)
   if (attribute) element.setAttribute("attribute", attribute)
+  if (attribute) element.setAttribute("value", value)
   if (templateElement) element.appendChild(templateElement)
   return element
 }

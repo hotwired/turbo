@@ -88,6 +88,10 @@ export class StreamElement extends HTMLElement {
   get attributeToUpdate() {
     return this.getAttribute("attribute")
   }
+  
+  get value() {
+    return this.getAttribute("value")
+  }
 
   private raise(message: string): never {
     throw new Error(`${this.description}: ${message}`)
