@@ -9,7 +9,9 @@ import { nextAnimationFrame } from "../util"
  * Using the `action` attribute, this can be configured one of four ways:
  *
  * - `append` - appends the result to the container
+ * - `append_unless_duplicate` - appends the result to the container only if there are no duplicate children
  * - `prepend` - prepends the result to the container
+ * - `prepend_unless_duplicate` - prepends the result to the container only if there are no duplicate children
  * - `replace` - replaces the contents of the container
  * - `remove` - removes the container
  * - `before` - inserts the result before the target
@@ -64,6 +66,13 @@ export class StreamElement extends HTMLElement {
     const newChildrenIds   = [...this.templateContent?.children].filter(c => !!c.id).map(c => c.id)
   
     return existingChildren.filter(c => newChildrenIds.includes(c.id))
+  }
+
+  /**
+   * Checks for any duplicate children (i.e. those with the same ID)
+   */
+  get hasDuplicateChildren() {
+    return !!this.duplicateChildren.length
   }
   
 

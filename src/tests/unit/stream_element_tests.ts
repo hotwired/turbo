@@ -43,6 +43,42 @@ export class StreamElementTests extends DOMTestCase {
     this.assert.equal(this.find("#hello")?.textContent, 'Hello Turbo  tail1 New First Second tail2 ')
   }
 
+  async "test action=append_unless_duplicate"() {
+    const element = createStreamElement("append_unless_duplicate", "hello", createTemplateElement("<span> Streams</span>"))
+    const element2 = createStreamElement("append_unless_duplicate", "hello", createTemplateElement("<span> and more</span>"))
+
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo Streams")
+    this.assert.isNull(element.parentElement)
+
+    this.append(element2)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo Streams and more")
+    this.assert.isNull(element2.parentElement)
+  }
+
+  async "test action=append_unless_duplicate with children ID already present in target"() {
+    const element = createStreamElement("append_unless_duplicate", "hello", createTemplateElement(' <div id="child_1">First</div> tail1 '))
+    const element2 = createStreamElement("append_unless_duplicate", "hello", createTemplateElement('<div id="child_1">New First</div> <div id="child_2">Second</div> tail2 '))
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'Hello Turbo First tail1 ')
+    this.assert.isNull(element.parentElement)
+
+    this.append(element2)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'Hello Turbo First tail1 ')
+  }
+
   async "test action=prepend"() {
     const element = createStreamElement("prepend", "hello", createTemplateElement("<span>Streams </span>"))
     const element2 = createStreamElement("prepend", "hello", createTemplateElement("<span>and more </span>"))
@@ -76,6 +112,41 @@ export class StreamElementTests extends DOMTestCase {
     await nextAnimationFrame()
 
     this.assert.equal(this.find("#hello")?.textContent, 'New First Second tail2  tail1 Hello Turbo')
+  }
+
+  async "test action=prepend_unless_duplicate"() {
+    const element = createStreamElement("prepend_unless_duplicate", "hello", createTemplateElement("<span>Streams </span>"))
+    const element2 = createStreamElement("prepend_unless_duplicate", "hello", createTemplateElement("<span>and more </span>"))
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, "Streams Hello Turbo")
+    this.assert.isNull(element.parentElement)
+
+    this.append(element2)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, "and more Streams Hello Turbo")
+    this.assert.isNull(element.parentElement)
+  }
+
+  async "test action=prepend_unless_duplicate with children ID already present in target"() {
+    const element = createStreamElement("prepend_unless_duplicate", "hello", createTemplateElement('<div id="child_1">First</div> tail1 '))
+    const element2 = createStreamElement("prepend_unless_duplicate", "hello", createTemplateElement('<div id="child_1">New First</div> <div id="child_2">Second</div> tail2 '))
+    this.assert.equal(this.find("#hello")?.textContent, "Hello Turbo")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'First tail1 Hello Turbo')
+    this.assert.isNull(element.parentElement)
+
+    this.append(element2)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.textContent, 'First tail1 Hello Turbo')
   }
 
   async "test action=remove"() {

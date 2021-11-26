@@ -10,12 +10,26 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
     this.targetElements.forEach(e => e.append(this.templateContent))
   },
 
+  append_unless_duplicate() {
+    if (this.hasDuplicateChildren) {
+      return
+    }
+    this.targetElements.forEach(e => e.append(this.templateContent))
+  },
+
   before() {
     this.targetElements.forEach(e => e.parentElement?.insertBefore(this.templateContent, e))
   },
 
   prepend() {
     this.removeDuplicateTargetChildren()
+    this.targetElements.forEach(e => e.prepend(this.templateContent))
+  },
+
+  prepend_unless_duplicate() {
+    if (this.hasDuplicateChildren) {
+      return
+    }
     this.targetElements.forEach(e => e.prepend(this.templateContent))
   },
 
