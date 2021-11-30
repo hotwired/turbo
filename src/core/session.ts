@@ -136,7 +136,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    this.convertLinkWithMethodClickToFormSubmission(link) || this.visit(location.href, { action })
+    const preserveScroll = link.hasAttribute("data-turbo-preserve-scroll")
+
+    this.convertLinkWithMethodClickToFormSubmission(link) || this.visit(location.href, { action, preserveScroll })
   }
 
   convertLinkWithMethodClickToFormSubmission(link: Element) {

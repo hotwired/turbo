@@ -41,6 +41,7 @@ export type VisitOptions = {
   action: Action,
   historyChanged: boolean,
   referrer?: URL,
+  preserveScroll: boolean,
   snapshotHTML?: string,
   response?: VisitResponse
   visitCachedSnapshot(snapshot: Snapshot): void
@@ -50,6 +51,7 @@ export type VisitOptions = {
 const defaultOptions: VisitOptions = {
   action: "advance",
   historyChanged: false,
+  preserveScroll: false,
   visitCachedSnapshot: () => {},
   willRender: true,
 }
@@ -88,13 +90,14 @@ export class Visit implements FetchRequestDelegate {
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
+  preserveScroll: boolean
 
   constructor(delegate: VisitDelegate, location: URL, restorationIdentifier: string | undefined, options: Partial<VisitOptions> = {}) {
     this.delegate = delegate
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, preserveScroll, snapshotHTML, response, visitCachedSnapshot, willRender } = { ...defaultOptions, ...options }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
@@ -104,6 +107,7 @@ export class Visit implements FetchRequestDelegate {
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
     this.scrolled = !willRender
+    this.preserveScroll = preserveScroll
   }
 
   get adapter() {
@@ -273,7 +277,8 @@ export class Visit implements FetchRequestDelegate {
     if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
         action: 'replace',
-        response: this.response
+        response: this.response,
+        preserveScroll: this.preserveScroll
       })
       this.followedRedirect = true
     }
@@ -334,13 +339,20 @@ export class Visit implements FetchRequestDelegate {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
       } else {
-        this.scrollToAnchor() || this.view.scrollToTop()
+        this.scrollSkip() || this.scrollToAnchor() || this.view.scrollToTop()
       }
       if (this.isSamePage) {
         this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
       }
 
       this.scrolled = true
+    }
+  }
+
+  scrollSkip() {
+    const { preserveScroll } = this;
+    if (preserveScroll === true) {
+      return true;
     }
   }
 

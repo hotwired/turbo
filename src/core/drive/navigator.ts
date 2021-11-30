@@ -91,7 +91,8 @@ export class Navigator {
 
         const { statusCode, redirected } = fetchResponse
         const action = this.getActionForFormSubmission(formSubmission)
-        const visitOptions = { action, response: { statusCode, responseHTML, redirected } }
+        const preserveScroll = this.getPreserveScrollForFormSubmission(formSubmission)
+        const visitOptions = { action, preserveScroll, response: { statusCode, responseHTML, redirected } }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
@@ -161,5 +162,11 @@ export class Navigator {
     const { formElement, submitter } = formSubmission
     const action = getAttribute("data-turbo-action", submitter, formElement)
     return isAction(action) ? action : "advance"
+  }
+
+  getPreserveScrollForFormSubmission(formSubmission: FormSubmission) {
+    const { formElement, submitter } = formSubmission
+    const preserveScroll = getAttribute("data-turbo-preserve-scroll", submitter, formElement)
+    return preserveScroll == 'true'
   }
 }
