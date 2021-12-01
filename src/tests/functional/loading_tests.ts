@@ -149,7 +149,7 @@ test("test changing [src] attribute on a [complete] frame with loading=lazy defe
   await page.click("#one")
   await nextEventNamed(page, "turbo:load")
   await page.goBack()
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
   await noNextEventNamed(page, "turbo:frame-load")
 
   let src = new URL((await attributeForSelector(page, "#hello", "src")) || "")

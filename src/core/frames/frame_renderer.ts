@@ -1,8 +1,26 @@
 import { FrameElement } from "../../elements/frame_element"
 import { nextAnimationFrame } from "../../util"
 import { Renderer } from "../renderer"
+import { Snapshot } from "../snapshot"
+
+export interface FrameRendererDelegate {
+  frameContentsExtracted(fragment: DocumentFragment): void
+}
 
 export class FrameRenderer extends Renderer<FrameElement> {
+  private readonly delegate: FrameRendererDelegate
+
+  constructor(
+    delegate: FrameRendererDelegate,
+    currentSnapshot: Snapshot<FrameElement>,
+    newSnapshot: Snapshot<FrameElement>,
+    isPreview: boolean,
+    willRender = true
+  ) {
+    super(currentSnapshot, newSnapshot, isPreview, willRender)
+    this.delegate = delegate
+  }
+
   get shouldRender() {
     return true
   }
@@ -22,7 +40,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
   loadFrameElement() {
     const destinationRange = document.createRange()
     destinationRange.selectNodeContents(this.currentElement)
-    destinationRange.deleteContents()
+    this.delegate.frameContentsExtracted(destinationRange.extractContents())
 
     const frameElement = this.newElement
     const sourceRange = frameElement.ownerDocument?.createRange()
