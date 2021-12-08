@@ -46,6 +46,10 @@
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <button data-turbo-action="replace">Same-origin form[method="post"] button[data-turbo-action="replace"]</button>
       </form>
+      <form id="form-post" method="post" action="/__turbo/redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <input type="submit" id="form-post-submit" value="Submit"/>
+      </form>
       <p><a id="same-origin-false-link" href="/src/tests/fixtures/one.html" data-turbo="false">Same-origin data-turbo=false link</a></p>
       <p data-turbo="false"><a id="same-origin-unannotated-link-inside-false-container" href="/src/tests/fixtures/one.html">Same-origin unannotated link inside data-turbo=false container</a></p>
       <p data-turbo="false"><a id="same-origin-true-link-inside-false-container" href="/src/tests/fixtures/one.html" data-turbo="true">Same-origin data-turbo=true link inside data-turbo=false container</a></p>

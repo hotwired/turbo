@@ -104,6 +104,20 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "replace")
   }
 
+  async "test following a POST form clears cache"() {
+    await this.remote.execute(() => {
+      const cachedElement = document.createElement("some-cached-element")
+      document.body.appendChild(cachedElement)
+    })
+    
+    this.clickSelector("#form-post-submit")
+    await this.nextBeat // 301 redirect response
+    await this.nextBeat // 200 response
+    await this.goBack()
+    this.assert.notOk(await this.hasSelector("some-cached-element"))
+  }
+
+
   async "test following a same-origin data-turbo=false link"() {
     this.clickSelector("#same-origin-false-link")
     await this.nextBody
