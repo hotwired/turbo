@@ -82,7 +82,6 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     await this.nextEventNamed("turbo:before-visit")
     await this.nextEventNamed("turbo:visit")
-    await this.nextEventNamed("turbo:before-cache")
     await this.nextEventNamed("turbo:before-render")
     await this.nextEventNamed("turbo:render")
     await this.nextEventNamed("turbo:load")
