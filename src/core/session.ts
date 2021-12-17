@@ -147,6 +147,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
       form.method = linkMethod
       form.action = link.getAttribute("href") || "undefined"
       form.hidden = true
+      form.setAttribute("data-turbo", "true")
 
       if (link.hasAttribute("data-turbo-confirm")) {
         form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
