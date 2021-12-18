@@ -110,6 +110,9 @@ export class ProgressBar {
     const element = document.createElement("style")
     element.type = "text/css"
     element.textContent = ProgressBar.defaultCSS
+    if (this.cspNonce) {
+      element.nonce = this.cspNonce
+    }
     return element
   }
 
@@ -117,5 +120,9 @@ export class ProgressBar {
     const element = document.createElement("div")
     element.className = "turbo-progress-bar"
     return element
+  }
+
+  get cspNonce() {
+    return document.head.querySelector('meta[name="csp-nonce"]')?.getAttribute("content")
   }
 }
