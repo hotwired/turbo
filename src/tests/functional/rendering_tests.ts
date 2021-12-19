@@ -21,8 +21,7 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
     await this.clickSelector("#delayed-link")
 
-    await this.waitUntilSelector(".turbo-progress-bar")
-    this.assert.ok(await this.hasSelector(".turbo-progress-bar[nonce=123]"), "displays progress bar")
+    this.assert.ok(await this.hasSelector("script[nonce='123']"), "displays progress bar")
   }
 
   async "test triggers before-render and render events for error pages"() {
