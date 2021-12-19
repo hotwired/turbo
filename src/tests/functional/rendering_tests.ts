@@ -17,6 +17,13 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert(await newBody.equals(await this.body))
   }
 
+  async "test progress bar inline style has nonce"() {
+    await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
+    await this.clickSelector("#delayed-link")
+
+    this.assert.ok(await this.hasSelector("script[nonce='123']"), "displays progress bar")
+  }
+
   async "test triggers before-render and render events for error pages"() {
     this.clickSelector("#nonexistent-link")
     const { newBody } = await this.nextEventNamed("turbo:before-render")
