@@ -777,6 +777,25 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await message.getVisibleText(), "Link!")
   }
 
+  async "test form link with before callback"() {
+    await this.remote.execute(() => window.Turbo.setLinkToFormBeforeCallback((form) => {
+      if (form.getAttribute('method') !== 'delete') return;
+
+      const input = document.createElement("input");
+      input.setAttribute("name", "_method")
+      input.setAttribute("type", "hidden")
+      input.setAttribute("value", "delete")
+
+      form.method = 'post'
+      form.appendChild(input)
+    }))
+
+    await this.clickSelector("#delete-link-method")
+    await this.nextBody
+
+    this.assert.equal(await this.getSearchParam("_method"), "delete")
+  }
+
   async "test turbo:before-fetch-request fires on the form element"() {
     await this.clickSelector('#targets-frame form.one [type="submit"]')
     this.assert.ok(await this.nextEventOnTarget("form_one", "turbo:before-fetch-request"))
