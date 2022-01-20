@@ -273,6 +273,7 @@ export class Visit implements FetchRequestDelegate {
     if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
         action: 'replace',
+        willRender: false,
         response: this.response
       })
       this.followedRedirect = true
