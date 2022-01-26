@@ -41,3 +41,6 @@ function clickCaptured(event: Event) {
     }
   })
 })()
+
+// Ensure TypeScript parses this file as a module
+export {}
