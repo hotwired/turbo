@@ -6,7 +6,7 @@ import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
 import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../observers/form_link_click_observer"
-import { getAction, expandURL, locationIsVisitable, Locatable } from "./url"
+import { getAction, getExtension, expandURL, isPrefixedBy, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -134,6 +134,14 @@ export class Session
     this.view.clearSnapshotCache()
   }
 
+  isVisitable(url: URL) {
+    return !!getExtension(url).match(/^(?:|\.(?:htm|html|xhtml|php))$/)
+  }
+
+  locationIsVisitable(location: URL, rootLocation: URL) {
+    return isPrefixedBy(location, rootLocation) && this.isVisitable(location)
+  }
+
   setProgressBarDelay(delay: number) {
     this.progressBarDelay = delay
   }
@@ -174,7 +182,7 @@ export class Session
   // Form click observer delegate
 
   willSubmitFormLinkToLocation(link: Element, location: URL): boolean {
-    return this.elementIsNavigatable(link) && locationIsVisitable(location, this.snapshot.rootLocation)
+    return this.elementIsNavigatable(link) && this.locationIsVisitable(location, this.snapshot.rootLocation)
   }
 
   submittedFormLinkToLocation() {}
@@ -184,7 +192,7 @@ export class Session
   willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent) {
     return (
       this.elementIsNavigatable(link) &&
-      locationIsVisitable(location, this.snapshot.rootLocation) &&
+      this.locationIsVisitable(location, this.snapshot.rootLocation) &&
       this.applicationAllowsFollowingLinkToLocation(link, location, event)
     )
   }
@@ -233,7 +241,7 @@ export class Session
 
     return (
       this.submissionIsNavigatable(form, submitter) &&
-      locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
+      this.locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
     )
   }
 
