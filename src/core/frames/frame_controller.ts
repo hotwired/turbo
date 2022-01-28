@@ -20,7 +20,7 @@ import {
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate, ViewRenderOptions } from "../view"
-import { Locatable, getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { Locatable, getAction, expandURL, urlsAreEqual } from "../url"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
@@ -459,7 +459,7 @@ export class FrameController
   private formActionIsVisitable(form: HTMLFormElement, submitter?: HTMLElement) {
     const action = getAction(form, submitter)
 
-    return locationIsVisitable(expandURL(action), this.rootLocation)
+    return session.locationIsVisitable(expandURL(action), this.rootLocation)
   }
 
   private shouldInterceptNavigation(element: Element, submitter?: HTMLElement) {
