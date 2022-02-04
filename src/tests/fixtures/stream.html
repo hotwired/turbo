@@ -20,6 +20,13 @@
       <button type="submit">Replace</button>
     </form>
 
+    <form id="replaceSecond" method="post" action="/__turbo/messages">
+      <input type="hidden" name="content" value="Hello SASS!">
+      <input type="hidden" name="target" value="message_2">
+      <input type="hidden" name="type" value="stream">
+      <button type="submit">Replace Second</button>
+    </form>
+
     <div id="messages">
       <div class="message">First</div>
     </div>

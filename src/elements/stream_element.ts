@@ -41,7 +41,6 @@ export class StreamElement extends HTMLElement {
       if (this.dispatchEvent(this.beforeRenderEvent)) {
         await nextAnimationFrame()
         this.performAction()
-        this.dispatchEvent(this.afterRenderEvent)
       }
     })()
   }
@@ -144,10 +143,6 @@ export class StreamElement extends HTMLElement {
 
   private get beforeRenderEvent() {
     return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
-  }
-
-  private get afterRenderEvent() {
-    return new CustomEvent("turbo:after-stream-render", { bubbles: true, cancelable: true })
   }
 
   private get targetElementsById() {
