@@ -32,5 +32,17 @@ export const StreamActions: { [action: string]: (this: StreamElement) => void } 
       e.innerHTML = ""
       e.append(this.templateContent)
     })
+  },
+
+  "add-class"() {
+    this.targetElements.forEach(e => {
+      this.templateElement.classList.forEach(c => e.classList.add(c))
+    })
+  },
+
+  "remove-class"() {
+    this.targetElements.forEach(e => {
+      this.templateElement.classList.forEach(c => e.classList.remove(c))
+    })
   }
 }

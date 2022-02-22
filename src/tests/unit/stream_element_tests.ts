@@ -4,7 +4,7 @@ import { DOMTestCase } from "../helpers/dom_test_case"
 
 export class StreamElementTests extends DOMTestCase {
   async beforeTest() {
-    this.fixtureHTML = `<div><div id="hello">Hello Turbo</div></div>`
+    this.fixtureHTML = `<div><div id="hello" class="hello1 hello2">Hello Turbo</div></div>`
   }
 
   async "test action=append"() {
@@ -139,6 +139,26 @@ export class StreamElementTests extends DOMTestCase {
     this.assert.ok(this.find("h1#before"))
     this.assert.isNull(element.parentElement)
   }
+
+  async "test action=add-class"() {
+    const element = createStreamElement("add-class", "hello", createTemplateElement("", "hello2 hello3"))
+    this.assert.equal(this.find("#hello")?.getAttribute("class"), "hello1 hello2")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.getAttribute("class"), "hello1 hello2 hello3")
+  }
+
+  async "test action=remove-class"() {
+    const element = createStreamElement("remove-class", "hello", createTemplateElement("", "hello2 hello3"))
+    this.assert.equal(this.find("#hello")?.getAttribute("class"), "hello1 hello2")
+
+    this.append(element)
+    await nextAnimationFrame()
+
+    this.assert.equal(this.find("#hello")?.getAttribute("class"), "hello1")
+  }
 }
 
 function createStreamElement(action: string | null, target: string | null, templateElement?: HTMLTemplateElement) {
@@ -149,9 +169,10 @@ function createStreamElement(action: string | null, target: string | null, templ
   return element
 }
 
-function createTemplateElement(html: string) {
+function createTemplateElement(html: string, classes?: string) {
   const element = document.createElement("template")
   element.innerHTML = html
+  if (classes) element.setAttribute("class", classes)
   return element
 }
 
