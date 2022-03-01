@@ -26,7 +26,14 @@ export class Snapshot<E extends Element = Element> {
   }
 
   get firstAutofocusableElement() {
-    return this.element.querySelector("[autofocus]")
+    const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
+
+    for (const element of this.element.querySelectorAll("[autofocus]")) {
+      if (element.closest(inertDisabledOrHidden) == null) return element
+      else continue
+    }
+
+    return null
   }
 
   get permanentElements() {
