@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Autofocus</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Autofocus With Inert Elements</h1>
+    <dialog>
+      <button autofocus id="first-autofocus-element" type="button">First [autofocus]</button>
+    </dialog>
+    <div hidden>
+      <button autofocus id="second-autofocus-element" type="button">Second [autofocus]</button>
+    </div>
+    <button autofocus id="third-autofocus-element" type="button">Third [autofocus]</button>
+  </body>
+</html>

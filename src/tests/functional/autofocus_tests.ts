@@ -20,6 +20,16 @@ export class AutofocusTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("#second-autofocus-element:focus"), "focuses the first [autofocus] element on the page")
   }
 
+  async "test autofocus third [autofocus] element on visit with inert elements"() {
+    await this.goToLocation("/src/tests/fixtures/navigation.html")
+    await this.clickSelector("#autofocus-inert-link")
+    await this.sleep(500)
+
+    this.assert.notOk(await this.hasSelector("#first-autofocus-element:focus"), "first autofocus element is hidden in a closed dialog")
+    this.assert.notOk(await this.hasSelector("#second-autofocus-element:focus"), "second autofocus element is hidden in a hidden div")
+    this.assert.ok(await this.hasSelector("third-autofocus-element:focus"), "focuses the third [autofocus] element on the page")
+  }
+
   async "test navigating a frame with a descendant link autofocuses [autofocus]:first-of-type"() {
     await this.clickSelector("#frame-inner-link")
     await this.nextBeat
