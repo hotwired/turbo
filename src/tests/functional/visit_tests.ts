@@ -120,6 +120,23 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("some-cached-element"))
   }
 
+  async "test updates HTML element classes"() {
+    await this.visitLocation("/src/tests/fixtures/one.html")
+
+    await this.remote.execute(() => {
+      this.assert.include(document.documentElement.className, "one")
+    })
+
+    this.clickSelector("#link-without-redirection")
+
+    await this.nextBeat // 200 response
+
+    await this.remote.execute(() => {
+      this.assert.notInclude(document.documentElement.className, "one")
+      this.assert.include(document.documentElement.className, "visit")
+    })
+  }
+
   async visitLocation(location: string) {
     this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }
