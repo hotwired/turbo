@@ -8,6 +8,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   prepareToRender() {
     this.mergeHead()
+    this.updateHtmlElementAttributes()
   }
 
   async render() {
@@ -35,11 +36,25 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.newSnapshot.element
   }
 
+  get newHtmlElement() {
+    return this.newSnapshot.htmlElement
+  }
+
   mergeHead() {
     this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
     this.removeCurrentHeadProvisionalElements()
     this.copyNewHeadProvisionalElements()
+  }
+
+  updateHtmlElementAttributes() {
+    for(const attr of document.documentElement.attributes) {
+      document.documentElement.removeAttribute(attr.nodeName)
+    }
+
+    for(const attr of this.newHtmlElement.attributes) {
+      document.documentElement.setAttribute(attr.nodeName, attr.nodeValue as string)
+    }
   }
 
   replaceBody() {
