@@ -121,20 +121,21 @@ export class VisitTests extends TurboDriveTestCase {
   }
 
   async "test updates HTML element classes"() {
-    await this.visitLocation("/src/tests/fixtures/one.html")
+    await this.visitLocation("/src/tests/fixtures/html_attributes.html")
+    await this.nextBeat
 
-    await this.remote.execute(() => {
-      this.assert.include(document.documentElement.className, "one")
-    })
+    this.assert.equal(await this.remote.execute(() => document.documentElement.className), "html-attributes")
+    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")), "attr")
+    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")), null)
 
-    this.clickSelector("#link-without-redirection")
+    this.clickSelector("#link")
+    await this.nextBeat
 
-    await this.nextBeat // 200 response
+    const classes = await this.remote.execute(() => document.documentElement.className)
+    this.assert.equal(classes, "html-attributes-two")
 
-    await this.remote.execute(() => {
-      this.assert.notInclude(document.documentElement.className, "one")
-      this.assert.include(document.documentElement.className, "visit")
-    })
+    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")), null)
+    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")), "other-attr")
   }
 
   async visitLocation(location: string) {
