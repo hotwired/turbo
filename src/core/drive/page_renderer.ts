@@ -55,7 +55,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
 
     for(const attr of this.newHtmlElement.attributes) {
-      document.documentElement.setAttribute(attr.nodeName, attr.nodeValue as string)
+      document.documentElement.setAttribute(attr.nodeName, attr.nodeValue!)
     }
   }
 
