@@ -131,10 +131,8 @@ export class VisitTests extends TurboDriveTestCase {
     this.clickSelector("#link")
     await this.nextBeat
 
-    const classes = await this.remote.execute(() => document.documentElement.className)
-    this.assert.equal(classes, "html-attributes-two")
-
-    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")), null)
+    this.assert.equal(await this.remote.execute(() => document.documentElement.className), "html-attributes-two")
+    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")), "attr-two")
     this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")), "other-attr")
   }
 
