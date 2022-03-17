@@ -20,6 +20,10 @@ export class Preloader {
     return this.delegate.navigator.view.snapshotCache
   }
 
+  start() {
+    this.preloadOnLoadLinksForView(this.element)
+  }
+
   preloadOnLoadLinksForView(element: Element) {
     const links = element.querySelectorAll('a[data-turbo-preload="load"]')
 
