@@ -232,10 +232,6 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.goBack()
   }
 
-  async "test snapshots are preloaded for links with turbo-preload='load'"() {
-    // TODO
-  }
-
   get assetElements(): Promise<Element[]> {
     return filter(this.headElements, isAssetElement)
   }
