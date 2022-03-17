@@ -4,7 +4,7 @@ export class PreloaderTests extends TurboDriveTestCase {
   async "test navigates to preloaded snapshot from cold start"() {
     await this.goToLocation("/src/tests/fixtures/preloading.html")
     await this.clickSelector("#preload_anchor")
-    console.log(await this.hasSelector("html[data-turbo-preview]")))
+    this.assert.ok(await this.attributeForSelector("#html", "data-turbo-preview"))
   }
 
   async "test navigates to preloaded snapshot from hot navigation"() {
