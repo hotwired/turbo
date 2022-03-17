@@ -9,6 +9,7 @@ export interface PreloaderDelegate {
 export class Preloader {
   readonly delegate: PreloaderDelegate
   readonly element: Element
+  readonly selector: string = 'a[rel="preload"], a[rel="prefetch"]'
 
   constructor(delegate: PreloaderDelegate, element: Element) {
     this.delegate = delegate
@@ -24,12 +25,8 @@ export class Preloader {
   }
 
   preloadOnLoadLinksForView(element: Element) {
-    const links = element.querySelectorAll('a[data-turbo-preload="load"]')
-
-    for (const link of links) {
-      if (link instanceof HTMLAnchorElement) {
-        this.preloadURL(link)
-      }
+    for (const link of element.querySelectorAll<HTMLAnchorElement>(this.selector)) {
+      this.preloadURL(link)
     }
   }
 
