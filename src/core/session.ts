@@ -18,6 +18,7 @@ import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
 import { FetchResponse } from "../http/fetch_response"
+import { Preloader, PreloaderDelegate } from "./drive/preloader"
 
 export type TimingData = unknown
 
@@ -28,10 +29,12 @@ export class Session
     LinkClickObserverDelegate,
     NavigatorDelegate,
     PageObserverDelegate,
-    PageViewDelegate
+    PageViewDelegate,
+    PreloaderDelegate
 {
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
+  readonly preloader = new Preloader(this, document.body)
   readonly view = new PageView(this, document.documentElement)
   adapter: Adapter = new BrowserAdapter(this)
 
@@ -59,6 +62,7 @@ export class Session
       this.streamObserver.start()
       this.frameRedirector.start()
       this.history.start()
+      this.preloader.start()
       this.started = true
       this.enabled = true
     }
@@ -116,6 +120,10 @@ export class Session
 
   get restorationIdentifier() {
     return this.history.restorationIdentifier
+  }
+
+  preloadLinksForFrame(frame: FrameElement) {
+
   }
 
   // History delegate
@@ -272,6 +280,10 @@ export class Session
   }
 
   // Frame element
+
+  preloadLinksForFrame(frame: FrameElement) {
+    this.preloader.preloadOnLoadLinksForView(frame)
+  }
 
   frameLoaded(frame: FrameElement) {
     this.notifyApplicationAfterFrameLoad(frame)
