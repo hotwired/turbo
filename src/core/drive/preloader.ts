@@ -32,17 +32,21 @@ export class Preloader {
     }
   }
 
-  preloadURL(link: Element) {
+  async preloadURL(link: Element) {
     const url = expandURL(link.getAttribute("href") || "")
 
     if (this.snapshotCache.has(url)) {
       return
     }
 
-    fetch(url.toString(), { headers: { 'VND.PREFETCH': 'true', 'Accept': 'text/html' } })
-      .then(res => res.text())
-      .then(responseText => PageSnapshot.fromHTMLString(responseText))
-      .then(snapshot => this.snapshotCache.put(url, snapshot))
-      .catch(() => {})
+    try {
+      const response = await fetch(url.toString(), { headers: { 'VND.PREFETCH': 'true', 'Accept': 'text/html' } })
+      const responseText = await response.text()
+      const snapshot = PageSnapshot.fromHTMLString(responseText)
+
+      this.snapshotCache.put(url, snapshot)
+    } catch(_) {
+      // If we cannot preload that is ok!
+    }
   }
 }
