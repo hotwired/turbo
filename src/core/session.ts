@@ -62,7 +62,6 @@ export class Session
       this.streamObserver.start()
       this.frameRedirector.start()
       this.history.start()
-      this.preloader.start()
       this.started = true
       this.enabled = true
     }
@@ -120,10 +119,6 @@ export class Session
 
   get restorationIdentifier() {
     return this.history.restorationIdentifier
-  }
-
-  preloadLinksForFrame(frame: FrameElement) {
-
   }
 
   // History delegate
@@ -275,15 +270,15 @@ export class Session
     this.notifyApplicationAfterRender()
   }
 
+  preloadOnLoadLinksForView(element: Element) {
+    this.preloader.preloadOnLoadLinksForView(element)
+  }
+
   viewInvalidated(reason: ReloadReason) {
     this.adapter.pageInvalidated(reason)
   }
 
   // Frame element
-
-  preloadLinksForFrame(frame: FrameElement) {
-    this.preloader.preloadOnLoadLinksForView(frame)
-  }
 
   frameLoaded(frame: FrameElement) {
     this.notifyApplicationAfterFrameLoad(frame)

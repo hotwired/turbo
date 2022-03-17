@@ -125,7 +125,6 @@ export class FrameController
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
-        session.preloadLinksForFrame(this.element)
         session.frameRendered(fetchResponse, this.element)
         session.frameLoaded(this.element)
         this.fetchResponseLoaded(fetchResponse)
@@ -243,6 +242,10 @@ export class FrameController
   }
 
   viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}
+
+  preloadOnLoadLinksForView(element: Element) {
+    session.preloadOnLoadLinksForView(element)
+  }
 
   viewInvalidated() {}
 
