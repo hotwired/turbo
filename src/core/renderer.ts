@@ -26,6 +26,10 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     return true
   }
 
+  get reloadReason() {
+    return ""
+  }
+
   prepareToRender() {
     return
   }

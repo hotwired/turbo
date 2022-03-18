@@ -6,6 +6,18 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
 
+  get reloadReason() {
+    if (!this.newSnapshot.isVisitable) {
+      return "Page snapshot is not visitable."
+    }
+
+    if (!this.trackedElementsAreIdentical) {
+      return "Tracked element was different."
+    }
+
+    return ""
+  }
+
   prepareToRender() {
     this.mergeHead()
   }
