@@ -116,7 +116,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, { action: "restore", historyChanged: true })
     } else {
-      this.adapter.pageInvalidated()
+      this.adapter.pageInvalidated("historyPoppedToLocationWithRestorationIdentifier")
     }
   }
 
@@ -250,8 +250,8 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.notifyApplicationAfterRender()
   }
 
-  viewInvalidated() {
-    this.adapter.pageInvalidated()
+  viewInvalidated(reason: string) {
+    this.adapter.pageInvalidated(reason)
   }
 
   // Frame element

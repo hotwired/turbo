@@ -13,5 +13,5 @@ export interface Adapter {
   visitRendered(visit: Visit): void
   formSubmissionStarted?(formSubmission: FormSubmission): void
   formSubmissionFinished?(formSubmission: FormSubmission): void
-  pageInvalidated(): void
+  pageInvalidated(reason: string): void
 }

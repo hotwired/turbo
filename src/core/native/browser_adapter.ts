@@ -3,7 +3,7 @@ import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
 import { FormSubmission } from "../drive/form_submission"
 import { Session } from "../session"
-import { uuid } from "../../util"
+import { uuid, dispatch } from "../../util"
 
 export class BrowserAdapter implements Adapter {
   readonly session: Session
@@ -45,7 +45,7 @@ export class BrowserAdapter implements Adapter {
       case SystemStatusCode.networkFailure:
       case SystemStatusCode.timeoutFailure:
       case SystemStatusCode.contentTypeMismatch:
-        return this.reload()
+        return this.reload(`Request failed with status code ${statusCode}`)
       default:
         return visit.loadResponse()
     }
@@ -60,8 +60,8 @@ export class BrowserAdapter implements Adapter {
 
   }
 
-  pageInvalidated() {
-    this.reload()
+  pageInvalidated(reason: string) {
+    this.reload(reason)
   }
 
   visitFailed(visit: Visit) {
@@ -114,7 +114,8 @@ export class BrowserAdapter implements Adapter {
     this.progressBar.show()
   }
 
-  reload() {
+  reload(reason: string) {
+    dispatch("turbo:reload", { detail: { reason} })
     window.location.reload()
   }
 

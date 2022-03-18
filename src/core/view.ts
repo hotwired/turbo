@@ -6,7 +6,7 @@ import { getAnchor } from "./url"
 export interface ViewDelegate<S extends Snapshot> {
   allowsImmediateRender(snapshot: S, resume: (value: any) => void): boolean
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
-  viewInvalidated(): void
+  viewInvalidated(reason: string): void
 }
 
 export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E>, R extends Renderer<E, S> = Renderer<E, S>, D extends ViewDelegate<S> = ViewDelegate<S>> {
@@ -90,12 +90,12 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
         delete this.renderPromise
       }
     } else {
-      this.invalidate()
+      this.invalidate(renderer.reloadReason)
     }
   }
 
-  invalidate() {
-    this.delegate.viewInvalidated()
+  invalidate(reason: string) {
+    this.delegate.viewInvalidated(reason)
   }
 
   prepareToRenderSnapshot(renderer: R) {
