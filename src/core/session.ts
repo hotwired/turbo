@@ -116,7 +116,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, { action: "restore", historyChanged: true })
     } else {
-      this.adapter.pageInvalidated("historyPoppedToLocationWithRestorationIdentifier")
+      this.adapter.pageInvalidated("Turbo is disabled.")
     }
   }
 

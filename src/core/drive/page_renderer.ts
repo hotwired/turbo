@@ -12,7 +12,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
 
     if (!this.trackedElementsAreIdentical) {
-      return "Tracked element was different."
+      return "A tracked element was different."
     }
 
     return ""
