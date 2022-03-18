@@ -8,12 +8,10 @@ export interface PreloaderDelegate {
 
 export class Preloader {
   readonly delegate: PreloaderDelegate
-  readonly element: Element
-  readonly selector: string = 'a[rel="preload"], a[rel="prefetch"]'
+  readonly selector: string = 'a[rel="preload"], a[rel="prefetch"], a[rel="next"]'
 
-  constructor(delegate: PreloaderDelegate, element: Element) {
+  constructor(delegate: PreloaderDelegate) {
     this.delegate = delegate
-    this.element = element
   }
 
   get snapshotCache(): SnapshotCache {
@@ -21,7 +19,9 @@ export class Preloader {
   }
 
   start() {
-    this.preloadOnLoadLinksForView(this.element)
+    document.addEventListener("DOMContentLoaded", () => {
+      this.preloadOnLoadLinksForView(document.body)
+    })
   }
 
   preloadOnLoadLinksForView(element: Element) {
