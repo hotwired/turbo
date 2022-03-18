@@ -19,9 +19,13 @@ export class Preloader {
   }
 
   start() {
-    document.addEventListener("DOMContentLoaded", () => {
+    if (document.readyState === 'loading') {
+      return document.addEventListener('DOMContentLoaded', () => {
+        this.preloadOnLoadLinksForView(document.body)
+      });
+    } else {
       this.preloadOnLoadLinksForView(document.body)
-    })
+    }
   }
 
   preloadOnLoadLinksForView(element: Element) {
