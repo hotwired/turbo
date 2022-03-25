@@ -44,8 +44,7 @@ export type VisitOptions = {
   snapshotHTML?: string,
   response?: VisitResponse
   visitCachedSnapshot(snapshot: Snapshot): void
-  willRender: boolean,
-  shouldCacheSnapshot: boolean
+  willRender: boolean
 }
 
 const defaultOptions: VisitOptions = {
@@ -53,7 +52,6 @@ const defaultOptions: VisitOptions = {
   historyChanged: false,
   visitCachedSnapshot: () => {},
   willRender: true,
-  shouldCacheSnapshot: true,
 }
 
 export type VisitResponse = {
@@ -87,7 +85,6 @@ export class Visit implements FetchRequestDelegate {
   request?: FetchRequest
   response?: VisitResponse
   scrolled = false
-  shouldCacheSnapshot = true
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
@@ -97,7 +94,7 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender, shouldCacheSnapshot } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender } = { ...defaultOptions, ...options }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
@@ -107,7 +104,6 @@ export class Visit implements FetchRequestDelegate {
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
     this.scrolled = !willRender
-    this.shouldCacheSnapshot = shouldCacheSnapshot
   }
 
   get adapter() {
@@ -218,7 +214,7 @@ export class Visit implements FetchRequestDelegate {
     if (this.response) {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
-        if (this.shouldCacheSnapshot) this.cacheSnapshot()
+        this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
           await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender)
