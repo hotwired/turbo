@@ -1,21 +1,24 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
+import { ReloadReason } from "../native/browser_adapter"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
 
-  get reloadReason() {
+  get reloadReason(): ReloadReason {
     if (!this.newSnapshot.isVisitable) {
-      return "Page snapshot is not visitable."
+      return {
+        reason: "turbo_visit_control_is_reload"
+      }
     }
 
     if (!this.trackedElementsAreIdentical) {
-      return "A tracked element was different."
+      return {
+        reason: "tracked_element_mismatch"
+      }
     }
-
-    return ""
   }
 
   prepareToRender() {

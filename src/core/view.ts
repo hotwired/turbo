@@ -1,3 +1,4 @@
+import { ReloadReason } from "./native/browser_adapter"
 import { Renderer } from "./renderer"
 import { Snapshot } from "./snapshot"
 import { Position } from "./types"
@@ -6,7 +7,7 @@ import { getAnchor } from "./url"
 export interface ViewDelegate<S extends Snapshot> {
   allowsImmediateRender(snapshot: S, resume: (value: any) => void): boolean
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
-  viewInvalidated(reason: string): void
+  viewInvalidated(reason: ReloadReason): void
 }
 
 export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E>, R extends Renderer<E, S> = Renderer<E, S>, D extends ViewDelegate<S> = ViewDelegate<S>> {
@@ -94,7 +95,7 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
     }
   }
 
-  invalidate(reason: string) {
+  invalidate(reason: ReloadReason) {
     this.delegate.viewInvalidated(reason)
   }
 

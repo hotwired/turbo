@@ -5,6 +5,12 @@ import { FormSubmission } from "../drive/form_submission"
 import { Session } from "../session"
 import { uuid, dispatch } from "../../util"
 
+export type ReloadReason = StructuredReason | undefined
+interface StructuredReason {
+  reason: string
+  context?: {[key: string]: any}
+}
+
 export class BrowserAdapter implements Adapter {
   readonly session: Session
   readonly progressBar = new ProgressBar
@@ -45,7 +51,12 @@ export class BrowserAdapter implements Adapter {
       case SystemStatusCode.networkFailure:
       case SystemStatusCode.timeoutFailure:
       case SystemStatusCode.contentTypeMismatch:
-        return this.reload(`Request failed with status code ${statusCode}`)
+        return this.reload({
+          reason: 'request_failed',
+          context: {
+            statusCode
+          }
+        })
       default:
         return visit.loadResponse()
     }
@@ -60,7 +71,7 @@ export class BrowserAdapter implements Adapter {
 
   }
 
-  pageInvalidated(reason: string) {
+  pageInvalidated(reason: ReloadReason) {
     this.reload(reason)
   }
 
@@ -114,8 +125,8 @@ export class BrowserAdapter implements Adapter {
     this.progressBar.show()
   }
 
-  reload(reason: string) {
-    dispatch("turbo:reload", { detail: { reason} })
+  reload(reason: ReloadReason) {
+    dispatch("turbo:reload", { detail: reason })
     window.location.reload()
   }
 

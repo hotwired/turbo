@@ -1,5 +1,5 @@
 import { Adapter } from "./native/adapter"
-import { BrowserAdapter } from "./native/browser_adapter"
+import { BrowserAdapter, ReloadReason } from "./native/browser_adapter"
 import { CacheObserver } from "../observers/cache_observer"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
@@ -116,7 +116,9 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, { action: "restore", historyChanged: true })
     } else {
-      this.adapter.pageInvalidated("Turbo is disabled.")
+      this.adapter.pageInvalidated({
+        reason: "turbo_disabled"
+      })
     }
   }
 
@@ -250,7 +252,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.notifyApplicationAfterRender()
   }
 
-  viewInvalidated(reason: string) {
+  viewInvalidated(reason: ReloadReason) {
     this.adapter.pageInvalidated(reason)
   }
 

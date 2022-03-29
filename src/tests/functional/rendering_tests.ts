@@ -52,7 +52,7 @@ export class RenderingTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
     this.assert.equal(await this.visitAction, "load")
-    this.assert.equal(reason, "A tracked element was different.")
+    this.assert.equal(reason, "tracked_element_mismatch")
   }
 
   async "test wont reload when tracked elements has a nonce"() {
@@ -76,7 +76,7 @@ export class RenderingTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
     this.assert.equal(await this.visitAction, "load")
-    this.assert.equal(reason, "Page snapshot is not visitable.")
+    this.assert.equal(reason, "turbo_visit_control_is_reload")
   }
 
   async "test accumulates asset elements in head"() {
