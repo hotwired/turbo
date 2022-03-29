@@ -63,10 +63,20 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test reloads when turbo-visit-control setting is reload"() {
+    await this.remote.execute(() =>
+      window.addEventListener("turbo:reload", (e: any) => {
+        localStorage.setItem('reloadReason', e.detail.reason)
+      })
+    )
+
     this.clickSelector("#visit-control-reload-link")
     await this.nextBody
+
+    const reason = await this.remote.execute(() => localStorage.getItem('reloadReason'))
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
     this.assert.equal(await this.visitAction, "load")
+    this.assert.equal(reason, "Page snapshot is not visitable.")
   }
 
   async "test accumulates asset elements in head"() {
