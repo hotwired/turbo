@@ -271,10 +271,6 @@ export class RenderingTests extends TurboDriveTestCase {
     return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black")
   }
 
-  get reloadFired(): Promise<boolean> {
-    return this.hasSelector("html[data-reload-fired]")
-  }
-
   async modifyBodyBeforeCaching() {
     return this.remote.execute(() => addEventListener("turbo:before-cache", function eventListener(event) {
       removeEventListener("turbo:before-cache", eventListener, false)
