@@ -6,6 +6,10 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/rendering.html")
   }
 
+  async teardown() {
+    await this.remote.execute(() => localStorage.clear())
+  }
+
   async "test triggers before-render and render events"() {
     this.clickSelector("#same-origin-link")
     const { newBody } = await this.nextEventNamed("turbo:before-render")
@@ -35,10 +39,20 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test reloads when tracked elements change"() {
+    await this.remote.execute(() =>
+      window.addEventListener("turbo:reload", (e: any) => {
+        localStorage.setItem('reloadReason', e.detail.reason)
+      })
+    )
+
     this.clickSelector("#tracked-asset-change-link")
     await this.nextBody
+
+    const reason = await this.remote.execute(() => localStorage.getItem('reloadReason'))
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
     this.assert.equal(await this.visitAction, "load")
+    this.assert.equal(reason, "A tracked element was different.")
   }
 
   async "test wont reload when tracked elements has a nonce"() {
@@ -245,6 +259,10 @@ export class RenderingTests extends TurboDriveTestCase {
 
   get isNoscriptStylesheetEvaluated(): Promise<boolean> {
     return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black")
+  }
+
+  get reloadFired(): Promise<boolean> {
+    return this.hasSelector("html[data-reload-fired]")
   }
 
   async modifyBodyBeforeCaching() {
