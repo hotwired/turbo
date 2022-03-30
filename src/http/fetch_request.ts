@@ -86,8 +86,8 @@ export class FetchRequest {
       const response = await fetch(this.url.href, fetchOptions)
       return await this.receive(response)
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        this.delegate.requestErrored(this, error)
+      if ((error as Error).name !== 'AbortError') {
+        this.delegate.requestErrored(this, (error as Error))
         throw error
       }
     } finally {
