@@ -63,10 +63,10 @@ export class TurboDriveTestCase extends FunctionalTestCase {
     return attributeValue
   }
 
-  async setLocalStorageFromEvent(eventName: string, key: string, value: string) {
-    return this.remote.execute((storageKey: string, storageValue: string) => {
+  async setLocalStorageFromEvent(event: string, key: string, value: string) {
+    return this.remote.execute((eventName: string, storageKey: string, storageValue: string) => {
       addEventListener(eventName, () => localStorage.setItem(storageKey, storageValue))
-    }, [key, value])
+    }, [event, key, value])
   }
 
   getFromLocalStorage(key: string) {
