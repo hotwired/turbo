@@ -6,6 +6,10 @@ export class NavigationTests extends TurboDriveTestCase {
   }
 
   async "test navigating renders a progress bar"() {
+    const styleElement = await this.querySelector("style")
+
+    this.assert.equal(await styleElement.getProperty("nonce"), "123", "renders progress bar stylesheet inline with nonce")
+
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
     await this.clickSelector("#delayed-link")
 
