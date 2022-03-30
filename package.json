@@ -39,6 +39,7 @@
     "@rollup/plugin-typescript": "^6.0.0",
     "@types/multer": "^1.4.5",
     "intern": "^4.9.0",
+    "@theintern/digdug": "^2.6.2",
     "arg": "^4.1.0",
     "multer": "^1.4.2",
     "rollup": "^2.35.1",
