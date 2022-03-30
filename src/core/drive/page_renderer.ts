@@ -1,6 +1,8 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 
+const INTERNAL_ATTRIBUTES = ["aria-busy", "data-turbo-preview"]
+
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
@@ -49,7 +51,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   updateHtmlElementAttributes() {
     for(const attr of document.documentElement.attributes) {
-      if (!this.newElement.hasAttribute(attr.nodeName)) {
+      if (!this.newElement.hasAttribute(attr.nodeName) && !INTERNAL_ATTRIBUTES.includes(attr.nodeName)) {
         document.documentElement.removeAttribute(attr.nodeName)
       }
     }
