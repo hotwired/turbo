@@ -1101,7 +1101,7 @@ inherits@2, inherits@2.0.4, inherits@^2.0.1, inherits@^2.0.3, inherits@~2.0.1, i
   resolved "https://registry.yarnpkg.com/inherits/-/inherits-2.0.4.tgz#0fa2c64f932917c3433a0ded55363aae37416b7c"
   integrity sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==
 
-intern@^4.9.0:
+intern@^4.10.1:
   version "4.10.1"
   resolved "https://registry.yarnpkg.com/intern/-/intern-4.10.1.tgz#4dfba51d70d8c4eaf795f1006b5aeb4d6bef1747"
   integrity sha512-GyUmdpdKGoEu1hRMNYeldPF11lFZlC1Pbq28ImzEY+7OHRDinMU9c8jwGxY7eAaUe15oy0Y7cocdjC/mzUuOng==
