@@ -11,12 +11,9 @@ export class TurboDriveTestCase extends FunctionalTestCase {
   lastBody?: Element
 
   async beforeTest() {
+    await this.clearLocalStorage()
     await this.drainEventLog()
     this.lastBody = await this.body
-  }
-
-  async afterTest() {
-    await this.remote.execute(() => localStorage.clear())
   }
 
   get nextWindowHandle(): Promise<string> {
@@ -103,5 +100,9 @@ export class TurboDriveTestCase extends FunctionalTestCase {
 
   drainEventLog() {
     return this.eventLogChannel.drain()
+  }
+
+  clearLocalStorage() {
+    this.remote.execute(() => localStorage.clear())
   }
 }
