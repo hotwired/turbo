@@ -8,7 +8,7 @@ export interface PreloaderDelegate {
 
 export class Preloader {
   readonly delegate: PreloaderDelegate
-  readonly selector: string = 'a[data-turbo-preload="true"]'
+  readonly selector: string = 'a[data-turbo-preload]'
 
   constructor(delegate: PreloaderDelegate) {
     this.delegate = delegate
