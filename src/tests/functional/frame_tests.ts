@@ -551,6 +551,16 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.nextEventOnTarget("frame", "turbo:before-fetch-response"))
   }
 
+  async "test link click network error fires turbo:error event"() {
+    await this.clickSelector("#load-error")
+    this.assert.ok(await this.nextEventNamed("turbo:error"))
+  }
+
+  async "test form submit network error fires turbo:error event"() {
+    await this.clickSelector("#submit-error")
+    this.assert.ok(await this.nextEventNamed("turbo:error"))
+  }
+
   async withoutChangingEventListenersCount(callback: () => void) {
     const name = "eventListenersAttachedToDocument"
     const setup = () => {

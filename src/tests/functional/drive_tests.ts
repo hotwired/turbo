@@ -28,6 +28,14 @@ export class DriveTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, this.path)
     this.assert.equal(await this.visitAction, "load")
   }
+
+  async "test link click network error fires turbo:error event"() {
+    this.clickSelector("#error")
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/__turbo/error")
+    this.assert.equal(await this.visitAction, "advance")
+    this.assert.ok(await this.nextEventNamed("turbo:error"))
+  }
 }
 
 

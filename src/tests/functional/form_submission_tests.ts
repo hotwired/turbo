@@ -308,6 +308,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     const title = await this.querySelector("h1")
     this.assert.equal(await title.getVisibleText(), "Unprocessable Entity", "renders the response HTML")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
+    this.assert.ok(await this.nextEventNamed("turbo:error"))
   }
 
   async "test invalid form submission with long form"() {
@@ -330,6 +331,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await title.getVisibleText(), "Internal Server Error", "renders the response HTML")
     this.assert.notOk(await this.hasSelector("head > #form-fixture-styles"), "replaces head")
     this.assert.notOk(await this.hasSelector("#frame form.reject"), "replaces entire page")
+    this.assert.ok(await this.nextEventNamed("turbo:error"), "fires turbo:error event")
   }
 
   async "test submitter form submission reads button attributes"() {

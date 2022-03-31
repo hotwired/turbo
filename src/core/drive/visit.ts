@@ -8,6 +8,7 @@ import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
 import { PageView } from "./page_view"
+import { reportError } from "../../util"
 
 export interface VisitDelegate {
   readonly adapter: Adapter
@@ -221,6 +222,7 @@ export class Visit implements FetchRequestDelegate {
           this.adapter.visitRendered(this)
           this.complete()
         } else {
+          reportError(this.response)
           await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML))
           this.adapter.visitRendered(this)
           this.fail()
