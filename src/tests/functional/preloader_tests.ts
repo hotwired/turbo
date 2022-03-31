@@ -4,6 +4,7 @@ export class PreloaderTests extends TurboDriveTestCase {
   async "test preloads snapshot on initial load"() {
     // contains `a[rel="preload"][href="http://localhost:9000/src/tests/fixtures/preloaded.html"]`
     await this.goToLocation("/src/tests/fixtures/preloading.html")
+    await this.nextBeat
 
     this.assert.ok(await this.remote.execute(() => {
       const preloadedUrl = "http://localhost:9000/src/tests/fixtures/preloaded.html"
@@ -20,6 +21,7 @@ export class PreloaderTests extends TurboDriveTestCase {
     // contains `a[rel="preload"][href="http://localhost:9000/src/tests/fixtures/preloaded.html"]`
     await this.clickSelector("#hot_preload_anchor")
     await this.waitUntilSelector("#preload_anchor")
+    await this.nextBeat
 
     this.assert.ok(await this.remote.execute(() => {
       const preloadedUrl = "http://localhost:9000/src/tests/fixtures/preloaded.html"
