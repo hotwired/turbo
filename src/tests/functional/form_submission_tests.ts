@@ -3,10 +3,8 @@ import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 export class FormSubmissionTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/form.html")
-    await this.remote.execute(() => {
-      addEventListener("turbo:submit-start", () => document.documentElement.setAttribute("data-form-submit-start", ""), { once: true })
-      addEventListener("turbo:submit-end", () => document.documentElement.setAttribute("data-form-submit-end", ""), { once: true })
-    })
+    await this.setLocalStorageFromEvent("turbo:submit-start", "formSubmitStarted", "true")
+    await this.setLocalStorageFromEvent("turbo:submit-end", "formSubmitEnded", "true")
   }
 
   async "test standard form submission renders a progress bar"() {
@@ -811,12 +809,12 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.location, "https://httpbin.org/post")
   }
 
-  get formSubmitStarted(): Promise<boolean> {
-    return this.hasSelector("html[data-form-submit-start]")
+  get formSubmitStarted() {
+    return this.getFromLocalStorage("formSubmitStarted")
   }
 
-  get formSubmitEnded(): Promise<boolean> {
-    return this.hasSelector("html[data-form-submit-end]")
+  get formSubmitEnded() {
+    return this.getFromLocalStorage("formSubmitEnded")
   }
 }
 
