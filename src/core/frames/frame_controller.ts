@@ -2,7 +2,7 @@ import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../ele
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
+import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy, reportError } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -116,7 +116,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         this.fetchResponseLoaded(fetchResponse)
       }
     } catch (error) {
-      console.error(error)
+      reportError(error)
       this.view.invalidate()
     } finally {
       this.fetchResponseLoaded = () => {}
@@ -182,12 +182,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
-    console.error(response)
+    reportError(response)
     this.resolveVisitPromise()
   }
 
   requestErrored(request: FetchRequest, error: Error) {
-    console.error(error)
+    reportError(error)
     this.resolveVisitPromise()
   }
 
@@ -214,7 +214,7 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-    console.error(error)
+    reportError(error)
   }
 
   formSubmissionFinished({ formElement }: FormSubmission) {
@@ -296,9 +296,9 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
         return await this.extractForeignFrameElement(element)
       }
 
-      console.error(`Response has no matching <turbo-frame id="${id}"> element`)
+      reportError(`Response has no matching <turbo-frame id="${id}"> element`)
     } catch (error) {
-      console.error(error)
+      reportError(error)
     }
 
     return new FrameElement()

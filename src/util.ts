@@ -1,3 +1,5 @@
+import { FetchResponse } from "./http/fetch_response";
+
 export type DispatchOptions = { target: EventTarget, cancelable: boolean, detail: any }
 
 export function dispatch(eventName: string, { target, cancelable, detail }: Partial<DispatchOptions> = {}) {
@@ -81,4 +83,9 @@ export function clearBusyState(...elements: Element[]) {
 
     element.removeAttribute("aria-busy")
   }
+}
+
+export function reportError(error: FetchResponse | unknown) {
+  console.error(error)
+  dispatch('turbo:error', { detail: { error } })
 }

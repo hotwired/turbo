@@ -121,5 +121,15 @@
     <hr class="push-off-screen">
     <input id="below-the-fold-input">
     <a id="below-the-fold-link-frame-action" data-turbo-action="advance" data-turbo-frame="frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame</a>
+
+    <turbo-frame id="error">
+      <a href="/__turbo/error" id="load-error">Load error</a>
+    </turbo-frame>
+
+    <turbo-frame id="frame-error">
+      <form action="/__turbo/error">
+        <button id="submit-error">Submit with error</button>
+      </form>
+    </turbo-frame>
   </body>
 </html>
