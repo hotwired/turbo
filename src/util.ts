@@ -86,6 +86,6 @@ export function clearBusyState(...elements: Element[]) {
 }
 
 export function reportError(error: FetchResponse | unknown) {
-  console.warn(error)
+  console.error(error)
   dispatch('turbo:error', { detail: { error } })
 }
