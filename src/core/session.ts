@@ -40,6 +40,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   enabled = true
   progressBarDelay = 500
   started = false
+  linkToFormBeforeCallback: null | ((formElement: HTMLFormElement) => void) = null;
 
   start() {
     if (!this.started) {
@@ -102,6 +103,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     this.progressBarDelay = delay
   }
 
+  setLinkToFormBeforeCallback(callback: (formElement: HTMLFormElement) => void) {
+    this.linkToFormBeforeCallback = callback;
+  }
+
   get location() {
     return this.history.location
   }
@@ -147,6 +152,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
       form.method = linkMethod
       form.action = link.getAttribute("href") || "undefined"
       form.hidden = true
+
+      if (this.linkToFormBeforeCallback) {
+        this.linkToFormBeforeCallback(form);
+      }
 
       if (link.hasAttribute("data-turbo-confirm")) {
         form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
