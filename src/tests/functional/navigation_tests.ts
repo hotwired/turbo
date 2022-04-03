@@ -294,6 +294,17 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/__turbo/delayed_response")
     this.assert.equal(await this.visitAction, "advance")
   }
+
+  async "test does not fire turbo:load twice after following a redirect"() {
+    await this.clickSelector("#redirection-link")
+    await this.nextBeat // 301 redirect response
+    await this.nextBeat // 200 response
+    await this.nextBody
+    const eventLogs = await this.eventLogChannel.read()
+    const turboLoads = eventLogs.filter(([ name ]) => name == "turbo:load");
+    this.assert.equal(turboLoads.length, 1);
+  }
+
 }
 
 NavigationTests.registerSuite()
