@@ -26,12 +26,32 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.getAlertText(), "Are you sure?")
     await this.acceptAlert()
     this.assert.ok(await this.formSubmitStarted)
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
   }
 
   async "test form submission with confirmation cancelled"() {
     await this.clickSelector("#standard form.confirm input[type=submit]")
 
     this.assert.equal(await this.getAlertText(), "Are you sure?")
+    await this.dismissAlert()
+    this.assert.notOk(await this.formSubmitStarted)
+  }
+
+  async "test form submission with secondary submitter click - confirmation confirmed"() {
+    await this.clickSelector("#standard form.confirm #secondary_submitter")
+
+    this.assert.equal(await this.getAlertText(), "Are you really sure?")
+    await this.acceptAlert()
+    this.assert.ok(await this.formSubmitStarted)
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
+    this.assert.equal(await this.visitAction, "advance")
+    this.assert.equal(await this.getSearchParam("greeting"), "secondary_submitter")
+  }
+
+  async "test form submission with secondary submitter click - confirmation cancelled"() {
+    await this.clickSelector("#standard form.confirm #secondary_submitter")
+
+    this.assert.equal(await this.getAlertText(), "Are you really sure?")
     await this.dismissAlert()
     this.assert.notOk(await this.formSubmitStarted)
   }
