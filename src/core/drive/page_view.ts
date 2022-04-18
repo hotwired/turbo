@@ -18,7 +18,7 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
 
   renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true) {
     const renderer = new PageRenderer(this.snapshot, snapshot, isPreview, willRender)
-    if (!renderer.trackedElementsAreIdentical) { this.forceReloaded = true }
+    if (!renderer.shouldRender) { this.forceReloaded = true }
     return this.render(renderer)
   }
 
