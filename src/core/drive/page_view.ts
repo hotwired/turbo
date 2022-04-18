@@ -14,9 +14,12 @@ type PageViewRenderer = PageRenderer | ErrorRenderer
 export class PageView extends View<Element, PageSnapshot, PageViewRenderer, PageViewDelegate> {
   readonly snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
+  forceReloaded = false
 
   renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true) {
     const renderer = new PageRenderer(this.snapshot, snapshot, isPreview, willRender)
+    // TODO - make this specific to the meta mismatch
+    if (!renderer.shouldRender) { this.forceReloaded = true }
     return this.render(renderer)
   }
 
