@@ -46,26 +46,27 @@ export class StreamElement extends HTMLElement {
   }
 
   disconnect() {
+    // eslint-disable-next-line no-empty
     try { this.remove() } catch {}
   }
- 
+
   /**
    * Removes duplicate children (by ID)
    */
   removeDuplicateTargetChildren() {
     this.duplicateChildren.forEach(c => c.remove())
   }
-  
+
   /**
    * Gets the list of duplicate children (i.e. those with the same ID)
    */
   get duplicateChildren() {
     const existingChildren = this.targetElements.flatMap(e => [...e.children]).filter(c => !!c.id)
-    const newChildrenIds   = [...this.templateContent?.children].filter(c => !!c.id).map(c => c.id)
-  
+    const newChildrenIds   = [...(this.templateContent?.children || [])].filter(c => !!c.id).map(c => c.id)
+
     return existingChildren.filter(c => newChildrenIds.includes(c.id))
   }
-  
+
 
   /**
    * Gets the action function to be performed.
@@ -85,7 +86,7 @@ export class StreamElement extends HTMLElement {
    * Gets the target elements which the template will be rendered to.
    */
   get targetElements() {
-    if (this.target) { 
+    if (this.target) {
       return this.targetElementsById
     } else if (this.targets) {
       return this.targetElementsByQuery

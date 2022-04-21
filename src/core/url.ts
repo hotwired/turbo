@@ -8,6 +8,7 @@ export function getAnchor(url: URL) {
   let anchorMatch
   if (url.hash) {
     return url.hash.slice(1)
+  // eslint-disable-next-line no-cond-assign
   } else if (anchorMatch = url.href.match(/#(.*)$/)) {
     return anchorMatch[1]
   }

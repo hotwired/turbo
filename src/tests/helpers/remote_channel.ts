@@ -3,7 +3,7 @@ import { Remote } from "intern/lib/executors/Node"
 export class RemoteChannel<T> {
   readonly remote: Remote
   readonly identifier: string
-  private index: number = 0
+  private index = 0
 
   constructor(remote: Remote, identifier: string) {
     this.remote = remote

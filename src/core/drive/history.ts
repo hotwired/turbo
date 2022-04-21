@@ -98,7 +98,7 @@ export class History {
     }
   }
 
-  onPageLoad = async (event: Event) => {
+  onPageLoad = async (_event: Event) => {
     await nextMicrotask()
     this.pageLoaded = true
   }

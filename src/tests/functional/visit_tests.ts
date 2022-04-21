@@ -1,8 +1,6 @@
 import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 import { get } from "http"
 
-declare const Turbo: any
-
 export class VisitTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/visit.html")

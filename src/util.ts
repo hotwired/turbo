@@ -43,7 +43,7 @@ function interpolate(strings: TemplateStringsArray, values: any[]) {
 }
 
 export function uuid() {
-  return Array.apply(null, { length: 36 } as any).map((_, i) => {
+  return Array.from({ length: 36 }).map((_, i) => {
     if (i == 8 || i == 13 || i == 18 || i == 23) {
       return "-"
     } else if (i == 14) {

@@ -294,7 +294,7 @@ export class Visit implements FetchRequestDelegate {
     this.startRequest()
   }
 
-  requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
+  requestPreventedHandlingResponse(_request: FetchRequest, _response: FetchResponse) {
 
   }
 
@@ -319,7 +319,7 @@ export class Visit implements FetchRequestDelegate {
     }
   }
 
-  requestErrored(request: FetchRequest, error: Error) {
+  requestErrored(_request: FetchRequest, _error: Error) {
     this.recordResponse({ statusCode: SystemStatusCode.networkFailure, redirected: false })
   }
 

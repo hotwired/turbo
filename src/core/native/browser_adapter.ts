@@ -51,12 +51,12 @@ export class BrowserAdapter implements Adapter {
     }
   }
 
-  visitRequestFinished(visit: Visit) {
+  visitRequestFinished(_visit: Visit) {
     this.progressBar.setValue(1)
     this.hideVisitProgressBar()
   }
 
-  visitCompleted(visit: Visit) {
+  visitCompleted(_visit: Visit) {
 
   }
 
@@ -64,20 +64,20 @@ export class BrowserAdapter implements Adapter {
     this.reload()
   }
 
-  visitFailed(visit: Visit) {
+  visitFailed(_visit: Visit) {
 
   }
 
-  visitRendered(visit: Visit) {
+  visitRendered(_visit: Visit) {
 
   }
 
-  formSubmissionStarted(formSubmission: FormSubmission) {
+  formSubmissionStarted(_formSubmission: FormSubmission) {
     this.progressBar.setValue(0)
     this.showFormProgressBarAfterDelay()
   }
 
-  formSubmissionFinished(formSubmission: FormSubmission) {
+  formSubmissionFinished(_formSubmission: FormSubmission) {
     this.progressBar.setValue(1)
     this.hideFormProgressBar()
   }

@@ -37,7 +37,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test from submission with confirmation overriden"() {
-    await this.remote.execute(() => window.Turbo.setConfirmMethod((message, element) => confirm("Overriden message")))
+    await this.remote.execute(() => window.Turbo.setConfirmMethod(() => confirm("Overriden message")))
 
     await this.clickSelector("#standard form.confirm input[type=submit]")
 

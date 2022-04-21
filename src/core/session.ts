@@ -19,7 +19,7 @@ import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
 import { FetchResponse } from "../http/fetch_response"
 
-export type TimingData = {}
+export type TimingData = unknown
 
 export class Session implements FormSubmitObserverDelegate, HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate, PageViewDelegate {
   readonly navigator = new Navigator(this)
@@ -245,7 +245,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
     return !event.defaultPrevented
   }
 
-  viewRenderedSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
+  viewRenderedSnapshot(_snapshot: PageSnapshot, _isPreview: boolean) {
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender()
   }

@@ -92,8 +92,7 @@ export class LoadingTests extends TurboDriveTestCase {
 
     const frameContent = "#loading-eager turbo-frame#frame h2"
     this.assert.ok(await this.hasSelector(frameContent))
-    // @ts-ignore
-    await this.remote.execute(() => document.querySelector("#loading-eager turbo-frame")?.reload())
+    await this.remote.execute(() => (document.querySelector("#loading-eager turbo-frame") as any)?.reload())
     this.assert.ok(await this.hasSelector(frameContent))
   }
 

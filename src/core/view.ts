@@ -15,8 +15,8 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
   renderer?: R
   abstract readonly snapshot: S
   renderPromise?: Promise<void>
-  private resolveRenderPromise = (value: any) => {}
-  private resolveInterceptionPromise = (value: any) => {}
+  private resolveRenderPromise = (_value: any) => {}
+  private resolveInterceptionPromise = (_value: any) => {}
 
   constructor(delegate: D, element: E) {
     this.delegate = delegate

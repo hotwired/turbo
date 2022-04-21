@@ -50,7 +50,7 @@ export class FormSubmission {
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
-  static confirmMethod(message: string, element: HTMLFormElement):boolean {
+  static confirmMethod(message: string, _element: HTMLFormElement):boolean {
     return confirm(message)
   }
 
@@ -144,7 +144,7 @@ export class FormSubmission {
     }
   }
 
-  requestStarted(request: FetchRequest) {
+  requestStarted(_request: FetchRequest) {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
     dispatch("turbo:submit-start", { target: this.formElement, detail: { formSubmission: this } })
@@ -178,7 +178,7 @@ export class FormSubmission {
     this.delegate.formSubmissionErrored(this, error)
   }
 
-  requestFinished(request: FetchRequest) {
+  requestFinished(_request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
     dispatch("turbo:submit-end", { target: this.formElement, detail: { formSubmission: this, ...this.result }})

@@ -34,7 +34,7 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
 
   // Adapter interface
 
-  visitProposedToLocation(location: URL, options?: Partial<VisitOptions>): void {
+  visitProposedToLocation(location: URL, _options?: Partial<VisitOptions>): void {
     this.locations.push(location)
   }
 
@@ -43,39 +43,39 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
     visit.cancel()
   }
 
-  visitCompleted(visit: Visit): void {
+  visitCompleted(_visit: Visit): void {
 
   }
 
-  visitFailed(visit: Visit): void {
+  visitFailed(_visit: Visit): void {
 
   }
 
-  visitRequestStarted(visit: Visit): void {
+  visitRequestStarted(_visit: Visit): void {
 
   }
 
-  visitRequestCompleted(visit: Visit): void {
+  visitRequestCompleted(_visit: Visit): void {
 
   }
 
-  visitRequestFailedWithStatusCode(visit: Visit, statusCode: number): void {
+  visitRequestFailedWithStatusCode(_visit: Visit, _statusCode: number): void {
 
   }
 
-  visitRequestFinished(visit: Visit): void {
+  visitRequestFinished(_visit: Visit): void {
 
   }
 
-  visitRendered(visit: Visit): void {
+  visitRendered(_visit: Visit): void {
 
   }
 
-  formSubmissionStarted(formSubmission: FormSubmission): void {
+  formSubmissionStarted(_formSubmission: FormSubmission): void {
 
   }
 
-  formSubmissionFinished(formSubmission: FormSubmission): void {
+  formSubmissionFinished(_formSubmission: FormSubmission): void {
 
   }
 

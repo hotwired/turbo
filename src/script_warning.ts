@@ -5,7 +5,8 @@ import { unindent } from "./util"
   if (!element) return
   if (element.hasAttribute("data-turbo-suppress-warning")) return
 
-  while (element = element.parentElement) {
+  element = element.parentElement
+  while (element) {
     if (element == document.body) {
       return console.warn(unindent`
         You are loading Turbo from a <script> element inside the <body> element. This is probably not what you meant to do!
@@ -18,5 +19,7 @@ import { unindent } from "./util"
         Suppress this warning by adding a "data-turbo-suppress-warning" attribute to: %s
       `, element.outerHTML)
     }
+
+    element = element.parentElement
   }
 })()
