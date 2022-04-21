@@ -52,7 +52,7 @@ export class BrowserAdapter implements Adapter {
       case SystemStatusCode.timeoutFailure:
       case SystemStatusCode.contentTypeMismatch:
         return this.reload({
-          reason: 'request_failed',
+          reason: "request_failed",
           context: {
             statusCode
           }

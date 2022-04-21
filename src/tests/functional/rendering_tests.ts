@@ -41,14 +41,14 @@ export class RenderingTests extends TurboDriveTestCase {
   async "test reloads when tracked elements change"() {
     await this.remote.execute(() =>
       window.addEventListener("turbo:reload", (e: any) => {
-        localStorage.setItem('reloadReason', e.detail.reason)
+        localStorage.setItem("reloadReason", e.detail.reason)
       })
     )
 
     this.clickSelector("#tracked-asset-change-link")
     await this.nextBody
 
-    const reason = await this.remote.execute(() => localStorage.getItem('reloadReason'))
+    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
     this.assert.equal(await this.visitAction, "load")
@@ -65,14 +65,14 @@ export class RenderingTests extends TurboDriveTestCase {
   async "test reloads when turbo-visit-control setting is reload"() {
     await this.remote.execute(() =>
       window.addEventListener("turbo:reload", (e: any) => {
-        localStorage.setItem('reloadReason', e.detail.reason)
+        localStorage.setItem("reloadReason", e.detail.reason)
       })
     )
 
     this.clickSelector("#visit-control-reload-link")
     await this.nextBody
 
-    const reason = await this.remote.execute(() => localStorage.getItem('reloadReason'))
+    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
     this.assert.equal(await this.visitAction, "load")
