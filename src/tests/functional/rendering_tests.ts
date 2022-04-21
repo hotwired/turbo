@@ -64,7 +64,7 @@ export class RenderingTests extends TurboDriveTestCase {
 
   async "test replaces provisional elements in head"() {
     const originalElements = await this.provisionalElements
-    this.assert(!await this.hasSelector("meta[name=test]"))
+    this.assert(!(await this.hasSelector("meta[name=test]")))
 
     this.clickSelector("#same-origin-link")
     await this.nextBody
@@ -76,7 +76,7 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.nextBody
     const finalElements = await this.provisionalElements
     this.assert.notDeepEqual(finalElements, newElements)
-    this.assert(!await this.hasSelector("meta[name=test]"))
+    this.assert(!(await this.hasSelector("meta[name=test]")))
   }
 
   async "test evaluates head stylesheet elements"() {
@@ -184,7 +184,7 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test before-cache event"() {
-    this.beforeCache(body => body.innerHTML = "Modified")
+    this.beforeCache((body) => (body.innerHTML = "Modified"))
     this.clickSelector("#same-origin-link")
     await this.nextBody
     await this.goBack()
@@ -213,7 +213,7 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   get provisionalElements(): Promise<Element[]> {
-    return filter(this.headElements, async element => !await isAssetElement(element))
+    return filter(this.headElements, async (element) => !(await isAssetElement(element)))
   }
 
   get headElements(): Promise<Element[]> {
@@ -233,33 +233,50 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   get isStylesheetEvaluated(): Promise<boolean> {
-    return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black")
+    return this.evaluate(
+      () => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black"
+    )
   }
 
   get isNoscriptStylesheetEvaluated(): Promise<boolean> {
-    return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black")
+    return this.evaluate(
+      () => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black"
+    )
   }
 
   async modifyBodyBeforeCaching() {
-    return this.remote.execute(() => addEventListener("turbo:before-cache", function eventListener() {
-      removeEventListener("turbo:before-cache", eventListener, false)
-      document.body.innerHTML = "Modified"
-    }, false))
+    return this.remote.execute(() =>
+      addEventListener(
+        "turbo:before-cache",
+        function eventListener() {
+          removeEventListener("turbo:before-cache", eventListener, false)
+          document.body.innerHTML = "Modified"
+        },
+        false
+      )
+    )
   }
 
   async beforeCache(callback: (body: HTMLElement) => void) {
-    return this.remote.execute((callback: (body: HTMLElement) => void) => {
-      addEventListener("turbo:before-cache", function eventListener() {
-        removeEventListener("turbo:before-cache", eventListener, false)
-        callback(document.body)
-      }, false)
-    }, [callback])
+    return this.remote.execute(
+      (callback: (body: HTMLElement) => void) => {
+        addEventListener(
+          "turbo:before-cache",
+          function eventListener() {
+            removeEventListener("turbo:before-cache", eventListener, false)
+            callback(document.body)
+          },
+          false
+        )
+      },
+      [callback]
+    )
   }
 
   async modifyBodyAfterRemoval() {
     return this.remote.execute(() => {
       const { documentElement, body } = document
-      const observer = new MutationObserver(records => {
+      const observer = new MutationObserver((records) => {
         for (const record of records) {
           if (Array.from(record.removedNodes).indexOf(body) > -1) {
             body.innerHTML = "Modified"
@@ -275,7 +292,7 @@ export class RenderingTests extends TurboDriveTestCase {
 
 async function filter<T>(promisedValues: Promise<T[]>, predicate: (value: T) => Promise<boolean>): Promise<T[]> {
   const values = await promisedValues
-  const matches = await Promise.all(values.map(value => predicate(value)))
+  const matches = await Promise.all(values.map((value) => predicate(value)))
   return matches.reduce((result, match, index) => result.concat(match ? values[index] : []), [] as T[])
 }
 

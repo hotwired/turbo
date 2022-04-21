@@ -21,13 +21,16 @@ export class RemoteChannel<T> {
   }
 
   private get newRecords() {
-    return this.remote.execute((identifier: string, index: number) => {
-      const records = (window as any)[identifier]
-      if (records != null && typeof records.slice == "function") {
-        return records.slice(index)
-      } else {
-        return []
-      }
-    }, [this.identifier, this.index])
+    return this.remote.execute(
+      (identifier: string, index: number) => {
+        const records = (window as any)[identifier]
+        if (records != null && typeof records.slice == "function") {
+          return records.slice(index)
+        } else {
+          return []
+        }
+      },
+      [this.identifier, this.index]
+    )
   }
 }

@@ -6,7 +6,7 @@ export class Snapshot<E extends Element = Element> {
   }
 
   get children() {
-    return [ ...this.element.children ]
+    return [...this.element.children]
   }
 
   hasAnchor(anchor: string | undefined) {
@@ -26,7 +26,7 @@ export class Snapshot<E extends Element = Element> {
   }
 
   get permanentElements() {
-    return [ ...this.element.querySelectorAll("[id][data-turbo-permanent]") ]
+    return [...this.element.querySelectorAll("[id][data-turbo-permanent]")]
   }
 
   getPermanentElementById(id: string) {
@@ -40,7 +40,7 @@ export class Snapshot<E extends Element = Element> {
       const { id } = currentPermanentElement
       const newPermanentElement = snapshot.getPermanentElementById(id)
       if (newPermanentElement) {
-        permanentElementMap[id] = [ currentPermanentElement, newPermanentElement ]
+        permanentElementMap[id] = [currentPermanentElement, newPermanentElement]
       }
     }
 

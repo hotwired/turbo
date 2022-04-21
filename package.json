@@ -42,8 +42,11 @@
     "@typescript-eslint/parser": "^5.20.0",
     "arg": "^5.0.1",
     "eslint": "^8.13.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "intern": "^4.9.0",
     "multer": "^1.4.2",
+    "prettier": "2.6.2",
     "rollup": "^2.35.1",
     "tslib": "^2.0.3",
     "typescript": "^4.6.3"

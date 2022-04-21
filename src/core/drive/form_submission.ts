@@ -12,9 +12,7 @@ export interface FormSubmissionDelegate {
   formSubmissionFinished(formSubmission: FormSubmission): void
 }
 
-export type FormSubmissionResult
-  = { success: boolean, fetchResponse: FetchResponse }
-  | { success: false, error: Error }
+export type FormSubmissionResult = { success: boolean; fetchResponse: FetchResponse } | { success: false; error: Error }
 
 export enum FormSubmissionState {
   initialized,
@@ -27,15 +25,18 @@ export enum FormSubmissionState {
 
 enum FormEnctype {
   urlEncoded = "application/x-www-form-urlencoded",
-  multipart  = "multipart/form-data",
-  plain      = "text/plain"
+  multipart = "multipart/form-data",
+  plain = "text/plain",
 }
 
 function formEnctypeFromString(encoding: string): FormEnctype {
-  switch(encoding.toLowerCase()) {
-    case FormEnctype.multipart: return FormEnctype.multipart
-    case FormEnctype.plain:     return FormEnctype.plain
-    default:                    return FormEnctype.urlEncoded
+  switch (encoding.toLowerCase()) {
+    case FormEnctype.multipart:
+      return FormEnctype.multipart
+    case FormEnctype.plain:
+      return FormEnctype.plain
+    default:
+      return FormEnctype.urlEncoded
   }
 }
 
@@ -50,18 +51,23 @@ export class FormSubmission {
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
-  static confirmMethod(message: string, _element: HTMLFormElement):boolean {
+  static confirmMethod(message: string, _element: HTMLFormElement): boolean {
     return confirm(message)
   }
 
-  constructor(delegate: FormSubmissionDelegate, formElement: HTMLFormElement, submitter?: HTMLElement, mustRedirect = false) {
+  constructor(
+    delegate: FormSubmissionDelegate,
+    formElement: HTMLFormElement,
+    submitter?: HTMLElement,
+    mustRedirect = false
+  ) {
     this.delegate = delegate
     this.formElement = formElement
     this.submitter = submitter
     this.formData = buildFormData(formElement, submitter)
     this.location = expandURL(this.action)
     if (this.method == FetchMethod.get) {
-      mergeFormDataEntries(this.location, [ ...this.body.entries() ])
+      mergeFormDataEntries(this.location, [...this.body.entries()])
     }
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body, this.formElement)
     this.mustRedirect = mustRedirect
@@ -73,8 +79,10 @@ export class FormSubmission {
   }
 
   get action(): string {
-    const formElementAction = typeof this.formElement.action === 'string' ? this.formElement.action : null
-    return this.submitter?.getAttribute("formaction") || this.formElement.getAttribute("action") || formElementAction || ""
+    const formElementAction = typeof this.formElement.action === "string" ? this.formElement.action : null
+    return (
+      this.submitter?.getAttribute("formaction") || this.formElement.getAttribute("action") || formElementAction || ""
+    )
   }
 
   get body() {
@@ -94,8 +102,8 @@ export class FormSubmission {
   }
 
   get stringFormData() {
-    return [ ...this.formData ].reduce((entries, [ name, value ]) => {
-      return entries.concat(typeof value == "string" ? [[ name, value ]] : [])
+    return [...this.formData].reduce((entries, [name, value]) => {
+      return entries.concat(typeof value == "string" ? [[name, value]] : [])
     }, [] as [string, string][])
   }
 
@@ -114,7 +122,9 @@ export class FormSubmission {
 
     if (this.needsConfirmation) {
       const answer = FormSubmission.confirmMethod(this.confirmationMessage!, this.formElement)
-      if (!answer) { return }
+      if (!answer) {
+        return
+      }
     }
 
     if (this.state == initialized) {
@@ -140,14 +150,17 @@ export class FormSubmission {
       if (token) {
         headers["X-CSRF-Token"] = token
       }
-      headers["Accept"] = [ StreamMessage.contentType, headers["Accept"] ].join(", ")
+      headers["Accept"] = [StreamMessage.contentType, headers["Accept"]].join(", ")
     }
   }
 
   requestStarted(_request: FetchRequest) {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
-    dispatch("turbo:submit-start", { target: this.formElement, detail: { formSubmission: this } })
+    dispatch("turbo:submit-start", {
+      target: this.formElement,
+      detail: { formSubmission: this },
+    })
     this.delegate.formSubmissionStarted(this)
   }
 
@@ -181,7 +194,10 @@ export class FormSubmission {
   requestFinished(_request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
-    dispatch("turbo:submit-end", { target: this.formElement, detail: { formSubmission: this, ...this.result }})
+    dispatch("turbo:submit-end", {
+      target: this.formElement,
+      detail: { formSubmission: this, ...this.result },
+    })
     this.delegate.formSubmissionFinished(this)
   }
 
@@ -223,9 +239,9 @@ function responseSucceededWithoutRedirect(response: FetchResponse) {
 }
 
 function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {
-  const searchParams = new URLSearchParams
+  const searchParams = new URLSearchParams()
 
-  for (const [ name, value ] of entries) {
+  for (const [name, value] of entries) {
     if (value instanceof File) continue
 
     searchParams.append(name, value)

@@ -21,7 +21,15 @@ import { FetchResponse } from "../http/fetch_response"
 
 export type TimingData = unknown
 
-export class Session implements FormSubmitObserverDelegate, HistoryDelegate, LinkClickObserverDelegate, NavigatorDelegate, PageObserverDelegate, PageViewDelegate {
+export class Session
+  implements
+    FormSubmitObserverDelegate,
+    HistoryDelegate,
+    LinkClickObserverDelegate,
+    NavigatorDelegate,
+    PageObserverDelegate,
+    PageViewDelegate
+{
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly view = new PageView(this, document.documentElement)
@@ -114,7 +122,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string) {
     if (this.enabled) {
-      this.navigator.startVisit(location, restorationIdentifier, { action: "restore", historyChanged: true })
+      this.navigator.startVisit(location, restorationIdentifier, {
+        action: "restore",
+        historyChanged: true,
+      })
     } else {
       this.adapter.pageInvalidated()
     }
@@ -129,9 +140,11 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   // Link click observer delegate
 
   willFollowLinkToLocation(link: Element, location: URL) {
-    return this.elementDriveEnabled(link)
-      && locationIsVisitable(location, this.snapshot.rootLocation)
-      && this.applicationAllowsFollowingLinkToLocation(link, location)
+    return (
+      this.elementDriveEnabled(link) &&
+      locationIsVisitable(location, this.snapshot.rootLocation) &&
+      this.applicationAllowsFollowingLinkToLocation(link, location)
+    )
   }
 
   followedLinkToLocation(link: Element, location: URL) {
@@ -202,9 +215,11 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
     const action = getAction(form, submitter)
 
-    return this.elementDriveEnabled(form)
-      && (!submitter || this.elementDriveEnabled(submitter))
-      && locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
+    return (
+      this.elementDriveEnabled(form) &&
+      (!submitter || this.elementDriveEnabled(submitter)) &&
+      locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
+    )
   }
 
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
@@ -261,7 +276,7 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   }
 
   frameRendered(fetchResponse: FetchResponse, frame: FrameElement) {
-    this.notifyApplicationAfterFrameRender(fetchResponse, frame);
+    this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
   // Application events
@@ -277,11 +292,18 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   }
 
   notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL) {
-    return dispatch("turbo:click", { target: link, detail: { url: location.href }, cancelable: true })
+    return dispatch("turbo:click", {
+      target: link,
+      detail: { url: location.href },
+      cancelable: true,
+    })
   }
 
   notifyApplicationBeforeVisitingLocation(location: URL) {
-    return dispatch("turbo:before-visit", { detail: { url: location.href }, cancelable: true })
+    return dispatch("turbo:before-visit", {
+      detail: { url: location.href },
+      cancelable: true,
+    })
   }
 
   notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
@@ -294,7 +316,10 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   }
 
   notifyApplicationBeforeRender(newBody: HTMLBodyElement, resume: (value: any) => void) {
-    return dispatch("turbo:before-render", { detail: { newBody, resume }, cancelable: true })
+    return dispatch("turbo:before-render", {
+      detail: { newBody, resume },
+      cancelable: true,
+    })
   }
 
   notifyApplicationAfterRender() {
@@ -303,11 +328,18 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
     clearBusyState(document.documentElement)
-    return dispatch("turbo:load", { detail: { url: this.location.href, timing }})
+    return dispatch("turbo:load", {
+      detail: { url: this.location.href, timing },
+    })
   }
 
   notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL) {
-    dispatchEvent(new HashChangeEvent("hashchange", { oldURL: oldURL.toString(), newURL: newURL.toString() }))
+    dispatchEvent(
+      new HashChangeEvent("hashchange", {
+        oldURL: oldURL.toString(),
+        newURL: newURL.toString(),
+      })
+    )
   }
 
   notifyApplicationAfterFrameLoad(frame: FrameElement) {
@@ -315,7 +347,11 @@ export class Session implements FormSubmitObserverDelegate, HistoryDelegate, Lin
   }
 
   notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {
-    return dispatch("turbo:frame-render", { detail: { fetchResponse }, target: frame, cancelable: true })
+    return dispatch("turbo:frame-render", {
+      detail: { fetchResponse },
+      target: frame,
+      cancelable: true,
+    })
   }
 
   // Helpers
@@ -385,6 +421,6 @@ const deprecatedLocationPropertyDescriptors = {
   absoluteURL: {
     get() {
       return this.toString()
-    }
-  }
+    },
+  },
 }

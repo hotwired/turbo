@@ -54,7 +54,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   get newScriptElements() {
     return this.currentElement.querySelectorAll("script")
-  }  
+  }
 }
 
 function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLogicalPosition): ScrollLogicalPosition {

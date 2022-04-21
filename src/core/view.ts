@@ -9,7 +9,12 @@ export interface ViewDelegate<S extends Snapshot> {
   viewInvalidated(): void
 }
 
-export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E>, R extends Renderer<E, S> = Renderer<E, S>, D extends ViewDelegate<S> = ViewDelegate<S>> {
+export abstract class View<
+  E extends Element,
+  S extends Snapshot<E> = Snapshot<E>,
+  R extends Renderer<E, S> = Renderer<E, S>,
+  D extends ViewDelegate<S> = ViewDelegate<S>
+> {
   readonly delegate: D
   readonly element: E
   renderer?: R
@@ -73,11 +78,11 @@ export abstract class View<E extends Element, S extends Snapshot<E> = Snapshot<E
     const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
     if (shouldRender) {
       try {
-        this.renderPromise = new Promise(resolve => this.resolveRenderPromise = resolve)
+        this.renderPromise = new Promise((resolve) => (this.resolveRenderPromise = resolve))
         this.renderer = renderer
         this.prepareToRenderSnapshot(renderer)
 
-        const renderInterception = new Promise(resolve => this.resolveInterceptionPromise = resolve)
+        const renderInterception = new Promise((resolve) => (this.resolveInterceptionPromise = resolve))
         const immediateRender = this.delegate.allowsImmediateRender(snapshot, this.resolveInterceptionPromise)
         if (!immediateRender) await renderInterception
 

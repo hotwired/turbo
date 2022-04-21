@@ -7,7 +7,7 @@ import { uuid } from "../../util"
 
 export class BrowserAdapter implements Adapter {
   readonly session: Session
-  readonly progressBar = new ProgressBar
+  readonly progressBar = new ProgressBar()
 
   visitProgressBarTimeout?: number
   formProgressBarTimeout?: number
@@ -56,21 +56,15 @@ export class BrowserAdapter implements Adapter {
     this.hideVisitProgressBar()
   }
 
-  visitCompleted(_visit: Visit) {
-
-  }
+  visitCompleted(_visit: Visit) {}
 
   pageInvalidated() {
     this.reload()
   }
 
-  visitFailed(_visit: Visit) {
+  visitFailed(_visit: Visit) {}
 
-  }
-
-  visitRendered(_visit: Visit) {
-
-  }
+  visitRendered(_visit: Visit) {}
 
   formSubmissionStarted(_formSubmission: FormSubmission) {
     this.progressBar.setValue(0)

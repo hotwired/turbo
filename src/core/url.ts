@@ -8,8 +8,8 @@ export function getAnchor(url: URL) {
   let anchorMatch
   if (url.hash) {
     return url.hash.slice(1)
-  // eslint-disable-next-line no-cond-assign
-  } else if (anchorMatch = url.href.match(/#(.*)$/)) {
+    // eslint-disable-next-line no-cond-assign
+  } else if ((anchorMatch = url.href.match(/#(.*)$/))) {
     return anchorMatch[1]
   }
 }
@@ -39,9 +39,7 @@ export function locationIsVisitable(location: URL, rootLocation: URL) {
 
 export function getRequestURL(url: URL) {
   const anchor = getAnchor(url)
-  return anchor != null
-    ? url.href.slice(0, -(anchor.length + 1))
-    : url.href
+  return anchor != null ? url.href.slice(0, -(anchor.length + 1)) : url.href
 }
 
 export function toCacheKey(url: URL) {

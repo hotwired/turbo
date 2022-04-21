@@ -14,7 +14,16 @@ import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction } from "../types"
 
-export class FrameController implements AppearanceObserverDelegate, FetchRequestDelegate, FormInterceptorDelegate, FormSubmissionDelegate, FrameElementDelegate, LinkInterceptorDelegate, ViewDelegate<Snapshot<FrameElement>> {
+export class FrameController
+  implements
+    AppearanceObserverDelegate,
+    FetchRequestDelegate,
+    FormInterceptorDelegate,
+    FormSubmissionDelegate,
+    FrameElementDelegate,
+    LinkInterceptorDelegate,
+    ViewDelegate<Snapshot<FrameElement>>
+{
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
@@ -81,7 +90,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
   }
 
   async loadSourceURL() {
-    if (!this.settingSourceURL && this.enabled && this.isActive && (this.reloadable || this.sourceURL != this.currentURL)) {
+    if (
+      !this.settingSourceURL &&
+      this.enabled &&
+      this.isActive &&
+      (this.reloadable || this.sourceURL != this.currentURL)
+    ) {
       const previousURL = this.currentURL
       this.currentURL = this.sourceURL
       if (this.sourceURL) {
@@ -227,21 +241,19 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
     return true
   }
 
-  viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {
-  }
+  viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}
 
-  viewInvalidated() {
-  }
+  viewInvalidated() {}
 
   // Private
 
   private async visit(url: URL) {
-    const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams, this.element)
+    const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
 
     this.currentFetchRequest?.cancel()
     this.currentFetchRequest = request
 
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve) => {
       this.resolveVisitPromise = () => {
         this.resolveVisitPromise = () => {}
         this.currentFetchRequest = null
@@ -271,7 +283,12 @@ export class FrameController implements AppearanceObserverDelegate, FetchRequest
           const responseHTML = frame.ownerDocument.documentElement.outerHTML
           const response = { statusCode, redirected, responseHTML }
 
-          session.visit(frame.src, { action, response, visitCachedSnapshot, willRender: false })
+          session.visit(frame.src, {
+            action,
+            response,
+            visitCachedSnapshot,
+            willRender: false,
+          })
         }
       }
     }

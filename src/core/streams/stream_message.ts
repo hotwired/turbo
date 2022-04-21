@@ -27,7 +27,7 @@ export class StreamMessage {
   get foreignElements() {
     return this.templateChildren.reduce((streamElements, child) => {
       if (child.tagName.toLowerCase() == "turbo-stream") {
-        return [ ...streamElements, child as StreamElement ]
+        return [...streamElements, child as StreamElement]
       } else {
         return streamElements
       }
