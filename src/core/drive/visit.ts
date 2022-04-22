@@ -330,9 +330,6 @@ export class Visit implements FetchRequestDelegate {
   // Scrolling
 
   performScroll() {
-    if (this.view.forceReloaded) {
-      return
-    }
     if (!this.scrolled) {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
@@ -411,7 +408,9 @@ export class Visit implements FetchRequestDelegate {
     })
     await callback()
     delete this.frame
-    this.performScroll()
+    if (!this.view.forceReloaded) {
+      this.performScroll()
+    }
   }
 
   cancelRender() {
