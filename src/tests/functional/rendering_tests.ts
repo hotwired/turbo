@@ -6,6 +6,10 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/rendering.html")
   }
 
+  async teardown() {
+    await this.remote.execute(() => localStorage.clear())
+  }
+
   async "test triggers before-render and render events"() {
     this.clickSelector("#same-origin-link")
     const { newBody } = await this.nextEventNamed("turbo:before-render")
@@ -50,25 +54,23 @@ export class RenderingTests extends TurboDriveTestCase {
 
   async "test maintains scroll position before visit when turbo-visit-control setting is reload"() {
     await this.scrollToSelector("#below-the-fold-visit-control-reload-link")
-    // await this.nextBeat
-    this.assert.ok(await this.isScrolledToSelector("#below-the-fold-visit-control-reload-link"), "did not scroll")
-
-    // let sp = await this.scrollPosition
-    // console.log(sp)
-    // this.assert.ok(sp.y > 100)
     this.assert.notOk(await this.isScrolledToTop(), "scrolled down")
 
-    this.clickSelector("#below-the-fold-visit-control-reload-link")
-    // this.assert.equal(await this.pathname, "/src/tests/fixtures/rendering.html")
+    this.remote.execute(() => addEventListener("turbo:click", () => {
+      let scrolls = 0
+      addEventListener("scroll", () => {
+        scrolls++
+        localStorage.setItem("scrolls", String(scrolls))
+      })
+    }))
 
-    // sp = await this.scrollPosition
-    // console.log(sp)
-    // console.log(await this.pathname)
-    // this.assert.ok(sp.y > 100)
-    this.nextBeat
-    this.assert.notOk(await this.isScrolledToTop(), "stayed scrolled down")
+    this.clickSelector("#below-the-fold-visit-control-reload-link")
 
     await this.nextBody
+
+    const scrolls = await this.remote.execute(() => Number(localStorage.getItem("scrolls")))
+    this.assert.ok(scrolls === 0, "scroll position is preserved")
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
     this.assert.equal(await this.visitAction, "load")
   }
