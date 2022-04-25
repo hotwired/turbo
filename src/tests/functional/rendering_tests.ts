@@ -56,20 +56,18 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.scrollToSelector("#below-the-fold-visit-control-reload-link")
     this.assert.notOk(await this.isScrolledToTop(), "scrolled down")
 
-    this.remote.execute(() => addEventListener("turbo:click", () => {
-      let scrolls = 0
-      addEventListener("scroll", () => {
-        scrolls++
-        localStorage.setItem("scrolls", String(scrolls))
-      })
+    await this.remote.execute(() => localStorage.setItem("scrolls", "false"))
+
+    this.remote.execute(() => addEventListener("scroll", () => {
+      localStorage.setItem("scrolls", "true")
     }))
 
     this.clickSelector("#below-the-fold-visit-control-reload-link")
 
     await this.nextBody
 
-    const scrolls = await this.remote.execute(() => Number(localStorage.getItem("scrolls")))
-    this.assert.ok(scrolls === 0, "scroll position is preserved")
+    const scrolls = await this.remote.execute(() => localStorage.getItem("scrolls"))
+    this.assert.ok(scrolls === "false", "scroll position is preserved")
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
     this.assert.equal(await this.visitAction, "load")
