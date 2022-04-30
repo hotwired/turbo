@@ -585,15 +585,20 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextBeat
 
     const eventLogs = await this.eventLogChannel.read()
-    const fetchLogs = eventLogs.filter(([name, options]) => 
-      name == "turbo:before-fetch-request" && options?.url?.includes('/src/tests/fixtures/frames/frame_for_eager.html')
+    const fetchLogs = eventLogs.filter(
+      ([name, options]) =>
+      name == "turbo:before-fetch-request" &&
+      options?.url?.includes("/src/tests/fixtures/frames/frame_for_eager.html")
     )
     this.assert.equal(fetchLogs.length, 1)
 
-    const src = await this.attributeForSelector("#eager-loaded-frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#eager-loaded-frame", "src")) ?? ""
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame_for_eager.html"), "updates src attribute")
     this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Eager-loaded frame")
-    this.assert.equal(await (await this.querySelector("#eager-loaded-frame h2")).getVisibleText(), "Eager-loaded frame: Loaded")
+    this.assert.equal(
+      await (await this.querySelector("#eager-loaded-frame h2")).getVisibleText(),
+      "Eager-loaded frame: Loaded"
+    )
     this.assert.equal(await this.pathname, "/src/tests/fixtures/page_with_eager_frame.html")
   }
 
