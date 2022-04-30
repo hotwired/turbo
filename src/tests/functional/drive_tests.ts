@@ -17,9 +17,7 @@ export class DriveTests extends TurboDriveTestCase {
   async "test drive to external link"() {
     this.clickSelector("#drive_enabled_external")
     await this.nextBody
-    this.assert.equal(
-      await this.remote.execute(() => window.location.href), "https://example.com/"
-    )
+    this.assert.equal(await this.remote.execute(() => window.location.href), "https://example.com/")
   }
 
   async "test drive enabled by default; click link inside data-turbo='false'"() {
@@ -29,6 +27,5 @@ export class DriveTests extends TurboDriveTestCase {
     this.assert.equal(await this.visitAction, "load")
   }
 }
-
 
 DriveTests.registerSuite()

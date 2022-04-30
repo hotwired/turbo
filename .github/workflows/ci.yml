@@ -20,6 +20,18 @@ jobs:
     - run: yarn install
     - run: yarn build
 
+    - name: Set Chrome Version
+      run: |
+        CHROMEVER="$(chromedriver --version | cut -d' ' -f2)"
+        echo "Actions ChromeDriver is $CHROMEVER"
+        CONTENTS="$(jq '.tunnelOptions.drivers[0].name = "chrome"' < intern.json)"
+        CONTENTS="$(echo ${CONTENTS} | jq --arg chromever "$CHROMEVER" '.tunnelOptions.drivers[0].version = $chromever')"
+        echo "${CONTENTS}" > intern.json
+        cat intern.json
+
+    - name: Lint
+      run: yarn lint
+
     - name: Test
       run: yarn test
 

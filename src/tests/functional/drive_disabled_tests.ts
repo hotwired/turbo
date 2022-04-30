@@ -22,21 +22,15 @@ export class DriveDisabledTests extends TurboDriveTestCase {
   }
 
   async "test drive disabled by default; submit form inside data-turbo='true'"() {
-    await this.remote.execute(() => {
-      addEventListener("turbo:submit-start", () => document.documentElement.setAttribute("data-form-submitted", ""), { once: true })
-    })
+    await this.setLocalStorageFromEvent("turbo:submit-start", "formSubmitted", "true")
+
     this.clickSelector("#no_submitter_drive_enabled a#requestSubmit")
     await this.nextBody
-    this.assert.ok(await this.formSubmitted)
+    this.assert.ok(await this.getFromLocalStorage("formSubmitted"))
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.equal(await this.visitAction, "advance")
     this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
   }
-
-  get formSubmitted(): Promise<boolean> {
-    return this.hasSelector("html[data-form-submitted]")
-  }
 }
-
 
 DriveDisabledTests.registerSuite()

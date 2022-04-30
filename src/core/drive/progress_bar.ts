@@ -1,7 +1,7 @@
 import { unindent } from "../../util"
 
 export class ProgressBar {
-  static animationDuration = 300/*ms*/
+  static animationDuration = 300 /*ms*/
 
   static get defaultCSS() {
     return unindent`
@@ -12,7 +12,7 @@ export class ProgressBar {
         left: 0;
         height: 3px;
         background: #0076ff;
-        z-index: 9999;
+        z-index: 2147483647;
         transition:
           width ${ProgressBar.animationDuration}ms ease-out,
           opacity ${ProgressBar.animationDuration / 2}ms ${ProgressBar.animationDuration / 2}ms ease-in;
@@ -102,7 +102,7 @@ export class ProgressBar {
 
   refresh() {
     requestAnimationFrame(() => {
-      this.progressElement.style.width = `${10 + (this.value * 90)}%`
+      this.progressElement.style.width = `${10 + this.value * 90}%`
     })
   }
 

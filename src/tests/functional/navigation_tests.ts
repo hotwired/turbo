@@ -6,6 +6,14 @@ export class NavigationTests extends TurboDriveTestCase {
   }
 
   async "test navigating renders a progress bar"() {
+    const styleElement = await this.querySelector("style")
+
+    this.assert.equal(
+      await styleElement.getProperty("nonce"),
+      "123",
+      "renders progress bar stylesheet inline with nonce"
+    )
+
     await this.remote.execute(() => window.Turbo.setProgressBarDelay(0))
     await this.clickSelector("#delayed-link")
 
@@ -35,8 +43,16 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.nextBody
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets [aria-busy] on the document element")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), null, "removes [aria-busy] from the document element")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("html", "aria-busy"),
+      "true",
+      "sets [aria-busy] on the document element"
+    )
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("one", "aria-busy"),
+      null,
+      "removes [aria-busy] from the updated document element"
+    )
   }
 
   async "test following a same-origin unannotated custom element link"() {
@@ -161,7 +177,7 @@ export class NavigationTests extends TurboDriveTestCase {
   async "test following a same-origin [download] link"() {
     this.clickSelector("#same-origin-download-link")
     await this.nextBeat
-    this.assert(!await this.changedBody)
+    this.assert(!(await this.changedBody))
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
     this.assert.equal(await this.visitAction, "load")
   }
@@ -219,11 +235,14 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.pressTab()
 
     this.assert.notOk(await this.selectorHasFocus("#ignored-link"), "skips interactive elements before #main")
-    this.assert.ok(await this.selectorHasFocus("#main a:first-of-type"), "skips to first interactive element after #main")
+    this.assert.ok(
+      await this.selectorHasFocus("#main a:first-of-type"),
+      "skips to first interactive element after #main"
+    )
   }
 
   async "test same-page anchored replace link assumes the intention was a refresh"() {
-    await this.clickSelector('#refresh-link')
+    await this.clickSelector("#refresh-link")
     await this.nextBody
     this.assert.ok(await this.isScrolledToSelector("#main"), "scrolled to #main")
   }
@@ -243,14 +262,14 @@ export class NavigationTests extends TurboDriveTestCase {
   }
 
   async "test following a redirection"() {
-    await this.clickSelector('#redirection-link')
+    await this.clickSelector("#redirection-link")
     await this.nextBody
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "replace")
   }
 
   async "test clicking the back button after redirection"() {
-    await this.clickSelector('#redirection-link')
+    await this.clickSelector("#redirection-link")
     await this.nextBody
     await this.goBack()
     this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
@@ -264,7 +283,7 @@ export class NavigationTests extends TurboDriveTestCase {
       "turbo:before-cache",
       "turbo:before-render",
       "turbo:render",
-      "turbo:load"
+      "turbo:load",
     ]
 
     for (const eventName in events) {
@@ -277,9 +296,13 @@ export class NavigationTests extends TurboDriveTestCase {
   async "test correct referrer header"() {
     this.clickSelector("#headers-link")
     await this.nextBody
-    const pre = await this.querySelector('pre')
+    const pre = await this.querySelector("pre")
     const headers = await JSON.parse(await pre.getVisibleText())
-    this.assert.equal(headers.referer, 'http://localhost:9000/src/tests/fixtures/navigation.html', `referer header is correctly set`)
+    this.assert.equal(
+      headers.referer,
+      "http://localhost:9000/src/tests/fixtures/navigation.html",
+      `referer header is correctly set`
+    )
   }
 
   async "test double-clicking on a link"() {

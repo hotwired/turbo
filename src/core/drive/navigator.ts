@@ -36,7 +36,7 @@ export class Navigator {
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
-      ...options
+      ...options,
     })
     this.currentVisit.start()
   }
@@ -76,7 +76,7 @@ export class Navigator {
 
   formSubmissionStarted(formSubmission: FormSubmission) {
     // Not all adapters implement formSubmissionStarted
-    if (typeof this.adapter.formSubmissionStarted === 'function') {
+    if (typeof this.adapter.formSubmissionStarted === "function") {
       this.adapter.formSubmissionStarted(formSubmission)
     }
   }
@@ -91,7 +91,10 @@ export class Navigator {
 
         const { statusCode, redirected } = fetchResponse
         const action = this.getActionForFormSubmission(formSubmission)
-        const visitOptions = { action, response: { statusCode, responseHTML, redirected } }
+        const visitOptions = {
+          action,
+          response: { statusCode, responseHTML, redirected },
+        }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
@@ -118,7 +121,7 @@ export class Navigator {
 
   formSubmissionFinished(formSubmission: FormSubmission) {
     // Not all adapters implement formSubmissionFinished
-    if (typeof this.adapter.formSubmissionFinished === 'function') {
+    if (typeof this.adapter.formSubmissionFinished === "function") {
       this.adapter.formSubmissionFinished(formSubmission)
     }
   }
@@ -136,11 +139,13 @@ export class Navigator {
   locationWithActionIsSamePage(location: URL, action?: Action): boolean {
     const anchor = getAnchor(location)
     const currentAnchor = getAnchor(this.view.lastRenderedLocation)
-    const isRestorationToTop = action === 'restore' && typeof anchor === 'undefined'
+    const isRestorationToTop = action === "restore" && typeof anchor === "undefined"
 
-    return action !== "replace" &&
+    return (
+      action !== "replace" &&
       getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
       (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
+    )
   }
 
   visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {

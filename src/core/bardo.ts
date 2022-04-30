@@ -16,14 +16,14 @@ export class Bardo {
 
   enter() {
     for (const id in this.permanentElementMap) {
-      const [, newPermanentElement ] = this.permanentElementMap[id]
+      const [, newPermanentElement] = this.permanentElementMap[id]
       this.replaceNewPermanentElementWithPlaceholder(newPermanentElement)
     }
   }
 
   leave() {
     for (const id in this.permanentElementMap) {
-      const [ currentPermanentElement ] = this.permanentElementMap[id]
+      const [currentPermanentElement] = this.permanentElementMap[id]
       this.replaceCurrentPermanentElementWithClone(currentPermanentElement)
       this.replacePlaceholderWithPermanentElement(currentPermanentElement)
     }
@@ -45,11 +45,11 @@ export class Bardo {
   }
 
   getPlaceholderById(id: string) {
-    return this.placeholders.find(element => element.content == id)
+    return this.placeholders.find((element) => element.content == id)
   }
 
   get placeholders(): HTMLMetaElement[] {
-    return [ ...document.querySelectorAll("meta[name=turbo-permanent-placeholder][content]") ] as any
+    return [...document.querySelectorAll("meta[name=turbo-permanent-placeholder][content]")] as any
   }
 }
 

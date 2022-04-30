@@ -48,13 +48,13 @@ export class LinkClickObserver {
 
   clickEventIsSignificant(event: MouseEvent) {
     return !(
-      (event.target && (event.target as any).isContentEditable)
-      || event.defaultPrevented
-      || event.which > 1
-      || event.altKey
-      || event.ctrlKey
-      || event.metaKey
-      || event.shiftKey
+      (event.target && (event.target as any).isContentEditable) ||
+      event.defaultPrevented ||
+      event.which > 1 ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey
     )
   }
 
