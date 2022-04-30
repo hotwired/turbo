@@ -6,11 +6,12 @@ import { StreamSource } from "./types"
 import { VisitOptions } from "./drive/visit"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
+import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
 
 const session = new Session()
 const { navigator } = session
-export { navigator, session, PageRenderer, PageSnapshot }
+export { navigator, session, PageRenderer, PageSnapshot, FrameRenderer }
 
 /**
  * Starts the main session.
