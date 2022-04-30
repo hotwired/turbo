@@ -8,7 +8,7 @@ import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FormSubmission } from "./drive/form_submission"
 
-const session = new Session
+const session = new Session()
 const { navigator } = session
 export { navigator, session, PageRenderer, PageSnapshot }
 
@@ -98,6 +98,6 @@ export function setProgressBarDelay(delay: number) {
   session.setProgressBarDelay(delay)
 }
 
-export function setConfirmMethod(confirmMethod: (message: string, element: HTMLFormElement)=>boolean) {
+export function setConfirmMethod(confirmMethod: (message: string, element: HTMLFormElement) => boolean) {
   FormSubmission.confirmMethod = confirmMethod
 }

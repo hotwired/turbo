@@ -2,7 +2,11 @@ import { Snapshot } from "../snapshot"
 
 type ElementDetailMap = { [outerHTML: string]: ElementDetails }
 
-type ElementDetails = { type?: ElementType, tracked: boolean, elements: Element[] }
+type ElementDetails = {
+  type?: ElementType
+  tracked: boolean
+  elements: Element[]
+}
 
 type ElementType = "script" | "stylesheet"
 
@@ -11,27 +15,27 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
     .filter((element) => !elementIsNoscript(element))
     .map((element) => elementWithoutNonce(element))
     .reduce((result, element) => {
-    const { outerHTML } = element
-    const details: ElementDetails
-      = outerHTML in result
-      ? result[outerHTML]
-      : {
-        type: elementType(element),
-        tracked: elementIsTracked(element),
-        elements: []
+      const { outerHTML } = element
+      const details: ElementDetails =
+        outerHTML in result
+          ? result[outerHTML]
+          : {
+              type: elementType(element),
+              tracked: elementIsTracked(element),
+              elements: [],
+            }
+      return {
+        ...result,
+        [outerHTML]: {
+          ...details,
+          elements: [...details.elements, element],
+        },
       }
-    return {
-      ...result,
-      [outerHTML]: {
-        ...details,
-        elements: [ ...details.elements, element ]
-      }
-    }
-  }, {} as ElementDetailMap)
+    }, {} as ElementDetailMap)
 
   get trackedElementSignature(): string {
     return Object.keys(this.detailsByOuterHTML)
-      .filter(outerHTML => this.detailsByOuterHTML[outerHTML].tracked)
+      .filter((outerHTML) => this.detailsByOuterHTML[outerHTML].tracked)
       .join("")
   }
 
@@ -45,8 +49,8 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
 
   getElementsMatchingTypeNotInSnapshot(matchedType: ElementType, snapshot: HeadSnapshot) {
     return Object.keys(this.detailsByOuterHTML)
-      .filter(outerHTML => !(outerHTML in snapshot.detailsByOuterHTML))
-      .map(outerHTML => this.detailsByOuterHTML[outerHTML])
+      .filter((outerHTML) => !(outerHTML in snapshot.detailsByOuterHTML))
+      .map((outerHTML) => this.detailsByOuterHTML[outerHTML])
       .filter(({ type }) => type == matchedType)
       .map(({ elements: [element] }) => element)
   }
@@ -55,9 +59,9 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
     return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
       const { type, tracked, elements } = this.detailsByOuterHTML[outerHTML]
       if (type == null && !tracked) {
-        return [ ...result, ...elements ]
+        return [...result, ...elements]
       } else if (elements.length > 1) {
-        return [ ...result, ...elements.slice(1) ]
+        return [...result, ...elements.slice(1)]
       } else {
         return result
       }
@@ -66,14 +70,14 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
 
   getMetaValue(name: string): string | null {
     const element = this.findMetaElementByName(name)
-    return element
-      ? element.getAttribute("content")
-      : null
+    return element ? element.getAttribute("content") : null
   }
 
   findMetaElementByName(name: string) {
     return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
-      const { elements: [element] } = this.detailsByOuterHTML[outerHTML]
+      const {
+        elements: [element],
+      } = this.detailsByOuterHTML[outerHTML]
       return elementIsMetaElementWithName(element, name) ? element : result
     }, undefined as Element | undefined)
   }
@@ -115,6 +119,6 @@ function elementWithoutNonce(element: Element) {
   if (element.hasAttribute("nonce")) {
     element.setAttribute("nonce", "")
   }
-  
-  return element  
+
+  return element
 }

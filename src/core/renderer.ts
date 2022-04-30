@@ -20,7 +20,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     this.newSnapshot = newSnapshot
     this.isPreview = isPreview
     this.willRender = willRender
-    this.promise = new Promise((resolve, reject) => this.resolvingFunctions = { resolve, reject })
+    this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
   }
 
   get shouldRender() {
@@ -92,7 +92,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
 }
 
 function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
-  for (const { name, value } of [ ...sourceElement.attributes ]) {
+  for (const { name, value } of [...sourceElement.attributes]) {
     destinationElement.setAttribute(name, value)
   }
 }

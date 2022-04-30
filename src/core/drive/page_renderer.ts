@@ -65,13 +65,13 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   updateHtmlElementAttributes() {
-    for(const attr of document.documentElement.attributes) {
+    for (const attr of document.documentElement.attributes) {
       if (!this.newElement.hasAttribute(attr.nodeName) && !INTERNAL_ATTRIBUTES.includes(attr.nodeName)) {
         document.documentElement.removeAttribute(attr.nodeName)
       }
     }
 
-    for(const attr of this.newHtmlElement.attributes) {
+    for (const attr of this.newHtmlElement.attributes) {
       document.documentElement.setAttribute(attr.nodeName, attr.nodeValue!)
     }
   }

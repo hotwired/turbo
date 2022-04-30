@@ -1,8 +1,6 @@
 import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
 import { get } from "http"
 
-declare const Turbo: any
-
 export class VisitTests extends TurboDriveTestCase {
   async setup() {
     await this.goToLocation("/src/tests/fixtures/visit.html")
@@ -55,7 +53,7 @@ export class VisitTests extends TurboDriveTestCase {
 
     this.clickSelector("#same-origin-link")
     await this.nextBeat
-    this.assert(!await this.changedBody)
+    this.assert(!(await this.changedBody))
 
     const urlAfterVisit = await this.location
     this.assert.equal(urlAfterVisit, urlBeforeVisit)
@@ -87,22 +85,27 @@ export class VisitTests extends TurboDriveTestCase {
   }
 
   async "test turbo:before-fetch-response open new site"() {
-    this.remote.execute(() => addEventListener("turbo:before-fetch-response", async function eventListener(event: any) {
-      removeEventListener("turbo:before-fetch-response", eventListener, false);
-
-      (window as any).fetchResponseResult = {
-        responseText: await event.detail.fetchResponse.responseText,
-        responseHTML: await event.detail.fetchResponse.responseHTML,
-      };
-    }, false));
+    this.remote.execute(() =>
+      addEventListener(
+        "turbo:before-fetch-response",
+        async function eventListener(event: any) {
+          removeEventListener("turbo:before-fetch-response", eventListener, false)
+          ;(window as any).fetchResponseResult = {
+            responseText: await event.detail.fetchResponse.responseText,
+            responseHTML: await event.detail.fetchResponse.responseHTML,
+          }
+        },
+        false
+      )
+    )
 
     await this.clickSelector("#sample-response")
     await this.nextEventNamed("turbo:before-fetch-response")
 
     const fetchResponseResult = await this.evaluate(() => (window as any).fetchResponseResult)
 
-    this.assert.isTrue(fetchResponseResult.responseText.indexOf('An element with an ID') > -1)
-    this.assert.isTrue(fetchResponseResult.responseHTML.indexOf('An element with an ID') > -1)
+    this.assert.isTrue(fetchResponseResult.responseText.indexOf("An element with an ID") > -1)
+    this.assert.isTrue(fetchResponseResult.responseHTML.indexOf("An element with an ID") > -1)
   }
 
   async "test cache does not override response after redirect"() {
@@ -126,14 +129,23 @@ export class VisitTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.remote.execute(() => document.documentElement.className), "html-attributes")
     this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")), "attr")
-    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")), null)
+    this.assert.equal(
+      await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")),
+      null
+    )
 
     this.clickSelector("#link")
     await this.nextBeat
 
     this.assert.equal(await this.remote.execute(() => document.documentElement.className), "html-attributes-two")
-    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")), "attr-two")
-    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")), "other-attr")
+    this.assert.equal(
+      await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")),
+      "attr-two"
+    )
+    this.assert.equal(
+      await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")),
+      "other-attr"
+    )
   }
 
   async visitLocation(location: string) {
@@ -141,15 +153,21 @@ export class VisitTests extends TurboDriveTestCase {
   }
 
   async cancelNextVisit() {
-    this.remote.execute(() => addEventListener("turbo:before-visit", function eventListener(event) {
-      removeEventListener("turbo:before-visit", eventListener, false)
-      event.preventDefault()
-    }, false))
+    this.remote.execute(() =>
+      addEventListener(
+        "turbo:before-visit",
+        function eventListener(event) {
+          removeEventListener("turbo:before-visit", eventListener, false)
+          event.preventDefault()
+        },
+        false
+      )
+    )
   }
 }
 
 function contentTypeOfURL(url: string): Promise<string | undefined> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     get(url, ({ headers }) => resolve(headers["content-type"]))
   })
 }

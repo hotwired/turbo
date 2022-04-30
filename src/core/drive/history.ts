@@ -9,7 +9,9 @@ type HistoryMethod = (this: typeof history, state: any, title: string, url?: str
 
 export type RestorationData = { scrollPosition?: Position }
 
-export type RestorationDataMap = { [restorationIdentifier: string]: RestorationData }
+export type RestorationDataMap = {
+  [restorationIdentifier: string]: RestorationData
+}
 
 export class History {
   readonly delegate: HistoryDelegate
@@ -65,7 +67,10 @@ export class History {
   updateRestorationData(additionalData: Partial<RestorationData>) {
     const { restorationIdentifier } = this
     const restorationData = this.restorationData[restorationIdentifier]
-    this.restorationData[restorationIdentifier] = { ...restorationData, ...additionalData }
+    this.restorationData[restorationIdentifier] = {
+      ...restorationData,
+      ...additionalData,
+    }
   }
 
   // Scroll restoration
@@ -98,7 +103,7 @@ export class History {
     }
   }
 
-  onPageLoad = async (event: Event) => {
+  onPageLoad = async (_event: Event) => {
     await nextMicrotask()
     this.pageLoaded = true
   }

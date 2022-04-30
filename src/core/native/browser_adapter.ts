@@ -13,7 +13,7 @@ interface StructuredReason {
 
 export class BrowserAdapter implements Adapter {
   readonly session: Session
-  readonly progressBar = new ProgressBar
+  readonly progressBar = new ProgressBar()
 
   visitProgressBarTimeout?: number
   formProgressBarTimeout?: number
@@ -62,33 +62,27 @@ export class BrowserAdapter implements Adapter {
     }
   }
 
-  visitRequestFinished(visit: Visit) {
+  visitRequestFinished(_visit: Visit) {
     this.progressBar.setValue(1)
     this.hideVisitProgressBar()
   }
 
-  visitCompleted(visit: Visit) {
-
-  }
+  visitCompleted(_visit: Visit) {}
 
   pageInvalidated(reason: ReloadReason) {
     this.reload(reason)
   }
 
-  visitFailed(visit: Visit) {
+  visitFailed(_visit: Visit) {}
 
-  }
+  visitRendered(_visit: Visit) {}
 
-  visitRendered(visit: Visit) {
-
-  }
-
-  formSubmissionStarted(formSubmission: FormSubmission) {
+  formSubmissionStarted(_formSubmission: FormSubmission) {
     this.progressBar.setValue(0)
     this.showFormProgressBarAfterDelay()
   }
 
-  formSubmissionFinished(formSubmission: FormSubmission) {
+  formSubmissionFinished(_formSubmission: FormSubmission) {
     this.progressBar.setValue(1)
     this.hideFormProgressBar()
   }

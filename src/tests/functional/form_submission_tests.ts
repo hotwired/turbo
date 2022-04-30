@@ -37,7 +37,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test from submission with confirmation overriden"() {
-    await this.remote.execute(() => window.Turbo.setConfirmMethod((message, element) => confirm("Overriden message")))
+    await this.remote.execute(() => window.Turbo.setConfirmMethod(() => confirm("Overriden message")))
 
     await this.clickSelector("#standard form.confirm input[type=submit]")
 
@@ -61,8 +61,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
     this.assert.equal(await this.visitAction, "advance")
     this.assert.equal(await this.getSearchParam("greeting"), "Hello from a redirect")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets [aria-busy] on the document element")
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), null, "removes [aria-busy] from the document element")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("html", "aria-busy"),
+      "true",
+      "sets [aria-busy] on the document element"
+    )
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("html", "aria-busy"),
+      null,
+      "removes [aria-busy] from the document element"
+    )
   }
 
   async "test standard POST form submission events"() {
@@ -98,8 +106,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   async "test standard POST form submission toggles submitter [disabled] attribute"() {
     await this.clickSelector("#standard-post-form-submit")
 
-    this.assert.equal(await this.nextAttributeMutationNamed("standard-post-form-submit", "disabled"), "", "sets [disabled] on the submitter")
-    this.assert.equal(await this.nextAttributeMutationNamed("standard-post-form-submit", "disabled"), null, "removes [disabled] from the submitter")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("standard-post-form-submit", "disabled"),
+      "",
+      "sets [disabled] on the submitter"
+    )
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("standard-post-form-submit", "disabled"),
+      null,
+      "removes [disabled] from the submitter"
+    )
   }
 
   async "test standard GET form submission"() {
@@ -172,8 +188,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   async "test standard GET form submission toggles submitter [disabled] attribute"() {
     await this.clickSelector("#standard-get-form-submit")
 
-    this.assert.equal(await this.nextAttributeMutationNamed("standard-get-form-submit", "disabled"), "", "sets [disabled] on the submitter")
-    this.assert.equal(await this.nextAttributeMutationNamed("standard-get-form-submit", "disabled"), null, "removes [disabled] from the submitter")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("standard-get-form-submit", "disabled"),
+      "",
+      "sets [disabled] on the submitter"
+    )
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("standard-get-form-submit", "disabled"),
+      null,
+      "removes [disabled] from the submitter"
+    )
   }
 
   async "test standard GET form submission appending keys"() {
@@ -226,7 +250,10 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBeat
 
     const enctype = await this.getSearchParam("enctype")
-    this.assert.ok(enctype?.startsWith("application/x-www-form-urlencoded"), "submits a application/x-www-form-urlencoded request")
+    this.assert.ok(
+      enctype?.startsWith("application/x-www-form-urlencoded"),
+      "submits a application/x-www-form-urlencoded request"
+    )
   }
 
   async "test no-action form submission with single parameter"() {
@@ -256,13 +283,13 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
+    this.assert.deepEqual(await this.getAllSearchParams("query"), ["1", "2"])
 
     await this.clickSelector("#no-action form.multiple input[type=submit]")
     await this.nextBody
 
     this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
-    this.assert.deepEqual(await this.getAllSearchParams("query"), [ "1", "2" ])
+    this.assert.deepEqual(await this.getAllSearchParams("query"), ["1", "2"])
   }
 
   async "test no-action form submission submitter parameters"() {
@@ -403,15 +430,23 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     const otherEvents = await this.eventLogChannel.read()
     this.assert.equal(otherEvents.length, 0, "no more events")
 
-    const src = await (await this.querySelector("#frame")).getAttribute("src") || ""
-    this.assert.equal((new URL(src)).pathname, "/src/tests/fixtures/frames/frame.html")
+    const src = (await (await this.querySelector("#frame")).getAttribute("src")) || ""
+    this.assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
   }
 
   async "test frame POST form targetting frame toggles submitter's [disabled] attribute"() {
     await this.clickSelector("#targets-frame-post-form-submit")
 
-    this.assert.equal(await this.nextAttributeMutationNamed("targets-frame-post-form-submit", "disabled"), "", "sets [disabled] on the submitter")
-    this.assert.equal(await this.nextAttributeMutationNamed("targets-frame-post-form-submit", "disabled"), null, "removes [disabled] from the submitter")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("targets-frame-post-form-submit", "disabled"),
+      "",
+      "sets [disabled] on the submitter"
+    )
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("targets-frame-post-form-submit", "disabled"),
+      null,
+      "removes [disabled] from the submitter"
+    )
   }
 
   async "test frame GET form targetting frame submission"() {
@@ -434,15 +469,23 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     const otherEvents = await this.eventLogChannel.read()
     this.assert.equal(otherEvents.length, 0, "no more events")
 
-    const src = await (await this.querySelector("#frame")).getAttribute("src") || ""
-    this.assert.equal((new URL(src)).pathname, "/src/tests/fixtures/frames/frame.html")
+    const src = (await (await this.querySelector("#frame")).getAttribute("src")) || ""
+    this.assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
   }
 
   async "test frame GET form targetting frame toggles submitter's [disabled] attribute"() {
     await this.clickSelector("#targets-frame-get-form-submit")
 
-    this.assert.equal(await this.nextAttributeMutationNamed("targets-frame-get-form-submit", "disabled"), "", "sets [disabled] on the submitter")
-    this.assert.equal(await this.nextAttributeMutationNamed("targets-frame-get-form-submit", "disabled"), null, "removes [disabled] from the submitter")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("targets-frame-get-form-submit", "disabled"),
+      "",
+      "sets [disabled] on the submitter"
+    )
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("targets-frame-get-form-submit", "disabled"),
+      null,
+      "removes [disabled] from the submitter"
+    )
   }
 
   async "test frame form GET submission from submitter referencing another frame"() {
@@ -466,7 +509,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test frame form submission with redirect response"() {
-    const path = await this.attributeForSelector("#frame form.redirect input[name=path]", "value") || ""
+    const path = (await this.attributeForSelector("#frame form.redirect input[name=path]", "value")) || ""
     const url = new URL(path, "http://localhost:9000")
     url.searchParams.set("enctype", "application/x-www-form-urlencoded;charset=UTF-8")
 
@@ -487,9 +530,17 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBeat
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets [aria-busy] on the #frame")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      "true",
+      "sets [aria-busy] on the #frame"
+    )
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), null, "removes [aria-busy] from the #frame")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      null,
+      "removes [aria-busy] from the #frame"
+    )
   }
 
   async "test frame form submission toggles the target frame's [aria-busy] attribute"() {
@@ -497,12 +548,20 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     await this.nextBeat
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets [aria-busy] on the #frame")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      "true",
+      "sets [aria-busy] on the #frame"
+    )
 
     const title = await this.querySelector("#frame h2")
     this.assert.equal(await title.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] from the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), null, "removes [aria-busy] from the #frame")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      null,
+      "removes [aria-busy] from the #frame"
+    )
   }
 
   async "test frame form submission with empty created response"() {
@@ -647,7 +706,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test form submission targetting frame skipped within method=dialog"() {
-    await this.clickSelector('#dialog-method-turbo-frame button')
+    await this.clickSelector("#dialog-method-turbo-frame button")
     await this.nextBeat
 
     this.assert.notOk(await this.formSubmitEnded)
@@ -659,7 +718,6 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.notOk(await this.formSubmitStarted)
   }
-
 
   async "test form submission targets disabled frame"() {
     await this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
@@ -740,7 +798,10 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     await this.nextBeat
 
-    this.assert.notOk(await this.hasSelector("#frame div.message"), "Not confirming form submission does not submit the form")
+    this.assert.notOk(
+      await this.hasSelector("#frame div.message"),
+      "Not confirming form submission does not submit the form"
+    )
   }
 
   async "test link method form submission outside frame"() {

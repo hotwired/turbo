@@ -64,21 +64,21 @@ export class FunctionalTestCase extends InternTestCase {
 
   async scrollToSelector(selector: string): Promise<void> {
     const element = await this.remote.findByCssSelector(selector)
-    return this.evaluate(element => element.scrollIntoView(), element)
+    return this.evaluate((element) => element.scrollIntoView(), element)
   }
 
   async pressTab(): Promise<void> {
-    return this.remote.getActiveElement().then(activeElement => activeElement.type(('\uE004'))) // TAB
+    return this.remote.getActiveElement().then((activeElement) => activeElement.type("\uE004")) // TAB
   }
 
   async outerHTMLForSelector(selector: string): Promise<string> {
     const element = await this.remote.findByCssSelector(selector)
-    return this.evaluate(element => element.outerHTML, element)
+    return this.evaluate((element) => element.outerHTML, element)
   }
 
   async innerHTMLForSelector(selector: string): Promise<string> {
     const element = await this.remote.findAllByCssSelector(selector)
-    return this.evaluate(element => element.innerHTML, element)
+    return this.evaluate((element) => element.innerHTML, element)
   }
 
   async attributeForSelector(selector: string, attributeName: string) {
@@ -93,7 +93,7 @@ export class FunctionalTestCase extends InternTestCase {
     return await element.getProperty(attributeName)
   }
 
-  get scrollPosition(): Promise<{ x: number, y: number }> {
+  get scrollPosition(): Promise<{ x: number; y: number }> {
     return this.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
   }
 
@@ -114,7 +114,7 @@ export class FunctionalTestCase extends InternTestCase {
   }
 
   async sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   async evaluate<T>(callback: (...args: any[]) => T, ...args: any[]): Promise<T> {
@@ -146,7 +146,7 @@ export class FunctionalTestCase extends InternTestCase {
   }
 
   get searchParams(): Promise<URLSearchParams> {
-    return this.evaluate(() => location.search).then(search => new URLSearchParams(search))
+    return this.evaluate(() => location.search).then((search) => new URLSearchParams(search))
   }
 
   async getSearchParam(key: string): Promise<string> {

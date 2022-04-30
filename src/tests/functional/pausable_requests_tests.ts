@@ -9,7 +9,7 @@ export class PausableRequestsTests extends TurboDriveTestCase {
     await this.clickSelector("#link")
 
     await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), 'Continue request?')
+    this.assert.strictEqual(await this.getAlertText(), "Continue request?")
     await this.acceptAlert()
 
     await this.nextBeat
@@ -21,11 +21,11 @@ export class PausableRequestsTests extends TurboDriveTestCase {
     await this.clickSelector("#link")
 
     await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), 'Continue request?')
+    this.assert.strictEqual(await this.getAlertText(), "Continue request?")
     await this.dismissAlert()
 
     await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), 'Request aborted')
+    this.assert.strictEqual(await this.getAlertText(), "Request aborted")
     await this.acceptAlert()
 
     await this.nextBeat

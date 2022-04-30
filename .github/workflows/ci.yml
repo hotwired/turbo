@@ -29,6 +29,9 @@ jobs:
         echo "${CONTENTS}" > intern.json
         cat intern.json
 
+    - name: Lint
+      run: yarn lint
+
     - name: Test
       run: yarn test
 

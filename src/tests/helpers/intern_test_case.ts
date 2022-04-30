@@ -11,16 +11,16 @@ export class InternTestCase {
 
   static get tests(): Tests {
     return this.testNames.reduce((tests, testName): Tests => {
-      return { ...tests, [testName]: internTest => this.runTest(internTest) }
+      return { ...tests, [testName]: (internTest) => this.runTest(internTest) }
     }, {} as Tests)
   }
 
   static get testNames(): string[] {
-    return this.testKeys.map(key => key.slice(5))
+    return this.testKeys.map((key) => key.slice(5))
   }
 
   static get testKeys(): string[] {
-    return Object.getOwnPropertyNames(this.prototype).filter(key => key.match(/^test /))
+    return Object.getOwnPropertyNames(this.prototype).filter((key) => key.match(/^test /))
   }
 
   static runTest(internTest: Test): Promise<void> {
@@ -51,13 +51,9 @@ export class InternTestCase {
     return intern.getPlugin("chai").assert
   }
 
-  async setup() {
+  async setup() {}
 
-  }
-
-  async beforeTest() {
-
-  }
+  async beforeTest() {}
 
   get test(): () => Promise<void> {
     const method = (this as any)[`test ${this.testName}`]
@@ -68,11 +64,7 @@ export class InternTestCase {
     }
   }
 
-  async afterTest() {
+  async afterTest() {}
 
-  }
-
-  async teardown() {
-
-  }
+  async teardown() {}
 }
