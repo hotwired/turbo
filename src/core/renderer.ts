@@ -1,5 +1,6 @@
 import { Bardo } from "./bardo"
 import { Snapshot } from "./snapshot"
+import { ReloadReason } from "./native/browser_adapter"
 
 type ResolvingFunctions<T = unknown> = {
   resolve(value: T | PromiseLike<T>): void
@@ -24,6 +25,10 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
 
   get shouldRender() {
     return true
+  }
+
+  get reloadReason(): ReloadReason {
+    return
   }
 
   prepareToRender() {

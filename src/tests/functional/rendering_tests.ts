@@ -6,6 +6,10 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/rendering.html")
   }
 
+  async teardown() {
+    await this.remote.execute(() => localStorage.clear())
+  }
+
   async "test triggers before-render and render events"() {
     this.clickSelector("#same-origin-link")
     const { newBody } = await this.nextEventNamed("turbo:before-render")
@@ -28,10 +32,20 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test reloads when tracked elements change"() {
+    await this.remote.execute(() =>
+      window.addEventListener("turbo:reload", (e: any) => {
+        localStorage.setItem("reloadReason", e.detail.reason)
+      })
+    )
+
     this.clickSelector("#tracked-asset-change-link")
     await this.nextBody
+
+    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
     this.assert.equal(await this.visitAction, "load")
+    this.assert.equal(reason, "tracked_element_mismatch")
   }
 
   async "test wont reload when tracked elements has a nonce"() {
@@ -42,10 +56,20 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test reloads when turbo-visit-control setting is reload"() {
+    await this.remote.execute(() =>
+      window.addEventListener("turbo:reload", (e: any) => {
+        localStorage.setItem("reloadReason", e.detail.reason)
+      })
+    )
+
     this.clickSelector("#visit-control-reload-link")
     await this.nextBody
+
+    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
     this.assert.equal(await this.visitAction, "load")
+    this.assert.equal(reason, "turbo_visit_control_is_reload")
   }
 
   async "test accumulates asset elements in head"() {
