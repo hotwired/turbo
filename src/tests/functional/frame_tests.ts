@@ -587,8 +587,8 @@ export class FrameTests extends TurboDriveTestCase {
     const eventLogs = await this.eventLogChannel.read()
     const fetchLogs = eventLogs.filter(
       ([name, options]) =>
-      name == "turbo:before-fetch-request" &&
-      options?.url?.includes("/src/tests/fixtures/frames/frame_for_eager.html")
+        name == "turbo:before-fetch-request" &&
+        options?.url?.includes("/src/tests/fixtures/frames/frame_for_eager.html")
     )
     this.assert.equal(fetchLogs.length, 1)
 
