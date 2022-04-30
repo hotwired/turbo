@@ -108,7 +108,7 @@ export class FormSubmission {
   }
 
   get confirmationMessage() {
-    return this.formElement.getAttribute("data-turbo-confirm")
+    return this.submitter?.getAttribute("data-turbo-confirm") || this.formElement.getAttribute("data-turbo-confirm")
   }
 
   get needsConfirmation() {
