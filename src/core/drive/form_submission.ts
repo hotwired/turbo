@@ -51,8 +51,8 @@ export class FormSubmission {
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
-  static confirmMethod(message: string, _element: HTMLFormElement): boolean {
-    return confirm(message)
+  static confirmMethod(message: string, _element: HTMLFormElement): Promise<boolean> {
+    return Promise.resolve(confirm(message))
   }
 
   constructor(
@@ -121,7 +121,7 @@ export class FormSubmission {
     const { initialized, requesting } = FormSubmissionState
 
     if (this.needsConfirmation) {
-      const answer = FormSubmission.confirmMethod(this.confirmationMessage!, this.formElement)
+      const answer = await FormSubmission.confirmMethod(this.confirmationMessage!, this.formElement)
       if (!answer) {
         return
       }
