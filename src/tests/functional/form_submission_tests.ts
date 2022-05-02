@@ -25,6 +25,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.getAlertText(), "Are you sure?")
     await this.acceptAlert()
+    await this.nextEventNamed("turbo:load")
     this.assert.ok(await this.formSubmitStarted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
   }
@@ -42,6 +43,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.getAlertText(), "Are you really sure?")
     await this.acceptAlert()
+    await this.nextEventNamed("turbo:load")
     this.assert.ok(await this.formSubmitStarted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
