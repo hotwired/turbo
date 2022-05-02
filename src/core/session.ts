@@ -128,7 +128,7 @@ export class Session
       })
     } else {
       this.adapter.pageInvalidated({
-        reason: "turbo_disabled"
+        reason: "turbo_disabled",
       })
     }
   }
