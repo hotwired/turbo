@@ -8,7 +8,7 @@ import { uuid, dispatch } from "../../util"
 export type ReloadReason = StructuredReason | undefined
 interface StructuredReason {
   reason: string
-  context?: {[key: string]: any}
+  context?: { [key: string]: any }
 }
 
 export class BrowserAdapter implements Adapter {
@@ -54,8 +54,8 @@ export class BrowserAdapter implements Adapter {
         return this.reload({
           reason: "request_failed",
           context: {
-            statusCode
-          }
+            statusCode,
+          },
         })
       default:
         return visit.loadResponse()
