@@ -123,29 +123,20 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("some-cached-element"))
   }
 
-  async "test updates HTML element classes"() {
+  async "test updates HTML element attributes"() {
     await this.visitLocation("/src/tests/fixtures/html_attributes.html")
     await this.nextBeat
 
-    this.assert.equal(await this.remote.execute(() => document.documentElement.className), "html-attributes")
-    this.assert.equal(await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")), "attr")
-    this.assert.equal(
-      await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")),
-      null
-    )
+    this.assert.equal(await this.getDocumentElementAttribute("class"), "html-attributes")
+    this.assert.equal(await this.getDocumentElementAttribute("data-attribute"), "attr")
+    this.assert.equal(await this.getDocumentElementAttribute("data-other-attribute"), null)
 
     await this.clickSelector("#link")
     await this.nextBeat
 
-    this.assert.equal(await this.remote.execute(() => document.documentElement.className), "html-attributes-two")
-    this.assert.equal(
-      await this.remote.execute(() => document.documentElement.getAttribute("data-attribute")),
-      "attr-two"
-    )
-    this.assert.equal(
-      await this.remote.execute(() => document.documentElement.getAttribute("data-other-attribute")),
-      "other-attr"
-    )
+    this.assert.equal(await this.getDocumentElementAttribute("class"), "html-attributes-two")
+    this.assert.equal(await this.getDocumentElementAttribute("data-attribute"), "attr-two")
+    this.assert.equal(await this.getDocumentElementAttribute("data-other-attribute"), "other-attr")
   }
 
   async visitLocation(location: string) {
@@ -162,6 +153,13 @@ export class VisitTests extends TurboDriveTestCase {
         },
         false
       )
+    )
+  }
+
+  async getDocumentElementAttribute(attributeName: string): Promise<string | null> {
+    return await this.remote.execute(
+      (attributeName: string) => document.documentElement.getAttribute(attributeName),
+      [attributeName]
     )
   }
 }
