@@ -25,6 +25,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.getAlertText(), "Are you sure?")
     await this.acceptAlert()
+    await this.nextEventNamed("turbo:load")
     this.assert.ok(await this.formSubmitStarted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
   }
@@ -42,6 +43,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     this.assert.equal(await this.getAlertText(), "Are you really sure?")
     await this.acceptAlert()
+    await this.nextEventNamed("turbo:load")
     this.assert.ok(await this.formSubmitStarted)
     this.assert.equal(await this.pathname, "/src/tests/fixtures/one.html")
     this.assert.equal(await this.visitAction, "advance")
@@ -57,7 +59,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
   }
 
   async "test from submission with confirmation overriden"() {
-    await this.remote.execute(() => window.Turbo.setConfirmMethod(() => confirm("Overriden message")))
+    await this.remote.execute(() => window.Turbo.setConfirmMethod(() => Promise.resolve(confirm("Overriden message"))))
 
     await this.clickSelector("#standard form.confirm input[type=submit]")
 
