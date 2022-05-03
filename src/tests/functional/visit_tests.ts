@@ -134,7 +134,7 @@ export class VisitTests extends TurboDriveTestCase {
       null
     )
 
-    this.clickSelector("#link")
+    await this.clickSelector("#link")
     await this.nextBeat
 
     this.assert.equal(await this.remote.execute(() => document.documentElement.className), "html-attributes-two")
