@@ -456,6 +456,16 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
   }
 
+  async "test frame POST form targetting frame submission"() {
+    await this.clickSelector("#nested-form-target-turbo-frame")
+
+    this.assert.ok(await this.formSubmitStarted, "fires turbo:submit-start")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.equal("hello", fetchOptions.headers["Turbo-Frame"])
+  }
+
   async "test frame POST form targetting frame toggles submitter's [disabled] attribute"() {
     await this.clickSelector("#targets-frame-post-form-submit")
 
