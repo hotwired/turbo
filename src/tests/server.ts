@@ -72,12 +72,12 @@ router.get("/delayed_response", (request, response) => {
 
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
-  const { content, status, type, target, targets } = params
+  const { content, status, type, target, targets, animated } = params
   if (typeof content == "string") {
     receiveMessage(content, target)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(targets ? renderMessageForTargets(content, targets) : renderMessage(content, target))
+      response.send(targets ? renderMessageForTargets(content, targets, animated) : renderMessage(content, target))
     } else {
       response.sendStatus(parseInt(status || "201", 10))
     }
@@ -135,10 +135,28 @@ function renderMessage(content: string, target = "messages") {
   `
 }
 
-function renderMessageForTargets(content: string, targets: string) {
+function renderMessageForTargets(content: string, targets: string, animated: string) {
+  return animated ? animatedMessage(content, targets) : staticMessage(content, targets)
+}
+
+function staticMessage(content: string, targets: string) {
   return `
     <turbo-stream action="append" targets="${targets}"><template>
       <div class="message">${escapeHTML(content)}</div>
+    </template></turbo-stream>
+  `
+}
+
+function animatedMessage(content: string, targets: string) {
+  return `
+    <turbo-stream action="append" targets="${targets}"><template>
+      <div id="message-to-animate" class="message"></div>
+      <script>
+        const msg = "${content}";
+        let divToAnimate = document.querySelector('#message-to-animate');
+        divToAnimate.innerHTML = msg;
+        divToAnimate.classList.add("cool-keyframe-class-assigned-by-script");
+      </script>
     </template></turbo-stream>
   `
 }

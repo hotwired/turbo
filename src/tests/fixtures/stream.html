@@ -12,6 +12,14 @@
       <button type="submit">Create</button>
     </form>
 
+    <form id="createAnimated" method="post" action="/__turbo/messages">
+      <input type="hidden" name="content" value="Hello from script!">
+      <input type="hidden" name="type" value="stream">
+      <input type="hidden" name="targets" value=".messages">
+      <input type="hidden" name="animated" value="true">
+      <button type="submit">Create</button>
+    </form>
+
     <form id="replace" method="post" action="/__turbo/messages">
       <input type="hidden" name="content" value="Hello CSS!">
       <input type="hidden" name="targets" value=".messages">

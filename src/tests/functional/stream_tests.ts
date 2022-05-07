@@ -34,6 +34,21 @@ export class StreamTests extends FunctionalTestCase {
     this.assert.equal(await element[0].getVisibleText(), "Hello CSS!")
     this.assert.equal(await element[1].getVisibleText(), "Hello CSS!")
   }
+
+  async "test receiving a stream message and enriching it via JS"() {
+    let element
+    const selector = ".messages div.message:last-child"
+
+    element = await this.querySelectorAll(selector)
+    this.assert.equal(await element[0].getVisibleText(), "Second")
+    this.assert.equal(await element[1].getVisibleText(), "Third")
+
+    await this.clickSelector("#createAnimated [type=submit]")
+    await this.nextBeat
+
+    element = await this.querySelector('.cool-keyframe-class-assigned-by-script')
+    this.assert.equal(await element.getVisibleText(), "Hello from script!")
+  }
 }
 
 StreamTests.registerSuite()
