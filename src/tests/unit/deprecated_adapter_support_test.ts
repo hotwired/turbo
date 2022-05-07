@@ -20,7 +20,7 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
     Turbo.navigator.proposeVisit(new URL(window.location.toString()))
     this.assert.equal(this.locations.length, 1)
 
-    const [ location ] = this.locations
+    const [location] = this.locations
     this.assert.equal(location.toString(), location.absoluteURL)
   }
 
@@ -28,13 +28,13 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
     Turbo.navigator.startVisit(window.location.toString(), "123")
     this.assert.equal(this.locations.length, 1)
 
-    const [ location ] = this.locations
+    const [location] = this.locations
     this.assert.equal(location.toString(), location.absoluteURL)
   }
 
   // Adapter interface
 
-  visitProposedToLocation(location: URL, options?: Partial<VisitOptions>): void {
+  visitProposedToLocation(location: URL, _options?: Partial<VisitOptions>): void {
     this.locations.push(location)
   }
 
@@ -43,45 +43,25 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
     visit.cancel()
   }
 
-  visitCompleted(visit: Visit): void {
+  visitCompleted(_visit: Visit): void {}
 
-  }
+  visitFailed(_visit: Visit): void {}
 
-  visitFailed(visit: Visit): void {
+  visitRequestStarted(_visit: Visit): void {}
 
-  }
+  visitRequestCompleted(_visit: Visit): void {}
 
-  visitRequestStarted(visit: Visit): void {
+  visitRequestFailedWithStatusCode(_visit: Visit, _statusCode: number): void {}
 
-  }
+  visitRequestFinished(_visit: Visit): void {}
 
-  visitRequestCompleted(visit: Visit): void {
+  visitRendered(_visit: Visit): void {}
 
-  }
+  formSubmissionStarted(_formSubmission: FormSubmission): void {}
 
-  visitRequestFailedWithStatusCode(visit: Visit, statusCode: number): void {
+  formSubmissionFinished(_formSubmission: FormSubmission): void {}
 
-  }
-
-  visitRequestFinished(visit: Visit): void {
-
-  }
-
-  visitRendered(visit: Visit): void {
-
-  }
-
-  formSubmissionStarted(formSubmission: FormSubmission): void {
-
-  }
-
-  formSubmissionFinished(formSubmission: FormSubmission): void {
-
-  }
-
-  pageInvalidated(): void {
-
-  }
+  pageInvalidated(): void {}
 }
 
 DeprecatedAdapterSupportTest.registerSuite()

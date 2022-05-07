@@ -1,5 +1,6 @@
 import { Bardo } from "./bardo"
 import { Snapshot } from "./snapshot"
+import { ReloadReason } from "./native/browser_adapter"
 
 type ResolvingFunctions<T = unknown> = {
   resolve(value: T | PromiseLike<T>): void
@@ -19,11 +20,15 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     this.newSnapshot = newSnapshot
     this.isPreview = isPreview
     this.willRender = willRender
-    this.promise = new Promise((resolve, reject) => this.resolvingFunctions = { resolve, reject })
+    this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
   }
 
   get shouldRender() {
     return true
+  }
+
+  get reloadReason(): ReloadReason {
+    return
   }
 
   prepareToRender() {
@@ -87,7 +92,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
 }
 
 function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
-  for (const { name, value } of [ ...sourceElement.attributes ]) {
+  for (const { name, value } of [...sourceElement.attributes]) {
     destinationElement.setAttribute(name, value)
   }
 }

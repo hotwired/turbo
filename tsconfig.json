@@ -10,6 +10,7 @@
     "target": "es2017",
     "noEmit": true,
     "removeComments": true,
+    "skipLibCheck": true,
   },
   "exclude": [ "dist", "src/tests/fixtures" ]
 }

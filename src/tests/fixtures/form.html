@@ -75,6 +75,7 @@
       </form>
       <form action="/__turbo/redirect" method="post" class="confirm" data-turbo-confirm="Are you sure?">
         <input type="submit">
+        <button type="submit" name="greeting" id="secondary_submitter" data-turbo-confirm="Are you really sure?" formaction="/__turbo/redirect?path=/src/tests/fixtures/one.html" formmethod="post" value="secondary_submitter">Secondary action</button>
       </form>
     </div>
     <hr>

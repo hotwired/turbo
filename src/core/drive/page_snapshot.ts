@@ -12,19 +12,21 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
     return this.fromDocument(element.ownerDocument)
   }
 
-  static fromDocument({ head, body }: Document) {
-    return new this(body as HTMLBodyElement, new HeadSnapshot(head))
+  static fromDocument({ head, body, documentElement }: Document) {
+    return new this(body as HTMLBodyElement, new HeadSnapshot(head), documentElement as HTMLHtmlElement)
   }
 
   readonly headSnapshot: HeadSnapshot
+  readonly htmlElement: HTMLHtmlElement
 
-  constructor(element: HTMLBodyElement, headSnapshot: HeadSnapshot) {
+  constructor(element: HTMLBodyElement, headSnapshot: HeadSnapshot, htmlElement: HTMLHtmlElement) {
     super(element)
     this.headSnapshot = headSnapshot
+    this.htmlElement = htmlElement
   }
 
   clone() {
-    return new PageSnapshot(this.element.cloneNode(true), this.headSnapshot)
+    return new PageSnapshot(this.element.cloneNode(true), this.headSnapshot, this.htmlElement)
   }
 
   get headElement() {
