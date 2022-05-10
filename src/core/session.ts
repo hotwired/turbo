@@ -175,7 +175,7 @@ export class Session
 
   willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent) {
     return (
-      this.elementDriveEnabled(link) &&
+      this.elementIsNavigatable(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
       this.applicationAllowsFollowingLinkToLocation(link, location, event)
     )
@@ -222,8 +222,8 @@ export class Session
     const action = getAction(form, submitter)
 
     return (
-      this.elementDriveEnabled(form) &&
-      (!submitter || this.formElementDriveEnabled(submitter)) &&
+      this.elementIsNavigatable(form) &&
+      (!submitter || this.formElementIsNavigatable(submitter)) &&
       locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
     )
   }
@@ -375,7 +375,7 @@ export class Session
 
   // Helpers
 
-  formElementDriveEnabled(element?: Element) {
+  formElementIsNavigatable(element?: Element) {
     if (this.formMode == "off") {
       return false
     }
@@ -383,22 +383,23 @@ export class Session
       const form = element?.closest("form[data-turbo]")
       return form?.getAttribute("data-turbo") == "true"
     }
-    return this.elementDriveEnabled(element)
+    return this.elementIsNavigatable(element)
   }
 
-  elementDriveEnabled(element?: Element) {
+  elementIsNavigatable(element?: Element) {
     const container = element?.closest("[data-turbo]")
+    const withinFrame = element?.closest("turbo-frame")
 
-    // Check if Drive is enabled on the session.
-    if (this.drive) {
-      // Drive should be enabled by default, unless `data-turbo="false"`.
+    // Check if Drive is enabled on the session or we're within a Frame.
+    if (this.drive || withinFrame) {
+      // Element is navigatable by default, unless `data-turbo="false"`.
       if (container) {
         return container.getAttribute("data-turbo") != "false"
       } else {
         return true
       }
     } else {
-      // Drive should be disabled by default, unless `data-turbo="true"`.
+      // Element isn't navigatable by default, unless `data-turbo="true"`.
       if (container) {
         return container.getAttribute("data-turbo") == "true"
       } else {
