@@ -164,7 +164,7 @@ export class Session
 
     if (linkMethod) {
       const form = document.createElement("form")
-      form.method = linkMethod
+      form.setAttribute("method", linkMethod)
       form.action = link.getAttribute("href") || "undefined"
       form.hidden = true
 
