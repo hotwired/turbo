@@ -45,18 +45,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
   }
 
   createScriptElement(element: Element) {
-    if (element.getAttribute("data-turbo-eval") == "false") {
-      return element
-    } else {
-      const createdScriptElement = document.createElement("script")
-      if (this.cspNonce) {
-        createdScriptElement.nonce = this.cspNonce
-      }
-      createdScriptElement.textContent = element.textContent
-      createdScriptElement.async = false
-      copyElementAttributes(createdScriptElement, element)
-      return createdScriptElement
-    }
+    return createScriptElement(element)
   }
 
   preservingPermanentElements(callback: () => void) {
@@ -89,6 +78,25 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
   get cspNonce() {
     return document.head.querySelector('meta[name="csp-nonce"]')?.getAttribute("content")
   }
+}
+
+export function createScriptElement(element: Element) {
+  if (element.getAttribute("data-turbo-eval") == "false") {
+    return element
+  } else {
+    const createdScriptElement = document.createElement("script")
+    if (cspNonce()) {
+      createdScriptElement.nonce = cspNonce()!
+    }
+    createdScriptElement.textContent = element.textContent
+    createdScriptElement.async = false
+    copyElementAttributes(createdScriptElement, element)
+    return createdScriptElement
+  }
+}
+
+function cspNonce() {
+  return document.head.querySelector('meta[name="csp-nonce"]')?.getAttribute("content")
 }
 
 function copyElementAttributes(destinationElement: Element, sourceElement: Element) {

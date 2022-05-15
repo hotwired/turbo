@@ -1,4 +1,5 @@
 import { StreamElement } from "../../elements/stream_element"
+import { createScriptElement } from "../renderer";
 
 export class StreamMessage {
   static readonly contentType = "text/vnd.turbo-stream.html"
@@ -41,29 +42,9 @@ export class StreamMessage {
 
   activateScriptElements(parentElement: StreamElement) {
     for (const inertScriptElement of ((parentElement.firstChild as HTMLMetaElement).content as unknown as Element).querySelectorAll("script")) {
-      const activatedScriptElement = this.createScriptElement(inertScriptElement)
+      const activatedScriptElement = createScriptElement(inertScriptElement)
       inertScriptElement.replaceWith(activatedScriptElement)
     }
   }
-
-  createScriptElement(element: Element) {
-    if (element.getAttribute("data-turbo-eval") == "false") {
-      return element
-    } else {
-      const createdScriptElement = document.createElement("script")
-      createdScriptElement.setAttribute('data-renewed', 'true')
-      createdScriptElement.textContent = element.textContent
-      createdScriptElement.async = false
-      this.copyElementAttributes(createdScriptElement, element)
-      return createdScriptElement
-    }
-  }
-
-  copyElementAttributes(destinationElement: Element, sourceElement: Element) {
-    for (const { name, value } of [...sourceElement.attributes]) {
-      destinationElement.setAttribute(name, value);
-    }
-  }
-
 
 }
