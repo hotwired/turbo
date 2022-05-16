@@ -84,6 +84,15 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await frameText.getVisibleText(), "Frame: Loaded")
   }
 
+  async "test following a link with data-turbo-method set and a target set navigates the target frame"() {
+    await this.goToLocation("/src/tests/fixtures/form.html")
+    await this.clickSelector("#turbo-method-post-to-targeted-frame")
+    await this.nextBeat
+
+    const frameText = await this.querySelector("#hello h2")
+    this.assert.equal(await frameText.getVisibleText(), "Hello from a frame")
+  }
+
   async "test following a link in rapid succession cancels the previous request"() {
     await this.clickSelector("#outside-frame-form")
     await this.clickSelector("#outer-frame-link")

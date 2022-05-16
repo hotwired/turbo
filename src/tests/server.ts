@@ -43,6 +43,10 @@ router.get("/redirect", (request, response) => {
   response.redirect(301, url.format({ pathname, query }))
 })
 
+router.post("/redirect_to_hello", (request, response) => {
+  response.redirect(301, url.format({ pathname: "/src/tests/fixtures/frames/hello.html" }))
+})
+
 router.post("/reject/tall", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/422_tall.html`)
