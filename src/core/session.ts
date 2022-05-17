@@ -290,7 +290,7 @@ export class Session
 
   applicationAllowsFollowingLinkToLocation(link: Element, location: URL) {
     const event = this.notifyApplicationAfterClickingLinkToLocation(link, location)
-    return !event.defaultPrevented
+    return !event.defaultPrevented || (link.hasAttribute("data-turbo-method") && link.hasAttribute("data-turbo-frame"))
   }
 
   applicationAllowsVisitingLocation(location: URL) {
