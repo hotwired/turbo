@@ -72,6 +72,27 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(reason, "turbo_visit_control_is_reload")
   }
 
+  async "test maintains scroll position before visit when turbo-visit-control setting is reload"() {
+    await this.scrollToSelector("#below-the-fold-visit-control-reload-link")
+    this.assert.notOk(await this.isScrolledToTop(), "scrolled down")
+
+    await this.remote.execute(() => localStorage.setItem("scrolls", "false"))
+
+    this.remote.execute(() => addEventListener("scroll", () => {
+      localStorage.setItem("scrolls", "true")
+    }))
+
+    this.clickSelector("#below-the-fold-visit-control-reload-link")
+
+    await this.nextBody
+
+    const scrolls = await this.remote.execute(() => localStorage.getItem("scrolls"))
+    this.assert.ok(scrolls === "false", "scroll position is preserved")
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
+    this.assert.equal(await this.visitAction, "load")
+  }
+
   async "test accumulates asset elements in head"() {
     const originalElements = await this.assetElements
 
