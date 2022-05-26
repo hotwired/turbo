@@ -17,6 +17,7 @@ export class Navigator {
   readonly delegate: NavigatorDelegate
   formSubmission?: FormSubmission
   currentVisit?: Visit
+  lastVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
@@ -33,6 +34,7 @@ export class Navigator {
   }
 
   startVisit(locatable: Locatable, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+    this.lastVisit = this.currentVisit
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
@@ -138,12 +140,13 @@ export class Navigator {
 
   locationWithActionIsSamePage(location: URL, action?: Action): boolean {
     const anchor = getAnchor(location)
-    const currentAnchor = getAnchor(this.view.lastRenderedLocation)
+    const lastLocation = this.lastVisit?.location || this.view.lastRenderedLocation
+    const currentAnchor = getAnchor(lastLocation)
     const isRestorationToTop = action === "restore" && typeof anchor === "undefined"
 
     return (
       action !== "replace" &&
-      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+      getRequestURL(location) === getRequestURL(lastLocation) &&
       (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
     )
   }
