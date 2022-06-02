@@ -123,22 +123,6 @@ export class VisitTests extends TurboDriveTestCase {
     this.assert.notOk(await this.hasSelector("some-cached-element"))
   }
 
-  async "test updates HTML element attributes"() {
-    await this.visitLocation("/src/tests/fixtures/html_attributes.html")
-    await this.nextBeat
-
-    this.assert.equal(await this.getDocumentElementAttribute("class"), "html-attributes")
-    this.assert.equal(await this.getDocumentElementAttribute("data-attribute"), "attr")
-    this.assert.equal(await this.getDocumentElementAttribute("data-other-attribute"), null)
-
-    await this.clickSelector("#link")
-    await this.nextBeat
-
-    this.assert.equal(await this.getDocumentElementAttribute("class"), "html-attributes-two")
-    this.assert.equal(await this.getDocumentElementAttribute("data-attribute"), "attr-two")
-    this.assert.equal(await this.getDocumentElementAttribute("data-other-attribute"), "other-attr")
-  }
-
   async visitLocation(location: string) {
     this.remote.execute((location: string) => window.Turbo.visit(location), [location])
   }
