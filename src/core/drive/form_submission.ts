@@ -80,9 +80,12 @@ export class FormSubmission {
 
   get action(): string {
     const formElementAction = typeof this.formElement.action === "string" ? this.formElement.action : null
-    return (
-      this.submitter?.getAttribute("formaction") || this.formElement.getAttribute("action") || formElementAction || ""
-    )
+
+    if (this.submitter?.hasAttribute("formaction")) {
+      return this.submitter.getAttribute("formaction") || ""
+    } else {
+      return this.formElement.getAttribute("action") || formElementAction || ""
+    }
   }
 
   get body() {

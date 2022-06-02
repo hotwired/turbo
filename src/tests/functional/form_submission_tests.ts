@@ -330,6 +330,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.deepEqual(await this.getAllSearchParams("button"), [])
   }
 
+  async "test submitter with blank formaction submits to the current page"() {
+    await this.clickSelector("#blank-formaction button")
+    await this.nextBody
+
+    this.assert.ok(await this.hasSelector("#blank-formaction"), "overrides form[action] navigation")
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/form.html")
+  }
+
   async "test input named action with no action attribute"() {
     await this.clickSelector("#action-input form.no-action [type=submit]")
     await this.nextBody
