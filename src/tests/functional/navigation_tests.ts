@@ -49,9 +49,9 @@ export class NavigationTests extends TurboDriveTestCase {
       "sets [aria-busy] on the document element"
     )
     this.assert.equal(
-      await this.nextAttributeMutationNamed("one", "aria-busy"),
+      await this.nextAttributeMutationNamed("html", "aria-busy"),
       null,
-      "removes [aria-busy] from the updated document element"
+      "removes [aria-busy] from the document element"
     )
   }
 

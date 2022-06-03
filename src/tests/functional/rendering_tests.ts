@@ -78,9 +78,11 @@ export class RenderingTests extends TurboDriveTestCase {
 
     await this.remote.execute(() => localStorage.setItem("scrolls", "false"))
 
-    this.remote.execute(() => addEventListener("scroll", () => {
-      localStorage.setItem("scrolls", "true")
-    }))
+    this.remote.execute(() =>
+      addEventListener("scroll", () => {
+        localStorage.setItem("scrolls", "true")
+      })
+    )
 
     this.clickSelector("#below-the-fold-visit-control-reload-link")
 
