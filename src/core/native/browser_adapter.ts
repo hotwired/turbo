@@ -121,7 +121,7 @@ export class BrowserAdapter implements Adapter {
 
   reload(reason: ReloadReason) {
     dispatch("turbo:reload", { detail: reason })
-    window.location.reload()
+    window.location.replace(location.href)
   }
 
   get navigator() {

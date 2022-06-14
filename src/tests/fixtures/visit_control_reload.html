@@ -5,9 +5,17 @@
     <title>Visit control: reload</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
-    <meta name="turbo-visit-control" content="reload">
-  </head>
-  <body>
-    <h1>Visit control: reload</h1>
+    <!-- <meta name="turbo-visit-control" content="reload"> -->
+    <script src="/dist/turbo.es2017-umd.js?19879798723" data-turbo-track="reload"></script>
+    <style>
+      .push-off-screen { margin-top: 1000px; }
+    </style>
+   </head>
+   <body>
+     <h1>Visit control: reload</h1>
+
+    <hr class="push-off-screen">
+
+    <h2>Down the page</h2>
   </body>
 </html>
