@@ -125,7 +125,6 @@ export class BrowserAdapter implements Adapter {
 
     if (!this.location) return
 
-    console.log(this.location.toString())
     window.location.href = this.location.toString()
   }
 
