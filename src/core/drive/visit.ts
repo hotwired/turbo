@@ -229,8 +229,7 @@ export class Visit implements FetchRequestDelegate {
           this.adapter.visitRendered(this)
           this.complete()
         } else {
-          this.changeHistory()
-          await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML))
+          await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML), this)
           this.adapter.visitRendered(this)
           this.fail()
         }
@@ -268,7 +267,7 @@ export class Visit implements FetchRequestDelegate {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
-          await this.view.renderPage(snapshot, isPreview, this.willRender)
+          await this.view.renderPage(snapshot, isPreview, this.willRender, this)
           this.adapter.visitRendered(this)
           if (!isPreview) {
             this.complete()

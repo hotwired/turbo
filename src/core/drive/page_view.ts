@@ -27,7 +27,8 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
     return this.render(renderer)
   }
 
-  renderError(snapshot: PageSnapshot) {
+  renderError(snapshot: PageSnapshot, visit?: Visit) {
+    visit?.changeHistory()
     const renderer = new ErrorRenderer(this.snapshot, snapshot, false)
     return this.render(renderer)
   }
