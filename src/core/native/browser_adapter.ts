@@ -24,14 +24,13 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitProposedToLocation(location: URL, options?: Partial<VisitOptions>) {
-    this.location = location
     this.navigator.startVisit(location, uuid(), options)
   }
 
   visitStarted(visit: Visit) {
+    this.location = visit.location
     visit.loadCachedSnapshot()
     visit.issueRequest()
-    // visit.changeHistory()
     visit.goToSamePageAnchor()
   }
 
@@ -126,6 +125,7 @@ export class BrowserAdapter implements Adapter {
 
     if (!this.location) return
 
+    console.log(this.location.toString())
     window.location.href = this.location.toString()
   }
 
