@@ -4,6 +4,7 @@ import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
+import { Visit } from "./visit"
 
 export interface PageViewDelegate extends ViewDelegate<PageSnapshot> {
   viewWillCacheSnapshot(): void
@@ -16,10 +17,12 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 
-  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true) {
+  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit) {
     const renderer = new PageRenderer(this.snapshot, snapshot, isPreview, willRender)
     if (!renderer.shouldRender) {
       this.forceReloaded = true
+    } else {
+      visit?.changeHistory()
     }
     return this.render(renderer)
   }

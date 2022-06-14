@@ -17,19 +17,21 @@ export class BrowserAdapter implements Adapter {
 
   visitProgressBarTimeout?: number
   formProgressBarTimeout?: number
+  location?: URL
 
   constructor(session: Session) {
     this.session = session
   }
 
   visitProposedToLocation(location: URL, options?: Partial<VisitOptions>) {
+    this.location = location
     this.navigator.startVisit(location, uuid(), options)
   }
 
   visitStarted(visit: Visit) {
     visit.loadCachedSnapshot()
     visit.issueRequest()
-    visit.changeHistory()
+    // visit.changeHistory()
     visit.goToSamePageAnchor()
   }
 
@@ -121,7 +123,10 @@ export class BrowserAdapter implements Adapter {
 
   reload(reason: ReloadReason) {
     dispatch("turbo:reload", { detail: reason })
-    window.location.replace(location.href)
+
+    if (!this.location) return
+
+    window.location.href = this.location.toString()
   }
 
   get navigator() {
