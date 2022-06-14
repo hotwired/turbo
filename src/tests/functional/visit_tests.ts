@@ -10,6 +10,8 @@ export class VisitTests extends TurboDriveTestCase {
     const urlBeforeVisit = await this.location
     await this.visitLocation("/src/tests/fixtures/one.html")
 
+    await this.nextBeat
+
     const urlAfterVisit = await this.location
     this.assert.notEqual(urlBeforeVisit, urlAfterVisit)
     this.assert.equal(await this.visitAction, "advance")
