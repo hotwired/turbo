@@ -243,6 +243,10 @@ export class FrameController
 
   viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}
 
+  preloadOnLoadLinksForView(element: Element) {
+    session.preloadOnLoadLinksForView(element)
+  }
+
   viewInvalidated() {}
 
   // Private
