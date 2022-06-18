@@ -313,6 +313,21 @@ export class NavigationTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/__turbo/delayed_response")
     this.assert.equal(await this.visitAction, "advance")
   }
+
+  async "test navigating back whilst a visit is in-flight"() {
+    this.clickSelector("#delayed-link")
+    await this.nextBeat
+    await this.goBack()
+
+    this.assert.ok(
+      await this.nextEventNamed("turbo:visit"),
+      "navigating back whilst a visit is in-flight starts a non-silent Visit"
+    )
+
+    await this.nextBody
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/navigation.html")
+    this.assert.equal(await this.visitAction, "restore")
+  }
 }
 
 NavigationTests.registerSuite()
