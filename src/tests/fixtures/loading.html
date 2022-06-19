@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-skip-event-details="turbo:before-render">
   <head>
     <meta charset="utf-8">
     <title>Turbo</title>
@@ -12,6 +12,8 @@
 
       <turbo-frame id="hello" src="/src/tests/fixtures/frames/hello.html" loading="lazy"></turbo-frame>
     </details>
+
+    <a id="link-lazy-frame" href="/src/tests/fixtures/frames.html" data-turbo-frame="hello">Navigate #loading-lazy turbo-frame</a>
 
     <details id="loading-eager">
       <summary>Eager-loaded</summary>
