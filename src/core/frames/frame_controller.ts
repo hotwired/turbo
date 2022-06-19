@@ -82,7 +82,7 @@ export class FrameController
     if (this.isIgnoringChangesTo("src")) return
 
     if (this.element.isConnected) {
-      this.loaded = false
+      this.complete = false
     }
 
     if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
@@ -90,8 +90,8 @@ export class FrameController
     }
   }
 
-  loadedChanged() {
-    if (this.isIgnoringChangesTo("loaded")) return
+  completeChanged() {
+    if (this.isIgnoringChangesTo("complete")) return
 
     this.loadSourceURL()
   }
@@ -106,7 +106,7 @@ export class FrameController
   }
 
   private async loadSourceURL() {
-    if (this.enabled && this.isActive && !this.loaded && this.sourceURL) {
+    if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
       this.element.loaded = this.visit(expandURL(this.sourceURL))
       this.appearanceObserver.stop()
       await this.element.loaded
@@ -127,7 +127,7 @@ export class FrameController
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
-        this.loaded = true
+        this.complete = true
         session.frameRendered(fetchResponse, this.element)
         session.frameLoaded(this.element)
         this.fetchResponseLoaded(fetchResponse)
@@ -392,16 +392,16 @@ export class FrameController
     return this.formSubmission !== undefined || this.resolveVisitPromise() !== undefined
   }
 
-  get loaded() {
-    return this.element.hasAttribute("loaded")
+  get complete() {
+    return this.element.hasAttribute("complete")
   }
 
-  set loaded(value: boolean) {
-    this.ignoringChangesToAttribute("loaded", () => {
+  set complete(value: boolean) {
+    this.ignoringChangesToAttribute("complete", () => {
       if (value) {
-        this.element.setAttribute("loaded", "")
+        this.element.setAttribute("complete", "")
       } else {
-        this.element.removeAttribute("loaded")
+        this.element.removeAttribute("complete")
       }
     })
   }
