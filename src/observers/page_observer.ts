@@ -8,7 +8,7 @@ export enum PageStage {
   initial,
   loading,
   interactive,
-  complete
+  complete,
 }
 
 export class PageObserver {

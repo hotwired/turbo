@@ -6,6 +6,10 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.goToLocation("/src/tests/fixtures/rendering.html")
   }
 
+  async teardown() {
+    await this.remote.execute(() => localStorage.clear())
+  }
+
   async "test triggers before-render and render events"() {
     this.clickSelector("#same-origin-link")
     const { newBody } = await this.nextEventNamed("turbo:before-render")
@@ -28,10 +32,20 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test reloads when tracked elements change"() {
+    await this.remote.execute(() =>
+      window.addEventListener("turbo:reload", (e: any) => {
+        localStorage.setItem("reloadReason", e.detail.reason)
+      })
+    )
+
     this.clickSelector("#tracked-asset-change-link")
     await this.nextBody
+
+    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
     this.assert.equal(await this.visitAction, "load")
+    this.assert.equal(reason, "tracked_element_mismatch")
   }
 
   async "test wont reload when tracked elements has a nonce"() {
@@ -42,8 +56,41 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test reloads when turbo-visit-control setting is reload"() {
+    await this.remote.execute(() =>
+      window.addEventListener("turbo:reload", (e: any) => {
+        localStorage.setItem("reloadReason", e.detail.reason)
+      })
+    )
+
     this.clickSelector("#visit-control-reload-link")
     await this.nextBody
+
+    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
+
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
+    this.assert.equal(await this.visitAction, "load")
+    this.assert.equal(reason, "turbo_visit_control_is_reload")
+  }
+
+  async "test maintains scroll position before visit when turbo-visit-control setting is reload"() {
+    await this.scrollToSelector("#below-the-fold-visit-control-reload-link")
+    this.assert.notOk(await this.isScrolledToTop(), "scrolled down")
+
+    await this.remote.execute(() => localStorage.setItem("scrolls", "false"))
+
+    this.remote.execute(() =>
+      addEventListener("scroll", () => {
+        localStorage.setItem("scrolls", "true")
+      })
+    )
+
+    this.clickSelector("#below-the-fold-visit-control-reload-link")
+
+    await this.nextBody
+
+    const scrolls = await this.remote.execute(() => localStorage.getItem("scrolls"))
+    this.assert.ok(scrolls === "false", "scroll position is preserved")
+
     this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
     this.assert.equal(await this.visitAction, "load")
   }
@@ -64,7 +111,7 @@ export class RenderingTests extends TurboDriveTestCase {
 
   async "test replaces provisional elements in head"() {
     const originalElements = await this.provisionalElements
-    this.assert(!await this.hasSelector("meta[name=test]"))
+    this.assert(!(await this.hasSelector("meta[name=test]")))
 
     this.clickSelector("#same-origin-link")
     await this.nextBody
@@ -76,7 +123,7 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.nextBody
     const finalElements = await this.provisionalElements
     this.assert.notDeepEqual(finalElements, newElements)
-    this.assert(!await this.hasSelector("meta[name=test]"))
+    this.assert(!(await this.hasSelector("meta[name=test]")))
   }
 
   async "test evaluates head stylesheet elements"() {
@@ -134,7 +181,7 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test preserves permanent elements"() {
-    let permanentElement = await this.permanentElement
+    const permanentElement = await this.permanentElement
     this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
 
     this.clickSelector("#permanent-element-link")
@@ -145,6 +192,22 @@ export class RenderingTests extends TurboDriveTestCase {
     this.goBack()
     await this.nextEventNamed("turbo:render")
     this.assert(await permanentElement.equals(await this.permanentElement))
+  }
+
+  async "test restores focus during page rendering when transposing the activeElement"() {
+    await this.clickSelector("#permanent-input")
+    await this.pressEnter()
+    await this.nextBody
+
+    this.assert.ok(await this.selectorHasFocus("#permanent-input"), "restores focus after page loads")
+  }
+
+  async "test restores focus during page rendering when transposing an ancestor of the activeElement"() {
+    await this.clickSelector("#permanent-descendant-input")
+    await this.pressEnter()
+    await this.nextBody
+
+    this.assert.ok(await this.selectorHasFocus("#permanent-descendant-input"), "restores focus after page loads")
   }
 
   async "test preserves permanent elements within turbo-frames"() {
@@ -167,6 +230,25 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
   }
 
+  async "test restores focus during turbo-frame rendering when transposing the activeElement"() {
+    await this.clickSelector("#permanent-input-in-frame")
+    await this.pressEnter()
+    await this.nextBeat
+
+    this.assert.ok(await this.selectorHasFocus("#permanent-input-in-frame"), "restores focus after page loads")
+  }
+
+  async "test restores focus during turbo-frame rendering when transposing a descendant of the activeElement"() {
+    await this.clickSelector("#permanent-descendant-input-in-frame")
+    await this.pressEnter()
+    await this.nextBeat
+
+    this.assert.ok(
+      await this.selectorHasFocus("#permanent-descendant-input-in-frame"),
+      "restores focus after page loads"
+    )
+  }
+
   async "test preserves permanent element video playback"() {
     let videoElement = await this.querySelector("#permanent-video")
     await this.clickSelector("#permanent-video-button")
@@ -184,7 +266,7 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   async "test before-cache event"() {
-    this.beforeCache(body => body.innerHTML = "Modified")
+    this.beforeCache((body) => (body.innerHTML = "Modified"))
     this.clickSelector("#same-origin-link")
     await this.nextBody
     await this.goBack()
@@ -213,7 +295,7 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   get provisionalElements(): Promise<Element[]> {
-    return filter(this.headElements, async element => !await isAssetElement(element))
+    return filter(this.headElements, async (element) => !(await isAssetElement(element)))
   }
 
   get headElements(): Promise<Element[]> {
@@ -233,33 +315,50 @@ export class RenderingTests extends TurboDriveTestCase {
   }
 
   get isStylesheetEvaluated(): Promise<boolean> {
-    return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black")
+    return this.evaluate(
+      () => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black"
+    )
   }
 
   get isNoscriptStylesheetEvaluated(): Promise<boolean> {
-    return this.evaluate(() => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black")
+    return this.evaluate(
+      () => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black"
+    )
   }
 
   async modifyBodyBeforeCaching() {
-    return this.remote.execute(() => addEventListener("turbo:before-cache", function eventListener(event) {
-      removeEventListener("turbo:before-cache", eventListener, false)
-      document.body.innerHTML = "Modified"
-    }, false))
+    return this.remote.execute(() =>
+      addEventListener(
+        "turbo:before-cache",
+        function eventListener() {
+          removeEventListener("turbo:before-cache", eventListener, false)
+          document.body.innerHTML = "Modified"
+        },
+        false
+      )
+    )
   }
 
   async beforeCache(callback: (body: HTMLElement) => void) {
-    return this.remote.execute((callback: (body: HTMLElement) => void) => {
-      addEventListener("turbo:before-cache", function eventListener(event) {
-        removeEventListener("turbo:before-cache", eventListener, false)
-        callback(document.body)
-      }, false)
-    }, [callback])
+    return this.remote.execute(
+      (callback: (body: HTMLElement) => void) => {
+        addEventListener(
+          "turbo:before-cache",
+          function eventListener() {
+            removeEventListener("turbo:before-cache", eventListener, false)
+            callback(document.body)
+          },
+          false
+        )
+      },
+      [callback]
+    )
   }
 
   async modifyBodyAfterRemoval() {
     return this.remote.execute(() => {
       const { documentElement, body } = document
-      const observer = new MutationObserver(records => {
+      const observer = new MutationObserver((records) => {
         for (const record of records) {
           if (Array.from(record.removedNodes).indexOf(body) > -1) {
             body.innerHTML = "Modified"
@@ -275,7 +374,7 @@ export class RenderingTests extends TurboDriveTestCase {
 
 async function filter<T>(promisedValues: Promise<T[]>, predicate: (value: T) => Promise<boolean>): Promise<T[]> {
   const values = await promisedValues
-  const matches = await Promise.all(values.map(value => predicate(value)))
+  const matches = await Promise.all(values.map((value) => predicate(value)))
   return matches.reduce((result, match, index) => result.concat(match ? values[index] : []), [] as T[])
 }
 

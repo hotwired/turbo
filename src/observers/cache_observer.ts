@@ -16,10 +16,10 @@ export class CacheObserver {
   }
 
   removeStaleElements() {
-    const staleElements = [ ...document.querySelectorAll('[data-turbo-cache="false"]') ]
+    const staleElements = [...document.querySelectorAll('[data-turbo-cache="false"]')]
 
     for (const element of staleElements) {
-       element.remove()
-     }
+      element.remove()
+    }
   }
 }

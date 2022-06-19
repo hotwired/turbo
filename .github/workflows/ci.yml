@@ -8,11 +8,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
-        node-version: '12'
-    - uses: actions/cache@v2
+        node-version: '16'
+    - uses: actions/cache@v3
       with:
         path: node_modules
         key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -28,6 +28,9 @@ jobs:
         CONTENTS="$(echo ${CONTENTS} | jq --arg chromever "$CHROMEVER" '.tunnelOptions.drivers[0].version = $chromever')"
         echo "${CONTENTS}" > intern.json
         cat intern.json
+
+    - name: Lint
+      run: yarn lint
 
     - name: Test
       run: yarn test

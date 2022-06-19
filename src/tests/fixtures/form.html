@@ -75,6 +75,11 @@
       </form>
       <form action="/__turbo/redirect" method="post" class="confirm" data-turbo-confirm="Are you sure?">
         <input type="submit">
+        <button type="submit" name="greeting" id="secondary_submitter" data-turbo-confirm="Are you really sure?" formaction="/__turbo/redirect?path=/src/tests/fixtures/one.html" formmethod="post" value="secondary_submitter">Secondary action</button>
+      </form>
+      <form action="/__turbo/submit" method="post" data-turbo="true" class="turbo-enabled">
+        <input type="hidden" name="query" value="2">
+        <input type="submit">
       </form>
     </div>
     <hr>
@@ -91,6 +96,11 @@
       <form method="get" class="button-param">
         <input type="hidden" name="query" value="1">
         <button type="submit" name="button">Submit</button>
+      </form>
+    </div>
+    <div id="blank-formaction">
+      <form action="/src/tests/fixtures/one.html">
+        <button formaction="">Submit</button>
       </form>
     </div>
     <hr>

@@ -35,7 +35,9 @@ export class LoadingTests extends TurboDriveTestCase {
 
     this.assert.notOk(await this.hasSelector(frameContents))
 
-    await this.remote.execute(() => document.querySelector("#loading-lazy turbo-frame")?.setAttribute("loading", "eager"))
+    await this.remote.execute(() =>
+      document.querySelector("#loading-lazy turbo-frame")?.setAttribute("loading", "eager")
+    )
     await this.nextBeat
 
     const contents = await this.querySelector(frameContents)
@@ -61,7 +63,9 @@ export class LoadingTests extends TurboDriveTestCase {
     const frameContents = "#loading-lazy turbo-frame h2"
     await this.nextBeat
 
-    await this.remote.execute(() => document.querySelector("#loading-lazy turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html"))
+    await this.remote.execute(() =>
+      document.querySelector("#loading-lazy turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
+    )
     this.assert.notOk(await this.hasSelector(frameContents))
 
     await this.clickSelector("#loading-lazy summary")
@@ -75,7 +79,9 @@ export class LoadingTests extends TurboDriveTestCase {
     const frameContents = "#loading-eager turbo-frame h2"
     await this.nextBeat
 
-    await this.remote.execute(() => document.querySelector("#loading-eager turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html"))
+    await this.remote.execute(() =>
+      document.querySelector("#loading-eager turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
+    )
 
     await this.clickSelector("#loading-eager summary")
     await this.nextBeat
@@ -92,8 +98,7 @@ export class LoadingTests extends TurboDriveTestCase {
 
     const frameContent = "#loading-eager turbo-frame#frame h2"
     this.assert.ok(await this.hasSelector(frameContent))
-    // @ts-ignore
-    await this.remote.execute(() => document.querySelector("#loading-eager turbo-frame")?.reload())
+    await this.remote.execute(() => (document.querySelector("#loading-eager turbo-frame") as any)?.reload())
     this.assert.ok(await this.hasSelector(frameContent))
   }
 
@@ -102,7 +107,7 @@ export class LoadingTests extends TurboDriveTestCase {
     await this.nextBody
 
     const eventLogs = await this.eventLogChannel.read()
-    const requestLogs = eventLogs.filter(([ name ]) => name == "turbo:before-fetch-request")
+    const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
     this.assert.equal(requestLogs.length, 1)
   }
 
@@ -123,7 +128,7 @@ export class LoadingTests extends TurboDriveTestCase {
     await this.nextBeat
 
     const eventLogs = await this.eventLogChannel.read()
-    const requestLogs = eventLogs.filter(([ name ]) => name == "turbo:before-fetch-request")
+    const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
     this.assert.equal(requestLogs.length, 0)
   }
 }

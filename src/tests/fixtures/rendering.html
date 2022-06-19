@@ -24,6 +24,9 @@
     <script type="importmap" nonce="123">
       { "imports": { "turbo": "/dist/turbo.es2017-umd.js?123"} }
     </script>
+    <style>
+      .push-off-screen { margin-top: 1000px; }
+    </style>
   </head>
   <body>
     <section>
@@ -44,8 +47,28 @@
     </section>
     <div id="permanent" data-turbo-permanent>Rendering</div>
 
+    <form>
+      <input id="permanent-input" type="text" name="query" placeholder="Permanent input" data-turbo-permanent>
+    </form>
+
+    <form id="permanent-form" data-turbo-permanent>
+      <input id="permanent-descendant-input" type="text" name="query" placeholder="Permanent descendant input">
+    </form>
+
     <turbo-frame id="frame">
       <div id="permanent-in-frame" data-turbo-permanent>Rendering</div>
+    </turbo-frame>
+
+    <turbo-frame id="hello">
+      <form action="/__turbo/redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/hello.html">
+        <input id="permanent-input-in-frame" type="text" name="query" placeholder="Permanent input in frame" data-turbo-permanent>
+      </form>
+
+      <form id="permanent-form-in-frame" action="/__turbo/redirect" data-turbo-permanent>
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/hello.html">
+        <input id="permanent-descendant-input-in-frame" type="text" name="query" placeholder="Permanent descendant input in frame" data-turbo-permanent>
+      </form>
     </turbo-frame>
 
     <video id="permanent-video" data-turbo-permanent>
@@ -53,5 +76,8 @@
       <source src="/src/tests/fixtures/video.mp4" type="video/mp4">
     </video>
     <button id="permanent-video-button" type="button">Play</button>
+
+    <hr class="push-off-screen">
+    <p><a id="below-the-fold-visit-control-reload-link" href="/src/tests/fixtures/visit_control_reload.html">Visit control: reload</a></p>
   </body>
 </html>

@@ -31,4 +31,5 @@
   "turbo:visit",
   "turbo:frame-load",
   "turbo:frame-render",
+  "turbo:reload"
 ])

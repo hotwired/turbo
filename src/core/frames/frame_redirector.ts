@@ -24,7 +24,7 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
     this.formInterceptor.stop()
   }
 
-  shouldInterceptLinkClick(element: Element, url: string) {
+  shouldInterceptLinkClick(element: Element, _url: string) {
     return this.shouldRedirect(element)
   }
 

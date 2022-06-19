@@ -9,7 +9,7 @@ export class PausableRenderingTests extends TurboDriveTestCase {
     await this.clickSelector("#link")
 
     await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), 'Continue rendering?')
+    this.assert.strictEqual(await this.getAlertText(), "Continue rendering?")
     await this.acceptAlert()
 
     await this.nextBeat
@@ -21,11 +21,11 @@ export class PausableRenderingTests extends TurboDriveTestCase {
     await this.clickSelector("#link")
 
     await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), 'Continue rendering?')
+    this.assert.strictEqual(await this.getAlertText(), "Continue rendering?")
     await this.dismissAlert()
 
     await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), 'Rendering aborted')
+    this.assert.strictEqual(await this.getAlertText(), "Rendering aborted")
     await this.acceptAlert()
 
     await this.nextBeat

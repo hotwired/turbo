@@ -49,12 +49,7 @@ export class LinkInterceptor {
   }
 
   respondsToEventTarget(target: EventTarget | null) {
-    const element
-      = target instanceof Element
-      ? target
-        : target instanceof Node
-        ? target.parentElement
-          : null
+    const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
     return element && element.closest("turbo-frame, html") == this.element
   }
 }
