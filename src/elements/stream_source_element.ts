@@ -5,9 +5,7 @@ export class StreamSourceElement extends HTMLElement {
   streamSource: StreamSource | null = null
 
   connectedCallback() {
-    this.streamSource = this.src.match(/^ws{1,2}:/) ?
-      new WebSocket(this.src) :
-      new EventSource(this.src)
+    this.streamSource = this.src.match(/^ws{1,2}:/) ? new WebSocket(this.src) : new EventSource(this.src)
 
     connectStreamSource(this.streamSource)
   }
