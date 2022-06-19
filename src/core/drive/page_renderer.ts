@@ -1,9 +1,24 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
+import { ReloadReason } from "../native/browser_adapter"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
+  }
+
+  get reloadReason(): ReloadReason {
+    if (!this.newSnapshot.isVisitable) {
+      return {
+        reason: "turbo_visit_control_is_reload",
+      }
+    }
+
+    if (!this.trackedElementsAreIdentical) {
+      return {
+        reason: "tracked_element_mismatch",
+      }
+    }
   }
 
   prepareToRender() {
@@ -11,7 +26,9 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   async render() {
-    this.replaceBody()
+    if (this.willRender) {
+      this.replaceBody()
+    }
   }
 
   finishRendering() {

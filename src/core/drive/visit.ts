@@ -3,6 +3,7 @@ import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetc
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
+import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
 import { uuid } from "../../util"
@@ -23,7 +24,7 @@ export enum TimingMetric {
   visitStart = "visitStart",
   requestStart = "requestStart",
   requestEnd = "requestEnd",
-  visitEnd = "visitEnd"
+  visitEnd = "visitEnd",
 }
 
 export type TimingMetrics = Partial<{ [metric in TimingMetric]: any }>
@@ -33,31 +34,36 @@ export enum VisitState {
   started = "started",
   canceled = "canceled",
   failed = "failed",
-  completed = "completed"
+  completed = "completed",
 }
 
 export type VisitOptions = {
-  action: Action,
-  historyChanged: boolean,
-  referrer?: URL,
-  snapshotHTML?: string,
+  action: Action
+  historyChanged: boolean
+  referrer?: URL
+  snapshotHTML?: string
   response?: VisitResponse
+  visitCachedSnapshot(snapshot: Snapshot): void
+  willRender: boolean
 }
 
 const defaultOptions: VisitOptions = {
   action: "advance",
-  historyChanged: false
+  historyChanged: false,
+  visitCachedSnapshot: () => {},
+  willRender: true,
 }
 
 export type VisitResponse = {
-  statusCode: number,
+  statusCode: number
+  redirected: boolean
   responseHTML?: string
 }
 
 export enum SystemStatusCode {
   networkFailure = 0,
   timeoutFailure = -1,
-  contentTypeMismatch = -2
+  contentTypeMismatch = -2,
 }
 
 export class Visit implements FetchRequestDelegate {
@@ -67,6 +73,8 @@ export class Visit implements FetchRequestDelegate {
   readonly action: Action
   readonly referrer?: URL
   readonly timingMetrics: TimingMetrics = {}
+  readonly visitCachedSnapshot: (snapshot: Snapshot) => void
+  readonly willRender: boolean
 
   followedRedirect = false
   frame?: number
@@ -81,18 +89,29 @@ export class Visit implements FetchRequestDelegate {
   snapshotCached = false
   state = VisitState.initialized
 
-  constructor(delegate: VisitDelegate, location: URL, restorationIdentifier: string | undefined, options: Partial<VisitOptions> = {}) {
+  constructor(
+    delegate: VisitDelegate,
+    location: URL,
+    restorationIdentifier: string | undefined,
+    options: Partial<VisitOptions> = {}
+  ) {
     this.delegate = delegate
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response } = { ...defaultOptions, ...options }
+    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender } = {
+      ...defaultOptions,
+      ...options,
+    }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
+    this.visitCachedSnapshot = visitCachedSnapshot
+    this.willRender = willRender
+    this.scrolled = !willRender
   }
 
   get adapter() {
@@ -206,7 +225,7 @@ export class Visit implements FetchRequestDelegate {
         this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML))
+          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender)
           this.adapter.visitRendered(this)
           this.complete()
         } else {
@@ -248,7 +267,7 @@ export class Visit implements FetchRequestDelegate {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
-          await this.view.renderPage(snapshot, isPreview)
+          await this.view.renderPage(snapshot, isPreview, this.willRender)
           this.adapter.visitRendered(this)
           if (!isPreview) {
             this.complete()
@@ -259,10 +278,11 @@ export class Visit implements FetchRequestDelegate {
   }
 
   followRedirect() {
-    if (this.redirectedToLocation && !this.followedRedirect) {
+    if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
-        action: 'replace',
-        response: this.response
+        action: "replace",
+        willRender: false,
+        response: this.response,
       })
       this.followedRedirect = true
     }
@@ -283,31 +303,40 @@ export class Visit implements FetchRequestDelegate {
     this.startRequest()
   }
 
-  requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse) {
-
-  }
+  requestPreventedHandlingResponse(_request: FetchRequest, _response: FetchResponse) {}
 
   async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     const responseHTML = await response.responseHTML
+    const { redirected, statusCode } = response
     if (responseHTML == undefined) {
-      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+      this.recordResponse({
+        statusCode: SystemStatusCode.contentTypeMismatch,
+        redirected,
+      })
     } else {
       this.redirectedToLocation = response.redirected ? response.location : undefined
-      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+      this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
     }
   }
 
   async requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
     const responseHTML = await response.responseHTML
+    const { redirected, statusCode } = response
     if (responseHTML == undefined) {
-      this.recordResponse({ statusCode: SystemStatusCode.contentTypeMismatch })
+      this.recordResponse({
+        statusCode: SystemStatusCode.contentTypeMismatch,
+        redirected,
+      })
     } else {
-      this.recordResponse({ statusCode: response.statusCode, responseHTML })
+      this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
     }
   }
 
-  requestErrored(request: FetchRequest, error: Error) {
-    this.recordResponse({ statusCode: SystemStatusCode.networkFailure })
+  requestErrored(_request: FetchRequest, _error: Error) {
+    this.recordResponse({
+      statusCode: SystemStatusCode.networkFailure,
+      redirected: false,
+    })
   }
 
   requestFinished() {
@@ -361,9 +390,11 @@ export class Visit implements FetchRequestDelegate {
 
   getHistoryMethodForAction(action: Action) {
     switch (action) {
-      case "replace": return history.replaceState
+      case "replace":
+        return history.replaceState
       case "advance":
-      case "restore": return history.pushState
+      case "restore":
+        return history.pushState
     }
   }
 
@@ -377,25 +408,27 @@ export class Visit implements FetchRequestDelegate {
     } else if (this.action == "restore") {
       return !this.hasCachedSnapshot()
     } else {
-      return true
+      return this.willRender
     }
   }
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot()
+      this.view.cacheSnapshot().then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
       this.snapshotCached = true
     }
   }
 
   async render(callback: () => Promise<void>) {
     this.cancelRender()
-    await new Promise<void>(resolve => {
+    await new Promise<void>((resolve) => {
       this.frame = requestAnimationFrame(() => resolve())
     })
     await callback()
     delete this.frame
-    this.performScroll()
+    if (!this.view.forceReloaded) {
+      this.performScroll()
+    }
   }
 
   cancelRender() {

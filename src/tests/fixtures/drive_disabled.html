@@ -10,11 +10,7 @@
         if (event.target.id == "requestSubmit") {
           event.preventDefault()
           const form = event.target.closest('form')
-          if(typeof form.requestSubmit === "function"){
-            form.requestSubmit()
-          } else {
-            form.submit()
-          }
+          form.requestSubmit()
         }
       })
     </script>

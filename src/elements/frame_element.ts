@@ -1,15 +1,23 @@
 import { FetchResponse } from "../http/fetch_response"
 
-export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
+export enum FrameLoadingStyle {
+  eager = "eager",
+  lazy = "lazy",
+}
+
+export type FrameElementObservedAttribute = keyof FrameElement & ("disabled" | "complete" | "loading" | "src")
 
 export interface FrameElementDelegate {
   connect(): void
   disconnect(): void
+  completeChanged(): void
   loadingStyleChanged(): void
   sourceURLChanged(): void
   disabledChanged(): void
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
+  linkClickIntercepted(element: Element, url: string): void
   loadResponse(response: FetchResponse): void
+  fetchResponseLoaded: (fetchResponse: FetchResponse) => void
   isLoading: boolean
 }
 
@@ -35,8 +43,8 @@ export class FrameElement extends HTMLElement {
   loaded: Promise<FetchResponse | void> = Promise.resolve()
   readonly delegate: FrameElementDelegate
 
-  static get observedAttributes() {
-    return ["disabled", "loading", "src"]
+  static get observedAttributes(): FrameElementObservedAttribute[] {
+    return ["disabled", "complete", "loading", "src"]
   }
 
   constructor() {
@@ -53,14 +61,17 @@ export class FrameElement extends HTMLElement {
   }
 
   reload() {
-    const { src } = this;
-    this.src = null;
-    this.src = src;
+    const { src } = this
+    this.removeAttribute("complete")
+    this.src = null
+    this.src = src
   }
 
   attributeChangedCallback(name: string) {
     if (name == "loading") {
       this.delegate.loadingStyleChanged()
+    } else if (name == "complete") {
+      this.delegate.completeChanged()
     } else if (name == "src") {
       this.delegate.sourceURLChanged()
     } else {
@@ -176,7 +187,9 @@ export class FrameElement extends HTMLElement {
 
 function frameLoadingStyleFromString(style: string) {
   switch (style.toLowerCase()) {
-    case "lazy":  return FrameLoadingStyle.lazy
-    default:      return FrameLoadingStyle.eager
+    case "lazy":
+      return FrameLoadingStyle.lazy
+    default:
+      return FrameLoadingStyle.eager
   }
 }

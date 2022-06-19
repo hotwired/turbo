@@ -8,7 +8,7 @@ export interface StreamObserverDelegate {
 
 export class StreamObserver {
   readonly delegate: StreamObserverDelegate
-  readonly sources: Set<StreamSource> = new Set
+  readonly sources: Set<StreamSource> = new Set()
   private started = false
 
   constructor(delegate: StreamObserverDelegate) {

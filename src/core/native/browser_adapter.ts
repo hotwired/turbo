@@ -3,11 +3,17 @@ import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
 import { FormSubmission } from "../drive/form_submission"
 import { Session } from "../session"
-import { uuid } from "../../util"
+import { uuid, dispatch } from "../../util"
+
+export type ReloadReason = StructuredReason | undefined
+interface StructuredReason {
+  reason: string
+  context?: { [key: string]: any }
+}
 
 export class BrowserAdapter implements Adapter {
   readonly session: Session
-  readonly progressBar = new ProgressBar
+  readonly progressBar = new ProgressBar()
 
   visitProgressBarTimeout?: number
   formProgressBarTimeout?: number
@@ -21,10 +27,10 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitStarted(visit: Visit) {
+    visit.loadCachedSnapshot()
     visit.issueRequest()
     visit.changeHistory()
     visit.goToSamePageAnchor()
-    visit.loadCachedSnapshot()
   }
 
   visitRequestStarted(visit: Visit) {
@@ -45,39 +51,38 @@ export class BrowserAdapter implements Adapter {
       case SystemStatusCode.networkFailure:
       case SystemStatusCode.timeoutFailure:
       case SystemStatusCode.contentTypeMismatch:
-        return this.reload()
+        return this.reload({
+          reason: "request_failed",
+          context: {
+            statusCode,
+          },
+        })
       default:
         return visit.loadResponse()
     }
   }
 
-  visitRequestFinished(visit: Visit) {
+  visitRequestFinished(_visit: Visit) {
     this.progressBar.setValue(1)
     this.hideVisitProgressBar()
   }
 
-  visitCompleted(visit: Visit) {
+  visitCompleted(_visit: Visit) {}
 
+  pageInvalidated(reason: ReloadReason) {
+    this.reload(reason)
   }
 
-  pageInvalidated() {
-    this.reload()
-  }
+  visitFailed(_visit: Visit) {}
 
-  visitFailed(visit: Visit) {
+  visitRendered(_visit: Visit) {}
 
-  }
-
-  visitRendered(visit: Visit) {
-
-  }
-
-  formSubmissionStarted(formSubmission: FormSubmission) {
+  formSubmissionStarted(_formSubmission: FormSubmission) {
     this.progressBar.setValue(0)
     this.showFormProgressBarAfterDelay()
   }
 
-  formSubmissionFinished(formSubmission: FormSubmission) {
+  formSubmissionFinished(_formSubmission: FormSubmission) {
     this.progressBar.setValue(1)
     this.hideFormProgressBar()
   }
@@ -114,7 +119,8 @@ export class BrowserAdapter implements Adapter {
     this.progressBar.show()
   }
 
-  reload() {
+  reload(reason: ReloadReason) {
+    dispatch("turbo:reload", { detail: reason })
     window.location.reload()
   }
 

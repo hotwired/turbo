@@ -3,6 +3,7 @@ import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
 import { expandURL, getAnchor, getRequestURL, Locatable, locationIsVisitable } from "../url"
+import { getAttribute } from "../../util"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -16,6 +17,7 @@ export class Navigator {
   readonly delegate: NavigatorDelegate
   formSubmission?: FormSubmission
   currentVisit?: Visit
+  lastVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
@@ -32,10 +34,11 @@ export class Navigator {
   }
 
   startVisit(locatable: Locatable, restorationIdentifier: string, options: Partial<VisitOptions> = {}) {
+    this.lastVisit = this.currentVisit
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
-      ...options
+      ...options,
     })
     this.currentVisit.start()
   }
@@ -44,11 +47,7 @@ export class Navigator {
     this.stop()
     this.formSubmission = new FormSubmission(this, form, submitter, true)
 
-    if (this.formSubmission.isIdempotent) {
-      this.proposeVisit(this.formSubmission.fetchRequest.url, { action: this.getActionForFormSubmission(this.formSubmission) })
-    } else {
-      this.formSubmission.start()
-    }
+    this.formSubmission.start()
   }
 
   stop() {
@@ -79,7 +78,7 @@ export class Navigator {
 
   formSubmissionStarted(formSubmission: FormSubmission) {
     // Not all adapters implement formSubmissionStarted
-    if (typeof this.adapter.formSubmissionStarted === 'function') {
+    if (typeof this.adapter.formSubmissionStarted === "function") {
       this.adapter.formSubmissionStarted(formSubmission)
     }
   }
@@ -92,8 +91,12 @@ export class Navigator {
           this.view.clearSnapshotCache()
         }
 
-        const { statusCode } = fetchResponse
-        const visitOptions = { response: { statusCode, responseHTML } }
+        const { statusCode, redirected } = fetchResponse
+        const action = this.getActionForFormSubmission(formSubmission)
+        const visitOptions = {
+          action,
+          response: { statusCode, responseHTML, redirected },
+        }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }
@@ -120,7 +123,7 @@ export class Navigator {
 
   formSubmissionFinished(formSubmission: FormSubmission) {
     // Not all adapters implement formSubmissionFinished
-    if (typeof this.adapter.formSubmissionFinished === 'function') {
+    if (typeof this.adapter.formSubmissionFinished === "function") {
       this.adapter.formSubmissionFinished(formSubmission)
     }
   }
@@ -137,12 +140,15 @@ export class Navigator {
 
   locationWithActionIsSamePage(location: URL, action?: Action): boolean {
     const anchor = getAnchor(location)
-    const currentAnchor = getAnchor(this.view.lastRenderedLocation)
-    const isRestorationToTop = action === 'restore' && typeof anchor === 'undefined'
+    const lastLocation = this.lastVisit?.location || this.view.lastRenderedLocation
+    const currentAnchor = getAnchor(lastLocation)
+    const isRestorationToTop = action === "restore" && typeof anchor === "undefined"
 
-    return action !== "replace" &&
-      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
+    return (
+      action !== "replace" &&
+      getRequestURL(location) === getRequestURL(lastLocation) &&
       (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
+    )
   }
 
   visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
@@ -161,7 +167,7 @@ export class Navigator {
 
   getActionForFormSubmission(formSubmission: FormSubmission): Action {
     const { formElement, submitter } = formSubmission
-    const action = submitter?.getAttribute("data-turbo-action") || formElement.getAttribute("data-turbo-action")
+    const action = getAttribute("data-turbo-action", submitter, formElement)
     return isAction(action) ? action : "advance"
   }
 }

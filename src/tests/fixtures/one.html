@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html id="one">
   <head>
     <meta charset="utf-8">
     <title>One</title>
@@ -13,6 +13,7 @@
     <!--styles ensure that the element will be scrolled to top when navigated to via an anchored link -->
     <a name="named-anchor"></a>
     <div id="element-id" style="margin-top: 1em; height: 200vh">An element with an ID</div>
+    <p><a id="redirection-link" href="/__turbo/redirect?path=/src/tests/fixtures/visit.html">Redirection link</a></p>
 
     <turbo-frame id="navigate-top">
       Replaced only the frame

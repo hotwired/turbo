@@ -11,6 +11,7 @@ export class TurboDriveTestCase extends FunctionalTestCase {
   lastBody?: Element
 
   async beforeTest() {
+    await this.clearLocalStorage()
     await this.drainEventLog()
     this.lastBody = await this.body
   }
@@ -59,12 +60,25 @@ export class TurboDriveTestCase extends FunctionalTestCase {
     return attributeValue
   }
 
+  async setLocalStorageFromEvent(event: string, key: string, value: string) {
+    return this.remote.execute(
+      (eventName: string, storageKey: string, storageValue: string) => {
+        addEventListener(eventName, () => localStorage.setItem(storageKey, storageValue))
+      },
+      [event, key, value]
+    )
+  }
+
+  getFromLocalStorage(key: string) {
+    return this.remote.execute((storageKey: string) => localStorage.getItem(storageKey), [key])
+  }
+
   get nextBody(): Promise<Element> {
     return (async () => {
       let body
       do body = await this.changedBody
       while (!body)
-      return this.lastBody = body
+      return (this.lastBody = body)
     })()
   }
 
@@ -89,5 +103,9 @@ export class TurboDriveTestCase extends FunctionalTestCase {
 
   drainEventLog() {
     return this.eventLogChannel.drain()
+  }
+
+  clearLocalStorage() {
+    this.remote.execute(() => localStorage.clear())
   }
 }

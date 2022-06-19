@@ -1,31 +1,44 @@
 import { PermanentElementMap } from "./snapshot"
 
+export interface BardoDelegate {
+  enteringBardo(currentPermanentElement: Element, newPermanentElement: Element): void
+  leavingBardo(currentPermanentElement: Element): void
+}
+
 export class Bardo {
   readonly permanentElementMap: PermanentElementMap
+  readonly delegate: BardoDelegate
 
-  static preservingPermanentElements(permanentElementMap: PermanentElementMap, callback: () => void) {
-    const bardo = new this(permanentElementMap)
+  static preservingPermanentElements(
+    delegate: BardoDelegate,
+    permanentElementMap: PermanentElementMap,
+    callback: () => void
+  ) {
+    const bardo = new this(delegate, permanentElementMap)
     bardo.enter()
     callback()
     bardo.leave()
   }
 
-  constructor(permanentElementMap: PermanentElementMap) {
+  constructor(delegate: BardoDelegate, permanentElementMap: PermanentElementMap) {
+    this.delegate = delegate
     this.permanentElementMap = permanentElementMap
   }
 
   enter() {
     for (const id in this.permanentElementMap) {
-      const [, newPermanentElement ] = this.permanentElementMap[id]
+      const [currentPermanentElement, newPermanentElement] = this.permanentElementMap[id]
+      this.delegate.enteringBardo(currentPermanentElement, newPermanentElement)
       this.replaceNewPermanentElementWithPlaceholder(newPermanentElement)
     }
   }
 
   leave() {
     for (const id in this.permanentElementMap) {
-      const [ currentPermanentElement ] = this.permanentElementMap[id]
+      const [currentPermanentElement] = this.permanentElementMap[id]
       this.replaceCurrentPermanentElementWithClone(currentPermanentElement)
       this.replacePlaceholderWithPermanentElement(currentPermanentElement)
+      this.delegate.leavingBardo(currentPermanentElement)
     }
   }
 
@@ -45,11 +58,11 @@ export class Bardo {
   }
 
   getPlaceholderById(id: string) {
-    return this.placeholders.find(element => element.content == id)
+    return this.placeholders.find((element) => element.content == id)
   }
 
   get placeholders(): HTMLMetaElement[] {
-    return [ ...document.querySelectorAll("meta[name=turbo-permanent-placeholder][content]") ] as any
+    return [...document.querySelectorAll<HTMLMetaElement>("meta[name=turbo-permanent-placeholder][content]")]
   }
 }
 
