@@ -157,7 +157,8 @@ export class Visit implements FetchRequestDelegate {
     if (this.state == VisitState.started) {
       this.recordTimingMetric(TimingMetric.visitEnd)
       this.state = VisitState.completed
-      this.followRedirect();
+      this.followRedirect()
+
       if (!this.followedRedirect) {
         this.adapter.visitCompleted(this)
         this.delegate.visitCompleted(this)

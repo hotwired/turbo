@@ -320,8 +320,8 @@ export class NavigationTests extends TurboDriveTestCase {
     await this.nextBeat // 200 response
     await this.nextBody
     const eventLogs = await this.eventLogChannel.read()
-    const turboLoads = eventLogs.filter(([ name ]) => name == "turbo:load");
-    this.assert.equal(turboLoads.length, 1);
+    const turboLoads = eventLogs.filter(([name]) => name == "turbo:load")
+    this.assert.equal(turboLoads.length, 1)
   }
 
   async "test navigating back whilst a visit is in-flight"() {
