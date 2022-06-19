@@ -71,6 +71,10 @@ export class FunctionalTestCase extends InternTestCase {
     return this.remote.getActiveElement().then((activeElement) => activeElement.type("\uE004")) // TAB
   }
 
+  async pressEnter(): Promise<void> {
+    return this.remote.getActiveElement().then((activeElement) => activeElement.type("\uE006")) // ENTER
+  }
+
   async outerHTMLForSelector(selector: string): Promise<string> {
     const element = await this.remote.findByCssSelector(selector)
     return this.evaluate((element) => element.outerHTML, element)

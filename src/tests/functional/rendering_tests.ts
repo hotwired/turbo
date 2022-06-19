@@ -194,6 +194,22 @@ export class RenderingTests extends TurboDriveTestCase {
     this.assert(await permanentElement.equals(await this.permanentElement))
   }
 
+  async "test restores focus during page rendering when transposing the activeElement"() {
+    await this.clickSelector("#permanent-input")
+    await this.pressEnter()
+    await this.nextBody
+
+    this.assert.ok(await this.selectorHasFocus("#permanent-input"), "restores focus after page loads")
+  }
+
+  async "test restores focus during page rendering when transposing an ancestor of the activeElement"() {
+    await this.clickSelector("#permanent-descendant-input")
+    await this.pressEnter()
+    await this.nextBody
+
+    this.assert.ok(await this.selectorHasFocus("#permanent-descendant-input"), "restores focus after page loads")
+  }
+
   async "test preserves permanent elements within turbo-frames"() {
     let permanentElement = await this.querySelector("#permanent-in-frame")
     this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
@@ -212,6 +228,25 @@ export class RenderingTests extends TurboDriveTestCase {
     await this.nextBeat
     permanentElement = await this.querySelector("#permanent-in-frame")
     this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
+  }
+
+  async "test restores focus during turbo-frame rendering when transposing the activeElement"() {
+    await this.clickSelector("#permanent-input-in-frame")
+    await this.pressEnter()
+    await this.nextBeat
+
+    this.assert.ok(await this.selectorHasFocus("#permanent-input-in-frame"), "restores focus after page loads")
+  }
+
+  async "test restores focus during turbo-frame rendering when transposing a descendant of the activeElement"() {
+    await this.clickSelector("#permanent-descendant-input-in-frame")
+    await this.pressEnter()
+    await this.nextBeat
+
+    this.assert.ok(
+      await this.selectorHasFocus("#permanent-descendant-input-in-frame"),
+      "restores focus after page loads"
+    )
   }
 
   async "test preserves permanent element video playback"() {
