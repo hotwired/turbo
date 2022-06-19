@@ -30,9 +30,6 @@ export const StreamActions: {
   },
 
   update() {
-    this.targetElements.forEach((e) => {
-      e.innerHTML = ""
-      e.append(this.templateContent)
-    })
+    this.targetElements.forEach((e) => e.replaceChildren(this.templateContent))
   },
 }
