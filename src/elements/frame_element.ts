@@ -1,6 +1,9 @@
 import { FetchResponse } from "../http/fetch_response"
 
-export enum FrameLoadingStyle { eager = "eager", lazy = "lazy" }
+export enum FrameLoadingStyle {
+  eager = "eager",
+  lazy = "lazy",
+}
 
 export interface FrameElementDelegate {
   connect(): void
@@ -55,9 +58,9 @@ export class FrameElement extends HTMLElement {
   }
 
   reload() {
-    const { src } = this;
-    this.src = null;
-    this.src = src;
+    const { src } = this
+    this.src = null
+    this.src = src
   }
 
   attributeChangedCallback(name: string) {
@@ -178,7 +181,9 @@ export class FrameElement extends HTMLElement {
 
 function frameLoadingStyleFromString(style: string) {
   switch (style.toLowerCase()) {
-    case "lazy":  return FrameLoadingStyle.lazy
-    default:      return FrameLoadingStyle.eager
+    case "lazy":
+      return FrameLoadingStyle.lazy
+    default:
+      return FrameLoadingStyle.eager
   }
 }

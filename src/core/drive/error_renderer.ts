@@ -28,6 +28,6 @@ export class ErrorRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   get scriptElements() {
-    return [ ...document.documentElement.querySelectorAll("script") ]
+    return [...document.documentElement.querySelectorAll("script")]
   }
 }

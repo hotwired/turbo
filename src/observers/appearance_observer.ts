@@ -28,7 +28,7 @@ export class AppearanceObserver {
     }
   }
 
-  intersect: IntersectionObserverCallback = entries => {
+  intersect: IntersectionObserverCallback = (entries) => {
     const lastEntry = entries.slice(-1)[0]
     if (lastEntry?.isIntersecting) {
       this.delegate.elementAppearedInViewport(this.element)

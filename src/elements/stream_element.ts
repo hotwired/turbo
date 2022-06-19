@@ -37,35 +37,37 @@ export class StreamElement extends HTMLElement {
   private renderPromise?: Promise<void>
 
   async render() {
-    return this.renderPromise ??= (async () => {
+    return (this.renderPromise ??= (async () => {
       if (this.dispatchEvent(this.beforeRenderEvent)) {
         await nextAnimationFrame()
         this.performAction()
       }
-    })()
+    })())
   }
 
   disconnect() {
-    try { this.remove() } catch {}
+    try {
+      this.remove()
+      // eslint-disable-next-line no-empty
+    } catch {}
   }
- 
+
   /**
    * Removes duplicate children (by ID)
    */
   removeDuplicateTargetChildren() {
-    this.duplicateChildren.forEach(c => c.remove())
+    this.duplicateChildren.forEach((c) => c.remove())
   }
-  
+
   /**
    * Gets the list of duplicate children (i.e. those with the same ID)
    */
   get duplicateChildren() {
-    const existingChildren = this.targetElements.flatMap(e => [...e.children]).filter(c => !!c.id)
-    const newChildrenIds   = [...this.templateContent?.children].filter(c => !!c.id).map(c => c.id)
-  
-    return existingChildren.filter(c => newChildrenIds.includes(c.id))
+    const existingChildren = this.targetElements.flatMap((e) => [...e.children]).filter((c) => !!c.id)
+    const newChildrenIds = [...(this.templateContent?.children || [])].filter((c) => !!c.id).map((c) => c.id)
+
+    return existingChildren.filter((c) => newChildrenIds.includes(c.id))
   }
-  
 
   /**
    * Gets the action function to be performed.
@@ -85,7 +87,7 @@ export class StreamElement extends HTMLElement {
    * Gets the target elements which the template will be rendered to.
    */
   get targetElements() {
-    if (this.target) { 
+    if (this.target) {
       return this.targetElementsById
     } else if (this.targets) {
       return this.targetElementsByQuery
@@ -142,14 +144,17 @@ export class StreamElement extends HTMLElement {
   }
 
   private get beforeRenderEvent() {
-    return new CustomEvent("turbo:before-stream-render", { bubbles: true, cancelable: true })
+    return new CustomEvent("turbo:before-stream-render", {
+      bubbles: true,
+      cancelable: true,
+    })
   }
 
   private get targetElementsById() {
     const element = this.ownerDocument?.getElementById(this.target!)
 
     if (element !== null) {
-      return [ element ]
+      return [element]
     } else {
       return []
     }

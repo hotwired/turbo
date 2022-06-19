@@ -37,7 +37,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(fetchRequestUrl.searchParams.get("key"), "value", "fetch request encodes query parameters")
 
     await this.nextBeat
-    const src = new URL(await this.attributeForSelector("#frame", "src") || "")
+    const src = new URL((await this.attributeForSelector("#frame", "src")) || "")
 
     this.assert.equal(src.pathname, "/src/tests/fixtures/frames/frame.html")
     this.assert.equal(src.searchParams.get("key"), "value", "[src] attribute encodes query parameters")
@@ -57,9 +57,17 @@ export class FrameTests extends TurboDriveTestCase {
     await this.clickSelector("#hello a")
 
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), "", "sets [busy] on the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets [aria-busy=true] on the #frame")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      "true",
+      "sets [aria-busy=true] on the #frame"
+    )
     this.assert.equal(await this.nextAttributeMutationNamed("frame", "busy"), null, "removes [busy] on the #frame")
-    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), null, "removes [aria-busy] from the #frame")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      null,
+      "removes [aria-busy] from the #frame"
+    )
   }
 
   async "test following a link to a page without a matching frame results in an empty frame"() {
@@ -137,7 +145,7 @@ export class FrameTests extends TurboDriveTestCase {
   }
 
   async "test following a link within a frame with target=_top navigates the page"() {
-    this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
+    this.assert.equal(await this.attributeForSelector("#navigate-top", "src"), null)
 
     await this.clickSelector("#navigate-top a:not([data-turbo-frame])")
     await this.nextBeat
@@ -150,7 +158,7 @@ export class FrameTests extends TurboDriveTestCase {
   }
 
   async "test following a link that declares data-turbo-frame='_self' within a frame with target=_top navigates the frame itself"() {
-    this.assert.equal(await this.attributeForSelector("#navigate-top" ,"src"), null)
+    this.assert.equal(await this.attributeForSelector("#navigate-top", "src"), null)
 
     await this.clickSelector("#navigate-top a[data-turbo-frame='_self']")
     await this.nextBeat
@@ -184,9 +192,14 @@ export class FrameTests extends TurboDriveTestCase {
 
   async "test removing [disabled] attribute from eager-loaded frame navigates it"() {
     await this.remote.execute(() => document.getElementById("frame")?.setAttribute("disabled", ""))
-    await this.remote.execute((src: string) => document.getElementById("frame")?.setAttribute("src", "/src/tests/fixtures/frames/frame.html"))
+    await this.remote.execute(() =>
+      document.getElementById("frame")?.setAttribute("src", "/src/tests/fixtures/frames/frame.html")
+    )
 
-    this.assert.ok(await this.noNextEventNamed("turbo:before-fetch-request"), "[disabled] frames do not submit requests")
+    this.assert.ok(
+      await this.noNextEventNamed("turbo:before-fetch-request"),
+      "[disabled] frames do not submit requests"
+    )
 
     await this.remote.execute(() => document.getElementById("frame")?.removeAttribute("disabled"))
 
@@ -249,7 +262,7 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(otherEvents.length, 0, "no more events")
   }
 
-   async "test following inner link reloads frame on every click"() {
+  async "test following inner link reloads frame on every click"() {
     await this.clickSelector("#hello a")
     await this.nextEventNamed("turbo:before-fetch-request")
 
@@ -314,14 +327,25 @@ export class FrameTests extends TurboDriveTestCase {
   async "test navigating pushing URL state from a frame navigation fires events"() {
     await this.clickSelector("#link-outside-frame-action-advance")
 
-    this.assert.equal(await this.nextAttributeMutationNamed("frame", "aria-busy"), "true", "sets aria-busy on the <turbo-frame>")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      "true",
+      "sets aria-busy on the <turbo-frame>"
+    )
     await this.nextEventOnTarget("frame", "turbo:before-fetch-request")
     await this.nextEventOnTarget("frame", "turbo:before-fetch-response")
     await this.nextEventOnTarget("frame", "turbo:frame-render")
     await this.nextEventOnTarget("frame", "turbo:frame-load")
-    this.assert.notOk(await this.nextAttributeMutationNamed("frame", "aria-busy"), "removes aria-busy from the <turbo-frame>")
+    this.assert.notOk(
+      await this.nextAttributeMutationNamed("frame", "aria-busy"),
+      "removes aria-busy from the <turbo-frame>"
+    )
 
-    this.assert.equal(await this.nextAttributeMutationNamed("html", "aria-busy"), "true", "sets aria-busy on the <html>")
+    this.assert.equal(
+      await this.nextAttributeMutationNamed("html", "aria-busy"),
+      "true",
+      "sets aria-busy on the <html>"
+    )
     await this.nextEventOnTarget("html", "turbo:before-visit")
     await this.nextEventOnTarget("html", "turbo:visit")
     await this.nextEventOnTarget("html", "turbo:before-cache")
@@ -339,7 +363,7 @@ export class FrameTests extends TurboDriveTestCase {
     await this.nextEventOnTarget("frame", "turbo:frame-load")
     await this.noNextEventNamed("turbo:before-fetch-request")
 
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Frames")
@@ -381,13 +405,17 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
     this.assert.equal(await frameTitle.getVisibleText(), "Frame: Loaded")
     this.assert.equal(await this.pathname, "/src/tests/fixtures/frames/frame.html")
-    this.assert.equal(await this.propertyForSelector("#below-the-fold-input", "value"), "a value", "preserves page state")
+    this.assert.equal(
+      await this.propertyForSelector("#below-the-fold-input", "value"),
+      "a value",
+      "preserves page state"
+    )
 
     const { y } = await this.scrollPosition
     this.assert.notEqual(y, 0, "preserves Y scroll position")
@@ -416,7 +444,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
@@ -430,7 +458,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
@@ -444,7 +472,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
@@ -471,7 +499,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
@@ -498,7 +526,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
@@ -533,7 +561,7 @@ export class FrameTests extends TurboDriveTestCase {
 
     const title = await this.querySelector("h1")
     const frameTitle = await this.querySelector("#frame h2")
-    const src = await this.attributeForSelector("#frame", "src") ?? ""
+    const src = (await this.attributeForSelector("#frame", "src")) ?? ""
 
     this.assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
     this.assert.equal(await title.getVisibleText(), "Frames")
@@ -551,38 +579,78 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.ok(await this.nextEventOnTarget("frame", "turbo:before-fetch-response"))
   }
 
+  async "test navigating a eager frame with a link[method=get] that does not fetch eager frame twice"() {
+    await this.clickSelector("#link-to-eager-loaded-frame")
+
+    await this.nextBeat
+
+    const eventLogs = await this.eventLogChannel.read()
+    const fetchLogs = eventLogs.filter(
+      ([name, options]) =>
+        name == "turbo:before-fetch-request" &&
+        options?.url?.includes("/src/tests/fixtures/frames/frame_for_eager.html")
+    )
+    this.assert.equal(fetchLogs.length, 1)
+
+    const src = (await this.attributeForSelector("#eager-loaded-frame", "src")) ?? ""
+    this.assert.ok(src.includes("/src/tests/fixtures/frames/frame_for_eager.html"), "updates src attribute")
+    this.assert.equal(await (await this.querySelector("h1")).getVisibleText(), "Eager-loaded frame")
+    this.assert.equal(
+      await (await this.querySelector("#eager-loaded-frame h2")).getVisibleText(),
+      "Eager-loaded frame: Loaded"
+    )
+    this.assert.equal(await this.pathname, "/src/tests/fixtures/page_with_eager_frame.html")
+  }
+
   async withoutChangingEventListenersCount(callback: () => void) {
     const name = "eventListenersAttachedToDocument"
     const setup = () => {
-      return this.evaluate((name: string) => {
-        const context = window as any
-        context[name] = 0
-        context.originals = { addEventListener: document.addEventListener, removeEventListener: document.removeEventListener }
+      return this.evaluate(
+        (name: string) => {
+          const context = window as any
+          context[name] = 0
+          context.originals = {
+            addEventListener: document.addEventListener,
+            removeEventListener: document.removeEventListener,
+          }
 
-        document.addEventListener = (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
-          context.originals.addEventListener.call(document, type, listener, options)
-          context[name] += 1
-        }
+          document.addEventListener = (
+            type: string,
+            listener: EventListenerOrEventListenerObject,
+            options?: boolean | AddEventListenerOptions
+          ) => {
+            context.originals.addEventListener.call(document, type, listener, options)
+            context[name] += 1
+          }
 
-        document.removeEventListener = (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
-          context.originals.removeEventListener.call(document, type, listener, options)
-          context[name] -= 1
-        }
+          document.removeEventListener = (
+            type: string,
+            listener: EventListenerOrEventListenerObject,
+            options?: boolean | AddEventListenerOptions
+          ) => {
+            context.originals.removeEventListener.call(document, type, listener, options)
+            context[name] -= 1
+          }
 
-        return context[name] || 0
-      }, [name])
+          return context[name] || 0
+        },
+        [name]
+      )
     }
 
     const teardown = () => {
-      return this.evaluate((name: string) => {
-        const context = window as any
-        const { addEventListener, removeEventListener } = context.originals
+      return this.evaluate(
+        (name: string) => {
+          const context = window as any
+          const { addEventListener, removeEventListener } = context.originals
 
-        document.addEventListener = addEventListener
-        document.removeEventListener = removeEventListener
+          document.addEventListener = addEventListener
+          document.removeEventListener = removeEventListener
 
-        return context[name] || 0
-      }, [name])
+          return context[name] || 0
+        },
+        [name]
+      )
     }
 
     const originalCount = await setup()
@@ -610,6 +678,5 @@ declare global {
     frameScriptEvaluationCount?: number
   }
 }
-
 
 FrameTests.registerSuite()

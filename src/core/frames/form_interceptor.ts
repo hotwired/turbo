@@ -22,7 +22,11 @@ export class FormInterceptor {
 
   submitBubbled = <EventListener>((event: SubmitEvent) => {
     const form = event.target
-    if (!event.defaultPrevented && form instanceof HTMLFormElement && form.closest("turbo-frame, html") == this.element) {
+    if (
+      !event.defaultPrevented &&
+      form instanceof HTMLFormElement &&
+      form.closest("turbo-frame, html") == this.element
+    ) {
       const submitter = event.submitter || undefined
       const method = submitter?.getAttribute("formmethod") || form.method
 

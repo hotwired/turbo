@@ -61,9 +61,12 @@ export class TurboDriveTestCase extends FunctionalTestCase {
   }
 
   async setLocalStorageFromEvent(event: string, key: string, value: string) {
-    return this.remote.execute((eventName: string, storageKey: string, storageValue: string) => {
-      addEventListener(eventName, () => localStorage.setItem(storageKey, storageValue))
-    }, [event, key, value])
+    return this.remote.execute(
+      (eventName: string, storageKey: string, storageValue: string) => {
+        addEventListener(eventName, () => localStorage.setItem(storageKey, storageValue))
+      },
+      [event, key, value]
+    )
   }
 
   getFromLocalStorage(key: string) {
@@ -75,7 +78,7 @@ export class TurboDriveTestCase extends FunctionalTestCase {
       let body
       do body = await this.changedBody
       while (!body)
-      return this.lastBody = body
+      return (this.lastBody = body)
     })()
   }
 

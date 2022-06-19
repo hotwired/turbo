@@ -1,16 +1,28 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
-
-const INTERNAL_ATTRIBUTES = ["aria-busy", "data-turbo-preview"]
+import { ReloadReason } from "../native/browser_adapter"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
 
+  get reloadReason(): ReloadReason {
+    if (!this.newSnapshot.isVisitable) {
+      return {
+        reason: "turbo_visit_control_is_reload",
+      }
+    }
+
+    if (!this.trackedElementsAreIdentical) {
+      return {
+        reason: "tracked_element_mismatch",
+      }
+    }
+  }
+
   prepareToRender() {
     this.mergeHead()
-    this.updateHtmlElementAttributes()
   }
 
   async render() {
@@ -38,27 +50,11 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.newSnapshot.element
   }
 
-  get newHtmlElement() {
-    return this.newSnapshot.htmlElement
-  }
-
   mergeHead() {
     this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
     this.removeCurrentHeadProvisionalElements()
     this.copyNewHeadProvisionalElements()
-  }
-
-  updateHtmlElementAttributes() {
-    for(const attr of document.documentElement.attributes) {
-      if (!this.newElement.hasAttribute(attr.nodeName) && !INTERNAL_ATTRIBUTES.includes(attr.nodeName)) {
-        document.documentElement.removeAttribute(attr.nodeName)
-      }
-    }
-
-    for(const attr of this.newHtmlElement.attributes) {
-      document.documentElement.setAttribute(attr.nodeName, attr.nodeValue!)
-    }
   }
 
   replaceBody() {
