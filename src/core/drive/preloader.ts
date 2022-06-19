@@ -8,7 +8,7 @@ export interface PreloaderDelegate {
 
 export class Preloader {
   readonly delegate: PreloaderDelegate
-  readonly selector: string = 'a[data-turbo-preload]'
+  readonly selector: string = "a[data-turbo-preload]"
 
   constructor(delegate: PreloaderDelegate) {
     this.delegate = delegate
@@ -19,10 +19,10 @@ export class Preloader {
   }
 
   start() {
-    if (document.readyState === 'loading') {
-      return document.addEventListener('DOMContentLoaded', () => {
+    if (document.readyState === "loading") {
+      return document.addEventListener("DOMContentLoaded", () => {
         this.preloadOnLoadLinksForView(document.body)
-      });
+      })
     } else {
       this.preloadOnLoadLinksForView(document.body)
     }
@@ -42,12 +42,12 @@ export class Preloader {
     }
 
     try {
-      const response = await fetch(location.toString(), { headers: { 'VND.PREFETCH': 'true', 'Accept': 'text/html' } })
+      const response = await fetch(location.toString(), { headers: { "VND.PREFETCH": "true", Accept: "text/html" } })
       const responseText = await response.text()
       const snapshot = PageSnapshot.fromHTMLString(responseText)
 
       this.snapshotCache.put(location, snapshot)
-    } catch(_) {
+    } catch (_) {
       // If we cannot preload that is ok!
     }
   }
