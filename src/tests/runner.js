@@ -2,6 +2,7 @@ const { TestServer } = require("../../dist/tests/server")
 const configuration = require("../../intern.json")
 const intern = require("intern").default
 const arg = require("arg");
+const { CHROMEVER } = process.env
 
 const args = arg({
   "--grep": String,
@@ -10,6 +11,14 @@ const args = arg({
 
 intern.configure(configuration)
 intern.configure({ reporters: [ "runner" ] })
+
+if (CHROMEVER) {
+  intern.configure({
+    tunnelOptions: {
+      drivers: [{ name: "chrome", version: CHROMEVER }]
+    }
+  })
+}
 
 if (args["--grep"]) {
   intern.configure({ grep: args["--grep"] })
