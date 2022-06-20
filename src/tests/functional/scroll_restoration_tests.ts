@@ -1,33 +1,31 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { test } from "@playwright/test"
+import { assert } from "chai"
+import { nextBeat, scrollPosition, scrollToSelector } from "../helpers/page"
 
-export class ScrollRestorationTests extends TurboDriveTestCase {
-  async "test landing on an anchor"() {
-    await this.goToLocation("/src/tests/fixtures/scroll_restoration.html#three")
-    await this.nextBody
-    const { y: yAfterLoading } = await this.scrollPosition
-    this.assert.notEqual(yAfterLoading, 0)
-  }
+test("test landing on an anchor", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_restoration.html#three")
+  await nextBeat()
+  const { y: yAfterLoading } = await scrollPosition(page)
+  assert.notEqual(yAfterLoading, 0)
+})
 
-  async "test reloading after scrolling"() {
-    await this.goToLocation("/src/tests/fixtures/scroll_restoration.html")
-    await this.scrollToSelector("#three")
-    const { y: yAfterScrolling } = await this.scrollPosition
-    this.assert.notEqual(yAfterScrolling, 0)
+test("test reloading after scrolling", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_restoration.html")
+  await scrollToSelector(page, "#three")
+  const { y: yAfterScrolling } = await scrollPosition(page)
+  assert.notEqual(yAfterScrolling, 0)
 
-    await this.reload()
-    const { y: yAfterReloading } = await this.scrollPosition
-    this.assert.notEqual(yAfterReloading, 0)
-  }
+  await page.reload()
+  const { y: yAfterReloading } = await scrollPosition(page)
+  assert.notEqual(yAfterReloading, 0)
+})
 
-  async "test returning from history"() {
-    await this.goToLocation("/src/tests/fixtures/scroll_restoration.html")
-    await this.scrollToSelector("#three")
-    await this.goToLocation("/src/tests/fixtures/bare.html")
-    await this.goBack()
+test("test returning from history", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_restoration.html")
+  await scrollToSelector(page, "#three")
+  await page.goto("/src/tests/fixtures/bare.html")
+  await page.goBack()
 
-    const { y: yAfterReturning } = await this.scrollPosition
-    this.assert.notEqual(yAfterReturning, 0)
-  }
-}
-
-ScrollRestorationTests.registerSuite()
+  const { y: yAfterReturning } = await scrollPosition(page)
+  assert.notEqual(yAfterReturning, 0)
+})

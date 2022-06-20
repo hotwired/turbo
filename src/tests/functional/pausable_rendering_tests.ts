@@ -1,37 +1,34 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { test } from "@playwright/test"
+import { assert } from "chai"
+import { nextBeat } from "../helpers/page"
 
-export class PausableRenderingTests extends TurboDriveTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/pausable_rendering.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/pausable_rendering.html")
+})
 
-  async "test pauses and resumes rendering"() {
-    await this.clickSelector("#link")
+test("test pauses and resumes rendering", async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    assert.strictEqual(dialog.message(), "Continue rendering?")
+    dialog.accept()
+  })
 
-    await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), "Continue rendering?")
-    await this.acceptAlert()
+  await page.click("#link")
+  await nextBeat()
 
-    await this.nextBeat
-    const h1 = await this.querySelector("h1")
-    this.assert.equal(await h1.getVisibleText(), "One")
-  }
+  assert.equal(await page.textContent("h1"), "One")
+})
 
-  async "test aborts rendering"() {
-    await this.clickSelector("#link")
+test("test aborts rendering", async ({ page }) => {
+  const [firstDialog] = await Promise.all([page.waitForEvent("dialog"), page.click("#link")])
 
-    await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), "Continue rendering?")
-    await this.dismissAlert()
+  assert.strictEqual(firstDialog.message(), "Continue rendering?")
 
-    await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), "Rendering aborted")
-    await this.acceptAlert()
+  firstDialog.dismiss()
 
-    await this.nextBeat
-    const h1 = await this.querySelector("h1")
-    this.assert.equal(await h1.getVisibleText(), "Pausable Rendering")
-  }
-}
+  const nextDialog = await page.waitForEvent("dialog")
 
-PausableRenderingTests.registerSuite()
+  assert.strictEqual(nextDialog.message(), "Rendering aborted")
+  nextDialog.accept()
+
+  assert.equal(await page.textContent("h1"), "Pausable Rendering")
+})

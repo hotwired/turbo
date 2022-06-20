@@ -31,28 +31,6 @@ export default [
   },
 
   {
-    input: "src/tests/functional/index.ts",
-    output: [
-      {
-        file: "dist/tests/functional.js",
-        format: "cjs",
-        sourcemap: true
-      }
-    ],
-    plugins: [
-      resolve(),
-      typescript()
-    ],
-    external: [
-      "http",
-      "intern"
-    ],
-    watch: {
-      include: "src/tests/**"
-    }
-  },
-
-  {
     input: "src/tests/unit/index.ts",
     output: [
       {
