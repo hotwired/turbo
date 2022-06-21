@@ -36,9 +36,10 @@ export class FrameRenderer extends Renderer<FrameElement> {
     if (this.currentElement.autoscroll || this.newElement.autoscroll) {
       const element = this.currentElement.firstElementChild
       const block = readScrollLogicalPosition(this.currentElement.getAttribute("data-autoscroll-block"), "end")
+      const behavior = readScrollBehavior(this.currentElement.getAttribute("data-autoscroll-behavior"), "auto")
 
       if (element) {
-        element.scrollIntoView({ block })
+        element.scrollIntoView({ block, behavior })
         return true
       }
     }
@@ -59,6 +60,14 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
 function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLogicalPosition): ScrollLogicalPosition {
   if (value == "end" || value == "start" || value == "center" || value == "nearest") {
+    return value
+  } else {
+    return defaultValue
+  }
+}
+
+function readScrollBehavior(value: string | null, defaultValue: ScrollBehavior): ScrollBehavior {
+  if (value == "auto" || value == "smooth") {
     return value
   } else {
     return defaultValue
