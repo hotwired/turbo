@@ -173,14 +173,15 @@ export class FrameController
 
     this.formSubmission = new FormSubmission(this, element, submitter)
     const { fetchRequest } = this.formSubmission
-    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
+    const frame = this.findFrameElement(element, submitter)
+    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest, frame)
     this.formSubmission.start()
   }
 
   // Fetch request delegate
 
-  prepareHeadersForRequest(headers: FetchRequestHeaders, _request: FetchRequest) {
-    headers["Turbo-Frame"] = this.id
+  prepareHeadersForRequest(headers: FetchRequestHeaders, _request: FetchRequest, frame: FrameElement = this.element) {
+    headers["Turbo-Frame"] = frame.id
   }
 
   requestStarted(_request: FetchRequest) {

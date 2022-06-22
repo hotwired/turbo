@@ -765,6 +765,24 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
   }
 
+  async "test form submission targeting another frame submits the Turbo-Frame header"() {
+    await this.clickSelector("#frame form[method=get][data-turbo-frame=hello] [type=submit]")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+    this.assert.equal("hello", fetchOptions.headers["Turbo-Frame"])
+  }
+
+  async "test form submission with submitter referencing another frame submits the Turbo-Frame header"() {
+    await this.clickSelector("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+    this.assert.equal("hello", fetchOptions.headers["Turbo-Frame"])
+  }
+
   async "test link method form submission inside frame"() {
     await this.clickSelector("#link-method-inside-frame")
     await this.nextBeat
