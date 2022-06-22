@@ -36,6 +36,9 @@ Once you are done developing the feature or bug fix you have 2 options:
 ### Testing
 The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in `intern.json` check it out to see the used browser environments.
 
+To override the ChromeDriver version, declare the `CHROMEVER` environment
+variable.
+
 The tests are using the compiled version of the library and they are themselves also compiled. To compile the tests and library and watch for changes:
 
 ```bash
