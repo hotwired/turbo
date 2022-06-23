@@ -7,7 +7,7 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
+import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy, attributeTrue } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -149,7 +149,7 @@ export class FrameController
   // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, _url: string) {
-    if (element.hasAttribute("data-turbo-method")) {
+    if (element.hasAttribute("data-turbo-method") || attributeTrue(element, "data-turbo-stream")) {
       return false
     } else {
       return this.shouldInterceptNavigation(element)
