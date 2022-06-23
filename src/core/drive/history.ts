@@ -16,7 +16,9 @@ export type RestorationDataMap = {
 export class History {
   readonly delegate: HistoryDelegate
   location!: URL
+  initialLocation?: URL
   restorationIdentifier = uuid()
+  initialRestorationIdentifier?: string
   restorationData: RestorationDataMap = {}
   started = false
   pageLoaded = false
@@ -30,8 +32,10 @@ export class History {
     if (!this.started) {
       addEventListener("popstate", this.onPopState, false)
       addEventListener("load", this.onPageLoad, false)
+      this.location = new URL(window.location.href)
+      this.initialLocation = this.location
+      this.initialRestorationIdentifier = this.restorationIdentifier
       this.started = true
-      this.replace(new URL(window.location.href))
     }
   }
 
@@ -39,6 +43,8 @@ export class History {
     if (this.started) {
       removeEventListener("popstate", this.onPopState, false)
       removeEventListener("load", this.onPageLoad, false)
+      delete this.initialLocation
+      delete this.initialRestorationIdentifier
       this.started = false
     }
   }
@@ -93,10 +99,9 @@ export class History {
 
   onPopState = (event: PopStateEvent) => {
     if (this.shouldHandlePopState()) {
-      const { turbo } = event.state || {}
-      if (turbo) {
+      const restorationIdentifier = this.restorationIdentifierForPopState(event)
+      if (restorationIdentifier) {
         this.location = new URL(window.location.href)
-        const { restorationIdentifier } = turbo
         this.restorationIdentifier = restorationIdentifier
         this.delegate.historyPoppedToLocationWithRestorationIdentifier(this.location, restorationIdentifier)
       }
@@ -117,5 +122,19 @@ export class History {
 
   pageIsLoaded() {
     return this.pageLoaded || document.readyState == "complete"
+  }
+
+  restorationIdentifierForPopState(event: PopStateEvent) {
+    if (event.state) {
+      return (event.state.turbo || {}).restorationIdentifier
+    }
+
+    if (this.poppedToInitialEntry(event)) {
+      return this.initialRestorationIdentifier
+    }
+  }
+
+  poppedToInitialEntry(event: PopStateEvent) {
+    return !event.state && window.location.href == this.initialLocation!.href
   }
 }
