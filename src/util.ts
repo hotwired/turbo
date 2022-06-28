@@ -94,17 +94,14 @@ export function clearBusyState(...elements: Element[]) {
 }
 
 export function waitForLoad(element: HTMLLinkElement): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const onLoad = () => {
-      element.removeEventListener("error", onError)
+  return new Promise((resolve) => {
+    const onComplete = () => {
+      element.removeEventListener("error", onComplete)
+      element.removeEventListener("load", onComplete)
       resolve()
     }
-    const onError = () => {
-      element.removeEventListener("load", onLoad)
-      reject()
-    }
 
-    element.addEventListener("load", onLoad, { once: true })
-    element.addEventListener("error", onError, { once: true })
+    element.addEventListener("load", onComplete, { once: true })
+    element.addEventListener("error", onComplete, { once: true })
   })
 }
