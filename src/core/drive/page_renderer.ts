@@ -21,8 +21,8 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  prepareToRender() {
-    this.mergeHead()
+  async prepareToRender() {
+    await this.mergeHead()
   }
 
   async render() {
@@ -50,8 +50,8 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.newSnapshot.element
   }
 
-  mergeHead() {
-    this.copyNewHeadStylesheetElements()
+  async mergeHead() {
+    await this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
     this.removeCurrentHeadProvisionalElements()
     this.copyNewHeadProvisionalElements()
@@ -69,9 +69,20 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   copyNewHeadStylesheetElements() {
+    const loading = []
+
     for (const element of this.newHeadStylesheetElements) {
+      const promise = new Promise((resolve) => {
+        ;(element as HTMLLinkElement).onload = () => resolve(null)
+        ;(element as HTMLLinkElement).onerror = () => resolve(null)
+      })
+
+      loading.push(promise)
+
       document.head.appendChild(element)
     }
+
+    return Promise.all(loading)
   }
 
   copyNewHeadScriptElements() {
