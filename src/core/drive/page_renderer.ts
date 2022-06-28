@@ -1,6 +1,7 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { ReloadReason } from "../native/browser_adapter"
+import { waitForLoad } from "../../util"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   get shouldRender() {
@@ -68,21 +69,16 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.currentHeadSnapshot.trackedElementSignature == this.newHeadSnapshot.trackedElementSignature
   }
 
-  copyNewHeadStylesheetElements() {
-    const loading = []
+  async copyNewHeadStylesheetElements() {
+    const loadingElements = []
 
     for (const element of this.newHeadStylesheetElements) {
-      const promise = new Promise((resolve) => {
-        ;(element as HTMLLinkElement).onload = () => resolve(null)
-        ;(element as HTMLLinkElement).onerror = () => resolve(null)
-      })
-
-      loading.push(promise)
+      loadingElements.push(waitForLoad(element as HTMLLinkElement))
 
       document.head.appendChild(element)
     }
 
-    return Promise.all(loading)
+    await Promise.all(loadingElements)
   }
 
   copyNewHeadScriptElements() {

@@ -92,3 +92,19 @@ export function clearBusyState(...elements: Element[]) {
     element.removeAttribute("aria-busy")
   }
 }
+
+export function waitForLoad(element: HTMLLinkElement): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const onLoad = () => {
+      element.removeEventListener("error", onError)
+      resolve()
+    }
+    const onError = () => {
+      element.removeEventListener("load", onLoad)
+      reject()
+    }
+
+    element.addEventListener("load", onLoad, { once: true })
+    element.addEventListener("error", onError, { once: true })
+  })
+}
