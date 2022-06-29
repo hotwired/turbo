@@ -93,7 +93,7 @@ export function clearBusyState(...elements: Element[]) {
   }
 }
 
-export function waitForLoad(element: HTMLLinkElement): Promise<void> {
+export function waitForLoad(element: HTMLLinkElement, timeoutInMilliseconds = 2000): Promise<void> {
   return new Promise((resolve) => {
     const onComplete = () => {
       element.removeEventListener("error", onComplete)
@@ -103,5 +103,6 @@ export function waitForLoad(element: HTMLLinkElement): Promise<void> {
 
     element.addEventListener("load", onComplete, { once: true })
     element.addEventListener("error", onComplete, { once: true })
+    setTimeout(resolve, timeoutInMilliseconds)
   })
 }
