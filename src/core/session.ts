@@ -52,6 +52,7 @@ export class Session
   progressBarDelay = 500
   started = false
   formMode = "on"
+  isHTML:any = null
 
   start() {
     if (!this.started) {

@@ -1,3 +1,5 @@
+import { session } from "../index"
+
 export type Locatable = URL | string
 
 export function expandURL(locatable: Locatable) {
@@ -25,6 +27,10 @@ export function getExtension(url: URL) {
 }
 
 export function isHTML(url: URL) {
+  if (typeof(session.isHTML) === "function") { 
+    return session.isHTML(url);
+  }
+
   return !!getExtension(url).match(/^(?:|\.(?:htm|html|xhtml))$/)
 }
 
