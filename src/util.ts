@@ -1,3 +1,5 @@
+import { Action } from "./core/types"
+
 export type DispatchOptions = {
   target: EventTarget
   cancelable: boolean
@@ -90,5 +92,15 @@ export function clearBusyState(...elements: Element[]) {
     }
 
     element.removeAttribute("aria-busy")
+  }
+}
+
+export function getHistoryMethodForAction(action: Action) {
+  switch (action) {
+    case "replace":
+      return "replaceState"
+    case "advance":
+    case "restore":
+      return "pushState"
   }
 }
