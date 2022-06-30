@@ -52,10 +52,11 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   async mergeHead() {
-    await this.copyNewHeadStylesheetElements()
+    const newStylesheetElements = this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
     this.removeCurrentHeadProvisionalElements()
     this.copyNewHeadProvisionalElements()
+    await newStylesheetElements
   }
 
   replaceBody() {
