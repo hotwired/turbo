@@ -43,16 +43,15 @@ export class FrameController
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
   private action?: Action
   private frame?: FrameElement
-  private historyChanged = false
   readonly restorationIdentifier: string
 
-  constructor(element: FrameElement, restorationIdentifier: string | undefined) {
+  constructor(element: FrameElement) {
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
-    this.restorationIdentifier = restorationIdentifier || uuid()
+    this.restorationIdentifier = uuid()
   }
 
   connect() {
@@ -309,9 +308,8 @@ export class FrameController
   }
 
   changeHistory() {
-    if (!this.historyChanged && this.action && this.frame) {
+    if (this.action && this.frame) {
       session.history.update(this.action, expandURL(this.frame.src as string), this.restorationIdentifier)
-      this.historyChanged = true
     }
   }
 
