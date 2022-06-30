@@ -1,4 +1,4 @@
-import { Action } from "./core/types"
+import { Action, isAction } from "./core/types"
 
 export type DispatchOptions = {
   target: EventTarget
@@ -103,4 +103,10 @@ export function getHistoryMethodForAction(action: Action) {
     case "restore":
       return history.pushState
   }
+}
+
+export function getVisitAction(...elements: (Element|undefined)[]): Action | null {
+  const action = getAttribute("data-turbo-action", ...elements)
+
+  return isAction(action) ? action : null
 }

@@ -14,6 +14,7 @@ import {
   markAsBusy,
   uuid,
   getHistoryMethodForAction,
+  getVisitAction,
 } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
@@ -25,6 +26,7 @@ import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction, Action } from "../types"
+import { VisitOptions } from "../drive/visit"
 
 export class FrameController
   implements
@@ -48,7 +50,7 @@ export class FrameController
   private connected = false
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
-  private action?: Action
+  private action: Action | null = null
   private frame?: FrameElement
   readonly restorationIdentifier: string
 
@@ -289,7 +291,7 @@ export class FrameController
   }
 
   private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
-    this.action = getAttribute("data-turbo-action", submitter, element, frame) as Action
+    this.action = getVisitAction(submitter, element, frame)
     this.frame = frame
 
     if (isAction(this.action)) {
@@ -299,15 +301,17 @@ export class FrameController
           const { statusCode, redirected } = fetchResponse
           const responseHTML = frame.ownerDocument.documentElement.outerHTML
           const response = { statusCode, redirected, responseHTML }
-
-          session.visit(frame.src, {
-            action: this.action,
+          const options: Partial<VisitOptions> = {
             response,
             visitCachedSnapshot,
             willRender: false,
             updateHistory: false,
             restorationIdentifier: this.restorationIdentifier,
-          })
+          }
+
+          if (this.action) options.action = this.action
+
+          session.visit(frame.src, options)
         }
       }
     }
@@ -316,7 +320,7 @@ export class FrameController
   changeHistory() {
     if (this.action && this.frame) {
       const method = getHistoryMethodForAction(this.action)
-      session.history.update(method, expandURL(this.frame.src as string), this.restorationIdentifier)
+      session.history.update(method, expandURL(this.frame.src || ""), this.restorationIdentifier)
     }
   }
 
