@@ -289,11 +289,10 @@ export class FrameController
   }
 
   private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
-    const action = getAttribute("data-turbo-action", submitter, element, frame)
+    this.action = getAttribute("data-turbo-action", submitter, element, frame) as Action
+    this.frame = frame
 
-    if (isAction(action)) {
-      this.action = action
-      this.frame = frame
+    if (isAction(this.action)) {
       const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
         if (frame.src) {
@@ -302,7 +301,7 @@ export class FrameController
           const response = { statusCode, redirected, responseHTML }
 
           session.visit(frame.src, {
-            action,
+            action: this.action,
             response,
             visitCachedSnapshot,
             willRender: false,
