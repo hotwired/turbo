@@ -609,6 +609,40 @@ export class FrameTests extends TurboDriveTestCase {
     this.assert.equal(await this.pathname, "/src/tests/fixtures/page_with_eager_frame.html")
   }
 
+  async "test pauses and resumes frame renders"() {
+    this.setupPausableRender()
+
+    await this.clickSelector("#hello a")
+    await this.nextBeat
+
+    this.assert.strictEqual(await this.getAlertText(), "Continue rendering?")
+    await this.acceptAlert()
+
+    await this.nextBeat
+
+    const frameText = await this.querySelector("#frame h2")
+    this.assert.equal(await frameText.getVisibleText(), "Frame: Loaded")
+  }
+
+  async "test aborts frame rendering"() {
+    this.setupPausableRender()
+
+    await this.clickSelector("#hello a")
+    await this.nextBeat
+
+    this.assert.strictEqual(await this.getAlertText(), "Continue rendering?")
+    await this.dismissAlert()
+
+    await this.nextBeat
+    this.assert.strictEqual(await this.getAlertText(), "Rendering aborted")
+    await this.acceptAlert()
+
+    await this.nextBeat
+
+    const frameText = await this.querySelector("#frame h2")
+    this.assert.equal(await frameText.getVisibleText(), "Frames: #frame")
+  }
+
   async withoutChangingEventListenersCount(callback: () => void) {
     const name = "eventListenersAttachedToDocument"
     const setup = () => {
@@ -677,6 +711,20 @@ export class FrameTests extends TurboDriveTestCase {
 
   get frameScriptEvaluationCount(): Promise<number | undefined> {
     return this.evaluate(() => window.frameScriptEvaluationCount)
+  }
+
+  setupPausableRender() {
+    this.remote.execute(() => {
+      addEventListener("turbo:before-frame-render", (event) => {
+        event.preventDefault()
+
+        if (confirm("Continue rendering?")) {
+          ;(event as CustomEvent).detail.resume()
+        } else {
+          alert("Rendering aborted")
+        }
+      })
+    })
   }
 }
 
