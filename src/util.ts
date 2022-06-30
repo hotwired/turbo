@@ -105,7 +105,7 @@ export function getHistoryMethodForAction(action: Action) {
   }
 }
 
-export function getVisitAction(...elements: (Element|undefined)[]): Action | null {
+export function getVisitAction(...elements: (Element | undefined)[]): Action | null {
   const action = getAttribute("data-turbo-action", ...elements)
 
   return isAction(action) ? action : null
