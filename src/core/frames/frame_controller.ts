@@ -7,7 +7,14 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy, uuid, getHistoryMethodForAction } from "../../util"
+import {
+  clearBusyState,
+  getAttribute,
+  parseHTMLDocument,
+  markAsBusy,
+  uuid,
+  getHistoryMethodForAction,
+} from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
