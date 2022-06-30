@@ -126,6 +126,7 @@ export class FrameController
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
         const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
         if (this.view.renderPromise) await this.view.renderPromise
+        this.changeHistory()
         await this.view.render(renderer)
         this.complete = true
         session.frameRendered(fetchResponse, this.element)
@@ -292,11 +293,14 @@ export class FrameController
             response,
             visitCachedSnapshot,
             willRender: false,
+            updateHistory: false,
           })
         }
       }
     }
   }
+
+  changeHistory() {}
 
   private findFrameElement(element: Element, submitter?: HTMLElement) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")

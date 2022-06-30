@@ -45,6 +45,7 @@ export type VisitOptions = {
   response?: VisitResponse
   visitCachedSnapshot(snapshot: Snapshot): void
   willRender: boolean
+  updateHistory: boolean
 }
 
 const defaultOptions: VisitOptions = {
@@ -52,6 +53,7 @@ const defaultOptions: VisitOptions = {
   historyChanged: false,
   visitCachedSnapshot: () => {},
   willRender: true,
+  updateHistory: true,
 }
 
 export type VisitResponse = {
@@ -75,6 +77,7 @@ export class Visit implements FetchRequestDelegate {
   readonly timingMetrics: TimingMetrics = {}
   readonly visitCachedSnapshot: (snapshot: Snapshot) => void
   readonly willRender: boolean
+  readonly updateHistory: boolean
 
   followedRedirect = false
   frame?: number
@@ -99,10 +102,11 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender } = {
-      ...defaultOptions,
-      ...options,
-    }
+    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender, updateHistory } =
+      {
+        ...defaultOptions,
+        ...options,
+      }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
@@ -111,6 +115,7 @@ export class Visit implements FetchRequestDelegate {
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
+    this.updateHistory = updateHistory
     this.scrolled = !willRender
   }
 
@@ -171,7 +176,7 @@ export class Visit implements FetchRequestDelegate {
   }
 
   changeHistory() {
-    if (!this.historyChanged) {
+    if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
       const method = this.getHistoryMethodForAction(actionForHistory)
       this.history.update(method, this.location, this.restorationIdentifier)
