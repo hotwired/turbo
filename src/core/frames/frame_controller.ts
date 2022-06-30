@@ -7,7 +7,14 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
+import {
+  clearBusyState,
+  getAttribute,
+  parseHTMLDocument,
+  markAsBusy,
+  getHistoryMethodForAction,
+  uuid,
+} from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -17,7 +24,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
-import { isAction } from "../types"
+import { isAction, Action } from "../types"
 
 export class FrameController
   implements
@@ -41,6 +48,8 @@ export class FrameController
   private connected = false
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
+  private action?: Action
+  private frame?: FrameElement
 
   constructor(element: FrameElement) {
     this.element = element
@@ -281,6 +290,8 @@ export class FrameController
     const action = getAttribute("data-turbo-action", submitter, element, frame)
 
     if (isAction(action)) {
+      this.action = action
+      this.frame = frame
       const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
         if (frame.src) {
@@ -300,7 +311,13 @@ export class FrameController
     }
   }
 
-  changeHistory() {}
+  changeHistory() {
+    if (this.action && this.frame) {
+      const methodName = getHistoryMethodForAction(this.action)
+      const method = history[methodName]
+      session.history.update(method, expandURL(this.frame.src as string), uuid())
+    }
+  }
 
   private findFrameElement(element: Element, submitter?: HTMLElement) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")

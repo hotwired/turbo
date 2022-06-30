@@ -6,7 +6,7 @@ import { getAnchor } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
-import { uuid } from "../../util"
+import { uuid, getHistoryMethodForAction } from "../../util"
 import { PageView } from "./page_view"
 
 export interface VisitDelegate {
@@ -178,7 +178,8 @@ export class Visit implements FetchRequestDelegate {
   changeHistory() {
     if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
-      const method = this.getHistoryMethodForAction(actionForHistory)
+      const methodName = getHistoryMethodForAction(actionForHistory)
+      const method = history[methodName]
       this.history.update(method, this.location, this.restorationIdentifier)
       this.historyChanged = true
     }
