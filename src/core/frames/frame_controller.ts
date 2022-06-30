@@ -300,7 +300,7 @@ export class FrameController
             visitCachedSnapshot,
             willRender: false,
             updateHistory: false,
-            restorationIdentifier: this.restorationIdentifier
+            restorationIdentifier: this.restorationIdentifier,
           })
         }
       }
