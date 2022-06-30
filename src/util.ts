@@ -98,9 +98,9 @@ export function clearBusyState(...elements: Element[]) {
 export function getHistoryMethodForAction(action: Action) {
   switch (action) {
     case "replace":
-      return "replaceState"
+      return history.replaceState
     case "advance":
     case "restore":
-      return "pushState"
+      return history.pushState
   }
 }

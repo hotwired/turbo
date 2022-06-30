@@ -12,8 +12,6 @@ import {
   getAttribute,
   parseHTMLDocument,
   markAsBusy,
-  getHistoryMethodForAction,
-  uuid,
 } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
@@ -50,6 +48,7 @@ export class FrameController
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
   private action?: Action
   private frame?: FrameElement
+  private historyChanged = false
 
   constructor(element: FrameElement) {
     this.element = element
@@ -312,10 +311,9 @@ export class FrameController
   }
 
   changeHistory() {
-    if (this.action && this.frame) {
-      const methodName = getHistoryMethodForAction(this.action)
-      const method = history[methodName]
-      session.history.update(method, expandURL(this.frame.src as string), uuid())
+    if (!this.historyChanged && this.action && this.frame) {
+      session.history.update(this.action, expandURL(this.frame.src as string))
+      this.historyChanged = true
     }
   }
 

@@ -1,11 +1,9 @@
-import { Position } from "../types"
-import { nextMicrotask, uuid } from "../../util"
+import { Action, Position } from "../types"
+import { nextMicrotask, uuid, getHistoryMethodForAction } from "../../util"
 
 export interface HistoryDelegate {
   historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string): void
 }
-
-type HistoryMethod = (this: typeof history, state: any, title: string, url?: string | null | undefined) => void
 
 export type RestorationData = { scrollPosition?: Position }
 
@@ -44,14 +42,15 @@ export class History {
   }
 
   push(location: URL, restorationIdentifier?: string) {
-    this.update(history.pushState, location, restorationIdentifier)
+    this.update("advance", location, restorationIdentifier)
   }
 
   replace(location: URL, restorationIdentifier?: string) {
-    this.update(history.replaceState, location, restorationIdentifier)
+    this.update("replace", location, restorationIdentifier)
   }
 
-  update(method: HistoryMethod, location: URL, restorationIdentifier = uuid()) {
+  update(action: Action, location: URL, restorationIdentifier = uuid()) {
+    const method = getHistoryMethodForAction(action)
     const state = { turbo: { restorationIdentifier } }
     method.call(history, state, "", location.href)
     this.location = location
