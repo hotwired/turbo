@@ -7,7 +7,7 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy, uuid } from "../../util"
+import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy, uuid, getHistoryMethodForAction } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -309,7 +309,8 @@ export class FrameController
 
   changeHistory() {
     if (this.action && this.frame) {
-      session.history.update(this.action, expandURL(this.frame.src as string), this.restorationIdentifier)
+      const method = getHistoryMethodForAction(this.action)
+      session.history.update(method, expandURL(this.frame.src as string), this.restorationIdentifier)
     }
   }
 
