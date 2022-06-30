@@ -29,6 +29,7 @@
   "turbo:before-fetch-request",
   "turbo:before-fetch-response",
   "turbo:visit",
+  "turbo:before-frame-render",
   "turbo:frame-load",
   "turbo:frame-render",
   "turbo:reload"
