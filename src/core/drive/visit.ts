@@ -46,6 +46,7 @@ export type VisitOptions = {
   visitCachedSnapshot(snapshot: Snapshot): void
   willRender: boolean
   updateHistory: boolean
+  restorationIdentifier?: string
 }
 
 const defaultOptions: VisitOptions = {
