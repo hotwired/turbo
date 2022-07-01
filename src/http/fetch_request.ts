@@ -1,6 +1,7 @@
 import { FetchResponse } from "./fetch_response"
 import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
+import { StreamMessage } from "../core/streams/stream_message"
 
 export interface FetchRequestDelegate {
   referrer?: URL
@@ -137,7 +138,7 @@ export class FetchRequest {
 
   get defaultHeaders() {
     return {
-      Accept: "text/html, application/xhtml+xml",
+      Accept: [StreamMessage.contentType, "text/html", "application/xhtml+xml"].join(", "),
     }
   }
 

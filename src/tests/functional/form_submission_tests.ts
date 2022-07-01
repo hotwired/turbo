@@ -157,7 +157,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
 
-    this.assert.notOk(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
 
     await this.nextEventNamed("turbo:before-fetch-response")
 
@@ -486,7 +486,7 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
 
-    this.assert.notOk(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
     this.assert.equal("frame", fetchOptions.headers["Turbo-Frame"])
 
     await this.nextEventNamed("turbo:before-fetch-response")

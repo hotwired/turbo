@@ -2,7 +2,6 @@ import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders }
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
 import { dispatch } from "../../util"
-import { StreamMessage } from "../streams/stream_message"
 
 export interface FormSubmissionDelegate {
   formSubmissionStarted(formSubmission: FormSubmission): void
@@ -153,7 +152,6 @@ export class FormSubmission {
       if (token) {
         headers["X-CSRF-Token"] = token
       }
-      headers["Accept"] = [StreamMessage.contentType, headers["Accept"]].join(", ")
     }
   }
 
