@@ -17,6 +17,13 @@ export class LoadingTests extends TurboDriveTestCase {
     this.assert.ok(await this.hasSelector("#loading-eager turbo-frame[complete]"), "has [complete] attribute")
   }
 
+  async "test lazy loading for a frame with display: contents"() {
+    await this.nextBeat
+
+    const frameContents = await this.querySelector("#eager-loaded-frame h2")
+    this.assert.equal(await frameContents.getVisibleText(), "Eager-loaded frame: Loaded")
+  }
+
   async "test lazy loading within a details element"() {
     await this.nextBeat
 
