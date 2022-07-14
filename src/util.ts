@@ -92,3 +92,7 @@ export function clearBusyState(...elements: Element[]) {
     element.removeAttribute("aria-busy")
   }
 }
+
+export function attributeTrue(element: Element, attributeName: string) {
+  return element.getAttribute(attributeName) === "true"
+}
