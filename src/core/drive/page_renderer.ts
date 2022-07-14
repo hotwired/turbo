@@ -1,19 +1,24 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { ReloadReason } from "../native/browser_adapter"
-import { activateScriptElement, waitForLoad } from "../../util"
+import { activateScriptElement, waitForLoad, nextEventLoopTick, getBodyElementId } from "../../util"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
-  static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
+  static async renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
+    await nextEventLoopTick()
+
     if (document.body && newElement instanceof HTMLBodyElement) {
-      document.body.replaceWith(newElement)
+      const currentBody = PageRenderer.getBodyElement(currentElement)
+      const newBody = PageRenderer.getBodyElement(newElement)
+
+      currentBody.replaceWith(newBody)
     } else {
       document.documentElement.appendChild(newElement)
     }
   }
 
   get shouldRender() {
-    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
+    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical && this.bodyElementMatches
   }
 
   get reloadReason(): ReloadReason {
@@ -26,6 +31,12 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     if (!this.trackedElementsAreIdentical) {
       return {
         reason: "tracked_element_mismatch",
+      }
+    }
+
+    if (!this.bodyElementMatches) {
+      return {
+        reason: "body_element_mismatch",
       }
     }
   }
@@ -76,6 +87,20 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   get trackedElementsAreIdentical() {
     return this.currentHeadSnapshot.trackedElementSignature == this.newHeadSnapshot.trackedElementSignature
+  }
+
+  get bodyElementMatches() {
+    return PageRenderer.getBodyElement(this.newElement) !== null
+  }
+
+  static get bodySelector() {
+    const bodyId = getBodyElementId()
+
+    return bodyId ? `#${bodyId}` : 'body'
+  }
+
+  static getBodyElement(element: HTMLElement): HTMLElement {
+    return element.querySelector(this.bodySelector) || element
   }
 
   async copyNewHeadStylesheetElements() {
