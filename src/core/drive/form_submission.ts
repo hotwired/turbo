@@ -29,6 +29,11 @@ enum FormEnctype {
   plain = "text/plain",
 }
 
+export type TurboSubmitStartEvent = CustomEvent<{ formSubmission: FormSubmission }>
+export type TurboSubmitEndEvent = CustomEvent<
+  { formSubmission: FormSubmission } & { [K in keyof FormSubmissionResult]?: FormSubmissionResult[K] }
+>
+
 function formEnctypeFromString(encoding: string): FormEnctype {
   switch (encoding.toLowerCase()) {
     case FormEnctype.multipart:
@@ -163,7 +168,7 @@ export class FormSubmission {
   requestStarted(_request: FetchRequest) {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
-    dispatch("turbo:submit-start", {
+    dispatch<TurboSubmitStartEvent>("turbo:submit-start", {
       target: this.formElement,
       detail: { formSubmission: this },
     })
@@ -200,7 +205,7 @@ export class FormSubmission {
   requestFinished(_request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
-    dispatch("turbo:submit-end", {
+    dispatch<TurboSubmitEndEvent>("turbo:submit-end", {
       target: this.formElement,
       detail: { formSubmission: this, ...this.result },
     })

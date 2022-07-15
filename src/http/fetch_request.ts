@@ -2,6 +2,15 @@ import { FetchResponse } from "./fetch_response"
 import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
 
+export type TurboBeforeFetchRequestEvent = CustomEvent<{
+  fetchOptions: RequestInit
+  url: URL
+  resume: (value: any) => void
+}>
+export type TurboBeforeFetchResponseEvent = CustomEvent<{
+  fetchResponse: FetchResponse
+}>
+
 export interface FetchRequestDelegate {
   referrer?: URL
 
@@ -108,7 +117,7 @@ export class FetchRequest {
 
   async receive(response: Response): Promise<FetchResponse> {
     const fetchResponse = new FetchResponse(response)
-    const event = dispatch("turbo:before-fetch-response", {
+    const event = dispatch<TurboBeforeFetchResponseEvent>("turbo:before-fetch-response", {
       cancelable: true,
       detail: { fetchResponse },
       target: this.target as EventTarget,
@@ -151,7 +160,7 @@ export class FetchRequest {
 
   private async allowRequestToBeIntercepted(fetchOptions: RequestInit) {
     const requestInterception = new Promise((resolve) => (this.resolveRequestPromise = resolve))
-    const event = dispatch("turbo:before-fetch-request", {
+    const event = dispatch<TurboBeforeFetchRequestEvent>("turbo:before-fetch-request", {
       cancelable: true,
       detail: {
         fetchOptions,
