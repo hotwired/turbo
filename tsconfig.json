@@ -12,5 +12,5 @@
     "removeComments": true,
     "skipLibCheck": true,
   },
-  "exclude": [ "dist", "src/tests/fixtures" ]
+  "exclude": [ "dist", "src/tests/fixtures", "playwright.config.ts" ]
 }

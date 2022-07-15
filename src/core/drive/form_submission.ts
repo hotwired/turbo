@@ -1,7 +1,7 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
-import { dispatch } from "../../util"
+import { attributeTrue, dispatch } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 
 export interface FormSubmissionDelegate {
@@ -153,6 +153,9 @@ export class FormSubmission {
       if (token) {
         headers["X-CSRF-Token"] = token
       }
+    }
+
+    if (this.requestAcceptsTurboStreamResponse(request)) {
       headers["Accept"] = [StreamMessage.contentType, headers["Accept"]].join(", ")
     }
   }
@@ -204,8 +207,14 @@ export class FormSubmission {
     this.delegate.formSubmissionFinished(this)
   }
 
+  // Private
+
   requestMustRedirect(request: FetchRequest) {
     return !request.isIdempotent && this.mustRedirect
+  }
+
+  requestAcceptsTurboStreamResponse(request: FetchRequest) {
+    return !request.isIdempotent || attributeTrue(this.formElement, "data-turbo-stream")
   }
 }
 

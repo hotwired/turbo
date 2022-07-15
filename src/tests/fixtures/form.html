@@ -25,6 +25,11 @@
         <input type="hidden" name="greeting" value="Hello from a redirect">
         <input id="standard-get-form-submit" type="submit" value="form[method=get]">
       </form>
+      <form action="/__turbo/redirect" method="get" data-turbo-stream="true" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <input id="standard-get-form-with-stream-opt-in-submit" type="submit" value="form[method=get]">
+      </form>
       <hr>
       <form>
         <button id="form-action-none-q-a" name="q" value="a">Submit ?q=a to form:not([action])</button>
@@ -254,6 +259,8 @@
       <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" data-turbo-frame="_top" id="link-method-inside-frame-target-top">Break-out of frame with method link inside frame</a><br />
       <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" data-turbo-frame="hello" id="link-method-inside-frame-with-target">Method link inside frame targeting another frame</a><br />
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-inside-frame">Stream link inside frame</a>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="get" data-turbo-stream="true" id="stream-link-get-method-inside-frame">Stream link GET inside frame</a>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-stream="true" id="stream-link-inside-frame">Stream link (no method) inside frame</a>
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" data-turbo-confirm="Are you sure?" id="link-method-inside-frame-with-confirmation"data-turbo-confirm="Are you sure?">Stream link inside frame with confirmation</a>
       <form>
         <a href="/src/tests/fixtures/frames/frame.html" data-turbo-method="get" id="method-link-within-form-inside-frame">Method link within form inside frame</a><br />
@@ -283,6 +290,7 @@
     </turbo-frame>
     <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>
+    <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-stream="true" id="stream-link-outside-frame">Stream link (no method) outside frame</a>
     <form>
       <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-within-form-outside-frame">Method link within form outside frame</a><br />
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-within-form-outside-frame">Stream link within form outside frame</a>

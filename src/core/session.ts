@@ -12,7 +12,7 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
-import { clearBusyState, dispatch, markAsBusy } from "../util"
+import { attributeTrue, clearBusyState, dispatch, markAsBusy } from "../util"
 import { PageView, PageViewDelegate } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
@@ -165,16 +165,20 @@ export class Session
 
   convertLinkWithMethodClickToFormSubmission(link: Element) {
     const linkMethod = link.getAttribute("data-turbo-method")
+    const useTurboStream = attributeTrue(link, "data-turbo-stream")
 
-    if (linkMethod) {
+    if (linkMethod || useTurboStream) {
       const form = document.createElement("form")
-      form.setAttribute("method", linkMethod)
+      form.setAttribute("method", linkMethod || "get")
       form.action = link.getAttribute("href") || "undefined"
       form.hidden = true
 
-      if (link.hasAttribute("data-turbo-confirm")) {
-        form.setAttribute("data-turbo-confirm", link.getAttribute("data-turbo-confirm")!)
-      }
+      const attributes = ["data-turbo-confirm", "data-turbo-stream"]
+      attributes.forEach((attribute) => {
+        if (link.hasAttribute(attribute)) {
+          form.setAttribute(attribute, link.getAttribute(attribute)!)
+        }
+      })
 
       const frame = this.getTargetFrameForLink(link)
       if (frame) {
