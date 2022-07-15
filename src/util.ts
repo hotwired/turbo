@@ -106,3 +106,7 @@ export function waitForLoad(element: HTMLLinkElement, timeoutInMilliseconds = 20
     setTimeout(resolve, timeoutInMilliseconds)
   })
 }
+
+export function attributeTrue(element: Element, attributeName: string) {
+  return element.getAttribute(attributeName) === "true"
+}
