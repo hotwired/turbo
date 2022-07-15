@@ -150,11 +150,11 @@ export class Session
 
   // Link click observer delegate
 
-  willFollowLinkToLocation(link: Element, location: URL) {
+  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent) {
     return (
       this.elementDriveEnabled(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
-      this.applicationAllowsFollowingLinkToLocation(link, location)
+      this.applicationAllowsFollowingLinkToLocation(link, location, event)
     )
   }
 
@@ -300,8 +300,8 @@ export class Session
 
   // Application events
 
-  applicationAllowsFollowingLinkToLocation(link: Element, location: URL) {
-    const event = this.notifyApplicationAfterClickingLinkToLocation(link, location)
+  applicationAllowsFollowingLinkToLocation(link: Element, location: URL, ev: MouseEvent) {
+    const event = this.notifyApplicationAfterClickingLinkToLocation(link, location, ev)
     return !event.defaultPrevented
   }
 
@@ -310,10 +310,10 @@ export class Session
     return !event.defaultPrevented
   }
 
-  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL) {
+  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL, event: MouseEvent) {
     return dispatch("turbo:click", {
       target: link,
-      detail: { url: location.href },
+      detail: { url: location.href, originalEvent: event },
       cancelable: true,
     })
   }
