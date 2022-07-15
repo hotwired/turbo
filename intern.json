@@ -1,6 +1,5 @@
 {
   "suites": "dist/tests/unit.js",
-  "functionalSuites": "dist/tests/functional.js",
   "environments": [
     {
       "browserName": "chrome",
