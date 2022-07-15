@@ -110,3 +110,7 @@ export function getVisitAction(...elements: (Element | undefined)[]): Action | n
 
   return isAction(action) ? action : null
 }
+
+export function attributeTrue(element: Element, attributeName: string) {
+  return element.getAttribute(attributeName) === "true"
+}

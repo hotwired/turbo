@@ -150,6 +150,14 @@ export class FormSubmissionTests extends TurboDriveTestCase {
     this.assert.equal(await this.getSearchParam("greeting"), "Hello from a form")
   }
 
+  async "test standard GET form submission with data-turbo-stream"() {
+    await this.clickSelector("#standard-get-form-with-stream-opt-in-submit")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  }
+
   async "test standard GET form submission events"() {
     await this.clickSelector("#standard-get-form-submit")
 
@@ -798,6 +806,30 @@ export class FormSubmissionTests extends TurboDriveTestCase {
 
     const message = await this.querySelector("#frame div.message")
     this.assert.equal(await message.getVisibleText(), "Link!")
+  }
+
+  async "test stream link GET method form submission inside frame"() {
+    await this.clickSelector("#stream-link-get-method-inside-frame")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  }
+
+  async "test stream link inside frame"() {
+    await this.clickSelector("#stream-link-inside-frame")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  }
+
+  async "test stream link outside frame"() {
+    await this.clickSelector("#stream-link-outside-frame")
+
+    const { fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
+
+    this.assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
   }
 
   async "test link method form submission within form inside frame"() {

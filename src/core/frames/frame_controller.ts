@@ -15,6 +15,7 @@ import {
   uuid,
   getHistoryMethodForAction,
   getVisitAction,
+  attributeTrue,
 } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
@@ -169,7 +170,7 @@ export class FrameController
   // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, _url: string) {
-    if (element.hasAttribute("data-turbo-method")) {
+    if (element.hasAttribute("data-turbo-method") || attributeTrue(element, "data-turbo-stream")) {
       return false
     } else {
       return this.shouldInterceptNavigation(element)
