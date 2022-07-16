@@ -1,13 +1,10 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { test } from "@playwright/test"
+import { assert } from "chai"
 
-export class ImportTests extends TurboDriveTestCase {
-  async "test window variable with ESM"() {
-    await this.goToLocation("/src/tests/fixtures/esm.html")
-    const type = await this.evaluate(() => {
-      return typeof window.Turbo
-    })
-    this.assert.equal(type, "object")
-  }
-}
-
-ImportTests.registerSuite()
+test("test window variable with ESM", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/esm.html")
+  const type = await page.evaluate(() => {
+    return typeof window.Turbo
+  })
+  assert.equal(type, "object")
+})

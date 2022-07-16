@@ -1,7 +1,7 @@
 import { expandURL } from "../core/url"
 
 export interface LinkClickObserverDelegate {
-  willFollowLinkToLocation(link: Element, location: URL): boolean
+  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
   followedLinkToLocation(link: Element, location: URL): void
 }
 
@@ -38,7 +38,7 @@ export class LinkClickObserver {
       const link = this.findLinkFromClickTarget(target)
       if (link) {
         const location = this.getLocationForLink(link)
-        if (this.delegate.willFollowLinkToLocation(link, location)) {
+        if (this.delegate.willFollowLinkToLocation(link, location, event)) {
           event.preventDefault()
           this.delegate.followedLinkToLocation(link, location)
         }

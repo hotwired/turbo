@@ -1,27 +1,24 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { test } from "@playwright/test"
+import { nextEventOnTarget } from "../helpers/page"
 
-export class FrameNavigationTests extends TurboDriveTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/frame_navigation.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+})
 
-  async "test frame navigation with descendant link"() {
-    await this.clickSelector("#inside")
+test("test frame navigation with descendant link", async ({ page }) => {
+  await page.click("#inside")
 
-    await this.nextEventOnTarget("frame", "turbo:frame-load")
-  }
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+})
 
-  async "test frame navigation with self link"() {
-    await this.clickSelector("#self")
+test("test frame navigation with self link", async ({ page }) => {
+  await page.click("#self")
 
-    await this.nextEventOnTarget("frame", "turbo:frame-load")
-  }
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+})
 
-  async "test frame navigation with exterior link"() {
-    await this.clickSelector("#outside")
+test("test frame navigation with exterior link", async ({ page }) => {
+  await page.click("#outside")
 
-    await this.nextEventOnTarget("frame", "turbo:frame-load")
-  }
-}
-
-FrameNavigationTests.registerSuite()
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+})

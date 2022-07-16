@@ -1,39 +1,63 @@
-import { FunctionalTestCase } from "../helpers/functional_test_case"
+import { test } from "@playwright/test"
+import { assert } from "chai"
+import { nextBeat } from "../helpers/page"
 
-export class StreamTests extends FunctionalTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/stream.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/stream.html")
+})
 
-  async "test receiving a stream message"() {
-    let element
-    const selector = "#messages div.message:last-child"
+test("test receiving a stream message", async ({ page }) => {
+  const selector = "#messages div.message:last-child"
 
-    element = await this.querySelector(selector)
-    this.assert.equal(await element.getVisibleText(), "First")
+  assert.equal(await page.textContent(selector), "First")
 
-    await this.clickSelector("#create [type=submit]")
-    await this.nextBeat
+  await page.click("#create [type=submit]")
+  await nextBeat()
 
-    element = await this.querySelector(selector)
-    this.assert.equal(await element.getVisibleText(), "Hello world!")
-  }
+  assert.equal(await page.textContent(selector), "Hello world!")
+})
 
-  async "test receiving a stream message with css selector target"() {
-    let element
-    const selector = ".messages div.message:last-child"
+test("test receiving a stream message with css selector target", async ({ page }) => {
+  let element
+  const selector = ".messages div.message:last-child"
 
-    element = await this.querySelectorAll(selector)
-    this.assert.equal(await element[0].getVisibleText(), "Second")
-    this.assert.equal(await element[1].getVisibleText(), "Third")
+  element = await page.locator(selector).allTextContents()
+  assert.equal(await element[0], "Second")
+  assert.equal(await element[1], "Third")
 
-    await this.clickSelector("#replace [type=submit]")
-    await this.nextBeat
+  await page.click("#replace [type=submit]")
+  await nextBeat()
 
-    element = await this.querySelectorAll(selector)
-    this.assert.equal(await element[0].getVisibleText(), "Hello CSS!")
-    this.assert.equal(await element[1].getVisibleText(), "Hello CSS!")
-  }
-}
+  element = await page.locator(selector).allTextContents()
+  assert.equal(await element[0], "Hello CSS!")
+  assert.equal(await element[1], "Hello CSS!")
+})
 
-StreamTests.registerSuite()
+test("test receiving a stream message asynchronously", async ({ page }) => {
+  let messages = await page.locator("#messages > *").allTextContents()
+
+  assert.ok(messages[0])
+  assert.notOk(messages[1], "receives streams when connected")
+  assert.notOk(messages[2], "receives streams when connected")
+
+  await page.click("#async button")
+  await nextBeat()
+
+  messages = await page.locator("#messages > *").allTextContents()
+
+  assert.ok(messages[0])
+  assert.ok(messages[1], "receives streams when connected")
+  assert.notOk(messages[2], "receives streams when connected")
+
+  await page.evaluate(() => document.getElementById("stream-source")?.remove())
+  await nextBeat()
+
+  await page.click("#async button")
+  await nextBeat()
+
+  messages = await page.locator("#messages > *").allTextContents()
+
+  assert.ok(messages[0])
+  assert.ok(messages[1], "receives streams when connected")
+  assert.notOk(messages[2], "does not receive streams when disconnected")
+})

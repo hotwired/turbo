@@ -1,11 +1,14 @@
-export type DispatchOptions = {
+export type DispatchOptions<T extends CustomEvent> = {
   target: EventTarget
   cancelable: boolean
-  detail: any
+  detail: T["detail"]
 }
 
-export function dispatch(eventName: string, { target, cancelable, detail }: Partial<DispatchOptions> = {}) {
-  const event = new CustomEvent(eventName, {
+export function dispatch<T extends CustomEvent>(
+  eventName: string,
+  { target, cancelable, detail }: Partial<DispatchOptions<T>> = {}
+) {
+  const event = new CustomEvent<T["detail"]>(eventName, {
     cancelable,
     bubbles: true,
     detail,
@@ -91,4 +94,8 @@ export function clearBusyState(...elements: Element[]) {
 
     element.removeAttribute("aria-busy")
   }
+}
+
+export function attributeTrue(element: Element, attributeName: string) {
+  return element.getAttribute(attributeName) === "true"
 }

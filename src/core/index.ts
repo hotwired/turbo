@@ -12,6 +12,21 @@ import { FormSubmission } from "./drive/form_submission"
 const session = new Session()
 const { navigator } = session
 export { navigator, session, PageRenderer, PageSnapshot, FrameRenderer }
+export {
+  TurboBeforeCacheEvent,
+  TurboBeforeRenderEvent,
+  TurboBeforeVisitEvent,
+  TurboClickEvent,
+  TurboFrameLoadEvent,
+  TurboFrameRenderEvent,
+  TurboLoadEvent,
+  TurboRenderEvent,
+  TurboVisitEvent,
+} from "./session"
+
+export { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
+export { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent } from "../http/fetch_request"
+export { TurboBeforeStreamRenderEvent } from "../elements/stream_element"
 
 /**
  * Starts the main session.

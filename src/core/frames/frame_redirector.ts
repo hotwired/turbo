@@ -42,7 +42,6 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormInterceptor
   formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
     if (frame) {
-      frame.removeAttribute("reloadable")
       frame.delegate.formSubmissionIntercepted(element, submitter)
     }
   }
