@@ -41,8 +41,8 @@ export class FormLinkInterceptor implements LinkInterceptorDelegate {
     const turboConfirm = link.getAttribute("data-turbo-confirm")
     if (turboConfirm) form.setAttribute("data-turbo-confirm", turboConfirm)
 
-    const turboStream = link.getAttribute("data-turbo-stream")
-    if (turboStream) form.setAttribute("data-turbo-stream", turboStream)
+    const turboStream = link.hasAttribute("data-turbo-stream")
+    if (turboStream) form.setAttribute("data-turbo-stream", "")
 
     this.delegate.formLinkClickIntercepted(link, form)
 

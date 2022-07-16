@@ -96,10 +96,6 @@ export function clearBusyState(...elements: Element[]) {
   }
 }
 
-export function attributeTrue(element: Element, attributeName: string) {
-  return element.getAttribute(attributeName) === "true"
-}
-
 export function getMetaElement(name: string): HTMLMetaElement | null {
   return document.querySelector(`meta[name="${name}"]`)
 }
