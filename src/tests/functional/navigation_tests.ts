@@ -338,12 +338,10 @@ test("test does not fire turbo:load twice after following a redirect", async ({ 
   page.click("#redirection-link")
 
   await nextBeat() // 301 redirect response
+  await noNextEventNamed(page, "turbo:load")
   await nextBeat() // 200 response
   await nextBody(page)
-
-  const eventLogs = await this.eventLogChannel.read()
-  const turboLoads = eventLogs.filter(([name]) => name == "turbo:load")
-  assert.equal(turboLoads.length, 1)
+  await nextEventNamed(page, "turbo:load")
 })
 
 test("test navigating back whilst a visit is in-flight", async ({ page }) => {
