@@ -976,6 +976,16 @@ test("test POST to external action targetting frame ignored", async ({ page }) =
   assert.equal(page.url(), "https://httpbin.org/post")
 })
 
+test("test following a link with data-turbo-method set and a target set navigates the target frame", async ({
+  page,
+}) => {
+  await page.click("#turbo-method-post-to-targeted-frame")
+  await nextBeat()
+
+  const frameText = await page.locator("#hello h2")
+  assert.equal(await frameText.textContent(), "Hello from a frame")
+})
+
 function formSubmitStarted(page: Page) {
   return getFromLocalStorage(page, "formSubmitStarted")
 }

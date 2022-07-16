@@ -7,7 +7,7 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy, attributeTrue } from "../../util"
+import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate } from "../view"
@@ -15,6 +15,7 @@ import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
+import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observers/form_link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction } from "../types"
@@ -26,12 +27,14 @@ export class FrameController
     FormInterceptorDelegate,
     FormSubmissionDelegate,
     FrameElementDelegate,
+    FormLinkInterceptorDelegate,
     LinkInterceptorDelegate,
     ViewDelegate<Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
+  readonly formLinkInterceptor: FormLinkInterceptor
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
   formSubmission?: FormSubmission
@@ -46,6 +49,7 @@ export class FrameController
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
+    this.formLinkInterceptor = new FormLinkInterceptor(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
   }
@@ -58,6 +62,7 @@ export class FrameController
       } else {
         this.loadSourceURL()
       }
+      this.formLinkInterceptor.start()
       this.linkInterceptor.start()
       this.formInterceptor.start()
     }
@@ -67,6 +72,7 @@ export class FrameController
     if (this.connected) {
       this.connected = false
       this.appearanceObserver.stop()
+      this.formLinkInterceptor.stop()
       this.linkInterceptor.stop()
       this.formInterceptor.stop()
     }
@@ -146,14 +152,21 @@ export class FrameController
     this.loadSourceURL()
   }
 
+  // Form link interceptor delegate
+
+  shouldInterceptFormLinkClick(link: Element): boolean {
+    return this.shouldInterceptNavigation(link)
+  }
+
+  formLinkClickIntercepted(link: Element, form: HTMLFormElement): void {
+    const frame = this.findFrameElement(link)
+    if (frame) form.setAttribute("data-turbo-frame", frame.id)
+  }
+
   // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, _url: string) {
-    if (element.hasAttribute("data-turbo-method") || attributeTrue(element, "data-turbo-stream")) {
-      return false
-    } else {
-      return this.shouldInterceptNavigation(element)
-    }
+    return this.shouldInterceptNavigation(element)
   }
 
   linkClickIntercepted(element: Element, url: string) {
