@@ -334,6 +334,16 @@ test("test double-clicking on a link", async ({ page }) => {
   assert.equal(await visitAction(page), "advance")
 })
 
+test("test does not fire turbo:load twice after following a redirect", async ({ page }) => {
+  page.click("#redirection-link")
+
+  await nextBeat() // 301 redirect response
+  await noNextEventNamed(page, "turbo:load")
+  await nextBeat() // 200 response
+  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
+})
+
 test("test navigating back whilst a visit is in-flight", async ({ page }) => {
   page.click("#delayed-link")
   await nextEventNamed(page, "turbo:before-render")
