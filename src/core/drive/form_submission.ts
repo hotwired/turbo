@@ -1,7 +1,7 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
-import { attributeTrue, dispatch } from "../../util"
+import { attributeTrue, dispatch, getMetaContent } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 
 export interface FormSubmissionDelegate {
@@ -244,11 +244,6 @@ function getCookieValue(cookieName: string | null) {
       return value ? decodeURIComponent(value) : undefined
     }
   }
-}
-
-function getMetaContent(name: string) {
-  const element: HTMLMetaElement | null = document.querySelector(`meta[name="${name}"]`)
-  return element && element.content
 }
 
 function responseSucceededWithoutRedirect(response: FetchResponse) {
