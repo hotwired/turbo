@@ -803,7 +803,7 @@ test("test link method form submission inside frame", async ({ page }) => {
   await page.click("#link-method-inside-frame")
   await nextBeat()
 
-  assert.equal(await await page.textContent("#frame h2"), "Frame: Loaded")
+  assert.equal(await page.textContent("#frame h2"), "Frame: Loaded")
   assert.notOk(await hasSelector(page, "#nested-child"))
 })
 
@@ -898,6 +898,59 @@ test("test link method form submission outside frame", async ({ page }) => {
   assert.equal(await title.textContent(), "Hello")
 })
 
+test("test following a link with [data-turbo-method] set and a target set navigates the target frame", async ({
+  page,
+}) => {
+  await page.click("#turbo-method-post-to-targeted-frame")
+
+  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
+})
+
+test("test following a link with [data-turbo-method] and [data-turbo=true] set when html[data-turbo=false]", async ({
+  page,
+}) => {
+  const html = await page.locator("html")
+  await html.evaluate((html) => html.setAttribute("data-turbo", "false"))
+
+  const link = await page.locator("#turbo-method-post-to-targeted-frame")
+  await link.evaluate((link) => link.setAttribute("data-turbo", "true"))
+
+  await link.click()
+
+  assert.equal(await page.textContent("h1"), "Form", "does not navigate the full page")
+  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
+})
+
+test("test following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
+  page,
+}) => {
+  await page.evaluate(() => (window.Turbo.session.drive = false))
+
+  const link = await page.locator("#turbo-method-post-to-targeted-frame")
+  await link.evaluate((link) => link.setAttribute("data-turbo", "true"))
+
+  await link.click()
+
+  assert.equal(await page.textContent("h1"), "Form", "does not navigate the full page")
+  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
+})
+
+test("test following a link with [data-turbo-method] set when html[data-turbo=false]", async ({ page }) => {
+  const html = await page.locator("html")
+  await html.evaluate((html) => html.setAttribute("data-turbo", "false"))
+
+  await page.click("#turbo-method-post-to-targeted-frame")
+
+  assert.equal(await page.textContent("h1"), "Hello", "treats link as a full-page navigation")
+})
+
+test("test following a link with [data-turbo-method] set when Turbo.session.drive = false", async ({ page }) => {
+  await page.evaluate(() => (window.Turbo.session.drive = false))
+  await page.click("#turbo-method-post-to-targeted-frame")
+
+  assert.equal(await page.textContent("h1"), "Hello", "treats link as a full-page navigation")
+})
+
 test("test stream link method form submission outside frame", async ({ page }) => {
   await page.click("#stream-link-method-outside-frame")
   await nextBeat()
@@ -974,16 +1027,6 @@ test("test POST to external action targetting frame ignored", async ({ page }) =
   await nextBody(page)
 
   assert.equal(page.url(), "https://httpbin.org/post")
-})
-
-test("test following a link with data-turbo-method set and a target set navigates the target frame", async ({
-  page,
-}) => {
-  await page.click("#turbo-method-post-to-targeted-frame")
-  await nextBeat()
-
-  const frameText = await page.locator("#hello h2")
-  assert.equal(await frameText.textContent(), "Hello from a frame")
 })
 
 function formSubmitStarted(page: Page) {

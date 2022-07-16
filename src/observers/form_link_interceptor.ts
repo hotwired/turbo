@@ -31,8 +31,9 @@ export class FormLinkInterceptor implements LinkInterceptorDelegate {
 
   linkClickIntercepted(link: Element, action: string): void {
     const form = document.createElement("form")
+    form.setAttribute("data-turbo", "true")
     form.setAttribute("action", action)
-    form.hidden = true
+    form.setAttribute("hidden", "")
 
     const method = link.getAttribute("data-turbo-method")
     if (method) form.setAttribute("method", method)
