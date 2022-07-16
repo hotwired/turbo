@@ -341,7 +341,7 @@ test("test does not fire turbo:load twice after following a redirect", async ({ 
   await nextBeat() // 200 response
   await nextBody(page)
 
-  const eventLogs = await page.eventLogChannel.read()
+  const eventLogs = await this.eventLogChannel.read()
   const turboLoads = eventLogs.filter(([name]) => name == "turbo:load")
   assert.equal(turboLoads.length, 1)
 })
