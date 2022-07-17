@@ -1,37 +1,38 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { test } from "@playwright/test"
+import { assert } from "chai"
+import { nextBeat } from "../helpers/page"
 
-export class PausableRequestsTests extends TurboDriveTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/pausable_requests.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/pausable_requests.html")
+})
 
-  async "test pauses and resumes request"() {
-    await this.clickSelector("#link")
+test("test pauses and resumes request", async ({ page }) => {
+  page.once("dialog", (dialog) => {
+    assert.strictEqual(dialog.message(), "Continue request?")
+    dialog.accept()
+  })
 
-    await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), "Continue request?")
-    await this.acceptAlert()
+  await page.click("#link")
+  await nextBeat()
 
-    await this.nextBeat
-    const h1 = await this.querySelector("h1")
-    this.assert.equal(await h1.getVisibleText(), "One")
-  }
+  assert.equal(await page.textContent("h1"), "One")
+})
 
-  async "test aborts request"() {
-    await this.clickSelector("#link")
+test("test aborts request", async ({ page }) => {
+  page.once("dialog", (dialog) => {
+    assert.strictEqual(dialog.message(), "Continue request?")
+    dialog.dismiss()
+  })
 
-    await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), "Continue request?")
-    await this.dismissAlert()
+  await page.click("#link")
+  await nextBeat()
 
-    await this.nextBeat
-    this.assert.strictEqual(await this.getAlertText(), "Request aborted")
-    await this.acceptAlert()
+  page.once("dialog", (dialog) => {
+    assert.strictEqual(dialog.message(), "Request aborted")
+    dialog.accept()
+  })
 
-    await this.nextBeat
-    const h1 = await this.querySelector("h1")
-    this.assert.equal(await h1.getVisibleText(), "Pausable Requests")
-  }
-}
+  await nextBeat()
 
-PausableRequestsTests.registerSuite()
+  assert.equal(await page.textContent("h1"), "Pausable Requests")
+})

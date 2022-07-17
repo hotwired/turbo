@@ -1,4 +1,4 @@
-import { unindent } from "../../util"
+import { unindent, getMetaContent } from "../../util"
 
 export class ProgressBar {
   static animationDuration = 300 /*ms*/
@@ -123,6 +123,6 @@ export class ProgressBar {
   }
 
   get cspNonce() {
-    return document.head.querySelector('meta[name="csp-nonce"]')?.getAttribute("content")
+    return getMetaContent("csp-nonce")
   }
 }

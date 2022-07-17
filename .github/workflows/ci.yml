@@ -7,6 +7,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
+
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -18,6 +19,7 @@ jobs:
         key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
 
     - run: yarn install
+    - run: yarn run playwright install --with-deps
     - run: yarn build
 
     - name: Set Chrome Version
@@ -29,8 +31,21 @@ jobs:
     - name: Lint
       run: yarn lint
 
-    - name: Test
-      run: yarn test
+    - name: Unit Test
+      run: yarn test:unit
+
+    - name: Chrome Test
+      run: yarn test:browser --project=chrome
+
+    - name: Firefox Test
+      run: yarn test:browser --project=firefox
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: playwright-report
+        path: playwright-report
 
     - name: Publish dev build
       run: .github/scripts/publish-dev-build '${{ secrets.DEV_BUILD_GITHUB_TOKEN }}'

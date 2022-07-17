@@ -35,12 +35,14 @@
     "access": "public"
   },
   "devDependencies": {
+    "@playwright/test": "^1.22.2",
     "@rollup/plugin-node-resolve": "13.1.3",
     "@rollup/plugin-typescript": "8.3.1",
     "@types/multer": "^1.4.5",
     "@typescript-eslint/eslint-plugin": "^5.20.0",
     "@typescript-eslint/parser": "^5.20.0",
     "arg": "^5.0.1",
+    "chai": "~4.3.4",
     "eslint": "^8.13.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
@@ -58,10 +60,15 @@
     "build:win": "tsc --noEmit false --declaration true --emitDeclarationOnly true --outDir dist/types & rollup -c",
     "watch": "rollup -wc",
     "start": "node src/tests/runner.js serveOnly",
-    "test": "NODE_OPTIONS=--inspect node src/tests/runner.js",
-    "test:win": "SET NODE_OPTIONS=--inspect & node src/tests/runner.js",
+    "test": "yarn test:unit && yarn test:browser",
+    "test:browser": "playwright test",
+    "test:unit": "NODE_OPTIONS=--inspect node src/tests/runner.js",
+    "test:unit:win": "SET NODE_OPTIONS=--inspect & node src/tests/runner.js",
     "prerelease": "yarn build && git --no-pager diff && echo && npm pack --dry-run && echo && read -n 1 -p \"Look OK? Press any key to publish and commit v$npm_package_version\" && echo",
     "release": "npm publish && git commit -am \"$npm_package_name v$npm_package_version\" && git push",
     "lint": "eslint . --ext .ts"
+  },
+  "engines": {
+    "node": ">= 14"
   }
 }

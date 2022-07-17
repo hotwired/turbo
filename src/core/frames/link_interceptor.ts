@@ -1,3 +1,5 @@
+import { TurboClickEvent, TurboBeforeVisitEvent } from "../session"
+
 export interface LinkInterceptorDelegate {
   shouldInterceptLinkClick(element: Element, url: string): boolean
   linkClickIntercepted(element: Element, url: string): void
@@ -33,7 +35,7 @@ export class LinkInterceptor {
     }
   }
 
-  linkClicked = <EventListener>((event: CustomEvent) => {
+  linkClicked = <EventListener>((event: TurboClickEvent) => {
     if (this.clickEvent && this.respondsToEventTarget(event.target) && event.target instanceof Element) {
       if (this.delegate.shouldInterceptLinkClick(event.target, event.detail.url)) {
         this.clickEvent.preventDefault()
@@ -44,9 +46,9 @@ export class LinkInterceptor {
     delete this.clickEvent
   })
 
-  willVisit = () => {
+  willVisit = <EventListener>((_event: TurboBeforeVisitEvent) => {
     delete this.clickEvent
-  }
+  })
 
   respondsToEventTarget(target: EventTarget | null) {
     const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
