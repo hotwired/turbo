@@ -584,10 +584,12 @@ test("test navigating back after pushing URL state from a turbo-frame[data-turbo
 
   const title = await page.textContent("h1")
   const frameTitle = await page.textContent("#frame h2")
+  const src = new URL((await attributeForSelector(page, "#frame", "src")) || "")
 
   assert.equal(title, "Frames")
   assert.equal(frameTitle, "Frames: #frame")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
+  assert.equal(src.pathname, "/src/tests/fixtures/frames/frame.html")
   assert.equal(await propertyForSelector(page, "#frame", "src"), null)
 })
 

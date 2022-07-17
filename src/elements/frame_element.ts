@@ -1,4 +1,5 @@
 import { FetchResponse } from "../http/fetch_response"
+import { Snapshot } from "../core/snapshot"
 
 export enum FrameLoadingStyle {
   eager = "eager",
@@ -18,6 +19,7 @@ export interface FrameElementDelegate {
   linkClickIntercepted(element: Element, url: string): void
   loadResponse(response: FetchResponse): void
   fetchResponseLoaded: (fetchResponse: FetchResponse) => void
+  visitCachedSnapshot: (snapshot: Snapshot) => void
   isLoading: boolean
 }
 

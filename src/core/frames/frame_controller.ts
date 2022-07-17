@@ -44,6 +44,7 @@ export class FrameController
   private connected = false
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
+  private previousContents?: DocumentFragment
 
   constructor(element: FrameElement) {
     this.element = element
@@ -130,7 +131,7 @@ export class FrameController
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
+        const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, false, false)
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
         this.complete = true
@@ -263,6 +264,22 @@ export class FrameController
 
   viewInvalidated() {}
 
+  // Frame renderer delegate
+  frameContentsExtracted(fragment: DocumentFragment) {
+    this.previousContents = fragment
+  }
+
+  visitCachedSnapshot = ({ element }: Snapshot) => {
+    const frame = element.querySelector("#" + this.element.id)
+
+    if (frame && this.previousContents) {
+      frame.innerHTML = ""
+      frame.append(this.previousContents)
+    }
+
+    delete this.previousContents
+  }
+
   // Private
 
   private async visit(url: URL) {
@@ -293,7 +310,8 @@ export class FrameController
     const action = getAttribute("data-turbo-action", submitter, element, frame)
 
     if (isAction(action)) {
-      const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
+      const { visitCachedSnapshot } = frame.delegate
+
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
@@ -437,22 +455,6 @@ export class FrameController
     this.ignoredAttributes.add(attributeName)
     callback()
     this.ignoredAttributes.delete(attributeName)
-  }
-}
-
-class SnapshotSubstitution {
-  private readonly clone: Node
-  private readonly id: string
-
-  constructor(element: FrameElement) {
-    this.clone = element.cloneNode(true)
-    this.id = element.id
-  }
-
-  visitCachedSnapshot = ({ element }: Snapshot) => {
-    const { id, clone } = this
-
-    element.querySelector("#" + id)?.replaceWith(clone)
   }
 }
 
