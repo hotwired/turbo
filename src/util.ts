@@ -99,3 +99,27 @@ export function clearBusyState(...elements: Element[]) {
 export function attributeTrue(element: Element, attributeName: string) {
   return element.getAttribute(attributeName) === "true"
 }
+
+export function getMetaElement(name: string): HTMLMetaElement | null {
+  return document.querySelector(`meta[name="${name}"]`)
+}
+
+export function getMetaContent(name: string) {
+  const element = getMetaElement(name)
+  return element && element.content
+}
+
+export function setMetaContent(name: string, content: string) {
+  let element = getMetaElement(name)
+
+  if (!element) {
+    element = document.createElement("meta")
+    element.setAttribute("name", name)
+
+    document.head.appendChild(element)
+  }
+
+  element.setAttribute("content", content)
+
+  return element
+}

@@ -1,6 +1,7 @@
 import { Bardo, BardoDelegate } from "./bardo"
 import { Snapshot } from "./snapshot"
 import { ReloadReason } from "./native/browser_adapter"
+import { getMetaContent } from "../util"
 
 type ResolvingFunctions<T = unknown> = {
   resolve(value: T | PromiseLike<T>): void
@@ -106,7 +107,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
   }
 
   get cspNonce() {
-    return document.head.querySelector('meta[name="csp-nonce"]')?.getAttribute("content")
+    return getMetaContent("csp-nonce")
   }
 }
 
