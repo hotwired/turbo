@@ -358,3 +358,10 @@ test("test navigating back whilst a visit is in-flight", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
   assert.equal(await visitAction(page), "restore")
 })
+
+test("test ignores links that target an iframe", async ({ page }) => {
+  await page.click("#targets-iframe")
+  await nextBeat()
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+})

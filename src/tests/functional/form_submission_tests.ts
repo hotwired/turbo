@@ -1029,6 +1029,22 @@ test("test POST to external action targetting frame ignored", async ({ page }) =
   assert.equal(page.url(), "https://httpbin.org/post")
 })
 
+test("test form submission skipped with form[target]", async ({ page }) => {
+  await page.click("#skipped form[target] button")
+  await nextBeat()
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
+  assert.notOk(await formSubmitEnded(page))
+})
+
+test("test form submission skipped with submitter button[formtarget]", async ({ page }) => {
+  await page.click("#skipped [formtarget]")
+  await nextBeat()
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
+  assert.notOk(await formSubmitEnded(page))
+})
+
 function formSubmitStarted(page: Page) {
   return getFromLocalStorage(page, "formSubmitStarted")
 }
