@@ -40,13 +40,6 @@ jobs:
     - name: Firefox Test
       run: yarn test:browser --project=firefox
 
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v2
-      with:
-        name: playwright-report
-        path: playwright-report
-
     - name: Publish dev build
       run: .github/scripts/publish-dev-build '${{ secrets.DEV_BUILD_GITHUB_TOKEN }}'
       if: ${{ github.event_name == 'push' }}
