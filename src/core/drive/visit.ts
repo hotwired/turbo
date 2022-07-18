@@ -102,7 +102,16 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender, shouldCacheSnapshot } = {
+    const {
+      action,
+      historyChanged,
+      referrer,
+      snapshotHTML,
+      response,
+      visitCachedSnapshot,
+      willRender,
+      shouldCacheSnapshot,
+    } = {
       ...defaultOptions,
       ...options,
     }
