@@ -7,10 +7,10 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
+import { clearBusyState, dispatch, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { ViewDelegate } from "../view"
+import { ViewDelegate, ViewRenderOptions } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
@@ -19,6 +19,7 @@ import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observer
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction } from "../types"
+import { TurboBeforeFrameRenderEvent } from "../session"
 
 export class FrameController
   implements
@@ -29,7 +30,7 @@ export class FrameController
     FrameElementDelegate,
     FormLinkInterceptorDelegate,
     LinkInterceptorDelegate,
-    ViewDelegate<Snapshot<FrameElement>>
+    ViewDelegate<FrameElement, Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
@@ -44,7 +45,7 @@ export class FrameController
   private connected = false
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
-  private previousContents?: DocumentFragment
+  private previousFrameElement?: FrameElement
 
   constructor(element: FrameElement) {
     this.element = element
@@ -131,7 +132,14 @@ export class FrameController
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, false, false)
+        const renderer = new FrameRenderer(
+          this,
+          this.view.snapshot,
+          snapshot,
+          FrameRenderer.renderElement,
+          false,
+          false
+        )
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
         this.complete = true
@@ -252,8 +260,22 @@ export class FrameController
 
   // View delegate
 
-  allowsImmediateRender(_snapshot: Snapshot, _resume: (value: any) => void) {
-    return true
+  allowsImmediateRender({ element: newFrame }: Snapshot<FrameElement>, options: ViewRenderOptions<FrameElement>) {
+    const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
+      target: this.element,
+      detail: { newFrame, ...options },
+      cancelable: true,
+    })
+    const {
+      defaultPrevented,
+      detail: { render },
+    } = event
+
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}
@@ -265,19 +287,18 @@ export class FrameController
   viewInvalidated() {}
 
   // Frame renderer delegate
-  frameContentsExtracted(fragment: DocumentFragment) {
-    this.previousContents = fragment
+  frameExtracted(element: FrameElement) {
+    this.previousFrameElement = element
   }
 
   visitCachedSnapshot = ({ element }: Snapshot) => {
     const frame = element.querySelector("#" + this.element.id)
 
-    if (frame && this.previousContents) {
-      frame.innerHTML = ""
-      frame.append(this.previousContents)
+    if (frame && this.previousFrameElement) {
+      frame.replaceChildren(...this.previousFrameElement.children)
     }
 
-    delete this.previousContents
+    delete this.previousFrameElement
   }
 
   // Private

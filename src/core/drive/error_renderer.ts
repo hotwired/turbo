@@ -2,15 +2,21 @@ import { PageSnapshot } from "./page_snapshot"
 import { Renderer } from "../renderer"
 
 export class ErrorRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
+  static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
+    const { documentElement, body } = document
+
+    documentElement.replaceChild(newElement, body)
+  }
+
   async render() {
     this.replaceHeadAndBody()
     this.activateScriptElements()
   }
 
   replaceHeadAndBody() {
-    const { documentElement, head, body } = document
+    const { documentElement, head } = document
     documentElement.replaceChild(this.newHead, head)
-    documentElement.replaceChild(this.newElement, body)
+    this.renderElement(this.currentElement, this.newElement)
   }
 
   activateScriptElements() {

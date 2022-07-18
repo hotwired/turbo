@@ -62,6 +62,24 @@ test("test reloads when tracked elements change", async ({ page }) => {
   assert.equal(reason, "tracked_element_mismatch")
 })
 
+test("test before-render event supports custom render function", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:before-render", (event) => {
+      const { detail } = event as CustomEvent
+      const { render } = detail
+      detail.render = (currentElement: HTMLBodyElement, newElement: HTMLBodyElement) => {
+        newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered</span>`)
+        render(currentElement, newElement)
+      }
+    })
+  )
+  await page.click("#same-origin-link")
+  await nextBody(page)
+
+  const customRendered = await page.locator("#custom-rendered")
+  assert.equal(await customRendered.textContent(), "Custom Rendered", "renders with custom function")
+})
+
 test("test wont reload when tracked elements has a nonce", async ({ page }) => {
   await page.click("#tracked-nonce-tag-link")
   await nextBody(page)
@@ -235,6 +253,26 @@ test("test restores focus during page rendering when transposing an ancestor of 
   await nextBody(page)
 
   assert.ok(await selectorHasFocus(page, "#permanent-descendant-input"), "restores focus after page loads")
+})
+
+test("test before-frame-render event supports custom render function within turbo-frames", async ({ page }) => {
+  const frame = await page.locator("#frame")
+  await frame.evaluate((frame) =>
+    frame.addEventListener("turbo:before-frame-render", (event) => {
+      const { detail } = event as CustomEvent
+      const { render } = detail
+      detail.render = (currentElement: Element, newElement: Element) => {
+        newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered Frame</span>`)
+        render(currentElement, newElement)
+      }
+    })
+  )
+
+  await page.click("#permanent-in-frame-element-link")
+  await nextBeat()
+
+  const customRendered = await page.locator("#frame #custom-rendered")
+  assert.equal(await customRendered.textContent(), "Custom Rendered Frame", "renders with custom function")
 })
 
 test("test preserves permanent elements within turbo-frames", async ({ page }) => {
