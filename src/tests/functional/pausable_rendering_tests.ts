@@ -25,10 +25,26 @@ test("test aborts rendering", async ({ page }) => {
 
   firstDialog.dismiss()
 
-  const nextDialog = await page.waitForEvent("dialog")
-
-  assert.strictEqual(nextDialog.message(), "Rendering aborted")
-  nextDialog.accept()
-
   assert.equal(await page.textContent("h1"), "Pausable Rendering")
+})
+
+test("test pauses and resumes rendering a Frame", async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    assert.strictEqual(dialog.message(), "Continue rendering?")
+    dialog.accept()
+  })
+
+  await page.click("#frame-link")
+  await nextBeat()
+
+  assert.equal(await page.textContent("#hello h2"), "Hello from a frame")
+})
+
+test("test aborts rendering a Frame", async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    assert.strictEqual(dialog.message(), "Continue rendering?")
+    dialog.dismiss()
+  })
+
+  assert.equal(await page.textContent("#hello h2"), "Pausable Frame Rendering")
 })
