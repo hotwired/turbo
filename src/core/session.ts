@@ -298,11 +298,6 @@ export class Session
     this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
-  frameWillRender(fetchResponse: FetchResponse, frame: FrameElement, resume: (value: any) => void) {
-    const event = this.notifyApplicationBeforeFrameRender(fetchResponse, frame, resume)
-    return !event.defaultPrevented
-  }
-
   // Application events
 
   applicationAllowsFollowingLinkToLocation(link: Element, location: URL, ev: MouseEvent) {
@@ -373,14 +368,6 @@ export class Session
   notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {
     return dispatch<TurboFrameRenderEvent>("turbo:frame-render", {
       detail: { fetchResponse },
-      target: frame,
-      cancelable: true,
-    })
-  }
-
-  notifyApplicationBeforeFrameRender(fetchResponse: FetchResponse, frame: FrameElement, resume: (value: any) => void) {
-    return dispatch("turbo:before-frame-render", {
-      detail: { fetchResponse, resume },
       target: frame,
       cancelable: true,
     })

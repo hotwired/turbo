@@ -57,7 +57,6 @@ export class FrameController
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
   private action: Action | null = null
   private frame?: FrameElement
-  private resolveInterceptionPromise = (_value: any) => {}
   readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
 
@@ -157,10 +156,6 @@ export class FrameController
         )
         if (this.view.renderPromise) await this.view.renderPromise
         this.changeHistory()
-
-        const renderInterception = new Promise((resolve) => (this.resolveInterceptionPromise = resolve))
-        const immediateRender = session.frameWillRender(fetchResponse, this.element, this.resolveInterceptionPromise)
-        if (!immediateRender) await renderInterception
 
         await this.view.render(renderer)
         this.complete = true
