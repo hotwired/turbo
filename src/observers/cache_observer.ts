@@ -1,3 +1,5 @@
+import { TurboBeforeCacheEvent } from "../core/session"
+
 export class CacheObserver {
   started = false
 
@@ -15,11 +17,11 @@ export class CacheObserver {
     }
   }
 
-  removeStaleElements() {
+  removeStaleElements = <EventListener>((_event: TurboBeforeCacheEvent) => {
     const staleElements = [...document.querySelectorAll('[data-turbo-cache="false"]')]
 
     for (const element of staleElements) {
       element.remove()
     }
-  }
+  })
 }

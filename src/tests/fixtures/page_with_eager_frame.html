@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html id="html" data-skip-event-details="turbo:before-render">
+  <head>
+    <meta charset="utf-8">
+    <title>Frame</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Eager-loaded frame</h1>
+
+    <turbo-frame id="eager-loaded-frame" src="/src/tests/fixtures/frames/frame_for_eager.html" loading="eager">
+      <h2>Eager-loaded frame: NOT Loaded...</h2>
+    </turbo-frame>
+
+
+    <a href="/src/tests/fixtures/frames.html">Page /src/tests/fixtures/frames.html</a>
+  </body>
+</html>

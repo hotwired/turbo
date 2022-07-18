@@ -1,7 +1,7 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
-import { dispatch } from "../../util"
+import { dispatch, getMetaContent } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 
 export interface FormSubmissionDelegate {
@@ -28,6 +28,11 @@ enum FormEnctype {
   multipart = "multipart/form-data",
   plain = "text/plain",
 }
+
+export type TurboSubmitStartEvent = CustomEvent<{ formSubmission: FormSubmission }>
+export type TurboSubmitEndEvent = CustomEvent<
+  { formSubmission: FormSubmission } & { [K in keyof FormSubmissionResult]?: FormSubmissionResult[K] }
+>
 
 function formEnctypeFromString(encoding: string): FormEnctype {
   switch (encoding.toLowerCase()) {
@@ -80,9 +85,12 @@ export class FormSubmission {
 
   get action(): string {
     const formElementAction = typeof this.formElement.action === "string" ? this.formElement.action : null
-    return (
-      this.submitter?.getAttribute("formaction") || this.formElement.getAttribute("action") || formElementAction || ""
-    )
+
+    if (this.submitter?.hasAttribute("formaction")) {
+      return this.submitter.getAttribute("formaction") || ""
+    } else {
+      return this.formElement.getAttribute("action") || formElementAction || ""
+    }
   }
 
   get body() {
@@ -150,6 +158,9 @@ export class FormSubmission {
       if (token) {
         headers["X-CSRF-Token"] = token
       }
+    }
+
+    if (this.requestAcceptsTurboStreamResponse(request)) {
       headers["Accept"] = [StreamMessage.contentType, headers["Accept"]].join(", ")
     }
   }
@@ -157,7 +168,7 @@ export class FormSubmission {
   requestStarted(_request: FetchRequest) {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
-    dispatch("turbo:submit-start", {
+    dispatch<TurboSubmitStartEvent>("turbo:submit-start", {
       target: this.formElement,
       detail: { formSubmission: this },
     })
@@ -194,15 +205,21 @@ export class FormSubmission {
   requestFinished(_request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
-    dispatch("turbo:submit-end", {
+    dispatch<TurboSubmitEndEvent>("turbo:submit-end", {
       target: this.formElement,
       detail: { formSubmission: this, ...this.result },
     })
     this.delegate.formSubmissionFinished(this)
   }
 
+  // Private
+
   requestMustRedirect(request: FetchRequest) {
     return !request.isIdempotent && this.mustRedirect
+  }
+
+  requestAcceptsTurboStreamResponse(request: FetchRequest) {
+    return !request.isIdempotent || this.formElement.hasAttribute("data-turbo-stream")
   }
 }
 
@@ -227,11 +244,6 @@ function getCookieValue(cookieName: string | null) {
       return value ? decodeURIComponent(value) : undefined
     }
   }
-}
-
-function getMetaContent(name: string) {
-  const element: HTMLMetaElement | null = document.querySelector(`meta[name="${name}"]`)
-  return element && element.content
 }
 
 function responseSucceededWithoutRedirect(response: FetchResponse) {

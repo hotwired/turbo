@@ -17,6 +17,7 @@ export class BrowserAdapter implements Adapter {
 
   visitProgressBarTimeout?: number
   formProgressBarTimeout?: number
+  location?: URL
 
   constructor(session: Session) {
     this.session = session
@@ -27,9 +28,9 @@ export class BrowserAdapter implements Adapter {
   }
 
   visitStarted(visit: Visit) {
+    this.location = visit.location
     visit.loadCachedSnapshot()
     visit.issueRequest()
-    visit.changeHistory()
     visit.goToSamePageAnchor()
   }
 
@@ -121,7 +122,10 @@ export class BrowserAdapter implements Adapter {
 
   reload(reason: ReloadReason) {
     dispatch("turbo:reload", { detail: reason })
-    window.location.reload()
+
+    if (!this.location) return
+
+    window.location.href = this.location.toString()
   }
 
   get navigator() {

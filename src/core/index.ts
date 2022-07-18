@@ -1,5 +1,6 @@
 import { Adapter } from "./native/adapter"
 import { Session } from "./session"
+import { Cache } from "./cache"
 import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
@@ -10,8 +11,26 @@ import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
 
 const session = new Session()
+const cache = new Cache(session)
 const { navigator } = session
-export { navigator, session, PageRenderer, PageSnapshot, FrameRenderer }
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
+export {
+  TurboBeforeCacheEvent,
+  TurboBeforeRenderEvent,
+  TurboBeforeVisitEvent,
+  TurboClickEvent,
+  TurboFrameLoadEvent,
+  TurboFrameRenderEvent,
+  TurboLoadEvent,
+  TurboRenderEvent,
+  TurboVisitEvent,
+} from "./session"
+
+export { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
+export { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent } from "../http/fetch_request"
+export { TurboBeforeStreamRenderEvent } from "../elements/stream_element"
+
+export { StreamActions } from "./streams/stream_actions"
 
 /**
  * Starts the main session.
@@ -80,8 +99,13 @@ export function renderStreamMessage(message: StreamMessage | string) {
 /**
  * Removes all entries from the Turbo Drive page cache.
  * Call this when state has changed on the server that may affect cached pages.
+ *
+ * @deprecated since version 7.2.0 in favor of `Turbo.cache.clear()`
  */
 export function clearCache() {
+  console.warn(
+    "Please replace `Turbo.clearCache()` with `Turbo.cache.clear()`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
   session.clearCache()
 }
 
@@ -101,4 +125,8 @@ export function setProgressBarDelay(delay: number) {
 
 export function setConfirmMethod(confirmMethod: (message: string, element: HTMLFormElement) => Promise<boolean>) {
   FormSubmission.confirmMethod = confirmMethod
+}
+
+export function setFormMode(mode: string) {
+  session.setFormMode(mode)
 }

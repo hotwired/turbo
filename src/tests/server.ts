@@ -10,7 +10,7 @@ const streamResponses: Set<Response> = new Set()
 router.use(multer().none())
 
 router.use((request, response, next) => {
-  if (request.accepts(["text/html", "application/xhtml+xml"])) {
+  if (request.accepts(["text/html", "application/xhtml+xml", "text/event-stream"])) {
     next()
   } else {
     response.sendStatus(422)

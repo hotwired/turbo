@@ -1,167 +1,142 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { Page, test } from "@playwright/test"
+import { assert } from "chai"
 import { get } from "http"
+import { nextBeat, nextEventNamed, readEventLogs, visitAction, willChangeBody } from "../helpers/page"
 
-export class VisitTests extends TurboDriveTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/visit.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/visit.html")
+  await readEventLogs(page)
+})
 
-  async "test programmatically visiting a same-origin location"() {
-    const urlBeforeVisit = await this.location
-    await this.visitLocation("/src/tests/fixtures/one.html")
+test("test programmatically visiting a same-origin location", async ({ page }) => {
+  const urlBeforeVisit = page.url()
+  await visitLocation(page, "/src/tests/fixtures/one.html")
 
-    const urlAfterVisit = await this.location
-    this.assert.notEqual(urlBeforeVisit, urlAfterVisit)
-    this.assert.equal(await this.visitAction, "advance")
+  await nextBeat()
 
-    const { url: urlFromBeforeVisitEvent } = await this.nextEventNamed("turbo:before-visit")
-    this.assert.equal(urlFromBeforeVisitEvent, urlAfterVisit)
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "advance")
 
-    const { url: urlFromVisitEvent } = await this.nextEventNamed("turbo:visit")
-    this.assert.equal(urlFromVisitEvent, urlAfterVisit)
+  const { url: urlFromBeforeVisitEvent } = await nextEventNamed(page, "turbo:before-visit")
+  assert.equal(urlFromBeforeVisitEvent, urlAfterVisit)
 
-    const { timing } = await this.nextEventNamed("turbo:load")
-    this.assert.ok(timing)
-  }
+  const { url: urlFromVisitEvent } = await nextEventNamed(page, "turbo:visit")
+  assert.equal(urlFromVisitEvent, urlAfterVisit)
 
-  async "skip programmatically visiting a cross-origin location falls back to window.location"() {
-    const urlBeforeVisit = await this.location
-    await this.visitLocation("about:blank")
+  const { timing } = await nextEventNamed(page, "turbo:load")
+  assert.ok(timing)
+})
 
-    const urlAfterVisit = await this.location
-    this.assert.notEqual(urlBeforeVisit, urlAfterVisit)
-    this.assert.equal(await this.visitAction, "load")
-  }
+test("skip programmatically visiting a cross-origin location falls back to window.location", async ({ page }) => {
+  const urlBeforeVisit = page.url()
+  await visitLocation(page, "about:blank")
 
-  async "test visiting a location served with a non-HTML content type"() {
-    const urlBeforeVisit = await this.location
-    await this.visitLocation("/src/tests/fixtures/svg.svg")
-    await this.nextBeat
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
+})
 
-    const url = await this.remote.getCurrentUrl()
-    const contentType = await contentTypeOfURL(url)
-    this.assert.equal(contentType, "image/svg+xml")
+test("test visiting a location served with a non-HTML content type", async ({ page }) => {
+  const urlBeforeVisit = page.url()
+  await visitLocation(page, "/src/tests/fixtures/svg.svg")
+  await nextBeat()
 
-    const urlAfterVisit = await this.location
-    this.assert.notEqual(urlBeforeVisit, urlAfterVisit)
-    this.assert.equal(await this.visitAction, "load")
-  }
+  const url = page.url()
+  const contentType = await contentTypeOfURL(url)
+  assert.equal(contentType, "image/svg+xml")
 
-  async "test canceling a before-visit event prevents navigation"() {
-    this.cancelNextVisit()
-    const urlBeforeVisit = await this.location
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
+})
 
-    this.clickSelector("#same-origin-link")
-    await this.nextBeat
-    this.assert(!(await this.changedBody))
+test("test canceling a before-visit event prevents navigation", async ({ page }) => {
+  await cancelNextVisit(page)
+  const urlBeforeVisit = page.url()
 
-    const urlAfterVisit = await this.location
-    this.assert.equal(urlAfterVisit, urlBeforeVisit)
-  }
-
-  async "test navigation by history is not cancelable"() {
-    this.clickSelector("#same-origin-link")
-    await this.drainEventLog()
-    await this.nextBeat
-
-    this.cancelNextVisit()
-    await this.goBack()
-    this.assert(await this.changedBody)
-  }
-
-  async "test turbo:before-fetch-request event.detail"() {
-    await this.clickSelector("#same-origin-link")
-    const { url, fetchOptions } = await this.nextEventNamed("turbo:before-fetch-request")
-
-    this.assert.equal(fetchOptions.method, "GET")
-    this.assert.ok(url.toString().includes("/src/tests/fixtures/one.html"))
-  }
-
-  async "test turbo:before-fetch-request event.detail encodes searchParams"() {
-    await this.clickSelector("#same-origin-link-search-params")
-    const { url } = await this.nextEventNamed("turbo:before-fetch-request")
-
-    this.assert.ok(url.includes("/src/tests/fixtures/one.html?key=value"))
-  }
-
-  async "test turbo:before-fetch-response open new site"() {
-    this.remote.execute(() =>
-      addEventListener(
-        "turbo:before-fetch-response",
-        async function eventListener(event: any) {
-          removeEventListener("turbo:before-fetch-response", eventListener, false)
-          ;(window as any).fetchResponseResult = {
-            responseText: await event.detail.fetchResponse.responseText,
-            responseHTML: await event.detail.fetchResponse.responseHTML,
-          }
-        },
-        false
-      )
-    )
-
-    await this.clickSelector("#sample-response")
-    await this.nextEventNamed("turbo:before-fetch-response")
-
-    const fetchResponseResult = await this.evaluate(() => (window as any).fetchResponseResult)
-
-    this.assert.isTrue(fetchResponseResult.responseText.indexOf("An element with an ID") > -1)
-    this.assert.isTrue(fetchResponseResult.responseHTML.indexOf("An element with an ID") > -1)
-  }
-
-  async "test cache does not override response after redirect"() {
-    await this.remote.execute(() => {
-      const cachedElement = document.createElement("some-cached-element")
-      document.body.appendChild(cachedElement)
+  assert.notOk<boolean>(
+    await willChangeBody(page, async () => {
+      await page.click("#same-origin-link")
+      await nextBeat()
     })
+  )
 
-    this.assert(await this.hasSelector("some-cached-element"))
-    this.clickSelector("#same-origin-link")
-    await this.nextBeat
-    this.clickSelector("#redirection-link")
-    await this.nextBeat // 301 redirect response
-    await this.nextBeat // 200 response
-    this.assert.notOk(await this.hasSelector("some-cached-element"))
-  }
+  const urlAfterVisit = page.url()
+  assert.equal(urlAfterVisit, urlBeforeVisit)
+})
 
-  async "test updates HTML element attributes"() {
-    await this.visitLocation("/src/tests/fixtures/html_attributes.html")
-    await this.nextBeat
+test("test navigation by history is not cancelable", async ({ page }) => {
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
 
-    this.assert.equal(await this.getDocumentElementAttribute("class"), "html-attributes")
-    this.assert.equal(await this.getDocumentElementAttribute("data-attribute"), "attr")
-    this.assert.equal(await this.getDocumentElementAttribute("data-other-attribute"), null)
+  assert.equal(await page.textContent("h1"), "One")
 
-    await this.clickSelector("#link")
-    await this.nextBeat
+  await cancelNextVisit(page)
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
 
-    this.assert.equal(await this.getDocumentElementAttribute("class"), "html-attributes-two")
-    this.assert.equal(await this.getDocumentElementAttribute("data-attribute"), "attr-two")
-    this.assert.equal(await this.getDocumentElementAttribute("data-other-attribute"), "other-attr")
-  }
+  assert.equal(await page.textContent("h1"), "Visit")
+})
 
-  async visitLocation(location: string) {
-    this.remote.execute((location: string) => window.Turbo.visit(location), [location])
-  }
+test("test turbo:before-fetch-request event.detail", async ({ page }) => {
+  await page.click("#same-origin-link")
+  const { url, fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  async cancelNextVisit() {
-    this.remote.execute(() =>
-      addEventListener(
-        "turbo:before-visit",
-        function eventListener(event) {
-          removeEventListener("turbo:before-visit", eventListener, false)
-          event.preventDefault()
-        },
-        false
-      )
+  assert.equal(fetchOptions.method, "GET")
+  assert.ok(url.includes("/src/tests/fixtures/one.html"))
+})
+
+test("test turbo:before-fetch-request event.detail encodes searchParams", async ({ page }) => {
+  await page.click("#same-origin-link-search-params")
+  const { url } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.ok(url.includes("/src/tests/fixtures/one.html?key=value"))
+})
+
+test("test turbo:before-fetch-response open new site", async ({ page }) => {
+  page.evaluate(() =>
+    addEventListener(
+      "turbo:before-fetch-response",
+      async function eventListener(event: any) {
+        removeEventListener("turbo:before-fetch-response", eventListener, false)
+        ;(window as any).fetchResponseResult = {
+          responseText: await event.detail.fetchResponse.responseText,
+          responseHTML: await event.detail.fetchResponse.responseHTML,
+        }
+      },
+      false
     )
-  }
+  )
 
-  async getDocumentElementAttribute(attributeName: string): Promise<string | null> {
-    return await this.remote.execute(
-      (attributeName: string) => document.documentElement.getAttribute(attributeName),
-      [attributeName]
-    )
-  }
+  await page.click("#sample-response")
+  await nextEventNamed(page, "turbo:before-fetch-response")
+
+  const fetchResponseResult = await page.evaluate(() => (window as any).fetchResponseResult)
+
+  assert.isTrue(fetchResponseResult.responseText.indexOf("An element with an ID") > -1)
+  assert.isTrue(fetchResponseResult.responseHTML.indexOf("An element with an ID") > -1)
+})
+
+test("test cache does not override response after redirect", async ({ page }) => {
+  await page.evaluate(() => {
+    const cachedElement = document.createElement("some-cached-element")
+    document.body.appendChild(cachedElement)
+  })
+
+  assert.equal(await page.locator("some-cached-element").count(), 1)
+
+  await page.click("#same-origin-link")
+  await nextBeat()
+  await page.click("#redirection-link")
+  await nextBeat() // 301 redirect response
+  await nextBeat() // 200 response
+
+  assert.equal(await page.locator("some-cached-element").count(), 0)
+})
+
+function cancelNextVisit(page: Page): Promise<void> {
+  return page.evaluate(() => addEventListener("turbo:before-visit", (event) => event.preventDefault(), { once: true }))
 }
 
 function contentTypeOfURL(url: string): Promise<string | undefined> {
@@ -170,4 +145,6 @@ function contentTypeOfURL(url: string): Promise<string | undefined> {
   })
 }
 
-VisitTests.registerSuite()
+async function visitLocation(page: Page, location: string) {
+  return page.evaluate((location) => window.Turbo.visit(location), location)
+}

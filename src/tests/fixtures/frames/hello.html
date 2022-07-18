@@ -12,6 +12,14 @@
       <h2>Hello from a frame</h2>
 
       <a href="/src/tests/fixtures/frames.html">Navigate #hello</a>
+
+      <form>
+        <input id="permanent-input-in-frame" type="text" name="query" placeholder="Permanent input in frame" data-turbo-permanent>
+      </form>
+
+      <form id="permanent-form-in-frame" data-turbo-permanent>
+        <input id="permanent-descendant-input-in-frame" type="text" name="query" placeholder="Permanent descendant input in frame">
+      </form>
     </turbo-frame>
   </body>
 </html>

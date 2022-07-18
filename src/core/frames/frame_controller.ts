@@ -1,18 +1,25 @@
-import { FrameElement, FrameElementDelegate, FrameLoadingStyle } from "../../elements/frame_element"
+import {
+  FrameElement,
+  FrameElementDelegate,
+  FrameLoadingStyle,
+  FrameElementObservedAttribute,
+} from "../../elements/frame_element"
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
+import { clearBusyState, dispatch, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { ViewDelegate } from "../view"
+import { ViewDelegate, ViewRenderOptions } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
+import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observers/form_link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction } from "../types"
+import { TurboBeforeFrameRenderEvent } from "../session"
 
 export class FrameController
   implements
@@ -21,27 +28,30 @@ export class FrameController
     FormInterceptorDelegate,
     FormSubmissionDelegate,
     FrameElementDelegate,
+    FormLinkInterceptorDelegate,
     LinkInterceptorDelegate,
-    ViewDelegate<Snapshot<FrameElement>>
+    ViewDelegate<FrameElement, Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
+  readonly formLinkInterceptor: FormLinkInterceptor
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
-  currentURL?: string | null
   formSubmission?: FormSubmission
   fetchResponseLoaded = (_fetchResponse: FetchResponse) => {}
   private currentFetchRequest: FetchRequest | null = null
   private resolveVisitPromise = () => {}
   private connected = false
   private hasBeenLoaded = false
-  private settingSourceURL = false
+  private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
+  private previousFrameElement?: FrameElement
 
   constructor(element: FrameElement) {
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
+    this.formLinkInterceptor = new FormLinkInterceptor(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
   }
@@ -49,13 +59,14 @@ export class FrameController
   connect() {
     if (!this.connected) {
       this.connected = true
-      this.reloadable = false
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.appearanceObserver.start()
+      } else {
+        this.loadSourceURL()
       }
+      this.formLinkInterceptor.start()
       this.linkInterceptor.start()
       this.formInterceptor.start()
-      this.sourceURLChanged()
     }
   }
 
@@ -63,6 +74,7 @@ export class FrameController
     if (this.connected) {
       this.connected = false
       this.appearanceObserver.stop()
+      this.formLinkInterceptor.stop()
       this.linkInterceptor.stop()
       this.formInterceptor.stop()
     }
@@ -75,9 +87,21 @@ export class FrameController
   }
 
   sourceURLChanged() {
+    if (this.isIgnoringChangesTo("src")) return
+
+    if (this.element.isConnected) {
+      this.complete = false
+    }
+
     if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
       this.loadSourceURL()
     }
+  }
+
+  completeChanged() {
+    if (this.isIgnoringChangesTo("complete")) return
+
+    this.loadSourceURL()
   }
 
   loadingStyleChanged() {
@@ -89,26 +113,12 @@ export class FrameController
     }
   }
 
-  async loadSourceURL() {
-    if (
-      !this.settingSourceURL &&
-      this.enabled &&
-      this.isActive &&
-      (this.reloadable || this.sourceURL != this.currentURL)
-    ) {
-      const previousURL = this.currentURL
-      this.currentURL = this.sourceURL
-      if (this.sourceURL) {
-        try {
-          this.element.loaded = this.visit(expandURL(this.sourceURL))
-          this.appearanceObserver.stop()
-          await this.element.loaded
-          this.hasBeenLoaded = true
-        } catch (error) {
-          this.currentURL = previousURL
-          throw error
-        }
-      }
+  private async loadSourceURL() {
+    if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
+      this.element.loaded = this.visit(expandURL(this.sourceURL))
+      this.appearanceObserver.stop()
+      await this.element.loaded
+      this.hasBeenLoaded = true
     }
   }
 
@@ -122,9 +132,17 @@ export class FrameController
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
+        const renderer = new FrameRenderer(
+          this,
+          this.view.snapshot,
+          snapshot,
+          FrameRenderer.renderElement,
+          false,
+          false
+        )
         if (this.view.renderPromise) await this.view.renderPromise
         await this.view.render(renderer)
+        this.complete = true
         session.frameRendered(fetchResponse, this.element)
         session.frameLoaded(this.element)
         this.fetchResponseLoaded(fetchResponse)
@@ -143,18 +161,24 @@ export class FrameController
     this.loadSourceURL()
   }
 
+  // Form link interceptor delegate
+
+  shouldInterceptFormLinkClick(link: Element): boolean {
+    return this.shouldInterceptNavigation(link)
+  }
+
+  formLinkClickIntercepted(link: Element, form: HTMLFormElement): void {
+    const frame = this.findFrameElement(link)
+    if (frame) form.setAttribute("data-turbo-frame", frame.id)
+  }
+
   // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, _url: string) {
-    if (element.hasAttribute("data-turbo-method")) {
-      return false
-    } else {
-      return this.shouldInterceptNavigation(element)
-    }
+    return this.shouldInterceptNavigation(element)
   }
 
   linkClickIntercepted(element: Element, url: string) {
-    this.reloadable = true
     this.navigateFrame(element, url)
   }
 
@@ -169,7 +193,6 @@ export class FrameController
       this.formSubmission.stop()
     }
 
-    this.reloadable = false
     this.formSubmission = new FormSubmission(this, element, submitter)
     const { fetchRequest } = this.formSubmission
     this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
@@ -237,13 +260,46 @@ export class FrameController
 
   // View delegate
 
-  allowsImmediateRender(_snapshot: Snapshot, _resume: (value: any) => void) {
-    return true
+  allowsImmediateRender({ element: newFrame }: Snapshot<FrameElement>, options: ViewRenderOptions<FrameElement>) {
+    const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
+      target: this.element,
+      detail: { newFrame, ...options },
+      cancelable: true,
+    })
+    const {
+      defaultPrevented,
+      detail: { render },
+    } = event
+
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}
 
+  preloadOnLoadLinksForView(element: Element) {
+    session.preloadOnLoadLinksForView(element)
+  }
+
   viewInvalidated() {}
+
+  // Frame renderer delegate
+  frameExtracted(element: FrameElement) {
+    this.previousFrameElement = element
+  }
+
+  visitCachedSnapshot = ({ element }: Snapshot) => {
+    const frame = element.querySelector("#" + this.element.id)
+
+    if (frame && this.previousFrameElement) {
+      frame.replaceChildren(...this.previousFrameElement.children)
+    }
+
+    delete this.previousFrameElement
+  }
 
   // Private
 
@@ -268,7 +324,6 @@ export class FrameController
 
     this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
-    frame.setAttribute("reloadable", "")
     frame.src = url
   }
 
@@ -276,7 +331,8 @@ export class FrameController
     const action = getAttribute("data-turbo-action", submitter, element, frame)
 
     if (isAction(action)) {
-      const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
+      const { visitCachedSnapshot } = frame.delegate
+
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
@@ -304,12 +360,12 @@ export class FrameController
     const id = CSS.escape(this.id)
 
     try {
-      element = activateElement(container.querySelector(`turbo-frame#${id}`), this.currentURL)
+      element = activateElement(container.querySelector(`turbo-frame#${id}`), this.sourceURL)
       if (element) {
         return element
       }
 
-      element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`), this.currentURL)
+      element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`), this.sourceURL)
       if (element) {
         await element.loaded
         return await this.extractForeignFrameElement(element)
@@ -375,24 +431,9 @@ export class FrameController
   }
 
   set sourceURL(sourceURL: string | undefined) {
-    this.settingSourceURL = true
-    this.element.src = sourceURL ?? null
-    this.currentURL = this.element.src
-    this.settingSourceURL = false
-  }
-
-  get reloadable() {
-    const frame = this.findFrameElement(this.element)
-    return frame.hasAttribute("reloadable")
-  }
-
-  set reloadable(value: boolean) {
-    const frame = this.findFrameElement(this.element)
-    if (value) {
-      frame.setAttribute("reloadable", "")
-    } else {
-      frame.removeAttribute("reloadable")
-    }
+    this.ignoringChangesToAttribute("src", () => {
+      this.element.src = sourceURL ?? null
+    })
   }
 
   get loadingStyle() {
@@ -401,6 +442,20 @@ export class FrameController
 
   get isLoading() {
     return this.formSubmission !== undefined || this.resolveVisitPromise() !== undefined
+  }
+
+  get complete() {
+    return this.element.hasAttribute("complete")
+  }
+
+  set complete(value: boolean) {
+    this.ignoringChangesToAttribute("complete", () => {
+      if (value) {
+        this.element.setAttribute("complete", "")
+      } else {
+        this.element.removeAttribute("complete")
+      }
+    })
   }
 
   get isActive() {
@@ -412,21 +467,15 @@ export class FrameController
     const root = meta?.content ?? "/"
     return expandURL(root)
   }
-}
 
-class SnapshotSubstitution {
-  private readonly clone: Node
-  private readonly id: string
-
-  constructor(element: FrameElement) {
-    this.clone = element.cloneNode(true)
-    this.id = element.id
+  private isIgnoringChangesTo(attributeName: FrameElementObservedAttribute): boolean {
+    return this.ignoredAttributes.has(attributeName)
   }
 
-  visitCachedSnapshot = ({ element }: Snapshot) => {
-    const { id, clone } = this
-
-    element.querySelector("#" + id)?.replaceWith(clone)
+  private ignoringChangesToAttribute(attributeName: FrameElementObservedAttribute, callback: () => void) {
+    this.ignoredAttributes.add(attributeName)
+    callback()
+    this.ignoredAttributes.delete(attributeName)
   }
 }
 

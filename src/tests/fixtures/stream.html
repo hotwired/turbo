@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <title>Turbo Streams</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
-    <script>Turbo.connectStreamSource(new EventSource("/__turbo/messages"))</script></head>
+  </head>
   <body>
+    <turbo-stream-source id="stream-source" src="/__turbo/messages"></turbo-stream-source>
     <form id="create" method="post" action="/__turbo/messages">
       <input type="hidden" name="content" value="Hello world!">
       <input type="hidden" name="type" value="stream">
@@ -25,6 +26,11 @@
       <input type="hidden" name="targets" value=".messages">
       <input type="hidden" name="type" value="stream">
       <button type="submit">Replace</button>
+    </form>
+
+    <form id="async" method="post" action="/__turbo/messages">
+      <input type="hidden" name="content" value="Hello world!">
+      <button>Receive Message</button>
     </form>
 
     <div id="messages">

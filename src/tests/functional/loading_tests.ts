@@ -1,4 +1,15 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { test } from "@playwright/test"
+import { assert } from "chai"
+import {
+  attributeForSelector,
+  hasSelector,
+  nextBeat,
+  nextBody,
+  nextEventNamed,
+  nextEventOnTarget,
+  noNextEventNamed,
+  readEventLogs,
+} from "../helpers/page"
 
 declare global {
   interface Window {
@@ -6,131 +17,199 @@ declare global {
   }
 }
 
-export class LoadingTests extends TurboDriveTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/loading.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/loading.html")
+  await readEventLogs(page)
+})
 
-  async "test eager loading within a details element"() {
-    await this.nextBeat
-    this.assert.ok(await this.hasSelector("#loading-eager turbo-frame#frame h2"))
-  }
+test("test eager loading within a details element", async ({ page }) => {
+  await nextBeat()
+  assert.ok(await hasSelector(page, "#loading-eager turbo-frame#frame h2"))
+  assert.ok(await hasSelector(page, "#loading-eager turbo-frame[complete]"), "has [complete] attribute")
+})
 
-  async "test lazy loading within a details element"() {
-    await this.nextBeat
+test("test lazy loading within a details element", async ({ page }) => {
+  await nextBeat()
 
-    const frameContents = "#loading-lazy turbo-frame h2"
-    this.assert.notOk(await this.hasSelector(frameContents))
+  const frameContents = "#loading-lazy turbo-frame h2"
+  assert.notOk(await hasSelector(page, frameContents))
+  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame:not([complete])"))
 
-    await this.clickSelector("#loading-lazy summary")
-    await this.nextBeat
+  await page.click("#loading-lazy summary")
+  await nextBeat()
 
-    const contents = await this.querySelector(frameContents)
-    this.assert.equal(await contents.getVisibleText(), "Hello from a frame")
-  }
+  const contents = await page.locator(frameContents)
+  assert.equal(await contents.textContent(), "Hello from a frame")
+  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame[complete]"), "has [complete] attribute")
+})
 
-  async "test changing loading attribute from lazy to eager loads frame"() {
-    const frameContents = "#loading-lazy turbo-frame h2"
-    await this.nextBeat
+test("test changing loading attribute from lazy to eager loads frame", async ({ page }) => {
+  const frameContents = "#loading-lazy turbo-frame h2"
+  await nextBeat()
 
-    this.assert.notOk(await this.hasSelector(frameContents))
+  assert.notOk(await hasSelector(page, frameContents))
 
-    await this.remote.execute(() =>
-      document.querySelector("#loading-lazy turbo-frame")?.setAttribute("loading", "eager")
-    )
-    await this.nextBeat
+  await page.evaluate(() => document.querySelector("#loading-lazy turbo-frame")?.setAttribute("loading", "eager"))
+  await nextBeat()
 
-    const contents = await this.querySelector(frameContents)
-    await this.clickSelector("#loading-lazy summary")
-    this.assert.equal(await contents.getVisibleText(), "Hello from a frame")
-  }
+  const contents = await page.locator(frameContents)
+  await page.click("#loading-lazy summary")
+  assert.equal(await contents.textContent(), "Hello from a frame")
+})
 
-  async "test navigating a visible frame with loading=lazy navigates"() {
-    await this.clickSelector("#loading-lazy summary")
-    await this.nextBeat
+test("test navigating a visible frame with loading=lazy navigates", async ({ page }) => {
+  await page.click("#loading-lazy summary")
+  await nextBeat()
 
-    const initialContents = await this.querySelector("#hello h2")
-    this.assert.equal(await initialContents.getVisibleText(), "Hello from a frame")
+  const initialContents = await page.locator("#hello h2")
+  assert.equal(await initialContents.textContent(), "Hello from a frame")
 
-    await this.clickSelector("#hello a")
-    await this.nextBeat
+  await page.click("#hello a")
+  await nextBeat()
 
-    const navigatedContents = await this.querySelector("#hello h2")
-    this.assert.equal(await navigatedContents.getVisibleText(), "Frames: #hello")
-  }
+  const navigatedContents = await page.locator("#hello h2")
+  assert.equal(await navigatedContents.textContent(), "Frames: #hello")
+})
 
-  async "test changing src attribute on a frame with loading=lazy defers navigation"() {
-    const frameContents = "#loading-lazy turbo-frame h2"
-    await this.nextBeat
+test("test changing src attribute on a frame with loading=lazy defers navigation", async ({ page }) => {
+  const frameContents = "#loading-lazy turbo-frame h2"
+  await nextBeat()
 
-    await this.remote.execute(() =>
-      document.querySelector("#loading-lazy turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
-    )
-    this.assert.notOk(await this.hasSelector(frameContents))
+  await page.evaluate(() =>
+    document.querySelector("#loading-lazy turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
+  )
+  assert.notOk(await hasSelector(page, frameContents))
 
-    await this.clickSelector("#loading-lazy summary")
-    await this.nextBeat
+  await page.click("#loading-lazy summary")
+  await nextBeat()
 
-    const contents = await this.querySelector(frameContents)
-    this.assert.equal(await contents.getVisibleText(), "Frames: #hello")
-  }
+  const contents = await page.locator(frameContents)
+  assert.equal(await contents.textContent(), "Frames: #hello")
+})
 
-  async "test changing src attribute on a frame with loading=eager navigates"() {
-    const frameContents = "#loading-eager turbo-frame h2"
-    await this.nextBeat
+test("test changing src attribute on a frame with loading=eager navigates", async ({ page }) => {
+  const frameContents = "#loading-eager turbo-frame h2"
+  await nextBeat()
 
-    await this.remote.execute(() =>
-      document.querySelector("#loading-eager turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
-    )
+  await page.evaluate(() =>
+    document.querySelector("#loading-eager turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
+  )
 
-    await this.clickSelector("#loading-eager summary")
-    await this.nextBeat
+  await page.click("#loading-eager summary")
+  await nextBeat()
 
-    const contents = await this.querySelector(frameContents)
-    this.assert.equal(await contents.getVisibleText(), "Frames: #frame")
-  }
+  const contents = await page.locator(frameContents)
+  assert.equal(await contents.textContent(), "Frames: #frame")
+})
 
-  async "test reloading a frame reloads the content"() {
-    await this.nextBeat
+test("test reloading a frame reloads the content", async ({ page }) => {
+  await nextBeat()
 
-    await this.clickSelector("#loading-eager summary")
-    await this.nextBeat
+  await page.click("#loading-eager summary")
+  await nextBeat()
 
-    const frameContent = "#loading-eager turbo-frame#frame h2"
-    this.assert.ok(await this.hasSelector(frameContent))
-    await this.remote.execute(() => (document.querySelector("#loading-eager turbo-frame") as any)?.reload())
-    this.assert.ok(await this.hasSelector(frameContent))
-  }
+  const frameContent = "#loading-eager turbo-frame#frame h2"
+  assert.ok(await hasSelector(page, frameContent))
+  assert.ok(await hasSelector(page, "#loading-eager turbo-frame[complete]"), "has [complete] attribute")
 
-  async "test navigating away from a page does not reload its frames"() {
-    await this.clickSelector("#one")
-    await this.nextBody
+  await page.evaluate(() => (document.querySelector("#loading-eager turbo-frame") as any)?.reload())
+  assert.ok(await hasSelector(page, frameContent))
+  assert.ok(await hasSelector(page, "#loading-eager turbo-frame:not([complete])"), "clears [complete] attribute")
+})
 
-    const eventLogs = await this.eventLogChannel.read()
-    const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
-    this.assert.equal(requestLogs.length, 1)
-  }
+test("test navigating away from a page does not reload its frames", async ({ page }) => {
+  await page.click("#one")
+  await nextBody(page)
 
-  async "test disconnecting and reconnecting a frame does not reload the frame"() {
-    await this.nextBeat
+  const eventLogs = await readEventLogs(page)
+  const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
+  assert.equal(requestLogs.length, 1)
+})
 
-    await this.remote.execute(() => {
-      window.savedElement = document.querySelector("#loading-eager")
-      window.savedElement?.remove()
-    })
-    await this.nextBeat
+test("test removing the [complete] attribute of an eager frame reloads the content", async ({ page }) => {
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+  await page.evaluate(() => document.querySelector("#loading-eager turbo-frame")?.removeAttribute("complete"))
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
-    await this.remote.execute(() => {
-      if (window.savedElement) {
-        document.body.appendChild(window.savedElement)
-      }
-    })
-    await this.nextBeat
+  assert.ok(
+    await hasSelector(page, "#loading-eager turbo-frame[complete]"),
+    "sets the [complete] attribute after re-loading"
+  )
+})
 
-    const eventLogs = await this.eventLogChannel.read()
-    const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
-    this.assert.equal(requestLogs.length, 0)
-  }
-}
+test("test changing [src] attribute on a [complete] frame with loading=lazy defers navigation", async ({ page }) => {
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+  await page.click("#loading-lazy summary")
+  await nextEventOnTarget(page, "hello", "turbo:frame-load")
 
-LoadingTests.registerSuite()
+  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame[complete]"), "lazy frame is complete")
+  assert.equal(await page.textContent("#hello h2"), "Hello from a frame")
+
+  await page.click("#loading-lazy summary")
+  await page.click("#one")
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+  await noNextEventNamed(page, "turbo:frame-load")
+
+  let src = new URL((await attributeForSelector(page, "#hello", "src")) || "")
+
+  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame[complete]"), "lazy frame is complete")
+  assert.equal(src.pathname, "/src/tests/fixtures/frames/hello.html", "lazy frame retains [src]")
+
+  await page.click("#link-lazy-frame")
+  await noNextEventNamed(page, "turbo:frame-load")
+
+  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame:not([complete])"), "lazy frame is not complete")
+
+  await page.click("#loading-lazy summary")
+  await nextEventOnTarget(page, "hello", "turbo:frame-load")
+
+  src = new URL((await attributeForSelector(page, "#hello", "src")) || "")
+
+  assert.equal(await page.textContent("#loading-lazy turbo-frame h2"), "Frames: #hello")
+  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame[complete]"), "lazy frame is complete")
+  assert.equal(src.pathname, "/src/tests/fixtures/frames.html", "lazy frame navigates")
+})
+
+test("test navigating away from a page and then back does not reload its frames", async ({ page }) => {
+  await page.click("#one")
+  await nextBody(page)
+  await readEventLogs(page)
+  await page.goBack()
+  await nextBody(page)
+
+  const eventLogs = await readEventLogs(page)
+  const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
+  const requestsOnEagerFrame = requestLogs.filter((record) => record[2] == "frame")
+  const requestsOnLazyFrame = requestLogs.filter((record) => record[2] == "hello")
+
+  assert.equal(requestsOnEagerFrame.length, 0, "does not reload eager frame")
+  assert.equal(requestsOnLazyFrame.length, 0, "does not reload lazy frame")
+
+  await page.click("#loading-lazy summary")
+  await nextEventOnTarget(page, "hello", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "hello", "turbo:frame-render")
+  await nextEventOnTarget(page, "hello", "turbo:frame-load")
+})
+
+test("test disconnecting and reconnecting a frame does not reload the frame", async ({ page }) => {
+  await nextBeat()
+
+  await page.evaluate(() => {
+    window.savedElement = document.querySelector("#loading-eager")
+    window.savedElement?.remove()
+  })
+  await nextBeat()
+
+  await page.evaluate(() => {
+    if (window.savedElement) {
+      document.body.appendChild(window.savedElement)
+    }
+  })
+  await nextBeat()
+
+  const eventLogs = await readEventLogs(page)
+  const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
+  assert.equal(requestLogs.length, 0)
+})

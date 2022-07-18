@@ -5,6 +5,10 @@ export class Snapshot<E extends Element = Element> {
     this.element = element
   }
 
+  get activeElement() {
+    return this.element.ownerDocument.activeElement
+  }
+
   get children() {
     return [...this.element.children]
   }

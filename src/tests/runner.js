@@ -2,6 +2,7 @@ const { TestServer } = require("../../dist/tests/server")
 const configuration = require("../../intern.json")
 const intern = require("intern").default
 const arg = require("arg");
+const { CHROMEVER } = process.env
 
 const args = arg({
   "--grep": String,
@@ -10,6 +11,14 @@ const args = arg({
 
 intern.configure(configuration)
 intern.configure({ reporters: [ "runner" ] })
+
+if (CHROMEVER) {
+  intern.configure({
+    tunnelOptions: {
+      drivers: [{ name: "chrome", version: CHROMEVER }]
+    }
+  })
+}
 
 if (args["--grep"]) {
   intern.configure({ grep: args["--grep"] })
@@ -24,14 +33,6 @@ if (args["--environment"]) {
 const firstArg = args["_"][0]
 if (firstArg == "serveOnly") {
   intern.configure({ serveOnly: true })
-} else {
-  const { spawnSync } = require("child_process")
-  const { status, stderr } = spawnSync("java", [ "-version" ])
-
-  if (status != 0) {
-    console.error(stderr.toString())
-    process.exit(status)
-  }
 }
 
 intern.on("serverStart", server => {

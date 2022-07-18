@@ -1,7 +1,7 @@
 import { expandURL } from "../core/url"
 
 export interface LinkClickObserverDelegate {
-  willFollowLinkToLocation(link: Element, location: URL): boolean
+  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
   followedLinkToLocation(link: Element, location: URL): void
 }
 
@@ -36,9 +36,9 @@ export class LinkClickObserver {
     if (this.clickEventIsSignificant(event)) {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = this.findLinkFromClickTarget(target)
-      if (link) {
+      if (link && doesNotTargetIFrame(link)) {
         const location = this.getLocationForLink(link)
-        if (this.delegate.willFollowLinkToLocation(link, location)) {
+        if (this.delegate.willFollowLinkToLocation(link, location, event)) {
           event.preventDefault()
           this.delegate.followedLinkToLocation(link, location)
         }
@@ -60,11 +60,19 @@ export class LinkClickObserver {
 
   findLinkFromClickTarget(target: EventTarget | null) {
     if (target instanceof Element) {
-      return target.closest("a[href]:not([target^=_]):not([download])")
+      return target.closest<HTMLAnchorElement>("a[href]:not([target^=_]):not([download])")
     }
   }
 
   getLocationForLink(link: Element): URL {
     return expandURL(link.getAttribute("href") || "")
   }
+}
+
+function doesNotTargetIFrame(anchor: HTMLAnchorElement): boolean {
+  for (const element of document.getElementsByName(anchor.target)) {
+    if (element instanceof HTMLIFrameElement) return false
+  }
+
+  return true
 }

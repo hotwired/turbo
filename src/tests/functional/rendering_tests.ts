@@ -1,329 +1,401 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
-import { Element } from "@theintern/leadfoot"
+import { JSHandle, Page, test } from "@playwright/test"
+import { assert } from "chai"
+import {
+  clearLocalStorage,
+  disposeAll,
+  isScrolledToTop,
+  nextBeat,
+  nextBody,
+  nextEventNamed,
+  pathname,
+  scrollToSelector,
+  selectorHasFocus,
+  sleep,
+  strictElementEquals,
+  textContent,
+  visitAction,
+} from "../helpers/page"
 
-export class RenderingTests extends TurboDriveTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/rendering.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/rendering.html")
+  await clearLocalStorage(page)
+})
 
-  async teardown() {
-    await this.remote.execute(() => localStorage.clear())
-  }
+test("test triggers before-render and render events", async ({ page }) => {
+  await page.click("#same-origin-link")
+  const { newBody } = await nextEventNamed(page, "turbo:before-render")
 
-  async "test triggers before-render and render events"() {
-    this.clickSelector("#same-origin-link")
-    const { newBody } = await this.nextEventNamed("turbo:before-render")
+  assert.equal(await page.textContent("h1"), "One")
 
-    const h1 = await this.querySelector("h1")
-    this.assert.equal(await h1.getVisibleText(), "One")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await newBody, await page.evaluate(() => document.body.outerHTML))
+})
 
-    await this.nextEventNamed("turbo:render")
-    this.assert(await newBody.equals(await this.body))
-  }
+test("test triggers before-render and render events for error pages", async ({ page }) => {
+  await page.click("#nonexistent-link")
+  const { newBody } = await nextEventNamed(page, "turbo:before-render")
 
-  async "test triggers before-render and render events for error pages"() {
-    this.clickSelector("#nonexistent-link")
-    const { newBody } = await this.nextEventNamed("turbo:before-render")
+  assert.equal(await textContent(page, newBody), "404 Not Found: /nonexistent\n")
 
-    this.assert.equal(await newBody.getVisibleText(), "404 Not Found: /nonexistent")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await newBody, await page.evaluate(() => document.body.outerHTML))
+})
 
-    await this.nextEventNamed("turbo:render")
-    this.assert(await newBody.equals(await this.body))
-  }
-
-  async "test reloads when tracked elements change"() {
-    await this.remote.execute(() =>
-      window.addEventListener("turbo:reload", (e: any) => {
+test("test reloads when tracked elements change", async ({ page }) => {
+  await page.evaluate(() =>
+    window.addEventListener(
+      "turbo:reload",
+      (e: any) => {
         localStorage.setItem("reloadReason", e.detail.reason)
-      })
-    )
-
-    this.clickSelector("#tracked-asset-change-link")
-    await this.nextBody
-
-    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
-
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_asset_change.html")
-    this.assert.equal(await this.visitAction, "load")
-    this.assert.equal(reason, "tracked_element_mismatch")
-  }
-
-  async "test wont reload when tracked elements has a nonce"() {
-    this.clickSelector("#tracked-nonce-tag-link")
-    await this.nextBody
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/tracked_nonce_tag.html")
-    this.assert.equal(await this.visitAction, "advance")
-  }
-
-  async "test reloads when turbo-visit-control setting is reload"() {
-    await this.remote.execute(() =>
-      window.addEventListener("turbo:reload", (e: any) => {
-        localStorage.setItem("reloadReason", e.detail.reason)
-      })
-    )
-
-    this.clickSelector("#visit-control-reload-link")
-    await this.nextBody
-
-    const reason = await this.remote.execute(() => localStorage.getItem("reloadReason"))
-
-    this.assert.equal(await this.pathname, "/src/tests/fixtures/visit_control_reload.html")
-    this.assert.equal(await this.visitAction, "load")
-    this.assert.equal(reason, "turbo_visit_control_is_reload")
-  }
-
-  async "test accumulates asset elements in head"() {
-    const originalElements = await this.assetElements
-
-    this.clickSelector("#additional-assets-link")
-    await this.nextBody
-    const newElements = await this.assetElements
-    this.assert.notDeepEqual(newElements, originalElements)
-
-    this.goBack()
-    await this.nextBody
-    const finalElements = await this.assetElements
-    this.assert.deepEqual(finalElements, newElements)
-  }
-
-  async "test replaces provisional elements in head"() {
-    const originalElements = await this.provisionalElements
-    this.assert(!(await this.hasSelector("meta[name=test]")))
-
-    this.clickSelector("#same-origin-link")
-    await this.nextBody
-    const newElements = await this.provisionalElements
-    this.assert.notDeepEqual(newElements, originalElements)
-    this.assert(await this.hasSelector("meta[name=test]"))
-
-    this.goBack()
-    await this.nextBody
-    const finalElements = await this.provisionalElements
-    this.assert.notDeepEqual(finalElements, newElements)
-    this.assert(!(await this.hasSelector("meta[name=test]")))
-  }
-
-  async "test evaluates head stylesheet elements"() {
-    this.assert.equal(await this.isStylesheetEvaluated, false)
-
-    this.clickSelector("#additional-assets-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.isStylesheetEvaluated, true)
-  }
-
-  async "test does not evaluate head stylesheet elements inside noscript elements"() {
-    this.assert.equal(await this.isNoscriptStylesheetEvaluated, false)
-
-    this.clickSelector("#additional-assets-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.isNoscriptStylesheetEvaluated, false)
-  }
-
-  async "skip evaluates head script elements once"() {
-    this.assert.equal(await this.headScriptEvaluationCount, undefined)
-
-    this.clickSelector("#head-script-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.headScriptEvaluationCount, 1)
-
-    this.goBack()
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.headScriptEvaluationCount, 1)
-
-    this.clickSelector("#head-script-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.headScriptEvaluationCount, 1)
-  }
-
-  async "test evaluates body script elements on each render"() {
-    this.assert.equal(await this.bodyScriptEvaluationCount, undefined)
-
-    this.clickSelector("#body-script-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.bodyScriptEvaluationCount, 1)
-
-    this.goBack()
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.bodyScriptEvaluationCount, 1)
-
-    this.clickSelector("#body-script-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.bodyScriptEvaluationCount, 2)
-  }
-
-  async "test does not evaluate data-turbo-eval=false scripts"() {
-    this.clickSelector("#eval-false-script-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert.equal(await this.bodyScriptEvaluationCount, undefined)
-  }
-
-  async "test preserves permanent elements"() {
-    const permanentElement = await this.permanentElement
-    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
-
-    this.clickSelector("#permanent-element-link")
-    await this.nextEventNamed("turbo:render")
-    this.assert(await permanentElement.equals(await this.permanentElement))
-    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
-
-    this.goBack()
-    await this.nextEventNamed("turbo:render")
-    this.assert(await permanentElement.equals(await this.permanentElement))
-  }
-
-  async "test preserves permanent elements within turbo-frames"() {
-    let permanentElement = await this.querySelector("#permanent-in-frame")
-    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
-
-    await this.clickSelector("#permanent-in-frame-element-link")
-    await this.nextBeat
-    permanentElement = await this.querySelector("#permanent-in-frame")
-    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
-  }
-
-  async "test preserves permanent elements within turbo-frames rendered without layouts"() {
-    let permanentElement = await this.querySelector("#permanent-in-frame")
-    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
-
-    await this.clickSelector("#permanent-in-frame-without-layout-element-link")
-    await this.nextBeat
-    permanentElement = await this.querySelector("#permanent-in-frame")
-    this.assert.equal(await permanentElement.getVisibleText(), "Rendering")
-  }
-
-  async "test preserves permanent element video playback"() {
-    let videoElement = await this.querySelector("#permanent-video")
-    await this.clickSelector("#permanent-video-button")
-    await this.sleep(500)
-
-    const timeBeforeRender = await videoElement.getProperty("currentTime")
-    this.assert.notEqual(timeBeforeRender, 0, "playback has started")
-
-    await this.clickSelector("#permanent-element-link")
-    await this.nextBody
-    videoElement = await this.querySelector("#permanent-video")
-
-    const timeAfterRender = await videoElement.getProperty("currentTime")
-    this.assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
-  }
-
-  async "test before-cache event"() {
-    this.beforeCache((body) => (body.innerHTML = "Modified"))
-    this.clickSelector("#same-origin-link")
-    await this.nextBody
-    await this.goBack()
-    const body = await this.nextBody
-    this.assert(await body.getVisibleText(), "Modified")
-  }
-
-  async "test mutation record as before-cache notification"() {
-    this.modifyBodyAfterRemoval()
-    this.clickSelector("#same-origin-link")
-    await this.nextBody
-    await this.goBack()
-    const body = await this.nextBody
-    this.assert(await body.getVisibleText(), "Modified")
-  }
-
-  async "test error pages"() {
-    this.clickSelector("#nonexistent-link")
-    const body = await this.nextBody
-    this.assert.equal(await body.getVisibleText(), "404 Not Found: /nonexistent")
-    await this.goBack()
-  }
-
-  get assetElements(): Promise<Element[]> {
-    return filter(this.headElements, isAssetElement)
-  }
-
-  get provisionalElements(): Promise<Element[]> {
-    return filter(this.headElements, async (element) => !(await isAssetElement(element)))
-  }
-
-  get headElements(): Promise<Element[]> {
-    return this.evaluate(() => Array.from(document.head.children) as any[])
-  }
-
-  get permanentElement(): Promise<Element> {
-    return this.querySelector("#permanent")
-  }
-
-  get headScriptEvaluationCount(): Promise<number | undefined> {
-    return this.evaluate(() => window.headScriptEvaluationCount)
-  }
-
-  get bodyScriptEvaluationCount(): Promise<number | undefined> {
-    return this.evaluate(() => window.bodyScriptEvaluationCount)
-  }
-
-  get isStylesheetEvaluated(): Promise<boolean> {
-    return this.evaluate(
-      () => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black"
-    )
-  }
-
-  get isNoscriptStylesheetEvaluated(): Promise<boolean> {
-    return this.evaluate(
-      () => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black"
-    )
-  }
-
-  async modifyBodyBeforeCaching() {
-    return this.remote.execute(() =>
-      addEventListener(
-        "turbo:before-cache",
-        function eventListener() {
-          removeEventListener("turbo:before-cache", eventListener, false)
-          document.body.innerHTML = "Modified"
-        },
-        false
-      )
-    )
-  }
-
-  async beforeCache(callback: (body: HTMLElement) => void) {
-    return this.remote.execute(
-      (callback: (body: HTMLElement) => void) => {
-        addEventListener(
-          "turbo:before-cache",
-          function eventListener() {
-            removeEventListener("turbo:before-cache", eventListener, false)
-            callback(document.body)
-          },
-          false
-        )
       },
-      [callback]
+      { once: true }
     )
-  }
+  )
 
-  async modifyBodyAfterRemoval() {
-    return this.remote.execute(() => {
-      const { documentElement, body } = document
-      const observer = new MutationObserver((records) => {
-        for (const record of records) {
-          if (Array.from(record.removedNodes).indexOf(body) > -1) {
-            body.innerHTML = "Modified"
-            observer.disconnect()
-            break
-          }
-        }
-      })
-      observer.observe(documentElement, { childList: true })
+  await page.click("#tracked-asset-change-link")
+  await nextBody(page)
+
+  const reason = await page.evaluate(() => localStorage.getItem("reloadReason"))
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/tracked_asset_change.html")
+  assert.equal(await visitAction(page), "load")
+  assert.equal(reason, "tracked_element_mismatch")
+})
+
+test("test before-render event supports custom render function", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:before-render", (event) => {
+      const { detail } = event as CustomEvent
+      const { render } = detail
+      detail.render = (currentElement: HTMLBodyElement, newElement: HTMLBodyElement) => {
+        newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered</span>`)
+        render(currentElement, newElement)
+      }
     })
-  }
+  )
+  await page.click("#same-origin-link")
+  await nextBody(page)
+
+  const customRendered = await page.locator("#custom-rendered")
+  assert.equal(await customRendered.textContent(), "Custom Rendered", "renders with custom function")
+})
+
+test("test wont reload when tracked elements has a nonce", async ({ page }) => {
+  await page.click("#tracked-nonce-tag-link")
+  await nextBody(page)
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/tracked_nonce_tag.html")
+  assert.equal(await visitAction(page), "advance")
+})
+
+test("test reloads when turbo-visit-control setting is reload", async ({ page }) => {
+  await page.evaluate(() =>
+    window.addEventListener(
+      "turbo:reload",
+      (e: any) => {
+        localStorage.setItem("reloadReason", e.detail.reason)
+      },
+      { once: true }
+    )
+  )
+
+  await page.click("#visit-control-reload-link")
+  await nextBody(page)
+
+  const reason = await page.evaluate(() => localStorage.getItem("reloadReason"))
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/visit_control_reload.html")
+  assert.equal(await visitAction(page), "load")
+  assert.equal(reason, "turbo_visit_control_is_reload")
+})
+
+test("test maintains scroll position before visit when turbo-visit-control setting is reload", async ({ page }) => {
+  await scrollToSelector(page, "#below-the-fold-visit-control-reload-link")
+  assert.notOk(await isScrolledToTop(page), "scrolled down")
+
+  await page.evaluate(() => localStorage.setItem("scrolls", "false"))
+
+  page.evaluate(() =>
+    addEventListener("click", () => {
+      addEventListener("scroll", () => {
+        localStorage.setItem("scrolls", "true")
+      })
+    })
+  )
+
+  page.click("#below-the-fold-visit-control-reload-link")
+
+  await nextBody(page)
+
+  const scrolls = await page.evaluate(() => localStorage.getItem("scrolls"))
+  assert.equal(scrolls, "false", "scroll position is preserved")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/visit_control_reload.html")
+  assert.equal(await visitAction(page), "load")
+})
+
+test("test accumulates asset elements in head", async ({ page }) => {
+  const assetElements = () => page.$$('script, style, link[rel="stylesheet"]')
+  const originalElements = await assetElements()
+
+  await page.click("#additional-assets-link")
+  await nextBody(page)
+  const newElements = await assetElements()
+  assert.notOk(await deepElementsEqual(page, newElements, originalElements))
+
+  await page.goBack()
+  await nextBody(page)
+  const finalElements = await assetElements()
+  assert.ok(await deepElementsEqual(page, finalElements, newElements))
+
+  await disposeAll(...originalElements, ...newElements, ...finalElements)
+})
+
+test("test replaces provisional elements in head", async ({ page }) => {
+  const provisionalElements = () => page.$$('head :not(script), head :not(style), head :not(link[rel="stylesheet"])')
+  const originalElements = await provisionalElements()
+  assert.equal(await page.locator("meta[name=test]").count(), 0)
+
+  await page.click("#same-origin-link")
+  await nextBody(page)
+  const newElements = await provisionalElements()
+  assert.notOk(await deepElementsEqual(page, newElements, originalElements))
+  assert.equal(await page.locator("meta[name=test]").count(), 1)
+
+  await page.goBack()
+  await nextBody(page)
+  const finalElements = await provisionalElements()
+  assert.notOk(await deepElementsEqual(page, finalElements, newElements))
+  assert.equal(await page.locator("meta[name=test]").count(), 0)
+
+  await disposeAll(...originalElements, ...newElements, ...finalElements)
+})
+
+test("test evaluates head stylesheet elements", async ({ page }) => {
+  assert.equal(await isStylesheetEvaluated(page), false)
+
+  await page.click("#additional-assets-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await isStylesheetEvaluated(page), true)
+})
+
+test("test does not evaluate head stylesheet elements inside noscript elements", async ({ page }) => {
+  assert.equal(await isNoscriptStylesheetEvaluated(page), false)
+
+  await page.click("#additional-assets-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await isNoscriptStylesheetEvaluated(page), false)
+})
+
+test("skip evaluates head script elements once", async ({ page }) => {
+  assert.equal(await headScriptEvaluationCount(page), undefined)
+
+  await page.click("#head-script-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await headScriptEvaluationCount(page), 1)
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await headScriptEvaluationCount(page), 1)
+
+  await page.click("#head-script-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await headScriptEvaluationCount(page), 1)
+})
+
+test("test evaluates body script elements on each render", async ({ page }) => {
+  assert.equal(await bodyScriptEvaluationCount(page), undefined)
+
+  await page.click("#body-script-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await bodyScriptEvaluationCount(page), 1)
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await bodyScriptEvaluationCount(page), 1)
+
+  await page.click("#body-script-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await bodyScriptEvaluationCount(page), 2)
+})
+
+test("test does not evaluate data-turbo-eval=false scripts", async ({ page }) => {
+  await page.click("#eval-false-script-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.equal(await bodyScriptEvaluationCount(page), undefined)
+})
+
+test("test preserves permanent elements", async ({ page }) => {
+  const permanentElement = await page.locator("#permanent")
+  assert.equal(await permanentElement.textContent(), "Rendering")
+
+  await page.click("#permanent-element-link")
+  await nextEventNamed(page, "turbo:render")
+  assert.ok(await strictElementEquals(permanentElement, await page.locator("#permanent")))
+  assert.equal(await permanentElement!.textContent(), "Rendering")
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:render")
+  assert.ok(await strictElementEquals(permanentElement, await page.locator("#permanent")))
+})
+
+test("test restores focus during page rendering when transposing the activeElement", async ({ page }) => {
+  await page.press("#permanent-input", "Enter")
+  await nextBody(page)
+
+  assert.ok(await selectorHasFocus(page, "#permanent-input"), "restores focus after page loads")
+})
+
+test("test restores focus during page rendering when transposing an ancestor of the activeElement", async ({
+  page,
+}) => {
+  await page.press("#permanent-descendant-input", "Enter")
+  await nextBody(page)
+
+  assert.ok(await selectorHasFocus(page, "#permanent-descendant-input"), "restores focus after page loads")
+})
+
+test("test before-frame-render event supports custom render function within turbo-frames", async ({ page }) => {
+  const frame = await page.locator("#frame")
+  await frame.evaluate((frame) =>
+    frame.addEventListener("turbo:before-frame-render", (event) => {
+      const { detail } = event as CustomEvent
+      const { render } = detail
+      detail.render = (currentElement: Element, newElement: Element) => {
+        newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered Frame</span>`)
+        render(currentElement, newElement)
+      }
+    })
+  )
+
+  await page.click("#permanent-in-frame-element-link")
+  await nextBeat()
+
+  const customRendered = await page.locator("#frame #custom-rendered")
+  assert.equal(await customRendered.textContent(), "Custom Rendered Frame", "renders with custom function")
+})
+
+test("test preserves permanent elements within turbo-frames", async ({ page }) => {
+  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
+
+  await page.click("#permanent-in-frame-element-link")
+  await nextBeat()
+
+  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
+})
+
+test("test preserves permanent elements within turbo-frames rendered without layouts", async ({ page }) => {
+  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
+
+  await page.click("#permanent-in-frame-without-layout-element-link")
+  await nextBeat()
+
+  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
+})
+
+test("test restores focus during turbo-frame rendering when transposing the activeElement", async ({ page }) => {
+  await page.press("#permanent-input-in-frame", "Enter")
+  await nextBeat()
+
+  assert.ok(await selectorHasFocus(page, "#permanent-input-in-frame"), "restores focus after page loads")
+})
+
+test("test restores focus during turbo-frame rendering when transposing a descendant of the activeElement", async ({
+  page,
+}) => {
+  await page.press("#permanent-descendant-input-in-frame", "Enter")
+  await nextBeat()
+
+  assert.ok(await selectorHasFocus(page, "#permanent-descendant-input-in-frame"), "restores focus after page loads")
+})
+
+test("test preserves permanent element video playback", async ({ page }) => {
+  const videoElement = await page.locator("#permanent-video")
+  await page.click("#permanent-video-button")
+  await sleep(500)
+
+  const timeBeforeRender = await videoElement.evaluate((video: HTMLVideoElement) => video.currentTime)
+  assert.notEqual(timeBeforeRender, 0, "playback has started")
+
+  await page.click("#permanent-element-link")
+  await nextBody(page)
+
+  const timeAfterRender = await videoElement.evaluate((video: HTMLVideoElement) => video.currentTime)
+  assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
+})
+
+test("test before-cache event", async ({ page }) => {
+  await page.evaluate(() => {
+    addEventListener("turbo:before-cache", () => (document.body.innerHTML = "Modified"), { once: true })
+  })
+  await page.click("#same-origin-link")
+  await nextBody(page)
+  await page.goBack()
+
+  assert.equal(await page.textContent("body"), "Modified")
+})
+
+test("test mutation record as before-cache notification", async ({ page }) => {
+  await modifyBodyAfterRemoval(page)
+  await page.click("#same-origin-link")
+  await nextBody(page)
+  await page.goBack()
+
+  assert.equal(await page.textContent("body"), "Modified")
+})
+
+test("test error pages", async ({ page }) => {
+  await page.click("#nonexistent-link")
+  await nextBody(page)
+
+  assert.equal(await page.textContent("body"), "404 Not Found: /nonexistent\n")
+})
+
+function deepElementsEqual(
+  page: Page,
+  left: JSHandle<SVGElement | HTMLElement>[],
+  right: JSHandle<SVGElement | HTMLElement>[]
+): Promise<boolean> {
+  return page.evaluate(
+    ([left, right]) => left.length == right.length && left.every((element) => right.includes(element)),
+    [left, right]
+  )
 }
 
-async function filter<T>(promisedValues: Promise<T[]>, predicate: (value: T) => Promise<boolean>): Promise<T[]> {
-  const values = await promisedValues
-  const matches = await Promise.all(values.map((value) => predicate(value)))
-  return matches.reduce((result, match, index) => result.concat(match ? values[index] : []), [] as T[])
+function headScriptEvaluationCount(page: Page): Promise<number | undefined> {
+  return page.evaluate(() => window.headScriptEvaluationCount)
 }
 
-async function isAssetElement(element: Element): Promise<boolean> {
-  const tagName = await element.getTagName()
-  const relValue = await element.getAttribute("rel")
-  return tagName == "script" || tagName == "style" || (tagName == "link" && relValue == "stylesheet")
+function bodyScriptEvaluationCount(page: Page): Promise<number | undefined> {
+  return page.evaluate(() => window.bodyScriptEvaluationCount)
+}
+
+function isStylesheetEvaluated(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black"
+  )
+}
+
+function isNoscriptStylesheetEvaluated(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black"
+  )
+}
+
+function modifyBodyAfterRemoval(page: Page) {
+  return page.evaluate(() => {
+    const { documentElement, body } = document
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (Array.from(record.removedNodes).indexOf(body) > -1) {
+          body.innerHTML = "Modified"
+          observer.disconnect()
+          break
+        }
+      }
+    })
+    observer.observe(documentElement, { childList: true })
+  })
 }
 
 declare global {
@@ -332,5 +404,3 @@ declare global {
     bodyScriptEvaluationCount?: number
   }
 }
-
-RenderingTests.registerSuite()

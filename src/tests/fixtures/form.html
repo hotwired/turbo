@@ -25,6 +25,11 @@
         <input type="hidden" name="greeting" value="Hello from a redirect">
         <input id="standard-get-form-submit" type="submit" value="form[method=get]">
       </form>
+      <form action="/__turbo/redirect" method="get" data-turbo-stream class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <input id="standard-get-form-with-stream-opt-in-submit" type="submit" value="form[method=get]">
+      </form>
       <hr>
       <form>
         <button id="form-action-none-q-a" name="q" value="a">Submit ?q=a to form:not([action])</button>
@@ -77,6 +82,10 @@
         <input type="submit">
         <button type="submit" name="greeting" id="secondary_submitter" data-turbo-confirm="Are you really sure?" formaction="/__turbo/redirect?path=/src/tests/fixtures/one.html" formmethod="post" value="secondary_submitter">Secondary action</button>
       </form>
+      <form action="/__turbo/submit" method="post" data-turbo="true" class="turbo-enabled">
+        <input type="hidden" name="query" value="2">
+        <input type="submit">
+      </form>
     </div>
     <hr>
     <div id="no-action">
@@ -92,6 +101,11 @@
       <form method="get" class="button-param">
         <input type="hidden" name="query" value="1">
         <button type="submit" name="button">Submit</button>
+      </form>
+    </div>
+    <div id="blank-formaction">
+      <form action="/src/tests/fixtures/one.html">
+        <button formaction="">Submit</button>
       </form>
     </div>
     <hr>
@@ -169,6 +183,7 @@
         </form>
       </dialog>
 
+      <hr>
       <dialog id="dialog-method-turbo-frame" open>
         <form action="/__turbo/redirect" method="dialog">
           <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
@@ -182,6 +197,15 @@
           <button formmethod="dialog">Close</button>
         </form>
       </dialog>
+
+      <hr>
+      <form action="/src/tests/fixtures/one.html" method="get" target="iframe">
+        <button>Submit iframe target</button>
+      </form>
+
+      <form action="/src/tests/fixtures/one.html" method="get">
+        <button formtarget="iframe">Submit iframe formtarget</button>
+      </form>
     </div>
     <hr>
     <div id="targets-frame">
@@ -245,6 +269,8 @@
       <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" data-turbo-frame="_top" id="link-method-inside-frame-target-top">Break-out of frame with method link inside frame</a><br />
       <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" data-turbo-frame="hello" id="link-method-inside-frame-with-target">Method link inside frame targeting another frame</a><br />
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-inside-frame">Stream link inside frame</a>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="get" data-turbo-stream id="stream-link-get-method-inside-frame">Stream link GET inside frame</a>
+      <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-stream id="stream-link-inside-frame">Stream link (no method) inside frame</a>
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" data-turbo-confirm="Are you sure?" id="link-method-inside-frame-with-confirmation"data-turbo-confirm="Are you sure?">Stream link inside frame with confirmation</a>
       <form>
         <a href="/src/tests/fixtures/frames/frame.html" data-turbo-method="get" id="method-link-within-form-inside-frame">Method link within form inside frame</a><br />
@@ -274,6 +300,7 @@
     </turbo-frame>
     <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>
+    <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-stream id="stream-link-outside-frame">Stream link (no method) outside frame</a>
     <form>
       <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-within-form-outside-frame">Method link within form outside frame</a><br />
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-within-form-outside-frame">Stream link within form outside frame</a>
@@ -282,6 +309,7 @@
     <form method="post" action="https://httpbin.org/post">
       <button id="submit-external">POST to https://httpbin.org/post</button>
     </form>
+     <a href="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fframes%2Fhello.html" data-turbo-method="post" data-turbo-frame="hello" id="turbo-method-post-to-targeted-frame">Turbo method post to targeted frame</a>
     <turbo-frame id="hello"></turbo-frame>
     <hr>
 
@@ -298,5 +326,6 @@
     <form method="post" action="https://httpbin.org/post" data-turbo-frame="ignored">
       <button id="submit-external-target-ignored">POST to https://httpbin.org/post targeting #hello</button>
     </form>
+    <iframe name="iframe"></iframe>
   </body>
 </html>

@@ -1,25 +1,31 @@
-import { Bardo } from "./bardo"
+import { Bardo, BardoDelegate } from "./bardo"
 import { Snapshot } from "./snapshot"
 import { ReloadReason } from "./native/browser_adapter"
+import { getMetaContent } from "../util"
 
 type ResolvingFunctions<T = unknown> = {
   resolve(value: T | PromiseLike<T>): void
   reject(reason?: any): void
 }
 
-export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapshot<E>> {
+export type Render<E> = (newElement: E, currentElement: E) => void
+
+export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapshot<E>> implements BardoDelegate {
   readonly currentSnapshot: S
   readonly newSnapshot: S
   readonly isPreview: boolean
   readonly willRender: boolean
   readonly promise: Promise<void>
+  renderElement: Render<E>
   private resolvingFunctions?: ResolvingFunctions<void>
+  private activeElement: Element | null = null
 
-  constructor(currentSnapshot: S, newSnapshot: S, isPreview: boolean, willRender = true) {
+  constructor(currentSnapshot: S, newSnapshot: S, renderElement: Render<E>, isPreview: boolean, willRender = true) {
     this.currentSnapshot = currentSnapshot
     this.newSnapshot = newSnapshot
     this.isPreview = isPreview
     this.willRender = willRender
+    this.renderElement = renderElement
     this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
   }
 
@@ -49,13 +55,31 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
   }
 
   preservingPermanentElements(callback: () => void) {
-    Bardo.preservingPermanentElements(this.permanentElementMap, callback)
+    Bardo.preservingPermanentElements(this, this.permanentElementMap, callback)
   }
 
   focusFirstAutofocusableElement() {
     const element = this.connectedSnapshot.firstAutofocusableElement
     if (elementIsFocusable(element)) {
       element.focus()
+    }
+  }
+
+  // Bardo delegate
+
+  enteringBardo(currentPermanentElement: Element) {
+    if (this.activeElement) return
+
+    if (currentPermanentElement.contains(this.currentSnapshot.activeElement)) {
+      this.activeElement = this.currentSnapshot.activeElement
+    }
+  }
+
+  leavingBardo(currentPermanentElement: Element) {
+    if (currentPermanentElement.contains(this.activeElement) && this.activeElement instanceof HTMLElement) {
+      this.activeElement.focus()
+
+      this.activeElement = null
     }
   }
 
@@ -76,7 +100,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
   }
 
   get cspNonce() {
-    return document.head.querySelector('meta[name="csp-nonce"]')?.getAttribute("content")
+    return getMetaContent("csp-nonce")
   }
 }
 

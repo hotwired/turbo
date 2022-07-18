@@ -1,13 +1,17 @@
 import { FetchResponse } from "../http/fetch_response"
+import { Snapshot } from "../core/snapshot"
 
 export enum FrameLoadingStyle {
   eager = "eager",
   lazy = "lazy",
 }
 
+export type FrameElementObservedAttribute = keyof FrameElement & ("disabled" | "complete" | "loading" | "src")
+
 export interface FrameElementDelegate {
   connect(): void
   disconnect(): void
+  completeChanged(): void
   loadingStyleChanged(): void
   sourceURLChanged(): void
   disabledChanged(): void
@@ -15,6 +19,7 @@ export interface FrameElementDelegate {
   linkClickIntercepted(element: Element, url: string): void
   loadResponse(response: FetchResponse): void
   fetchResponseLoaded: (fetchResponse: FetchResponse) => void
+  visitCachedSnapshot: (snapshot: Snapshot) => void
   isLoading: boolean
 }
 
@@ -40,8 +45,8 @@ export class FrameElement extends HTMLElement {
   loaded: Promise<FetchResponse | void> = Promise.resolve()
   readonly delegate: FrameElementDelegate
 
-  static get observedAttributes() {
-    return ["disabled", "loading", "src"]
+  static get observedAttributes(): FrameElementObservedAttribute[] {
+    return ["disabled", "complete", "loading", "src"]
   }
 
   constructor() {
@@ -59,6 +64,7 @@ export class FrameElement extends HTMLElement {
 
   reload() {
     const { src } = this
+    this.removeAttribute("complete")
     this.src = null
     this.src = src
   }
@@ -66,6 +72,8 @@ export class FrameElement extends HTMLElement {
   attributeChangedCallback(name: string) {
     if (name == "loading") {
       this.delegate.loadingStyleChanged()
+    } else if (name == "complete") {
+      this.delegate.completeChanged()
     } else if (name == "src") {
       this.delegate.sourceURLChanged()
     } else {
