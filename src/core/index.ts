@@ -97,8 +97,13 @@ export function renderStreamMessage(message: StreamMessage | string) {
 /**
  * Removes all entries from the Turbo Drive page cache.
  * Call this when state has changed on the server that may affect cached pages.
+ *
+ * @deprecated since version 7.2.0 in favor of `Turbo.cache.clear()`
  */
 export function clearCache() {
+  console.warn(
+    "Please replace `Turbo.clearCache()` with `Turbo.cache.clear()`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
   session.clearCache()
 }
 
