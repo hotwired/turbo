@@ -25,6 +25,7 @@ import {
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/form.html")
+  await page.evaluate(() => (window.Turbo.session.drive = true))
   await setLocalStorageFromEvent(page, "turbo:submit-start", "formSubmitStarted", "true")
   await setLocalStorageFromEvent(page, "turbo:submit-end", "formSubmitEnded", "true")
   await readEventLogs(page)

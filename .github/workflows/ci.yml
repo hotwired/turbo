@@ -35,10 +35,10 @@ jobs:
       run: yarn test:unit
 
     - name: Chrome Test
-      run: yarn test:browser --project=chrome
+      run: yarn test:browser --project=chrome --reporter=github
 
     - name: Firefox Test
-      run: yarn test:browser --project=firefox
+      run: yarn test:browser --project=firefox --reporter=github
 
     - name: Upload test results
       if: always()
