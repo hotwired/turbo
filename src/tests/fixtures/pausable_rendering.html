@@ -6,20 +6,26 @@
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
     <script type="module">
-      addEventListener('turbo:before-render', function(event) {
-        event.preventDefault()
-        if (confirm('Continue rendering?')) {
-          event.detail.resume()
-        } else {
-          alert('Rendering aborted')
-        }
-      })
+      for (const event of ["turbo:before-render", "turbo:before-frame-render"]) {
+        addEventListener(event, function(event) {
+          event.preventDefault()
+          if (confirm("Continue rendering?")) {
+            event.detail.resume()
+          }
+        })
+      }
     </script>
   </head>
   <body>
     <section>
       <h1>Pausable Rendering</h1>
       <p><a id="link" href="/src/tests/fixtures/one.html">Link</a></p>
+
+      <turbo-frame id="hello">
+        <h2>Pausable Frame Rendering</h2>
+
+        <a id="frame-link" href="/src/tests/fixtures/frames/hello.html">#hello Frame Link</a>
+      </turbo-frame>
     </section>
   </body>
 </html>
