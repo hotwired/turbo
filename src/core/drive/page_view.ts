@@ -1,24 +1,26 @@
 import { nextEventLoopTick } from "../../util"
-import { View, ViewDelegate } from "../view"
+import { View, ViewDelegate, ViewRenderOptions } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 import { Visit } from "./visit"
 
-export interface PageViewDelegate extends ViewDelegate<PageSnapshot> {
+export type PageViewRenderOptions = ViewRenderOptions<HTMLBodyElement>
+
+export interface PageViewDelegate extends ViewDelegate<HTMLBodyElement, PageSnapshot> {
   viewWillCacheSnapshot(): void
 }
 
 type PageViewRenderer = PageRenderer | ErrorRenderer
 
-export class PageView extends View<Element, PageSnapshot, PageViewRenderer, PageViewDelegate> {
+export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRenderer, PageViewDelegate> {
   readonly snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 
   renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit) {
-    const renderer = new PageRenderer(this.snapshot, snapshot, isPreview, willRender)
+    const renderer = new PageRenderer(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
     if (!renderer.shouldRender) {
       this.forceReloaded = true
     } else {
@@ -29,7 +31,7 @@ export class PageView extends View<Element, PageSnapshot, PageViewRenderer, Page
 
   renderError(snapshot: PageSnapshot, visit?: Visit) {
     visit?.changeHistory()
-    const renderer = new ErrorRenderer(this.snapshot, snapshot, false)
+    const renderer = new ErrorRenderer(this.snapshot, snapshot, ErrorRenderer.renderElement, false)
     return this.render(renderer)
   }
 

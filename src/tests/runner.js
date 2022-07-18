@@ -33,14 +33,6 @@ if (args["--environment"]) {
 const firstArg = args["_"][0]
 if (firstArg == "serveOnly") {
   intern.configure({ serveOnly: true })
-} else {
-  const { spawnSync } = require("child_process")
-  const { status, stderr } = spawnSync("java", [ "-version" ])
-
-  if (status != 0) {
-    console.error(stderr.toString())
-    process.exit(status)
-  }
 }
 
 intern.on("serverStart", server => {

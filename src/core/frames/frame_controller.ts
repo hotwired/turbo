@@ -9,25 +9,27 @@ import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import {
   clearBusyState,
+  dispatch,
   getAttribute,
   parseHTMLDocument,
   markAsBusy,
   uuid,
   getHistoryMethodForAction,
   getVisitAction,
-  attributeTrue,
 } from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { ViewDelegate } from "../view"
+import { ViewDelegate, ViewRenderOptions } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
+import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observers/form_link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
+import { TurboBeforeFrameRenderEvent } from "../session"
 
 export class FrameController
   implements
@@ -36,12 +38,14 @@ export class FrameController
     FormInterceptorDelegate,
     FormSubmissionDelegate,
     FrameElementDelegate,
+    FormLinkInterceptorDelegate,
     LinkInterceptorDelegate,
-    ViewDelegate<Snapshot<FrameElement>>
+    ViewDelegate<FrameElement, Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
+  readonly formLinkInterceptor: FormLinkInterceptor
   readonly linkInterceptor: LinkInterceptor
   readonly formInterceptor: FormInterceptor
   formSubmission?: FormSubmission
@@ -55,11 +59,13 @@ export class FrameController
   private frame?: FrameElement
   private resolveInterceptionPromise = (_value: any) => {}
   readonly restorationIdentifier: string
+  private previousFrameElement?: FrameElement
 
   constructor(element: FrameElement) {
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
+    this.formLinkInterceptor = new FormLinkInterceptor(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.formInterceptor = new FormInterceptor(this, this.element)
     this.restorationIdentifier = uuid()
@@ -73,6 +79,7 @@ export class FrameController
       } else {
         this.loadSourceURL()
       }
+      this.formLinkInterceptor.start()
       this.linkInterceptor.start()
       this.formInterceptor.start()
     }
@@ -82,6 +89,7 @@ export class FrameController
     if (this.connected) {
       this.connected = false
       this.appearanceObserver.stop()
+      this.formLinkInterceptor.stop()
       this.linkInterceptor.stop()
       this.formInterceptor.stop()
     }
@@ -139,7 +147,14 @@ export class FrameController
       if (html) {
         const { body } = parseHTMLDocument(html)
         const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(this.view.snapshot, snapshot, false, false)
+        const renderer = new FrameRenderer(
+          this,
+          this.view.snapshot,
+          snapshot,
+          FrameRenderer.renderElement,
+          false,
+          false
+        )
         if (this.view.renderPromise) await this.view.renderPromise
         this.changeHistory()
 
@@ -167,14 +182,21 @@ export class FrameController
     this.loadSourceURL()
   }
 
+  // Form link interceptor delegate
+
+  shouldInterceptFormLinkClick(link: Element): boolean {
+    return this.shouldInterceptNavigation(link)
+  }
+
+  formLinkClickIntercepted(link: Element, form: HTMLFormElement): void {
+    const frame = this.findFrameElement(link)
+    if (frame) form.setAttribute("data-turbo-frame", frame.id)
+  }
+
   // Link interceptor delegate
 
   shouldInterceptLinkClick(element: Element, _url: string) {
-    if (element.hasAttribute("data-turbo-method") || attributeTrue(element, "data-turbo-stream")) {
-      return false
-    } else {
-      return this.shouldInterceptNavigation(element)
-    }
+    return this.shouldInterceptNavigation(element)
   }
 
   linkClickIntercepted(element: Element, url: string) {
@@ -259,8 +281,22 @@ export class FrameController
 
   // View delegate
 
-  allowsImmediateRender(_snapshot: Snapshot, _resume: (value: any) => void) {
-    return true
+  allowsImmediateRender({ element: newFrame }: Snapshot<FrameElement>, options: ViewRenderOptions<FrameElement>) {
+    const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
+      target: this.element,
+      detail: { newFrame, ...options },
+      cancelable: true,
+    })
+    const {
+      defaultPrevented,
+      detail: { render },
+    } = event
+
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}
@@ -270,6 +306,21 @@ export class FrameController
   }
 
   viewInvalidated() {}
+
+  // Frame renderer delegate
+  frameExtracted(element: FrameElement) {
+    this.previousFrameElement = element
+  }
+
+  visitCachedSnapshot = ({ element }: Snapshot) => {
+    const frame = element.querySelector("#" + this.element.id)
+
+    if (frame && this.previousFrameElement) {
+      frame.replaceChildren(...this.previousFrameElement.children)
+    }
+
+    delete this.previousFrameElement
+  }
 
   // Private
 
@@ -302,7 +353,8 @@ export class FrameController
     this.frame = frame
 
     if (isAction(this.action)) {
-      const { visitCachedSnapshot } = new SnapshotSubstitution(frame)
+      const { visitCachedSnapshot } = frame.delegate
+
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
@@ -457,22 +509,6 @@ export class FrameController
     this.ignoredAttributes.add(attributeName)
     callback()
     this.ignoredAttributes.delete(attributeName)
-  }
-}
-
-class SnapshotSubstitution {
-  private readonly clone: Node
-  private readonly id: string
-
-  constructor(element: FrameElement) {
-    this.clone = element.cloneNode(true)
-    this.id = element.id
-  }
-
-  visitCachedSnapshot = ({ element }: Snapshot) => {
-    const { id, clone } = this
-
-    element.querySelector("#" + id)?.replaceWith(clone)
   }
 }
 

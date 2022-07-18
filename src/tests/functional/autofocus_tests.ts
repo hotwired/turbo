@@ -1,78 +1,80 @@
-import { TurboDriveTestCase } from "../helpers/turbo_drive_test_case"
+import { test } from "@playwright/test"
+import { assert } from "chai"
+import { hasSelector, nextBeat } from "../helpers/page"
 
-export class AutofocusTests extends TurboDriveTestCase {
-  async setup() {
-    await this.goToLocation("/src/tests/fixtures/autofocus.html")
-  }
+test.beforeEach(async ({ page }) => {
+  await page.goto("/src/tests/fixtures/autofocus.html")
+})
 
-  async "test autofocus first autofocus element on load"() {
-    await this.nextBeat
-    this.assert.ok(
-      await this.hasSelector("#first-autofocus-element:focus"),
-      "focuses the first [autofocus] element on the page"
-    )
-    this.assert.notOk(
-      await this.hasSelector("#second-autofocus-element:focus"),
-      "focuses the first [autofocus] element on the page"
-    )
-  }
+test("test autofocus first autofocus element on load", async ({ page }) => {
+  await nextBeat()
+  assert.ok(
+    await hasSelector(page, "#first-autofocus-element:focus"),
+    "focuses the first [autofocus] element on the page"
+  )
+  assert.notOk(
+    await hasSelector(page, "#second-autofocus-element:focus"),
+    "focuses the first [autofocus] element on the page"
+  )
+})
 
-  async "test autofocus first [autofocus] element on visit"() {
-    await this.goToLocation("/src/tests/fixtures/navigation.html")
-    await this.clickSelector("#autofocus-link")
-    await this.sleep(500)
+test("test autofocus first [autofocus] element on visit", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation.html")
+  await page.click("#autofocus-link")
+  await nextBeat()
 
-    this.assert.ok(
-      await this.hasSelector("#first-autofocus-element:focus"),
-      "focuses the first [autofocus] element on the page"
-    )
-    this.assert.notOk(
-      await this.hasSelector("#second-autofocus-element:focus"),
-      "focuses the first [autofocus] element on the page"
-    )
-  }
+  assert.ok(
+    await hasSelector(page, "#first-autofocus-element:focus"),
+    "focuses the first [autofocus] element on the page"
+  )
+  assert.notOk(
+    await hasSelector(page, "#second-autofocus-element:focus"),
+    "focuses the first [autofocus] element on the page"
+  )
+})
 
-  async "test navigating a frame with a descendant link autofocuses [autofocus]:first-of-type"() {
-    await this.clickSelector("#frame-inner-link")
-    await this.nextBeat
+test("test navigating a frame with a descendant link autofocuses [autofocus]:first-of-type", async ({ page }) => {
+  await page.click("#frame-inner-link")
+  await nextBeat()
 
-    this.assert.ok(
-      await this.hasSelector("#frames-form-first-autofocus-element:focus"),
-      "focuses the first [autofocus] element in frame"
-    )
-    this.assert.notOk(
-      await this.hasSelector("#frames-form-second-autofocus-element:focus"),
-      "focuses the first [autofocus] element in frame"
-    )
-  }
+  assert.ok(
+    await hasSelector(page, "#frames-form-first-autofocus-element:focus"),
+    "focuses the first [autofocus] element in frame"
+  )
+  assert.notOk(
+    await hasSelector(page, "#frames-form-second-autofocus-element:focus"),
+    "focuses the first [autofocus] element in frame"
+  )
+})
 
-  async "test navigating a frame with a link targeting the frame autofocuses [autofocus]:first-of-type"() {
-    await this.clickSelector("#frame-outer-link")
-    await this.nextBeat
+test("test navigating a frame with a link targeting the frame autofocuses [autofocus]:first-of-type", async ({
+  page,
+}) => {
+  await page.click("#frame-outer-link")
+  await nextBeat()
 
-    this.assert.ok(
-      await this.hasSelector("#frames-form-first-autofocus-element:focus"),
-      "focuses the first [autofocus] element in frame"
-    )
-    this.assert.notOk(
-      await this.hasSelector("#frames-form-second-autofocus-element:focus"),
-      "focuses the first [autofocus] element in frame"
-    )
-  }
+  assert.ok(
+    await hasSelector(page, "#frames-form-first-autofocus-element:focus"),
+    "focuses the first [autofocus] element in frame"
+  )
+  assert.notOk(
+    await hasSelector(page, "#frames-form-second-autofocus-element:focus"),
+    "focuses the first [autofocus] element in frame"
+  )
+})
 
-  async "test navigating a frame with a turbo-frame targeting the frame autofocuses [autofocus]:first-of-type"() {
-    await this.clickSelector("#drives-frame-target-link")
-    await this.nextBeat
+test("test navigating a frame with a turbo-frame targeting the frame autofocuses [autofocus]:first-of-type", async ({
+  page,
+}) => {
+  await page.click("#drives-frame-target-link")
+  await nextBeat()
 
-    this.assert.ok(
-      await this.hasSelector("#frames-form-first-autofocus-element:focus"),
-      "focuses the first [autofocus] element in frame"
-    )
-    this.assert.notOk(
-      await this.hasSelector("#frames-form-second-autofocus-element:focus"),
-      "focuses the first [autofocus] element in frame"
-    )
-  }
-}
-
-AutofocusTests.registerSuite()
+  assert.ok(
+    await hasSelector(page, "#frames-form-first-autofocus-element:focus"),
+    "focuses the first [autofocus] element in frame"
+  )
+  assert.notOk(
+    await hasSelector(page, "#frames-form-second-autofocus-element:focus"),
+    "focuses the first [autofocus] element in frame"
+  )
+})

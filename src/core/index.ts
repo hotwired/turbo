@@ -1,5 +1,6 @@
 import { Adapter } from "./native/adapter"
 import { Session } from "./session"
+import { Cache } from "./cache"
 import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
@@ -10,8 +11,24 @@ import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
 
 const session = new Session()
+const cache = new Cache(session)
 const { navigator } = session
-export { navigator, session, PageRenderer, PageSnapshot, FrameRenderer }
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
+export {
+  TurboBeforeCacheEvent,
+  TurboBeforeRenderEvent,
+  TurboBeforeVisitEvent,
+  TurboClickEvent,
+  TurboFrameLoadEvent,
+  TurboFrameRenderEvent,
+  TurboLoadEvent,
+  TurboRenderEvent,
+  TurboVisitEvent,
+} from "./session"
+
+export { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
+export { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent } from "../http/fetch_request"
+export { TurboBeforeStreamRenderEvent } from "../elements/stream_element"
 
 /**
  * Starts the main session.

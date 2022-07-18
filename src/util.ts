@@ -1,13 +1,16 @@
 import { Action, isAction } from "./core/types"
 
-export type DispatchOptions = {
+export type DispatchOptions<T extends CustomEvent> = {
   target: EventTarget
   cancelable: boolean
-  detail: any
+  detail: T["detail"]
 }
 
-export function dispatch(eventName: string, { target, cancelable, detail }: Partial<DispatchOptions> = {}) {
-  const event = new CustomEvent(eventName, {
+export function dispatch<T extends CustomEvent>(
+  eventName: string,
+  { target, cancelable, detail }: Partial<DispatchOptions<T>> = {}
+) {
+  const event = new CustomEvent<T["detail"]>(eventName, {
     cancelable,
     bubbles: true,
     detail,
@@ -111,6 +114,26 @@ export function getVisitAction(...elements: (Element | undefined)[]): Action | n
   return isAction(action) ? action : null
 }
 
-export function attributeTrue(element: Element, attributeName: string) {
-  return element.getAttribute(attributeName) === "true"
+export function getMetaElement(name: string): HTMLMetaElement | null {
+  return document.querySelector(`meta[name="${name}"]`)
+}
+
+export function getMetaContent(name: string) {
+  const element = getMetaElement(name)
+  return element && element.content
+}
+
+export function setMetaContent(name: string, content: string) {
+  let element = getMetaElement(name)
+
+  if (!element) {
+    element = document.createElement("meta")
+    element.setAttribute("name", name)
+
+    document.head.appendChild(element)
+  }
+
+  element.setAttribute("content", content)
+
+  return element
 }

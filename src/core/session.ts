@@ -5,6 +5,7 @@ import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/for
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
+import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../observers/form_link_interceptor"
 import { getAction, expandURL, locationIsVisitable, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
@@ -12,20 +13,32 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
-import { attributeTrue, clearBusyState, dispatch, markAsBusy } from "../util"
-import { PageView, PageViewDelegate } from "./drive/page_view"
+import { clearBusyState, dispatch, markAsBusy } from "../util"
+import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
+import { FrameViewRenderOptions } from "./frames/frame_view"
 import { FetchResponse } from "../http/fetch_response"
 import { Preloader, PreloaderDelegate } from "./drive/preloader"
 
 export type TimingData = unknown
+export type TurboBeforeCacheEvent = CustomEvent
+export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
+export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
+export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
+export type TurboFrameLoadEvent = CustomEvent
+export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
+export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
+export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
+export type TurboRenderEvent = CustomEvent
+export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
 
 export class Session
   implements
     FormSubmitObserverDelegate,
     HistoryDelegate,
+    FormLinkInterceptorDelegate,
     LinkClickObserverDelegate,
     NavigatorDelegate,
     PageObserverDelegate,
@@ -35,7 +48,7 @@ export class Session
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly preloader = new Preloader(this)
-  readonly view = new PageView(this, document.documentElement)
+  readonly view = new PageView(this, document.documentElement as HTMLBodyElement)
   adapter: Adapter = new BrowserAdapter(this)
 
   readonly pageObserver = new PageObserver(this)
@@ -44,7 +57,7 @@ export class Session
   readonly formSubmitObserver = new FormSubmitObserver(this)
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
-
+  readonly formLinkInterceptor = new FormLinkInterceptor(this, document.documentElement)
   readonly frameRedirector = new FrameRedirector(document.documentElement)
 
   drive = true
@@ -57,6 +70,7 @@ export class Session
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
+      this.formLinkInterceptor.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
       this.scrollObserver.start()
@@ -77,6 +91,7 @@ export class Session
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
+      this.formLinkInterceptor.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
       this.scrollObserver.stop()
@@ -148,51 +163,27 @@ export class Session
     this.history.updateRestorationData({ scrollPosition: position })
   }
 
+  // Form link interceptor delegate
+
+  shouldInterceptFormLinkClick(_link: Element): boolean {
+    return true
+  }
+
+  formLinkClickIntercepted(_link: Element, _form: HTMLFormElement) {}
+
   // Link click observer delegate
 
-  willFollowLinkToLocation(link: Element, location: URL) {
+  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent) {
     return (
       this.elementDriveEnabled(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
-      this.applicationAllowsFollowingLinkToLocation(link, location)
+      this.applicationAllowsFollowingLinkToLocation(link, location, event)
     )
   }
 
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    this.convertLinkWithMethodClickToFormSubmission(link) || this.visit(location.href, { action })
-  }
-
-  convertLinkWithMethodClickToFormSubmission(link: Element) {
-    const linkMethod = link.getAttribute("data-turbo-method")
-    const useTurboStream = attributeTrue(link, "data-turbo-stream")
-
-    if (linkMethod || useTurboStream) {
-      const form = document.createElement("form")
-      form.setAttribute("method", linkMethod || "get")
-      form.action = link.getAttribute("href") || "undefined"
-      form.hidden = true
-
-      const attributes = ["data-turbo-confirm", "data-turbo-stream"]
-      attributes.forEach((attribute) => {
-        if (link.hasAttribute(attribute)) {
-          form.setAttribute(attribute, link.getAttribute(attribute)!)
-        }
-      })
-
-      const frame = this.getTargetFrameForLink(link)
-      if (frame) {
-        form.setAttribute("data-turbo-frame", frame)
-        form.addEventListener("turbo:submit-start", () => form.remove())
-      } else {
-        form.addEventListener("submit", () => form.remove())
-      }
-
-      document.body.appendChild(form)
-      return dispatch("submit", { cancelable: true, target: form })
-    } else {
-      return false
-    }
+    this.visit(location.href, { action })
   }
 
   // Navigator delegate
@@ -270,9 +261,18 @@ export class Session
     }
   }
 
-  allowsImmediateRender({ element }: PageSnapshot, resume: (value: any) => void) {
-    const event = this.notifyApplicationBeforeRender(element, resume)
-    return !event.defaultPrevented
+  allowsImmediateRender({ element }: PageSnapshot, options: PageViewRenderOptions) {
+    const event = this.notifyApplicationBeforeRender(element, options)
+    const {
+      defaultPrevented,
+      detail: { render },
+    } = event
+
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot: PageSnapshot, _isPreview: boolean) {
@@ -305,8 +305,8 @@ export class Session
 
   // Application events
 
-  applicationAllowsFollowingLinkToLocation(link: Element, location: URL) {
-    const event = this.notifyApplicationAfterClickingLinkToLocation(link, location)
+  applicationAllowsFollowingLinkToLocation(link: Element, location: URL, ev: MouseEvent) {
+    const event = this.notifyApplicationAfterClickingLinkToLocation(link, location, ev)
     return !event.defaultPrevented
   }
 
@@ -315,16 +315,16 @@ export class Session
     return !event.defaultPrevented
   }
 
-  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL) {
-    return dispatch("turbo:click", {
+  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL, event: MouseEvent) {
+    return dispatch<TurboClickEvent>("turbo:click", {
       target: link,
-      detail: { url: location.href },
+      detail: { url: location.href, originalEvent: event },
       cancelable: true,
     })
   }
 
   notifyApplicationBeforeVisitingLocation(location: URL) {
-    return dispatch("turbo:before-visit", {
+    return dispatch<TurboBeforeVisitEvent>("turbo:before-visit", {
       detail: { url: location.href },
       cancelable: true,
     })
@@ -332,27 +332,27 @@ export class Session
 
   notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
     markAsBusy(document.documentElement)
-    return dispatch("turbo:visit", { detail: { url: location.href, action } })
+    return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
-    return dispatch("turbo:before-cache")
+    return dispatch<TurboBeforeCacheEvent>("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement, resume: (value: any) => void) {
-    return dispatch("turbo:before-render", {
-      detail: { newBody, resume },
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, options: PageViewRenderOptions) {
+    return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
+      detail: { newBody, ...options },
       cancelable: true,
     })
   }
 
   notifyApplicationAfterRender() {
-    return dispatch("turbo:render")
+    return dispatch<TurboRenderEvent>("turbo:render")
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
     clearBusyState(document.documentElement)
-    return dispatch("turbo:load", {
+    return dispatch<TurboLoadEvent>("turbo:load", {
       detail: { url: this.location.href, timing },
     })
   }
@@ -367,11 +367,11 @@ export class Session
   }
 
   notifyApplicationAfterFrameLoad(frame: FrameElement) {
-    return dispatch("turbo:frame-load", { target: frame })
+    return dispatch<TurboFrameLoadEvent>("turbo:frame-load", { target: frame })
   }
 
   notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {
-    return dispatch("turbo:frame-render", {
+    return dispatch<TurboFrameRenderEvent>("turbo:frame-render", {
       detail: { fetchResponse },
       target: frame,
       cancelable: true,
@@ -425,19 +425,6 @@ export class Session
   getActionForLink(link: Element): Action {
     const action = link.getAttribute("data-turbo-action")
     return isAction(action) ? action : "advance"
-  }
-
-  getTargetFrameForLink(link: Element) {
-    const frame = link.getAttribute("data-turbo-frame")
-
-    if (frame) {
-      return frame
-    } else {
-      const container = link.closest("turbo-frame")
-      if (container) {
-        return container.id
-      }
-    }
   }
 
   get snapshot() {

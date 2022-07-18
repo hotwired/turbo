@@ -1,4 +1,22 @@
 (function(eventNames) {
+  function serializeToChannel(object, returned = {}) {
+    for (const key in object) {
+      const value = object[key]
+
+      if (value instanceof URL) {
+        returned[key] = value.toJSON()
+      } else if (value instanceof Element) {
+        returned[key] = value.outerHTML
+      } else if (typeof value == "object") {
+        returned[key] = serializeToChannel(value)
+      } else {
+        returned[key] = value
+      }
+    }
+
+    return returned
+  }
+
   window.eventLogs = []
 
   for (var i = 0; i < eventNames.length; i++) {
@@ -9,7 +27,7 @@
   function eventListener(event) {
     const skipped = document.documentElement.getAttribute("data-skip-event-details") || ""
 
-    eventLogs.push([event.type, skipped.includes(event.type) ? {} : event.detail, event.target.id])
+    eventLogs.push([event.type, serializeToChannel(skipped.includes(event.type) ? {} : event.detail), event.target.id])
   }
   window.mutationLogs = []
 

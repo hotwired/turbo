@@ -34,10 +34,16 @@ Once you are done developing the feature or bug fix you have 2 options:
 2. Run a local webserver and checkout your changes manually
 
 ### Testing
-The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in `intern.json` check it out to see the used browser environments.
+The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in [intern.json](./intern.json) and [playwright.config.ts](./playwright.config.ts). Check them out to see the used browser environments.
 
 To override the ChromeDriver version, declare the `CHROMEVER` environment
 variable.
+
+First, install the drivers to test the suite in browsers:
+
+``bash
+yarn playwright install  --with-deps
+```
 
 The tests are using the compiled version of the library and they are themselves also compiled. To compile the tests and library and watch for changes:
 
@@ -45,10 +51,29 @@ The tests are using the compiled version of the library and they are themselves 
 yarn watch
 ```
 
-To run the tests:
+To run the unit tests:
 
 ```bash
-yarn test
+yarn test:unit
+```
+
+To run the browser tests:
+
+```bash
+yarn test:browser
+```
+
+To run the browser suite against a particular browser (one of
+`chrome|firefox`), pass the value as the `--project=$BROWSER` flag:
+
+```bash
+yarn test:browser --project=chrome
+```
+
+To run the browser tests in a "headed" browser, pass the `--headed` flag:
+
+```bash
+yarn test:browser --project=chrome --headed
 ```
 
 ### Test files
@@ -58,14 +83,23 @@ The html files needed for the tests are stored in: `src/tests/fixtures/`
 
 ### Run single test
 
-To focus on single test grep for it:
-```javascript
-yarn test --grep TEST_CASE_NAME
+To focus on single test, pass its file path:
+
+```bas
+yarn test:browser TEST_FILE
 ```
 
-Where the `TEST_CASE_NAME` is the name of test you want to run. For example:
-```javascript
-yarn test --grep 'triggers before-render and render events'
+Where the `TEST_FILE` is the name of test you want to run. For example:
+
+```base
+yarn test:browser src/tests/functional/drive_tests.ts
+```
+
+To execute a particular test, append `:LINE` where `LINE` is the line number of
+the call to `test("...")`:
+
+```bash
+yarn test:browser src/tests/functional/drive_tests.ts:11
 ```
 
 ### Local webserver
