@@ -30,6 +30,8 @@ export { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submiss
 export { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent } from "../http/fetch_request"
 export { TurboBeforeStreamRenderEvent } from "../elements/stream_element"
 
+export { StreamActions } from "./streams/stream_actions"
+
 /**
  * Starts the main session.
  * This initialises any necessary observers such as those to monitor

@@ -33,6 +33,24 @@ test("test receiving a stream message with css selector target", async ({ page }
   assert.equal(await element[1], "Hello CSS!")
 })
 
+test("test overriding with custom StreamActions", async ({ page }) => {
+  const html = "Rendered with Custom Action"
+
+  await page.evaluate((html) => {
+    window.Turbo.StreamActions.customUpdate = function () {
+      for (const target of this.targetElements) target.innerHTML = html
+    }
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      `<turbo-stream action="customUpdate" target="messages">
+        <template></template>
+      </turbo-stream>`
+    )
+  }, html)
+
+  assert.equal(await page.textContent("#messages"), html, "evaluates custom StreamAction")
+})
+
 test("test receiving a stream message asynchronously", async ({ page }) => {
   let messages = await page.locator("#messages > *").allTextContents()
 
