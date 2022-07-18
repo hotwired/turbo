@@ -12,7 +12,7 @@ import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission
 import { Snapshot } from "../snapshot"
 import { ViewDelegate, ViewRenderOptions } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
-import { FormInterceptor, FormInterceptorDelegate } from "./form_interceptor"
+import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observers/form_link_interceptor"
@@ -25,7 +25,7 @@ export class FrameController
   implements
     AppearanceObserverDelegate,
     FetchRequestDelegate,
-    FormInterceptorDelegate,
+    FormSubmitObserverDelegate,
     FormSubmissionDelegate,
     FrameElementDelegate,
     FormLinkInterceptorDelegate,
@@ -37,7 +37,7 @@ export class FrameController
   readonly appearanceObserver: AppearanceObserver
   readonly formLinkInterceptor: FormLinkInterceptor
   readonly linkInterceptor: LinkInterceptor
-  readonly formInterceptor: FormInterceptor
+  readonly formSubmitObserver: FormSubmitObserver
   formSubmission?: FormSubmission
   fetchResponseLoaded = (_fetchResponse: FetchResponse) => {}
   private currentFetchRequest: FetchRequest | null = null
@@ -53,7 +53,7 @@ export class FrameController
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.formLinkInterceptor = new FormLinkInterceptor(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
-    this.formInterceptor = new FormInterceptor(this, this.element)
+    this.formSubmitObserver = new FormSubmitObserver(this, this.element)
   }
 
   connect() {
@@ -66,7 +66,7 @@ export class FrameController
       }
       this.formLinkInterceptor.start()
       this.linkInterceptor.start()
-      this.formInterceptor.start()
+      this.formSubmitObserver.start()
     }
   }
 
@@ -76,7 +76,7 @@ export class FrameController
       this.appearanceObserver.stop()
       this.formLinkInterceptor.stop()
       this.linkInterceptor.stop()
-      this.formInterceptor.stop()
+      this.formSubmitObserver.stop()
     }
   }
 
@@ -184,11 +184,11 @@ export class FrameController
 
   // Form interceptor delegate
 
-  shouldInterceptFormSubmission(element: HTMLFormElement, submitter?: HTMLElement) {
-    return this.shouldInterceptNavigation(element, submitter)
+  willSubmitForm(element: HTMLFormElement, submitter?: HTMLElement) {
+    return element.closest("turbo-frame") == this.element && this.shouldInterceptNavigation(element, submitter)
   }
 
-  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement) {
+  formSubmitted(element: HTMLFormElement, submitter?: HTMLElement) {
     if (this.formSubmission) {
       this.formSubmission.stop()
     }

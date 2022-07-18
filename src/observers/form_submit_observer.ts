@@ -5,29 +5,31 @@ export interface FormSubmitObserverDelegate {
 
 export class FormSubmitObserver {
   readonly delegate: FormSubmitObserverDelegate
+  readonly eventTarget: EventTarget
   started = false
 
-  constructor(delegate: FormSubmitObserverDelegate) {
+  constructor(delegate: FormSubmitObserverDelegate, eventTarget: EventTarget) {
     this.delegate = delegate
+    this.eventTarget = eventTarget
   }
 
   start() {
     if (!this.started) {
-      addEventListener("submit", this.submitCaptured, true)
+      this.eventTarget.addEventListener("submit", this.submitCaptured, true)
       this.started = true
     }
   }
 
   stop() {
     if (this.started) {
-      removeEventListener("submit", this.submitCaptured, true)
+      this.eventTarget.removeEventListener("submit", this.submitCaptured, true)
       this.started = false
     }
   }
 
   submitCaptured = () => {
-    removeEventListener("submit", this.submitBubbled, false)
-    addEventListener("submit", this.submitBubbled, false)
+    this.eventTarget.removeEventListener("submit", this.submitBubbled, false)
+    this.eventTarget.addEventListener("submit", this.submitBubbled, false)
   }
 
   submitBubbled = <EventListener>((event: SubmitEvent) => {
