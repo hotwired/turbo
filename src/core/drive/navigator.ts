@@ -87,7 +87,8 @@ export class Navigator {
     if (formSubmission == this.formSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
-        if (formSubmission.method != FetchMethod.get) {
+        const shouldCacheSnapshot = formSubmission.method == FetchMethod.get
+        if (!shouldCacheSnapshot) {
           this.view.clearSnapshotCache()
         }
 
@@ -95,6 +96,7 @@ export class Navigator {
         const action = this.getActionForFormSubmission(formSubmission)
         const visitOptions = {
           action,
+          shouldCacheSnapshot,
           response: { statusCode, responseHTML, redirected },
         }
         this.proposeVisit(fetchResponse.location, visitOptions)

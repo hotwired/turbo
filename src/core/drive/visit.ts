@@ -47,6 +47,7 @@ export type VisitOptions = {
   willRender: boolean
   updateHistory: boolean
   restorationIdentifier?: string
+  shouldCacheSnapshot: boolean
 }
 
 const defaultOptions: VisitOptions = {
@@ -55,6 +56,7 @@ const defaultOptions: VisitOptions = {
   visitCachedSnapshot: () => {},
   willRender: true,
   updateHistory: true,
+  shouldCacheSnapshot: true,
 }
 
 export type VisitResponse = {
@@ -89,6 +91,7 @@ export class Visit implements FetchRequestDelegate {
   request?: FetchRequest
   response?: VisitResponse
   scrolled = false
+  shouldCacheSnapshot = true
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
@@ -103,11 +106,20 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender, updateHistory } =
-      {
-        ...defaultOptions,
-        ...options,
-      }
+    const {
+      action,
+      historyChanged,
+      referrer,
+      snapshotHTML,
+      response,
+      visitCachedSnapshot,
+      willRender,
+      updateHistory,
+      shouldCacheSnapshot,
+    } = {
+      ...defaultOptions,
+      ...options,
+    }
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
@@ -118,6 +130,7 @@ export class Visit implements FetchRequestDelegate {
     this.willRender = willRender
     this.updateHistory = updateHistory
     this.scrolled = !willRender
+    this.shouldCacheSnapshot = shouldCacheSnapshot
   }
 
   get adapter() {
@@ -231,7 +244,7 @@ export class Visit implements FetchRequestDelegate {
     if (this.response) {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
-        this.cacheSnapshot()
+        if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
           await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender, this)
