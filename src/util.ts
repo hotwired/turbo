@@ -1,3 +1,5 @@
+import { Action, isAction } from "./core/types"
+
 export type DispatchOptions<T extends CustomEvent> = {
   target: EventTarget
   cancelable: boolean
@@ -94,6 +96,22 @@ export function clearBusyState(...elements: Element[]) {
 
     element.removeAttribute("aria-busy")
   }
+}
+
+export function getHistoryMethodForAction(action: Action) {
+  switch (action) {
+    case "replace":
+      return history.replaceState
+    case "advance":
+    case "restore":
+      return history.pushState
+  }
+}
+
+export function getVisitAction(...elements: (Element | undefined)[]): Action | null {
+  const action = getAttribute("data-turbo-action", ...elements)
+
+  return isAction(action) ? action : null
 }
 
 export function getMetaElement(name: string): HTMLMetaElement | null {

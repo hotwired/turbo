@@ -6,7 +6,7 @@ import { getAnchor } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
-import { uuid } from "../../util"
+import { getHistoryMethodForAction, uuid } from "../../util"
 import { PageView } from "./page_view"
 
 export interface VisitDelegate {
@@ -45,6 +45,8 @@ export type VisitOptions = {
   response?: VisitResponse
   visitCachedSnapshot(snapshot: Snapshot): void
   willRender: boolean
+  updateHistory: boolean
+  restorationIdentifier?: string
   shouldCacheSnapshot: boolean
 }
 
@@ -53,6 +55,7 @@ const defaultOptions: VisitOptions = {
   historyChanged: false,
   visitCachedSnapshot: () => {},
   willRender: true,
+  updateHistory: true,
   shouldCacheSnapshot: true,
 }
 
@@ -77,6 +80,7 @@ export class Visit implements FetchRequestDelegate {
   readonly timingMetrics: TimingMetrics = {}
   readonly visitCachedSnapshot: (snapshot: Snapshot) => void
   readonly willRender: boolean
+  readonly updateHistory: boolean
 
   followedRedirect = false
   frame?: number
@@ -110,6 +114,7 @@ export class Visit implements FetchRequestDelegate {
       response,
       visitCachedSnapshot,
       willRender,
+      updateHistory,
       shouldCacheSnapshot,
     } = {
       ...defaultOptions,
@@ -123,6 +128,7 @@ export class Visit implements FetchRequestDelegate {
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
+    this.updateHistory = updateHistory
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
   }
@@ -187,9 +193,9 @@ export class Visit implements FetchRequestDelegate {
   }
 
   changeHistory() {
-    if (!this.historyChanged) {
+    if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
-      const method = this.getHistoryMethodForAction(actionForHistory)
+      const method = getHistoryMethodForAction(actionForHistory)
       this.history.update(method, this.location, this.restorationIdentifier)
       this.historyChanged = true
     }

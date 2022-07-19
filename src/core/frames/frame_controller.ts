@@ -7,7 +7,16 @@ import {
 import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
-import { clearBusyState, dispatch, getAttribute, parseHTMLDocument, markAsBusy } from "../../util"
+import {
+  clearBusyState,
+  dispatch,
+  getAttribute,
+  parseHTMLDocument,
+  markAsBusy,
+  uuid,
+  getHistoryMethodForAction,
+  getVisitAction,
+} from "../../util"
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate, ViewRenderOptions } from "../view"
@@ -18,7 +27,8 @@ import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observers/form_link_interceptor"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
-import { isAction } from "../types"
+import { isAction, Action } from "../types"
+import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent } from "../session"
 
 export class FrameController
@@ -45,6 +55,9 @@ export class FrameController
   private connected = false
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
+  private action: Action | null = null
+  private frame?: FrameElement
+  readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
 
   constructor(element: FrameElement) {
@@ -53,6 +66,7 @@ export class FrameController
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.formLinkInterceptor = new FormLinkInterceptor(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
+    this.restorationIdentifier = uuid()
     this.formSubmitObserver = new FormSubmitObserver(this, this.element)
   }
 
@@ -141,6 +155,8 @@ export class FrameController
           false
         )
         if (this.view.renderPromise) await this.view.renderPromise
+        this.changeHistory()
+
         await this.view.render(renderer)
         this.complete = true
         session.frameRendered(fetchResponse, this.element)
@@ -328,9 +344,10 @@ export class FrameController
   }
 
   private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
-    const action = getAttribute("data-turbo-action", submitter, element, frame)
+    this.action = getVisitAction(submitter, element, frame)
+    this.frame = frame
 
-    if (isAction(action)) {
+    if (isAction(this.action)) {
       const { visitCachedSnapshot } = frame.delegate
 
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
@@ -338,15 +355,26 @@ export class FrameController
           const { statusCode, redirected } = fetchResponse
           const responseHTML = frame.ownerDocument.documentElement.outerHTML
           const response = { statusCode, redirected, responseHTML }
-
-          session.visit(frame.src, {
-            action,
+          const options: Partial<VisitOptions> = {
             response,
             visitCachedSnapshot,
             willRender: false,
-          })
+            updateHistory: false,
+            restorationIdentifier: this.restorationIdentifier,
+          }
+
+          if (this.action) options.action = this.action
+
+          session.visit(frame.src, options)
         }
       }
+    }
+  }
+
+  changeHistory() {
+    if (this.action && this.frame) {
+      const method = getHistoryMethodForAction(this.action)
+      session.history.update(method, expandURL(this.frame.src || ""), this.restorationIdentifier)
     }
   }
 
