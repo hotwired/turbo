@@ -244,7 +244,6 @@ export class FrameController
     dispatch<TurboFetchErrorEvent>("turbo:fetch-error", {
       target: this.element,
       detail: { request, error },
-      cancelable: true,
     })
     this.resolveVisitPromise()
   }
