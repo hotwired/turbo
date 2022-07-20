@@ -38,6 +38,9 @@ export class FormLinkInterceptor implements LinkInterceptorDelegate {
     const method = link.getAttribute("data-turbo-method")
     if (method) form.setAttribute("method", method)
 
+    const turboFrame = link.getAttribute("data-turbo-frame")
+    if (turboFrame) form.setAttribute("data-turbo-frame", turboFrame)
+
     const turboConfirm = link.getAttribute("data-turbo-confirm")
     if (turboConfirm) form.setAttribute("data-turbo-confirm", turboConfirm)
 

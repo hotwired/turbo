@@ -8,20 +8,24 @@ type ResolvingFunctions<T = unknown> = {
   reject(reason?: any): void
 }
 
+export type Render<E> = (newElement: E, currentElement: E) => void
+
 export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapshot<E>> implements BardoDelegate {
   readonly currentSnapshot: S
   readonly newSnapshot: S
   readonly isPreview: boolean
   readonly willRender: boolean
   readonly promise: Promise<void>
+  renderElement: Render<E>
   private resolvingFunctions?: ResolvingFunctions<void>
   private activeElement: Element | null = null
 
-  constructor(currentSnapshot: S, newSnapshot: S, isPreview: boolean, willRender = true) {
+  constructor(currentSnapshot: S, newSnapshot: S, renderElement: Render<E>, isPreview: boolean, willRender = true) {
     this.currentSnapshot = currentSnapshot
     this.newSnapshot = newSnapshot
     this.isPreview = isPreview
     this.willRender = willRender
+    this.renderElement = renderElement
     this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
   }
 

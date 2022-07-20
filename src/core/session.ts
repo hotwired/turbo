@@ -14,19 +14,21 @@ import { StreamMessage } from "./streams/stream_message"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
-import { PageView, PageViewDelegate } from "./drive/page_view"
+import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
+import { FrameViewRenderOptions } from "./frames/frame_view"
 import { FetchResponse } from "../http/fetch_response"
 import { Preloader, PreloaderDelegate } from "./drive/preloader"
 
 export type TimingData = unknown
 export type TurboBeforeCacheEvent = CustomEvent
-export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement; resume: (value: any) => void }>
+export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
 export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
 export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
 export type TurboFrameLoadEvent = CustomEvent
+export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
 export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
 export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
 export type TurboRenderEvent = CustomEvent
@@ -46,13 +48,13 @@ export class Session
   readonly navigator = new Navigator(this)
   readonly history = new History(this)
   readonly preloader = new Preloader(this)
-  readonly view = new PageView(this, document.documentElement)
+  readonly view = new PageView(this, document.documentElement as HTMLBodyElement)
   adapter: Adapter = new BrowserAdapter(this)
 
   readonly pageObserver = new PageObserver(this)
   readonly cacheObserver = new CacheObserver()
   readonly linkClickObserver = new LinkClickObserver(this)
-  readonly formSubmitObserver = new FormSubmitObserver(this)
+  readonly formSubmitObserver = new FormSubmitObserver(this, document)
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
   readonly formLinkInterceptor = new FormLinkInterceptor(this, document.documentElement)
@@ -259,9 +261,18 @@ export class Session
     }
   }
 
-  allowsImmediateRender({ element }: PageSnapshot, resume: (value: any) => void) {
-    const event = this.notifyApplicationBeforeRender(element, resume)
-    return !event.defaultPrevented
+  allowsImmediateRender({ element }: PageSnapshot, options: PageViewRenderOptions) {
+    const event = this.notifyApplicationBeforeRender(element, options)
+    const {
+      defaultPrevented,
+      detail: { render },
+    } = event
+
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot: PageSnapshot, _isPreview: boolean) {
@@ -323,9 +334,9 @@ export class Session
     return dispatch<TurboBeforeCacheEvent>("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement, resume: (value: any) => void) {
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, options: PageViewRenderOptions) {
     return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
-      detail: { newBody, resume },
+      detail: { newBody, ...options },
       cancelable: true,
     })
   }

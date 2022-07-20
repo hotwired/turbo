@@ -4,6 +4,14 @@ import { ReloadReason } from "../native/browser_adapter"
 import { waitForLoad } from "../../util"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
+  static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
+    if (document.body && newElement instanceof HTMLBodyElement) {
+      document.body.replaceWith(newElement)
+    } else {
+      document.documentElement.appendChild(newElement)
+    }
+  }
+
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
@@ -113,11 +121,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   assignNewBody() {
-    if (document.body && this.newElement instanceof HTMLBodyElement) {
-      document.body.replaceWith(this.newElement)
-    } else {
-      document.documentElement.appendChild(this.newElement)
-    }
+    this.renderElement(this.currentElement, this.newElement)
   }
 
   get newHeadStylesheetElements() {

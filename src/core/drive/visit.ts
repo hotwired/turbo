@@ -6,7 +6,7 @@ import { getAnchor } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
-import { uuid } from "../../util"
+import { getHistoryMethodForAction, uuid } from "../../util"
 import { PageView } from "./page_view"
 
 export interface VisitDelegate {
@@ -45,6 +45,9 @@ export type VisitOptions = {
   response?: VisitResponse
   visitCachedSnapshot(snapshot: Snapshot): void
   willRender: boolean
+  updateHistory: boolean
+  restorationIdentifier?: string
+  shouldCacheSnapshot: boolean
 }
 
 const defaultOptions: VisitOptions = {
@@ -52,6 +55,8 @@ const defaultOptions: VisitOptions = {
   historyChanged: false,
   visitCachedSnapshot: () => {},
   willRender: true,
+  updateHistory: true,
+  shouldCacheSnapshot: true,
 }
 
 export type VisitResponse = {
@@ -75,6 +80,7 @@ export class Visit implements FetchRequestDelegate {
   readonly timingMetrics: TimingMetrics = {}
   readonly visitCachedSnapshot: (snapshot: Snapshot) => void
   readonly willRender: boolean
+  readonly updateHistory: boolean
 
   followedRedirect = false
   frame?: number
@@ -85,6 +91,7 @@ export class Visit implements FetchRequestDelegate {
   request?: FetchRequest
   response?: VisitResponse
   scrolled = false
+  shouldCacheSnapshot = true
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
@@ -99,7 +106,17 @@ export class Visit implements FetchRequestDelegate {
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
 
-    const { action, historyChanged, referrer, snapshotHTML, response, visitCachedSnapshot, willRender } = {
+    const {
+      action,
+      historyChanged,
+      referrer,
+      snapshotHTML,
+      response,
+      visitCachedSnapshot,
+      willRender,
+      updateHistory,
+      shouldCacheSnapshot,
+    } = {
       ...defaultOptions,
       ...options,
     }
@@ -111,7 +128,9 @@ export class Visit implements FetchRequestDelegate {
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
+    this.updateHistory = updateHistory
     this.scrolled = !willRender
+    this.shouldCacheSnapshot = shouldCacheSnapshot
   }
 
   get adapter() {
@@ -174,9 +193,9 @@ export class Visit implements FetchRequestDelegate {
   }
 
   changeHistory() {
-    if (!this.historyChanged) {
+    if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
-      const method = this.getHistoryMethodForAction(actionForHistory)
+      const method = getHistoryMethodForAction(actionForHistory)
       this.history.update(method, this.location, this.restorationIdentifier)
       this.historyChanged = true
     }
@@ -225,7 +244,7 @@ export class Visit implements FetchRequestDelegate {
     if (this.response) {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
-        this.cacheSnapshot()
+        if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
           await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender, this)

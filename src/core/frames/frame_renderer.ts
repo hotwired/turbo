@@ -1,23 +1,37 @@
 import { FrameElement } from "../../elements/frame_element"
 import { nextAnimationFrame } from "../../util"
-import { Renderer } from "../renderer"
+import { Render, Renderer } from "../renderer"
 import { Snapshot } from "../snapshot"
 
 export interface FrameRendererDelegate {
-  frameContentsExtracted(fragment: DocumentFragment): void
+  frameExtracted(element: FrameElement): void
 }
 
 export class FrameRenderer extends Renderer<FrameElement> {
   private readonly delegate: FrameRendererDelegate
 
+  static renderElement(currentElement: FrameElement, newElement: FrameElement) {
+    const destinationRange = document.createRange()
+    destinationRange.selectNodeContents(currentElement)
+    destinationRange.deleteContents()
+
+    const frameElement = newElement
+    const sourceRange = frameElement.ownerDocument?.createRange()
+    if (sourceRange) {
+      sourceRange.selectNodeContents(frameElement)
+      currentElement.appendChild(sourceRange.extractContents())
+    }
+  }
+
   constructor(
     delegate: FrameRendererDelegate,
     currentSnapshot: Snapshot<FrameElement>,
     newSnapshot: Snapshot<FrameElement>,
+    renderElement: Render<FrameElement>,
     isPreview: boolean,
     willRender = true
   ) {
-    super(currentSnapshot, newSnapshot, isPreview, willRender)
+    super(currentSnapshot, newSnapshot, renderElement, isPreview, willRender)
     this.delegate = delegate
   }
 
@@ -38,16 +52,8 @@ export class FrameRenderer extends Renderer<FrameElement> {
   }
 
   loadFrameElement() {
-    const destinationRange = document.createRange()
-    destinationRange.selectNodeContents(this.currentElement)
-    this.delegate.frameContentsExtracted(destinationRange.extractContents())
-
-    const frameElement = this.newElement
-    const sourceRange = frameElement.ownerDocument?.createRange()
-    if (sourceRange) {
-      sourceRange.selectNodeContents(frameElement)
-      this.currentElement.appendChild(sourceRange.extractContents())
-    }
+    this.delegate.frameExtracted(this.newElement.cloneNode(true))
+    this.renderElement(this.currentElement, this.newElement)
   }
 
   scrollFrameIntoView() {

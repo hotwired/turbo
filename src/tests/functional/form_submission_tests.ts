@@ -146,7 +146,6 @@ test("test standard POST form submission events", async ({ page }) => {
 
   await nextEventNamed(page, "turbo:before-visit")
   await nextEventNamed(page, "turbo:visit")
-  await nextEventNamed(page, "turbo:before-cache")
   await nextEventNamed(page, "turbo:before-render")
   await nextEventNamed(page, "turbo:render")
   await nextEventNamed(page, "turbo:load")

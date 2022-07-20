@@ -1,5 +1,7 @@
 import { FetchResponse } from "../http/fetch_response"
 import { Snapshot } from "../core/snapshot"
+import { LinkInterceptorDelegate } from "../core/frames/link_interceptor"
+import { FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 
 export enum FrameLoadingStyle {
   eager = "eager",
@@ -8,15 +10,13 @@ export enum FrameLoadingStyle {
 
 export type FrameElementObservedAttribute = keyof FrameElement & ("disabled" | "complete" | "loading" | "src")
 
-export interface FrameElementDelegate {
+export interface FrameElementDelegate extends LinkInterceptorDelegate, FormSubmitObserverDelegate {
   connect(): void
   disconnect(): void
   completeChanged(): void
   loadingStyleChanged(): void
   sourceURLChanged(): void
   disabledChanged(): void
-  formSubmissionIntercepted(element: HTMLFormElement, submitter?: HTMLElement): void
-  linkClickIntercepted(element: Element, url: string): void
   loadResponse(response: FetchResponse): void
   fetchResponseLoaded: (fetchResponse: FetchResponse) => void
   visitCachedSnapshot: (snapshot: Snapshot) => void
