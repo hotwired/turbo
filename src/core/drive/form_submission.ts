@@ -203,7 +203,6 @@ export class FormSubmission {
     dispatch<TurboFetchErrorEvent>("turbo:fetch-error", {
       target: this.formElement,
       detail: { request, error },
-      cancelable: true,
     })
     this.delegate.formSubmissionErrored(this, error)
   }
