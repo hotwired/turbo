@@ -29,7 +29,7 @@ import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
-import { TurboBeforeFrameRenderEvent } from "../session"
+import { TurboBeforeFrameRenderEvent, TurboFetchErrorEvent } from "../session"
 
 export class FrameController
   implements
@@ -241,6 +241,11 @@ export class FrameController
 
   requestErrored(request: FetchRequest, error: Error) {
     console.error(error)
+    dispatch<TurboFetchErrorEvent>("turbo:fetch-error", {
+      target: this.element,
+      detail: { request, error },
+      cancelable: true,
+    })
     this.resolveVisitPromise()
   }
 
