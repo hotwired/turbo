@@ -25,11 +25,12 @@ test("test frame navigation with exterior link", async ({ page }) => {
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation emits fetch-error event when offline", async ({ page }) => {
+test("test frame navigation emits fetch-error event when offline", async ({ page }, testInfo) => {
+  testInfo.project.name
   let browser
-  if (process.env.browserName === "chrome") {
+  if (testInfo.project.name === "chrome") {
     browser = await chromium.launch()
-  } else if (process.env.browserName === "firefox") {
+  } else if (testInfo.project.name === "firefox") {
     browser = await firefox.launch()
   } else {
     throw new Error("unsupported browser")
