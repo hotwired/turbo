@@ -27,7 +27,7 @@ test("test frame navigation with exterior link", async ({ page }) => {
 
 test("test frame navigation emits fetch-error event when offline", async ({ page }) => {
   let browser
-  if (process.env.browserName === "chromium") {
+  if (process.env.browserName === "chrome") {
     browser = await chromium.launch()
   } else if (process.env.browserName === "firefox") {
     browser = await firefox.launch()
