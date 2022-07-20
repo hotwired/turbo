@@ -28,7 +28,7 @@ test("test frame navigation emits fetch-error event when offline", async ({ page
   await page.goto("/src/tests/fixtures/tabs.html")
   await page.context().setOffline(true)
   await page.click("#tab-2")
-  await nextEventOnTarget(page, "tab-frame", "turbo:fetch-error")
+  await nextEventNamed(page, "turbo:fetch-error")
 })
 
 test("test promoted frame navigation updates the URL before rendering", async ({ page }) => {
