@@ -24,7 +24,7 @@ import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observers/form_link_interceptor"
+import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction, Action } from "../types"
@@ -38,14 +38,14 @@ export class FrameController
     FormSubmitObserverDelegate,
     FormSubmissionDelegate,
     FrameElementDelegate,
-    FormLinkInterceptorDelegate,
+    FormLinkClickObserverDelegate,
     LinkInterceptorDelegate,
     ViewDelegate<FrameElement, Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
-  readonly formLinkInterceptor: FormLinkInterceptor
+  readonly formLinkClickObserver: FormLinkClickObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formSubmitObserver: FormSubmitObserver
   formSubmission?: FormSubmission
@@ -64,7 +64,7 @@ export class FrameController
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
-    this.formLinkInterceptor = new FormLinkInterceptor(this, this.element)
+    this.formLinkClickObserver = new FormLinkClickObserver(this, this.element)
     this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.restorationIdentifier = uuid()
     this.formSubmitObserver = new FormSubmitObserver(this, this.element)
@@ -78,7 +78,7 @@ export class FrameController
       } else {
         this.loadSourceURL()
       }
-      this.formLinkInterceptor.start()
+      this.formLinkClickObserver.start()
       this.linkInterceptor.start()
       this.formSubmitObserver.start()
     }
@@ -88,7 +88,7 @@ export class FrameController
     if (this.connected) {
       this.connected = false
       this.appearanceObserver.stop()
-      this.formLinkInterceptor.stop()
+      this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
     }
@@ -177,13 +177,13 @@ export class FrameController
     this.loadSourceURL()
   }
 
-  // Form link interceptor delegate
+  // Form link click observer delegate
 
-  shouldInterceptFormLinkClick(link: Element): boolean {
+  willSubmitFormLinkToLocation(link: Element): boolean {
     return this.shouldInterceptNavigation(link)
   }
 
-  formLinkClickIntercepted(link: Element, form: HTMLFormElement): void {
+  submittedFormLinkToLocation(link: Element, _location: URL, form: HTMLFormElement): void {
     const frame = this.findFrameElement(link)
     if (frame) form.setAttribute("data-turbo-frame", frame.id)
   }
@@ -198,7 +198,7 @@ export class FrameController
     this.navigateFrame(element, url)
   }
 
-  // Form interceptor delegate
+  // Form submit observer delegate
 
   willSubmitForm(element: HTMLFormElement, submitter?: HTMLElement) {
     return element.closest("turbo-frame") == this.element && this.shouldInterceptNavigation(element, submitter)
