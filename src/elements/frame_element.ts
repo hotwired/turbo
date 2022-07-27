@@ -42,7 +42,7 @@ export interface FrameElementDelegate extends LinkInterceptorDelegate, FormSubmi
 export class FrameElement extends HTMLElement {
   static delegateConstructor: new (element: FrameElement) => FrameElementDelegate
 
-  loaded: Promise<FetchResponse | void> = Promise.resolve()
+  loaded: Promise<void> = Promise.resolve()
   readonly delegate: FrameElementDelegate
 
   static get observedAttributes(): FrameElementObservedAttribute[] {

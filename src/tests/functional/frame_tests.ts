@@ -32,6 +32,22 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
+test("test navigating a frame with Turbo.visit", async ({ page }) => {
+  const pathname = "/src/tests/fixtures/frames/frame.html"
+
+  await page.locator("#frame").evaluate((frame) => frame.setAttribute("disabled", ""))
+  await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
+  await nextBeat()
+
+  assert.equal(await page.textContent("#frame h2"), "Frames: #frame", "does not navigate a disabled frame")
+
+  await page.locator("#frame").evaluate((frame) => frame.removeAttribute("disabled"))
+  await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
+  await nextBeat()
+
+  assert.equal(await page.textContent("#frame h2"), "Frame: loaded", "navigates the target frame")
+})
+
 test("test navigating a frame a second time does not leak event listeners", async ({ page }) => {
   await withoutChangingEventListenersCount(page, async () => {
     await page.click("#outer-frame-link")

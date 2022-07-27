@@ -48,6 +48,7 @@ export type VisitOptions = {
   updateHistory: boolean
   restorationIdentifier?: string
   shouldCacheSnapshot: boolean
+  frame?: string
 }
 
 const defaultOptions: VisitOptions = {
