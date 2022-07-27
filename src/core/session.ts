@@ -106,8 +106,8 @@ export class Session
     this.adapter = adapter
   }
 
-  visit(location: Locatable, options: Partial<VisitOptions> = {}) {
-    this.navigator.proposeVisit(expandURL(location), options)
+  visit(location: Locatable, options: Partial<VisitOptions> = {}): Promise<void> {
+    return this.navigator.proposeVisit(expandURL(location), options)
   }
 
   connectStreamSource(source: StreamSource) {
@@ -194,7 +194,7 @@ export class Session
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
     extendURLWithDeprecatedProperties(location)
-    this.adapter.visitProposedToLocation(location, options)
+    return this.adapter.visitProposedToLocation(location, options)
   }
 
   visitStarted(visit: Visit) {
