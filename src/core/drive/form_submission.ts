@@ -228,8 +228,8 @@ function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): F
   const name = submitter?.getAttribute("name")
   const value = submitter?.getAttribute("value")
 
-  if (name && value != null && formData.get(name) != value) {
-    formData.append(name, value)
+  if (name) {
+    formData.append(name, value || "")
   }
 
   return formData

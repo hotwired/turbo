@@ -367,14 +367,14 @@ test("test no-action form submission submitter parameters", async ({ page }) => 
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
   assert.equal(getSearchParam(page.url(), "query"), "1")
-  assert.deepEqual(searchParams(page.url()).getAll("button"), [])
+  assert.deepEqual(searchParams(page.url()).getAll("button"), [""])
 
   await page.click("#no-action form.button-param [type=submit]")
   await nextBody(page)
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
   assert.equal(getSearchParam(page.url(), "query"), "1")
-  assert.deepEqual(searchParams(page.url()).getAll("button"), [])
+  assert.deepEqual(searchParams(page.url()).getAll("button"), [""])
 })
 
 test("test submitter with blank formaction submits to the current page", async ({ page }) => {
