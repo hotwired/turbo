@@ -4,7 +4,7 @@ import { Render, Renderer } from "../renderer"
 import { Snapshot } from "../snapshot"
 
 export interface FrameRendererDelegate {
-  frameExtracted(element: FrameElement): void
+  willRenderFrame(currentElement: FrameElement, newElement: FrameElement): void
 }
 
 export class FrameRenderer extends Renderer<FrameElement> {
@@ -52,7 +52,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
   }
 
   loadFrameElement() {
-    this.delegate.frameExtracted(this.newElement.cloneNode(true))
+    this.delegate.willRenderFrame(this.currentElement, this.newElement)
     this.renderElement(this.currentElement, this.newElement)
   }
 

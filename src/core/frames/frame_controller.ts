@@ -303,8 +303,8 @@ export class FrameController
   viewInvalidated() {}
 
   // Frame renderer delegate
-  frameExtracted(element: FrameElement) {
-    this.previousFrameElement = element
+  willRenderFrame(currentElement: FrameElement, _newElement: FrameElement) {
+    this.previousFrameElement = currentElement.cloneNode(true)
   }
 
   visitCachedSnapshot = ({ element }: Snapshot) => {
