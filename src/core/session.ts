@@ -5,7 +5,7 @@ import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/for
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
-import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../observers/form_link_interceptor"
+import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../observers/form_link_click_observer"
 import { getAction, expandURL, locationIsVisitable, Locatable } from "./url"
 import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
@@ -38,7 +38,7 @@ export class Session
   implements
     FormSubmitObserverDelegate,
     HistoryDelegate,
-    FormLinkInterceptorDelegate,
+    FormLinkClickObserverDelegate,
     LinkClickObserverDelegate,
     NavigatorDelegate,
     PageObserverDelegate,
@@ -53,11 +53,11 @@ export class Session
 
   readonly pageObserver = new PageObserver(this)
   readonly cacheObserver = new CacheObserver()
-  readonly linkClickObserver = new LinkClickObserver(this)
+  readonly linkClickObserver = new LinkClickObserver(this, window)
   readonly formSubmitObserver = new FormSubmitObserver(this, document)
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
-  readonly formLinkInterceptor = new FormLinkInterceptor(this, document.documentElement)
+  readonly formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
   readonly frameRedirector = new FrameRedirector(document.documentElement)
 
   drive = true
@@ -70,7 +70,7 @@ export class Session
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
-      this.formLinkInterceptor.start()
+      this.formLinkClickObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
       this.scrollObserver.start()
@@ -91,7 +91,7 @@ export class Session
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
-      this.formLinkInterceptor.stop()
+      this.formLinkClickObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
       this.scrollObserver.stop()
@@ -163,13 +163,13 @@ export class Session
     this.history.updateRestorationData({ scrollPosition: position })
   }
 
-  // Form link interceptor delegate
+  // Form click observer delegate
 
-  shouldInterceptFormLinkClick(_link: Element): boolean {
-    return true
+  willSubmitFormLinkToLocation(link: Element, location: URL): boolean {
+    return this.elementDriveEnabled(link) && locationIsVisitable(location, this.snapshot.rootLocation)
   }
 
-  formLinkClickIntercepted(_link: Element, _form: HTMLFormElement) {}
+  submittedFormLinkToLocation() {}
 
   // Link click observer delegate
 

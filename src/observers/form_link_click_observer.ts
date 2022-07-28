@@ -1,17 +1,17 @@
-import { LinkInterceptor, LinkInterceptorDelegate } from "../core/frames/link_interceptor"
+import { LinkClickObserver, LinkClickObserverDelegate } from "./link_click_observer"
 
-export type FormLinkInterceptorDelegate = {
-  shouldInterceptFormLinkClick(link: Element): boolean
-  formLinkClickIntercepted(link: Element, form: HTMLFormElement): void
+export type FormLinkClickObserverDelegate = {
+  willSubmitFormLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
+  submittedFormLinkToLocation(link: Element, location: URL, form: HTMLFormElement): void
 }
 
-export class FormLinkInterceptor implements LinkInterceptorDelegate {
-  readonly linkInterceptor: LinkInterceptor
-  readonly delegate: FormLinkInterceptorDelegate
+export class FormLinkClickObserver implements LinkClickObserverDelegate {
+  readonly linkInterceptor: LinkClickObserver
+  readonly delegate: FormLinkClickObserverDelegate
 
-  constructor(delegate: FormLinkInterceptorDelegate, element: HTMLElement) {
+  constructor(delegate: FormLinkClickObserverDelegate, element: HTMLElement) {
     this.delegate = delegate
-    this.linkInterceptor = new LinkInterceptor(this, element)
+    this.linkInterceptor = new LinkClickObserver(this, element)
   }
 
   start() {
@@ -22,14 +22,15 @@ export class FormLinkInterceptor implements LinkInterceptorDelegate {
     this.linkInterceptor.stop()
   }
 
-  shouldInterceptLinkClick(link: Element): boolean {
+  willFollowLinkToLocation(link: Element, location: URL, originalEvent: MouseEvent): boolean {
     return (
-      this.delegate.shouldInterceptFormLinkClick(link) &&
+      this.delegate.willSubmitFormLinkToLocation(link, location, originalEvent) &&
       (link.hasAttribute("data-turbo-method") || link.hasAttribute("data-turbo-stream"))
     )
   }
 
-  linkClickIntercepted(link: Element, action: string): void {
+  followedLinkToLocation(link: Element, location: URL): void {
+    const action = location.href
     const form = document.createElement("form")
     form.setAttribute("data-turbo", "true")
     form.setAttribute("action", action)
@@ -47,7 +48,7 @@ export class FormLinkInterceptor implements LinkInterceptorDelegate {
     const turboStream = link.hasAttribute("data-turbo-stream")
     if (turboStream) form.setAttribute("data-turbo-stream", "")
 
-    this.delegate.formLinkClickIntercepted(link, form)
+    this.delegate.submittedFormLinkToLocation(link, location, form)
 
     document.body.appendChild(form)
     form.requestSubmit()

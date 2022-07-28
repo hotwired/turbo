@@ -7,33 +7,35 @@ export interface LinkClickObserverDelegate {
 
 export class LinkClickObserver {
   readonly delegate: LinkClickObserverDelegate
+  readonly eventTarget: EventTarget
   started = false
 
-  constructor(delegate: LinkClickObserverDelegate) {
+  constructor(delegate: LinkClickObserverDelegate, eventTarget: EventTarget) {
     this.delegate = delegate
+    this.eventTarget = eventTarget
   }
 
   start() {
     if (!this.started) {
-      addEventListener("click", this.clickCaptured, true)
+      this.eventTarget.addEventListener("click", this.clickCaptured, true)
       this.started = true
     }
   }
 
   stop() {
     if (this.started) {
-      removeEventListener("click", this.clickCaptured, true)
+      this.eventTarget.removeEventListener("click", this.clickCaptured, true)
       this.started = false
     }
   }
 
   clickCaptured = () => {
-    removeEventListener("click", this.clickBubbled, false)
-    addEventListener("click", this.clickBubbled, false)
+    this.eventTarget.removeEventListener("click", this.clickBubbled, false)
+    this.eventTarget.addEventListener("click", this.clickBubbled, false)
   }
 
-  clickBubbled = (event: MouseEvent) => {
-    if (this.clickEventIsSignificant(event)) {
+  clickBubbled = (event: Event) => {
+    if (event instanceof MouseEvent && this.clickEventIsSignificant(event)) {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = this.findLinkFromClickTarget(target)
       if (link && doesNotTargetIFrame(link)) {

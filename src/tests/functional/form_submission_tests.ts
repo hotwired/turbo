@@ -798,6 +798,49 @@ test("test form submission targeting a frame submits the Turbo-Frame header", as
   assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
 })
 
+test("test link method form submission submits a single request", async ({ page }) => {
+  let requestCounter = 0
+  page.on("request", () => requestCounter++)
+
+  await page.click("#stream-link-method-within-form-outside-frame")
+  await nextBeat()
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(requestCounter, 1, "submits a single HTTP request")
+})
+
+test("test link method form submission inside frame submits a single request", async ({ page }) => {
+  let requestCounter = 0
+  page.on("request", () => requestCounter++)
+
+  await page.click("#stream-link-method-inside-frame")
+  await nextBeat()
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(requestCounter, 1, "submits a single HTTP request")
+})
+
+test("test link method form submission targetting frame submits a single request", async ({ page }) => {
+  let requestCounter = 0
+  page.on("request", () => requestCounter++)
+
+  await page.click("#turbo-method-post-to-targeted-frame")
+  await nextBeat()
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(requestCounter, 2, "submits a single HTTP request then follows a redirect")
+})
+
 test("test link method form submission inside frame", async ({ page }) => {
   await page.click("#link-method-inside-frame")
   await nextBeat()
