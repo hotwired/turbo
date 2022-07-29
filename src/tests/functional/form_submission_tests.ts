@@ -1037,6 +1037,13 @@ test("test form submission with form mode optin and form enabled", async ({ page
   assert.ok(await formSubmitStarted(page))
 })
 
+test("test form submission with form mode optin and form enabled from submitter outside form", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.setFormMode("optin"))
+  await page.click("#standard button[form=turbo-enabled-form]")
+
+  assert.ok(await formSubmitStarted(page))
+})
+
 test("test turbo:before-fetch-request fires on the form element", async ({ page }) => {
   await page.click('#targets-frame form.one [type="submit"]')
   assert.ok(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-request"))
