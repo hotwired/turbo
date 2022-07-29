@@ -173,7 +173,7 @@ export class Session
   // Form click observer delegate
 
   willSubmitFormLinkToLocation(link: Element, location: URL): boolean {
-    return this.elementDriveEnabled(link) && locationIsVisitable(location, this.snapshot.rootLocation)
+    return this.elementIsNavigatable(link) && locationIsVisitable(location, this.snapshot.rootLocation)
   }
 
   submittedFormLinkToLocation() {}
