@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Scroll: One</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <style>
+      html { scroll-behavior: smooth; }
+      .push-below-fold { margin-top: 100vh; }
+    </style>
+  </head>
+  <body>
+    <h1>Scroll: One</h1>
+    <hr class="push-below-fold">
+    <a id="one-below-fold" href="/src/tests/fixtures/scroll/two.html#two-below-fold">two.html#two-below-fold</a>
+    <hr class="push-below-fold">
+  </body>
+</html>

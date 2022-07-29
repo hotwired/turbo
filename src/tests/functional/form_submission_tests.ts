@@ -592,7 +592,7 @@ test("test frame form submission with redirect response", async ({ page }) => {
 
   const button = await page.locator("#frame form.redirect input[type=submit]")
   await button.click()
-  await nextBeat()
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   const message = await page.locator("#frame div.message")
   assert.notOk(await hasSelector(page, "#frame form.redirect"))
