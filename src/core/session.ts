@@ -107,7 +107,14 @@ export class Session
   }
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}): Promise<void> {
-    return this.navigator.proposeVisit(expandURL(location), options)
+    const frameElement = document.getElementById(options.frame || "")
+
+    if (frameElement instanceof FrameElement) {
+      frameElement.src = location.toString()
+      return frameElement.loaded
+    } else {
+      return this.navigator.proposeVisit(expandURL(location), options)
+    }
   }
 
   connectStreamSource(source: StreamSource) {
