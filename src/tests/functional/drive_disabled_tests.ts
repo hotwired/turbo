@@ -3,6 +3,7 @@ import { assert } from "chai"
 import {
   getFromLocalStorage,
   nextBody,
+  nextEventOnTarget,
   pathname,
   searchParams,
   setLocalStorageFromEvent,
@@ -41,4 +42,14 @@ test("test drive disabled by default; submit form inside data-turbo='true'", asy
   assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
   assert.equal(await visitAction(page), "advance")
   assert.equal(await searchParams(page.url()).get("greeting"), "Hello from a redirect")
+})
+
+test("test drive disabled by default; links within <turbo-frame> navigate with Turbo", async ({ page }) => {
+  await page.click("#frame a")
+  await nextEventOnTarget(page, "frame", "turbo:frame-render")
+})
+
+test("test drive disabled by default; forms within <turbo-frame> navigate with Turbo", async ({ page }) => {
+  await page.click("#frame button")
+  await nextEventOnTarget(page, "frame", "turbo:frame-render")
 })

@@ -431,11 +431,11 @@ export class FrameController
       }
     }
 
-    if (!session.elementDriveEnabled(element)) {
+    if (!session.elementIsNavigatable(element)) {
       return false
     }
 
-    if (submitter && !session.elementDriveEnabled(submitter)) {
+    if (submitter && !session.elementIsNavigatable(submitter)) {
       return false
     }
 
