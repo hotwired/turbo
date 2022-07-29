@@ -187,6 +187,74 @@ test("test does not evaluate head stylesheet elements inside noscript elements",
   assert.equal(await isNoscriptStylesheetEvaluated(page), false)
 })
 
+test("test waits for CSS to be loaded before rendering", async ({ page }) => {
+  let finishLoadingCSS = (_value?: unknown) => {}
+  const promise = new Promise((resolve) => {
+    finishLoadingCSS = resolve
+  })
+  page.route("**/*.css", async (route) => {
+    await promise
+    route.continue()
+  })
+
+  await page.click("#additional-assets-link")
+
+  assert.equal(await isStylesheetEvaluated(page), false)
+  assert.notEqual(await page.textContent("h1"), "Additional assets")
+
+  finishLoadingCSS()
+
+  await nextEventNamed(page, "turbo:render")
+
+  assert.equal(await page.textContent("h1"), "Additional assets")
+  assert.equal(await isStylesheetEvaluated(page), true)
+})
+
+test("test waits for CSS to fail before rendering", async ({ page }) => {
+  let finishLoadingCSS = (_value?: unknown) => {}
+  const promise = new Promise((resolve) => {
+    finishLoadingCSS = resolve
+  })
+  page.route("**/*.css", async (route) => {
+    await promise
+    route.abort()
+  })
+
+  await page.click("#additional-assets-link")
+
+  assert.equal(await isStylesheetEvaluated(page), false)
+  assert.notEqual(await page.textContent("h1"), "Additional assets")
+
+  finishLoadingCSS()
+
+  await nextEventNamed(page, "turbo:render")
+
+  assert.equal(await page.textContent("h1"), "Additional assets")
+  assert.equal(await isStylesheetEvaluated(page), false)
+})
+
+test("test waits for some time, but renders if CSS takes too much to load", async ({ page }) => {
+  let finishLoadingCSS = (_value?: unknown) => {}
+  const promise = new Promise((resolve) => {
+    finishLoadingCSS = resolve
+  })
+  page.route("**/*.css", async (route) => {
+    await promise
+    route.continue()
+  })
+
+  await page.click("#additional-assets-link")
+  await nextEventNamed(page, "turbo:render")
+
+  assert.equal(await page.textContent("h1"), "Additional assets")
+  assert.equal(await isStylesheetEvaluated(page), false)
+
+  finishLoadingCSS()
+  await nextBeat()
+
+  assert.equal(await isStylesheetEvaluated(page), true)
+})
+
 test("skip evaluates head script elements once", async ({ page }) => {
   assert.equal(await headScriptEvaluationCount(page), undefined)
 

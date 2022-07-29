@@ -98,6 +98,20 @@ export function clearBusyState(...elements: Element[]) {
   }
 }
 
+export function waitForLoad(element: HTMLLinkElement, timeoutInMilliseconds = 2000): Promise<void> {
+  return new Promise((resolve) => {
+    const onComplete = () => {
+      element.removeEventListener("error", onComplete)
+      element.removeEventListener("load", onComplete)
+      resolve()
+    }
+
+    element.addEventListener("load", onComplete, { once: true })
+    element.addEventListener("error", onComplete, { once: true })
+    setTimeout(resolve, timeoutInMilliseconds)
+  })
+}
+
 export function getHistoryMethodForAction(action: Action) {
   switch (action) {
     case "replace":

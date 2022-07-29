@@ -87,7 +87,7 @@ export abstract class View<
       try {
         this.renderPromise = new Promise((resolve) => (this.resolveRenderPromise = resolve))
         this.renderer = renderer
-        this.prepareToRenderSnapshot(renderer)
+        await this.prepareToRenderSnapshot(renderer)
 
         const renderInterception = new Promise((resolve) => (this.resolveInterceptionPromise = resolve))
         const options = { resume: this.resolveInterceptionPromise, render: this.renderer.renderElement }
@@ -112,9 +112,9 @@ export abstract class View<
     this.delegate.viewInvalidated(reason)
   }
 
-  prepareToRenderSnapshot(renderer: R) {
+  async prepareToRenderSnapshot(renderer: R) {
     this.markAsPreview(renderer.isPreview)
-    renderer.prepareToRender()
+    await renderer.prepareToRender()
   }
 
   markAsPreview(isPreview: boolean) {
