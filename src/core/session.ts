@@ -230,7 +230,7 @@ export class Session
 
     return (
       this.elementIsNavigatable(form) &&
-      (!submitter || this.formElementIsNavigatable(submitter)) &&
+      (!submitter || this.submitterIsNavigatable(submitter)) &&
       locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
     )
   }
@@ -382,13 +382,12 @@ export class Session
 
   // Helpers
 
-  formElementIsNavigatable(element?: Element) {
+  submitterIsNavigatable(element: Element) {
     if (this.formMode == "off") {
       return false
     }
-    if (this.formMode == "optin") {
-      const form = element?.closest("form[data-turbo]")
-      return form?.getAttribute("data-turbo") == "true"
+    if (this.formMode == "optin" && hasForm(element) && element.form) {
+      return element.form.closest('[data-turbo="true"]') != null
     }
     return this.elementIsNavigatable(element)
   }
@@ -448,4 +447,8 @@ const deprecatedLocationPropertyDescriptors = {
       return this.toString()
     },
   },
+}
+
+function hasForm(element: Element): element is Element & { form: HTMLFormElement | null } {
+  return "form" in element
 }
