@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Form</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      const params = new URLSearchParams(window.location.search)
+
+      if (params.has("formMode")) {
+        window.Turbo.setFormMode(params.get("formMode"))
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Form Mode</h1>
+
+    <form id="form" action="/__turbo/redirect" method="post">
+      <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+      <input type="hidden" name="greeting" value="Hello from a form">
+      <button>submit #form</button>
+    </form>
+
+    <form id="form-without-submitter" action="/__turbo/redirect" method="post">
+      <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+      <input type="text" name="greeting" value="Hello from a form">
+    </form>
+
+    <form id="turbo-enabled-form" action="/__turbo/redirect" method="post" data-turbo="true">
+      <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+      <input type="hidden" name="greeting" value="Hello from a form[data-turbo=true]">
+      <button>submit #turbo-enabled-form</button>
+    </form>
+
+    <form id="turbo-enabled-form-without-submitter" action="/__turbo/redirect" method="post" data-turbo="true">
+      <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+      <input type="text" name="greeting" value="Hello from a form[data-turbo=true]">
+    </form>
+
+    <button form="form">Submit #form</button>
+    <button form="turbo-enabled-form">Submit #turbo-enabled-form</button>
+  </body>
+</html>
