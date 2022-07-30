@@ -276,16 +276,6 @@ export class Session {
     this.adapter.pageInvalidated(reason)
   }
 
-  // Frame element
-
-  frameLoaded(frame) {
-    this.notifyApplicationAfterFrameLoad(frame)
-  }
-
-  frameRendered(fetchResponse, frame) {
-    this.notifyApplicationAfterFrameRender(fetchResponse, frame)
-  }
-
   // Application events
 
   applicationAllowsFollowingLinkToLocation(link, location, ev) {
@@ -347,19 +337,7 @@ export class Session {
     )
   }
 
-  notifyApplicationAfterFrameLoad(frame) {
-    return dispatch("turbo:frame-load", { target: frame })
-  }
-
-  notifyApplicationAfterFrameRender(fetchResponse, frame) {
-    return dispatch("turbo:frame-render", {
-      detail: { fetchResponse },
-      target: frame,
-      cancelable: true
-    })
-  }
-
-  // Helpers
+  // Drive delegate
 
   submissionIsNavigatable(form, submitter) {
     if (this.formMode == "off") {
