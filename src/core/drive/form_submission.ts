@@ -161,7 +161,7 @@ export class FormSubmission {
     }
 
     if (this.requestAcceptsTurboStreamResponse(request)) {
-      headers["Accept"] = [StreamMessage.contentType, headers["Accept"]].join(", ")
+      request.acceptResponseType(StreamMessage.contentType)
     }
   }
 

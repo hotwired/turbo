@@ -30,6 +30,7 @@ import { session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent } from "../session"
+import { StreamMessage } from "../streams/stream_message"
 
 export class FrameController
   implements
@@ -59,6 +60,7 @@ export class FrameController
   private frame?: FrameElement
   readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
+  private currentNavigationElement?: Element
 
   constructor(element: FrameElement) {
     this.element = element
@@ -217,8 +219,12 @@ export class FrameController
 
   // Fetch request delegate
 
-  prepareHeadersForRequest(headers: FetchRequestHeaders, _request: FetchRequest) {
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
     headers["Turbo-Frame"] = this.id
+
+    if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
+      request.acceptResponseType(StreamMessage.contentType)
+    }
   }
 
   requestStarted(_request: FetchRequest) {
@@ -340,7 +346,9 @@ export class FrameController
 
     this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
-    frame.src = url
+    this.withCurrentNavigationElement(element, () => {
+      frame.src = url
+    })
   }
 
   private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
@@ -504,6 +512,12 @@ export class FrameController
     this.ignoredAttributes.add(attributeName)
     callback()
     this.ignoredAttributes.delete(attributeName)
+  }
+
+  private withCurrentNavigationElement(element: Element, callback: () => void) {
+    this.currentNavigationElement = element
+    callback()
+    delete this.currentNavigationElement
   }
 }
 

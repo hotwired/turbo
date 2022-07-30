@@ -886,17 +886,10 @@ test("test stream link GET method form submission inside frame", async ({ page }
 test("test stream link inside frame", async ({ page }) => {
   await page.click("#stream-link-inside-frame")
 
-  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+  const { fetchOptions, url } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
-})
-
-test("test stream link outside frame", async ({ page }) => {
-  await page.click("#stream-link-outside-frame")
-
-  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
-
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  assert.equal(getSearchParam(url, "content"), "Link!")
 })
 
 test("test link method form submission within form inside frame", async ({ page }) => {

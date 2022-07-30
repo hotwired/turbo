@@ -2,6 +2,7 @@ import { Page, test } from "@playwright/test"
 import { assert } from "chai"
 import { get } from "http"
 import {
+  getSearchParam,
   isScrolledToSelector,
   isScrolledToTop,
   nextBeat,
@@ -176,6 +177,14 @@ test("test turbo:before-fetch-response open new site", async ({ page }) => {
 
   assert.isTrue(fetchResponseResult.responseText.indexOf("An element with an ID") > -1)
   assert.isTrue(fetchResponseResult.responseHTML.indexOf("An element with an ID") > -1)
+})
+
+test("test visits with data-turbo-stream include MIME type & search params", async ({ page }) => {
+  await page.click("#stream-link")
+  const { fetchOptions, url } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  assert.equal(getSearchParam(url, "key"), "value")
 })
 
 test("test cache does not override response after redirect", async ({ page }) => {

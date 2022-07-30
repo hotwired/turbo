@@ -191,7 +191,9 @@ export class Session
 
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    this.visit(location.href, { action })
+    const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+
+    this.visit(location.href, { action, acceptsStreamResponse })
   }
 
   // Navigator delegate
