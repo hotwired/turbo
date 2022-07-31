@@ -1,5 +1,5 @@
 import { FrameElement } from "../../elements/frame_element"
-import { nextAnimationFrame } from "../../util"
+import { activateScriptElement, nextAnimationFrame } from "../../util"
 import { Render, Renderer } from "../renderer"
 import { Snapshot } from "../snapshot"
 
@@ -72,7 +72,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   activateScriptElements() {
     for (const inertScriptElement of this.newScriptElements) {
-      const activatedScriptElement = this.createScriptElement(inertScriptElement)
+      const activatedScriptElement = activateScriptElement(inertScriptElement)
       inertScriptElement.replaceWith(activatedScriptElement)
     }
   }

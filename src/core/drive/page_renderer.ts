@@ -1,7 +1,7 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { ReloadReason } from "../native/browser_adapter"
-import { waitForLoad } from "../../util"
+import { activateScriptElement, waitForLoad } from "../../util"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
@@ -92,7 +92,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   copyNewHeadScriptElements() {
     for (const element of this.newHeadScriptElements) {
-      document.head.appendChild(this.createScriptElement(element))
+      document.head.appendChild(activateScriptElement(element))
     }
   }
 
@@ -115,7 +115,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   activateNewBodyScriptElements() {
     for (const inertScriptElement of this.newBodyScriptElements) {
-      const activatedScriptElement = this.createScriptElement(inertScriptElement)
+      const activatedScriptElement = activateScriptElement(inertScriptElement)
       inertScriptElement.replaceWith(activatedScriptElement)
     }
   }

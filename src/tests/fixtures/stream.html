@@ -6,18 +6,17 @@
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
   </head>
   <body>
-    <turbo-stream-source id="stream-source" src="/__turbo/messages"></turbo-stream-source>
-    <form id="create" method="post" action="/__turbo/messages">
+    <form id="append-target" method="post" action="/__turbo/messages">
       <input type="hidden" name="content" value="Hello world!">
       <input type="hidden" name="type" value="stream">
-      <button type="submit">Create</button>
+      <button>Create</button>
     </form>
 
-    <form id="replace" method="post" action="/__turbo/messages">
+    <form id="append-targets" method="post" action="/__turbo/messages">
       <input type="hidden" name="content" value="Hello CSS!">
       <input type="hidden" name="targets" value=".messages">
       <input type="hidden" name="type" value="stream">
-      <button type="submit">Replace</button>
+      <button>Replace</button>
     </form>
 
     <form id="async" method="post" action="/__turbo/messages">
@@ -28,10 +27,10 @@
     <div id="messages">
       <div class="message">First</div>
     </div>
-    <div class="messages" id="message_2">
+    <div id="messages_2" class="messages">
       <div class="message">Second</div>
     </div>
-    <div class="messages">
+    <div id="messages_3" class="messages">
       <div class="message">Third</div>
     </div>
   </body>

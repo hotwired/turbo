@@ -6,6 +6,34 @@ export type DispatchOptions<T extends CustomEvent> = {
   detail: T["detail"]
 }
 
+export function activateScriptElement(element: HTMLScriptElement) {
+  if (element.getAttribute("data-turbo-eval") == "false") {
+    return element
+  } else {
+    const createdScriptElement = document.createElement("script")
+    const cspNonce = getMetaContent("csp-nonce")
+    if (cspNonce) {
+      createdScriptElement.nonce = cspNonce
+    }
+    createdScriptElement.textContent = element.textContent
+    createdScriptElement.async = false
+    copyElementAttributes(createdScriptElement, element)
+    return createdScriptElement
+  }
+}
+
+function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
+  for (const { name, value } of sourceElement.attributes) {
+    destinationElement.setAttribute(name, value)
+  }
+}
+
+export function createDocumentFragment(html: string): DocumentFragment {
+  const template = document.createElement("template")
+  template.innerHTML = html
+  return template.content
+}
+
 export function dispatch<T extends CustomEvent>(
   eventName: string,
   { target, cancelable, detail }: Partial<DispatchOptions<T>> = {}
