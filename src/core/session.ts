@@ -22,6 +22,7 @@ import { FrameViewRenderOptions } from "./frames/frame_view"
 import { FetchResponse } from "../http/fetch_response"
 import { Preloader, PreloaderDelegate } from "./drive/preloader"
 
+export type FormMode = "on" | "off" | "optin"
 export type TimingData = unknown
 export type TurboBeforeCacheEvent = CustomEvent
 export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
@@ -64,7 +65,7 @@ export class Session
   enabled = true
   progressBarDelay = 500
   started = false
-  formMode = "on"
+  formMode: FormMode = "on"
 
   start() {
     if (!this.started) {
@@ -137,7 +138,7 @@ export class Session
     this.progressBarDelay = delay
   }
 
-  setFormMode(mode: string) {
+  setFormMode(mode: FormMode) {
     this.formMode = mode
   }
 
@@ -229,8 +230,7 @@ export class Session
     const action = getAction(form, submitter)
 
     return (
-      this.elementIsNavigatable(form) &&
-      (!submitter || this.submitterIsNavigatable(submitter)) &&
+      this.submissionIsNavigatable(form, submitter) &&
       locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
     )
   }
@@ -382,19 +382,23 @@ export class Session
 
   // Helpers
 
-  submitterIsNavigatable(element: Element) {
+  submissionIsNavigatable(form: HTMLFormElement, submitter?: HTMLElement): boolean {
     if (this.formMode == "off") {
       return false
+    } else {
+      const submitterIsNavigatable = submitter ? this.elementIsNavigatable(submitter) : true
+
+      if (this.formMode == "optin") {
+        return submitterIsNavigatable && form.closest('[data-turbo="true"]') != null
+      } else {
+        return submitterIsNavigatable && this.elementIsNavigatable(form)
+      }
     }
-    if (this.formMode == "optin" && hasForm(element) && element.form) {
-      return element.form.closest('[data-turbo="true"]') != null
-    }
-    return this.elementIsNavigatable(element)
   }
 
-  elementIsNavigatable(element?: Element) {
-    const container = element?.closest("[data-turbo]")
-    const withinFrame = element?.closest("turbo-frame")
+  elementIsNavigatable(element: Element): boolean {
+    const container = element.closest("[data-turbo]")
+    const withinFrame = element.closest("turbo-frame")
 
     // Check if Drive is enabled on the session or we're within a Frame.
     if (this.drive || withinFrame) {
@@ -447,8 +451,4 @@ const deprecatedLocationPropertyDescriptors = {
       return this.toString()
     },
   },
-}
-
-function hasForm(element: Element): element is Element & { form: HTMLFormElement | null } {
-  return "form" in element
 }

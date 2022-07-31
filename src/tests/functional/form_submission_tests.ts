@@ -1016,34 +1016,6 @@ test("test stream link method form submission within form outside frame", async 
   assert.equal(await page.textContent("#frame div.message"), "Link!")
 })
 
-test("test form submission with form mode off", async ({ page }) => {
-  await page.evaluate(() => window.Turbo.setFormMode("off"))
-  await page.click("#standard form.turbo-enabled input[type=submit]")
-
-  assert.notOk(await formSubmitStarted(page))
-})
-
-test("test form submission with form mode optin and form not enabled", async ({ page }) => {
-  await page.evaluate(() => window.Turbo.setFormMode("optin"))
-  await page.click("#standard form.redirect input[type=submit]")
-
-  assert.notOk(await formSubmitStarted(page))
-})
-
-test("test form submission with form mode optin and form enabled", async ({ page }) => {
-  await page.evaluate(() => window.Turbo.setFormMode("optin"))
-  await page.click("#standard form.turbo-enabled input[type=submit]")
-
-  assert.ok(await formSubmitStarted(page))
-})
-
-test("test form submission with form mode optin and form enabled from submitter outside form", async ({ page }) => {
-  await page.evaluate(() => window.Turbo.setFormMode("optin"))
-  await page.click("#standard button[form=turbo-enabled-form]")
-
-  assert.ok(await formSubmitStarted(page))
-})
-
 test("test turbo:before-fetch-request fires on the form element", async ({ page }) => {
   await page.click('#targets-frame form.one [type="submit"]')
   assert.ok(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-request"))

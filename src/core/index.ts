@@ -1,5 +1,5 @@
 import { Adapter } from "./native/adapter"
-import { Session } from "./session"
+import { FormMode, Session } from "./session"
 import { Cache } from "./cache"
 import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
@@ -127,6 +127,6 @@ export function setConfirmMethod(confirmMethod: (message: string, element: HTMLF
   FormSubmission.confirmMethod = confirmMethod
 }
 
-export function setFormMode(mode: string) {
+export function setFormMode(mode: FormMode) {
   session.setFormMode(mode)
 }
