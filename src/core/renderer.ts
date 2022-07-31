@@ -2,7 +2,6 @@ import { ResolvingFunctions } from "./types"
 import { Bardo, BardoDelegate } from "./bardo"
 import { Snapshot } from "./snapshot"
 import { ReloadReason } from "./native/browser_adapter"
-import { getMetaContent } from "../util"
 
 export type Render<E> = (newElement: E, currentElement: E) => void
 
@@ -43,21 +42,6 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     if (this.resolvingFunctions) {
       this.resolvingFunctions.resolve()
       delete this.resolvingFunctions
-    }
-  }
-
-  createScriptElement(element: Element) {
-    if (element.getAttribute("data-turbo-eval") == "false") {
-      return element
-    } else {
-      const createdScriptElement = document.createElement("script")
-      if (this.cspNonce) {
-        createdScriptElement.nonce = this.cspNonce
-      }
-      createdScriptElement.textContent = element.textContent
-      createdScriptElement.async = false
-      copyElementAttributes(createdScriptElement, element)
-      return createdScriptElement
     }
   }
 
@@ -104,16 +88,6 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
 
   get permanentElementMap() {
     return this.currentSnapshot.getPermanentElementMapForSnapshot(this.newSnapshot)
-  }
-
-  get cspNonce() {
-    return getMetaContent("csp-nonce")
-  }
-}
-
-function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
-  for (const { name, value } of [...sourceElement.attributes]) {
-    destinationElement.setAttribute(name, value)
   }
 }
 
