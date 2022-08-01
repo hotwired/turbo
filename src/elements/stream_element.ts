@@ -1,7 +1,7 @@
 import { StreamActions } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
 
-export type TurboBeforeStreamRenderEvent = CustomEvent
+export type TurboBeforeStreamRenderEvent = CustomEvent<{ newStream: StreamElement }>
 
 // <turbo-stream action=replace target=id><template>...
 
@@ -149,6 +149,7 @@ export class StreamElement extends HTMLElement {
     return new CustomEvent("turbo:before-stream-render", {
       bubbles: true,
       cancelable: true,
+      detail: { newStream: this },
     })
   }
 

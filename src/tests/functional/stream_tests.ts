@@ -1,9 +1,10 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
-import { nextBeat } from "../helpers/page"
+import { nextBeat, nextEventNamed, readEventLogs } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/stream.html")
+  await readEventLogs(page)
 })
 
 test("test receiving a stream message", async ({ page }) => {
@@ -15,6 +16,14 @@ test("test receiving a stream message", async ({ page }) => {
   await nextBeat()
 
   assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
+})
+
+test("test dispatches a turbo:before-stream-render event", async ({ page }) => {
+  await page.click("#append-target button")
+  const { newStream } = await nextEventNamed(page, "turbo:before-stream-render")
+
+  assert.ok(newStream.includes(`action="append"`))
+  assert.ok(newStream.includes(`target="messages"`))
 })
 
 test("test receiving a stream message with css selector target", async ({ page }) => {
