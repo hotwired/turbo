@@ -20,7 +20,7 @@ import {
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate, ViewRenderOptions } from "../view"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { getAction, expandURL, urlsAreEqual, locationIsVisitable, getUrlHash } from "../url"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
@@ -76,6 +76,17 @@ export class FrameController
 
   connect() {
     if (!this.connected) {
+      // can just act on the frame if we have an identifier
+      if (this.id && this.element.isConnected) {
+        const frameSource = this.frameHashSource()
+
+        // if we have a source for the frame in the hash we want to override/set it on the frame
+        if (frameSource && this.sourceURL !== frameSource) {
+          // TODO: figure out if we also should use Turbo.visit(..., { frame: frameId }) here
+          this.sourceURL = frameSource
+        }
+      }
+
       this.connected = true
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.appearanceObserver.start()
@@ -335,6 +346,16 @@ export class FrameController
     delete this.previousFrameElement
   }
 
+  // Frame Hash History/Navigation
+
+  frameHashId(id: string = this.id): string {
+    return `${id}_frame_src`
+  }
+
+  frameHashSource(id: string = this.id): string | null {
+    return this.getHash().get(this.frameHashId(id))
+  }
+
   // Private
 
   private async visit(url: URL) {
@@ -353,11 +374,26 @@ export class FrameController
     })
   }
 
+  private navigateWithHash(urlString: string) {
+    const url = new URL(urlString)
+    const hash = this.getHash()
+
+    if (url.origin == window.location.origin) {
+      hash.set(this.frameHashId(this.element.id), url.pathname + url.hash)
+    } else {
+      hash.set(this.frameHashId(this.element.id), url.toString())
+    }
+
+    this.setHash(hash)
+  }
+
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
 
     this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
+    // TODO: figure out if this is the right place to call this
+    this.navigateWithHash(url)
     this.withCurrentNavigationElement(element, () => {
       frame.src = url
     })
@@ -483,6 +519,19 @@ export class FrameController
     return !this.element.disabled
   }
 
+  setHash(hash: URLSearchParams) {
+    const url = new URL(window.location.href)
+    url.hash = hash.toString()
+
+    // TODO: figure out if this is optimal, maybe this needs to be streamlined with the Turbo History concept
+    // window.history.pushState({}, "", url.toString())
+    session.history.push(url)
+  }
+
+  getHash(): URLSearchParams {
+    return getUrlHash()
+  }
+
   get sourceURL() {
     if (this.element.src) {
       return this.element.src
@@ -544,8 +593,8 @@ export class FrameController
   }
 }
 
-function getFrameElementById(id: string | null) {
-  if (id != null) {
+function getFrameElementById(id: string | null | undefined) {
+  if (id) {
     const element = document.getElementById(id)
     if (element instanceof FrameElement) {
       return element

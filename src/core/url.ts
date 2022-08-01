@@ -50,6 +50,13 @@ export function urlsAreEqual(left: string, right: string) {
   return expandURL(left).href == expandURL(right).href
 }
 
+export function getUrlHash(location: Location | URL = window.location): URLSearchParams {
+  const url = new URL(location.href)
+  url.search = location.hash.substring(1)
+
+  return url.searchParams
+}
+
 function getPathComponents(url: URL) {
   return url.pathname.split("/").slice(1)
 }
