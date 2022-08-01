@@ -305,11 +305,8 @@ export class Session
     this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
-  async frameMissing(frame: FrameElement, fetchResponse: FetchResponse): Promise<void> {
-    const responseHTML = await fetchResponse.responseHTML
-    const { location, redirected, statusCode } = fetchResponse
-
-    return this.visit(location, { response: { redirected, statusCode, responseHTML } })
+  frameMissing(frame: FrameElement, fetchResponse: FetchResponse): Promise<void> {
+    return this.visit(fetchResponse.location)
   }
 
   // Application events
