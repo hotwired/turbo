@@ -62,11 +62,12 @@ export class FrameElement extends HTMLElement {
     this.delegate.disconnect()
   }
 
-  reload() {
+  reload(): Promise<void> {
     const { src } = this
     this.removeAttribute("complete")
     this.src = null
     this.src = src
+    return this.loaded
   }
 
   attributeChangedCallback(name: string) {
