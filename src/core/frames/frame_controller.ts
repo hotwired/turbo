@@ -29,7 +29,7 @@ import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
-import { TurboBeforeFrameRenderEvent, TurboFetchErrorEvent } from "../session"
+import { TurboBeforeFrameRenderEvent, TurboFetchRequestErrorEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
 
 export class FrameController
@@ -247,7 +247,7 @@ export class FrameController
 
   requestErrored(request: FetchRequest, error: Error) {
     console.error(error)
-    dispatch<TurboFetchErrorEvent>("turbo:fetch-error", {
+    dispatch<TurboFetchRequestErrorEvent>("turbo:fetch-request-error", {
       target: this.element,
       detail: { request, error },
     })
