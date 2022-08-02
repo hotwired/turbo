@@ -11,6 +11,7 @@ import {
   nextEventNamed,
   noNextEventNamed,
   pathname,
+  readEventLogs,
   search,
   selectorHasFocus,
   visitAction,
@@ -21,6 +22,7 @@ import {
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/navigation.html")
+  await readEventLogs(page)
 })
 
 test("test navigating renders a progress bar", async ({ page }) => {
@@ -129,8 +131,8 @@ test("test following a same-origin POST form[data-turbo-action=replace]", async 
 })
 
 test("test following a same-origin POST form button[data-turbo-action=replace]", async ({ page }) => {
-  page.click("#same-origin-replace-form-submitter-post button")
-  await nextBody(page)
+  await page.click("#same-origin-replace-form-submitter-post button")
+  await nextEventNamed(page, "turbo:load")
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
@@ -339,10 +341,11 @@ test("test correct referrer header", async ({ page }) => {
 })
 
 test("test double-clicking on a link", async ({ page }) => {
-  page.click("#delayed-link")
-  page.click("#delayed-link")
+  await page.click("#delayed-link", { clickCount: 2 })
+  await nextBeat()
 
-  await nextBody(page, 1200)
+  await nextEventNamed(page, "turbo:load")
+
   assert.equal(pathname(page.url()), "/__turbo/delayed_response")
   assert.equal(await visitAction(page), "advance")
 })

@@ -34,8 +34,10 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
 
   // Adapter interface
 
-  visitProposedToLocation(location: URL, _options?: Partial<VisitOptions>): void {
+  visitProposedToLocation(location: URL, _options?: Partial<VisitOptions>): Promise<void> {
     this.locations.push(location)
+
+    return Promise.resolve()
   }
 
   visitStarted(visit: Visit): void {

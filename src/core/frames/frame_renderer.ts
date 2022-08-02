@@ -1,10 +1,10 @@
 import { FrameElement } from "../../elements/frame_element"
-import { nextAnimationFrame } from "../../util"
+import { activateScriptElement, nextAnimationFrame } from "../../util"
 import { Render, Renderer } from "../renderer"
 import { Snapshot } from "../snapshot"
 
 export interface FrameRendererDelegate {
-  frameExtracted(element: FrameElement): void
+  willRenderFrame(currentElement: FrameElement, newElement: FrameElement): void
 }
 
 export class FrameRenderer extends Renderer<FrameElement> {
@@ -52,7 +52,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
   }
 
   loadFrameElement() {
-    this.delegate.frameExtracted(this.newElement.cloneNode(true))
+    this.delegate.willRenderFrame(this.currentElement, this.newElement)
     this.renderElement(this.currentElement, this.newElement)
   }
 
@@ -72,7 +72,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   activateScriptElements() {
     for (const inertScriptElement of this.newScriptElements) {
-      const activatedScriptElement = this.createScriptElement(inertScriptElement)
+      const activatedScriptElement = activateScriptElement(inertScriptElement)
       inertScriptElement.replaceWith(activatedScriptElement)
     }
   }

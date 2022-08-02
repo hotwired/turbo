@@ -70,7 +70,7 @@ export class StreamObserver {
   }
 
   receiveMessageHTML(html: string) {
-    this.delegate.receivedMessageFromStream(new StreamMessage(html))
+    this.delegate.receivedMessageFromStream(StreamMessage.wrap(html))
   }
 }
 

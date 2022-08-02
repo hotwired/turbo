@@ -1,5 +1,5 @@
 import { Adapter } from "./native/adapter"
-import { Session } from "./session"
+import { FormMode, Session } from "./session"
 import { Cache } from "./cache"
 import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
@@ -64,8 +64,8 @@ export function registerAdapter(adapter: Adapter) {
  * @param options.snapshotHTML Cached snapshot to render
  * @param options.response Response of the specified location
  */
-export function visit(location: Locatable, options?: Partial<VisitOptions>) {
-  session.visit(location, options)
+export function visit(location: Locatable, options?: Partial<VisitOptions>): Promise<void> {
+  return session.visit(location, options)
 }
 
 /**
@@ -127,6 +127,6 @@ export function setConfirmMethod(confirmMethod: (message: string, element: HTMLF
   FormSubmission.confirmMethod = confirmMethod
 }
 
-export function setFormMode(mode: string) {
+export function setFormMode(mode: FormMode) {
   session.setFormMode(mode)
 }

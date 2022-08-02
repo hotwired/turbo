@@ -82,10 +82,6 @@
         <input type="submit">
         <button type="submit" name="greeting" id="secondary_submitter" data-turbo-confirm="Are you really sure?" formaction="/__turbo/redirect?path=/src/tests/fixtures/one.html" formmethod="post" value="secondary_submitter">Secondary action</button>
       </form>
-      <form action="/__turbo/submit" method="post" data-turbo="true" class="turbo-enabled">
-        <input type="hidden" name="query" value="2">
-        <input type="submit">
-      </form>
     </div>
     <hr>
     <div id="no-action">
@@ -300,7 +296,6 @@
     </turbo-frame>
     <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>
-    <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-stream id="stream-link-outside-frame">Stream link (no method) outside frame</a>
     <form>
       <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-within-form-outside-frame">Method link within form outside frame</a><br />
       <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-within-form-outside-frame">Stream link within form outside frame</a>

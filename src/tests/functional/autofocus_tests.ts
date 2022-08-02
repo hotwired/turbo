@@ -47,6 +47,36 @@ test("test navigating a frame with a descendant link autofocuses [autofocus]:fir
   )
 })
 
+test("test autofocus visible [autofocus] element on visit with inert elements", async ({ page }) => {
+  await page.click("#autofocus-inert-link")
+  await nextBeat()
+
+  assert.notOk(
+    await hasSelector(page, "#dialog-autofocus-element:focus"),
+    "autofocus element is ignored in a closed dialog"
+  )
+  assert.notOk(
+    await hasSelector(page, "#details-autofocus-element:focus"),
+    "autofocus element is ignored in a closed details"
+  )
+  assert.notOk(
+    await hasSelector(page, "#hidden-autofocus-element:focus"),
+    "autofocus element is ignored in a hidden div"
+  )
+  assert.notOk(
+    await hasSelector(page, "#inert-autofocus-element:focus"),
+    "autofocus element is ignored in an inert div"
+  )
+  assert.notOk(
+    await hasSelector(page, "#disabled-autofocus-element:focus"),
+    "autofocus element is ignored when disabled"
+  )
+  assert.ok(
+    await hasSelector(page, "#visible-autofocus-element:focus"),
+    "focuses the visible [autofocus] element on the page"
+  )
+})
+
 test("test navigating a frame with a link targeting the frame autofocuses [autofocus]:first-of-type", async ({
   page,
 }) => {

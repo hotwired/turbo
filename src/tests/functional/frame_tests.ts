@@ -32,6 +32,22 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
+test("test navigating a frame with Turbo.visit", async ({ page }) => {
+  const pathname = "/src/tests/fixtures/frames/frame.html"
+
+  await page.locator("#frame").evaluate((frame) => frame.setAttribute("disabled", ""))
+  await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
+  await nextBeat()
+
+  assert.equal(await page.textContent("#frame h2"), "Frames: #frame", "does not navigate a disabled frame")
+
+  await page.locator("#frame").evaluate((frame) => frame.removeAttribute("disabled"))
+  await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
+  await nextBeat()
+
+  assert.equal(await page.textContent("#frame h2"), "Frame: loaded", "navigates the target frame")
+})
+
 test("test navigating a frame a second time does not leak event listeners", async ({ page }) => {
   await withoutChangingEventListenersCount(page, async () => {
     await page.click("#outer-frame-link")
@@ -207,24 +223,28 @@ test("test following a link that declares data-turbo-frame='_self' within a fram
 test("test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
   page,
 }) => {
-  await nextBeat()
   await page.click("#recursive summary")
+
   assert.ok(await hasSelector(page, "#recursive details[open]"))
 
   await page.click("#recursive a")
-  await nextBeat()
+  await nextEventOnTarget(page, "recursive", "turbo:frame-load")
+  await nextEventOnTarget(page, "composer", "turbo:frame-load")
+
   assert.ok(await hasSelector(page, "#recursive details:not([open])"))
 })
 
 test("test submitting a form that redirects to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
   page,
 }) => {
-  await nextBeat()
   await page.click("#recursive summary")
+
   assert.ok(await hasSelector(page, "#recursive details[open]"))
 
   await page.click("#recursive input[type=submit]")
-  await nextBeat()
+  await nextEventOnTarget(page, "recursive", "turbo:frame-load")
+  await nextEventOnTarget(page, "composer", "turbo:frame-load")
+
   assert.ok(await hasSelector(page, "#recursive details:not([open])"))
 })
 

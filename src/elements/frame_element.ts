@@ -1,6 +1,6 @@
 import { FetchResponse } from "../http/fetch_response"
 import { Snapshot } from "../core/snapshot"
-import { LinkInterceptorDelegate } from "../core/frames/link_interceptor"
+import { LinkClickObserverDelegate } from "../observers/link_click_observer"
 import { FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 
 export enum FrameLoadingStyle {
@@ -10,7 +10,7 @@ export enum FrameLoadingStyle {
 
 export type FrameElementObservedAttribute = keyof FrameElement & ("disabled" | "complete" | "loading" | "src")
 
-export interface FrameElementDelegate extends LinkInterceptorDelegate, FormSubmitObserverDelegate {
+export interface FrameElementDelegate extends LinkClickObserverDelegate, FormSubmitObserverDelegate {
   connect(): void
   disconnect(): void
   completeChanged(): void
@@ -42,7 +42,7 @@ export interface FrameElementDelegate extends LinkInterceptorDelegate, FormSubmi
 export class FrameElement extends HTMLElement {
   static delegateConstructor: new (element: FrameElement) => FrameElementDelegate
 
-  loaded: Promise<FetchResponse | void> = Promise.resolve()
+  loaded: Promise<void> = Promise.resolve()
   readonly delegate: FrameElementDelegate
 
   static get observedAttributes(): FrameElementObservedAttribute[] {
@@ -62,11 +62,12 @@ export class FrameElement extends HTMLElement {
     this.delegate.disconnect()
   }
 
-  reload() {
+  reload(): Promise<void> {
     const { src } = this
     this.removeAttribute("complete")
     this.src = null
     this.src = src
+    return this.loaded
   }
 
   attributeChangedCallback(name: string) {

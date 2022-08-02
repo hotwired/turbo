@@ -34,5 +34,14 @@
       <input type="hidden" name="greeting" value="Hello from a redirect">
       <a href="#" id="requestSubmit">Drive enabled submit via JS</a>
     </form>
+
+    <turbo-frame id="frame">
+      <h2>Hello from a frame</h2>
+
+      <a href="/src/tests/fixtures/drive_disabled.html">Navigate #frame</a>
+      <form action="/src/tests/fixtures/drive_disabled.html">
+        <button>Navigate #frame</button>
+      </form>
+    </turbo-frame>
   </body>
 </html>

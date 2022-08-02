@@ -23,13 +23,14 @@ import { ViewDelegate, ViewRenderOptions } from "../view"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
-import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { FormLinkInterceptor, FormLinkInterceptorDelegate } from "../../observers/form_link_interceptor"
+import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
+import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent, TurboFetchErrorEvent } from "../session"
+import { StreamMessage } from "../streams/stream_message"
 
 export class FrameController
   implements
@@ -38,15 +39,15 @@ export class FrameController
     FormSubmitObserverDelegate,
     FormSubmissionDelegate,
     FrameElementDelegate,
-    FormLinkInterceptorDelegate,
-    LinkInterceptorDelegate,
+    FormLinkClickObserverDelegate,
+    LinkClickObserverDelegate,
     ViewDelegate<FrameElement, Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
-  readonly formLinkInterceptor: FormLinkInterceptor
-  readonly linkInterceptor: LinkInterceptor
+  readonly formLinkClickObserver: FormLinkClickObserver
+  readonly linkClickObserver: LinkClickObserver
   readonly formSubmitObserver: FormSubmitObserver
   formSubmission?: FormSubmission
   fetchResponseLoaded = (_fetchResponse: FetchResponse) => {}
@@ -59,13 +60,14 @@ export class FrameController
   private frame?: FrameElement
   readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
+  private currentNavigationElement?: Element
 
   constructor(element: FrameElement) {
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
-    this.formLinkInterceptor = new FormLinkInterceptor(this, this.element)
-    this.linkInterceptor = new LinkInterceptor(this, this.element)
+    this.formLinkClickObserver = new FormLinkClickObserver(this, this.element)
+    this.linkClickObserver = new LinkClickObserver(this, this.element)
     this.restorationIdentifier = uuid()
     this.formSubmitObserver = new FormSubmitObserver(this, this.element)
   }
@@ -78,8 +80,8 @@ export class FrameController
       } else {
         this.loadSourceURL()
       }
-      this.formLinkInterceptor.start()
-      this.linkInterceptor.start()
+      this.formLinkClickObserver.start()
+      this.linkClickObserver.start()
       this.formSubmitObserver.start()
     }
   }
@@ -88,8 +90,8 @@ export class FrameController
     if (this.connected) {
       this.connected = false
       this.appearanceObserver.stop()
-      this.formLinkInterceptor.stop()
-      this.linkInterceptor.stop()
+      this.formLinkClickObserver.stop()
+      this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
     }
   }
@@ -177,28 +179,28 @@ export class FrameController
     this.loadSourceURL()
   }
 
-  // Form link interceptor delegate
+  // Form link click observer delegate
 
-  shouldInterceptFormLinkClick(link: Element): boolean {
-    return this.shouldInterceptNavigation(link)
+  willSubmitFormLinkToLocation(link: Element): boolean {
+    return link.closest("turbo-frame") == this.element && this.shouldInterceptNavigation(link)
   }
 
-  formLinkClickIntercepted(link: Element, form: HTMLFormElement): void {
+  submittedFormLinkToLocation(link: Element, _location: URL, form: HTMLFormElement): void {
     const frame = this.findFrameElement(link)
     if (frame) form.setAttribute("data-turbo-frame", frame.id)
   }
 
-  // Link interceptor delegate
+  // Link click observer delegate
 
-  shouldInterceptLinkClick(element: Element, _url: string) {
+  willFollowLinkToLocation(element: Element) {
     return this.shouldInterceptNavigation(element)
   }
 
-  linkClickIntercepted(element: Element, url: string) {
-    this.navigateFrame(element, url)
+  followedLinkToLocation(element: Element, location: URL) {
+    this.navigateFrame(element, location.href)
   }
 
-  // Form interceptor delegate
+  // Form submit observer delegate
 
   willSubmitForm(element: HTMLFormElement, submitter?: HTMLElement) {
     return element.closest("turbo-frame") == this.element && this.shouldInterceptNavigation(element, submitter)
@@ -217,8 +219,12 @@ export class FrameController
 
   // Fetch request delegate
 
-  prepareHeadersForRequest(headers: FetchRequestHeaders, _request: FetchRequest) {
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
     headers["Turbo-Frame"] = this.id
+
+    if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
+      request.acceptResponseType(StreamMessage.contentType)
+    }
   }
 
   requestStarted(_request: FetchRequest) {
@@ -307,8 +313,8 @@ export class FrameController
   viewInvalidated() {}
 
   // Frame renderer delegate
-  frameExtracted(element: FrameElement) {
-    this.previousFrameElement = element
+  willRenderFrame(currentElement: FrameElement, _newElement: FrameElement) {
+    this.previousFrameElement = currentElement.cloneNode(true)
   }
 
   visitCachedSnapshot = ({ element }: Snapshot) => {
@@ -344,7 +350,9 @@ export class FrameController
 
     this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
-    frame.src = url
+    this.withCurrentNavigationElement(element, () => {
+      frame.src = url
+    })
   }
 
   private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
@@ -435,11 +443,11 @@ export class FrameController
       }
     }
 
-    if (!session.elementDriveEnabled(element)) {
+    if (!session.elementIsNavigatable(element)) {
       return false
     }
 
-    if (submitter && !session.elementDriveEnabled(submitter)) {
+    if (submitter && !session.elementIsNavigatable(submitter)) {
       return false
     }
 
@@ -508,6 +516,12 @@ export class FrameController
     this.ignoredAttributes.add(attributeName)
     callback()
     this.ignoredAttributes.delete(attributeName)
+  }
+
+  private withCurrentNavigationElement(element: Element, callback: () => void) {
+    this.currentNavigationElement = element
+    callback()
+    delete this.currentNavigationElement
   }
 }
 

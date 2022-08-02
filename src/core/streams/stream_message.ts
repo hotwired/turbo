@@ -1,40 +1,33 @@
 import { StreamElement } from "../../elements/stream_element"
+import { activateScriptElement, createDocumentFragment } from "../../util"
 
 export class StreamMessage {
   static readonly contentType = "text/vnd.turbo-stream.html"
-  readonly templateElement = document.createElement("template")
+  readonly fragment: DocumentFragment
 
   static wrap(message: StreamMessage | string) {
     if (typeof message == "string") {
-      return new this(message)
+      return new this(createDocumentFragment(message))
     } else {
       return message
     }
   }
 
-  constructor(html: string) {
-    this.templateElement.innerHTML = html
+  constructor(fragment: DocumentFragment) {
+    this.fragment = importStreamElements(fragment)
   }
+}
 
-  get fragment() {
-    const fragment = document.createDocumentFragment()
-    for (const element of this.foreignElements) {
-      fragment.appendChild(document.importNode(element, true))
+function importStreamElements(fragment: DocumentFragment): DocumentFragment {
+  for (const element of fragment.querySelectorAll<StreamElement>("turbo-stream")) {
+    const streamElement = document.importNode(element, true)
+
+    for (const inertScriptElement of streamElement.templateElement.content.querySelectorAll("script")) {
+      inertScriptElement.replaceWith(activateScriptElement(inertScriptElement))
     }
-    return fragment
+
+    element.replaceWith(streamElement)
   }
 
-  get foreignElements() {
-    return this.templateChildren.reduce((streamElements, child) => {
-      if (child.tagName.toLowerCase() == "turbo-stream") {
-        return [...streamElements, child as StreamElement]
-      } else {
-        return streamElements
-      }
-    }, [] as StreamElement[])
-  }
-
-  get templateChildren() {
-    return Array.from(this.templateElement.content.children)
-  }
+  return fragment
 }

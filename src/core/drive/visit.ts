@@ -1,13 +1,14 @@
 import { Adapter } from "../native/adapter"
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
-import { Action } from "../types"
+import { Action, ResolvingFunctions } from "../types"
 import { getHistoryMethodForAction, uuid } from "../../util"
 import { PageView } from "./page_view"
+import { StreamMessage } from "../streams/stream_message"
 
 export interface VisitDelegate {
   readonly adapter: Adapter
@@ -48,6 +49,8 @@ export type VisitOptions = {
   updateHistory: boolean
   restorationIdentifier?: string
   shouldCacheSnapshot: boolean
+  frame?: string
+  acceptsStreamResponse: boolean
 }
 
 const defaultOptions: VisitOptions = {
@@ -57,6 +60,7 @@ const defaultOptions: VisitOptions = {
   willRender: true,
   updateHistory: true,
   shouldCacheSnapshot: true,
+  acceptsStreamResponse: false,
 }
 
 export type VisitResponse = {
@@ -81,6 +85,9 @@ export class Visit implements FetchRequestDelegate {
   readonly visitCachedSnapshot: (snapshot: Snapshot) => void
   readonly willRender: boolean
   readonly updateHistory: boolean
+  readonly promise: Promise<void>
+
+  private resolvingFunctions!: ResolvingFunctions<void>
 
   followedRedirect = false
   frame?: number
@@ -92,6 +99,7 @@ export class Visit implements FetchRequestDelegate {
   response?: VisitResponse
   scrolled = false
   shouldCacheSnapshot = true
+  acceptsStreamResponse = false
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
@@ -105,6 +113,7 @@ export class Visit implements FetchRequestDelegate {
     this.delegate = delegate
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
+    this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
 
     const {
       action,
@@ -116,6 +125,7 @@ export class Visit implements FetchRequestDelegate {
       willRender,
       updateHistory,
       shouldCacheSnapshot,
+      acceptsStreamResponse,
     } = {
       ...defaultOptions,
       ...options,
@@ -131,6 +141,7 @@ export class Visit implements FetchRequestDelegate {
     this.updateHistory = updateHistory
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
+    this.acceptsStreamResponse = acceptsStreamResponse
   }
 
   get adapter() {
@@ -169,6 +180,8 @@ export class Visit implements FetchRequestDelegate {
       }
       this.cancelRender()
       this.state = VisitState.canceled
+
+      this.resolvingFunctions.reject()
     }
   }
 
@@ -182,6 +195,8 @@ export class Visit implements FetchRequestDelegate {
         this.adapter.visitCompleted(this)
         this.delegate.visitCompleted(this)
       }
+
+      this.resolvingFunctions.resolve()
     }
   }
 
@@ -189,6 +204,8 @@ export class Visit implements FetchRequestDelegate {
     if (this.state == VisitState.started) {
       this.state = VisitState.failed
       this.adapter.visitFailed(this)
+
+      this.resolvingFunctions.reject()
     }
   }
 
@@ -248,6 +265,7 @@ export class Visit implements FetchRequestDelegate {
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
           await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender, this)
+          this.performScroll()
           this.adapter.visitRendered(this)
           this.complete()
         } else {
@@ -290,6 +308,7 @@ export class Visit implements FetchRequestDelegate {
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
           await this.view.renderPage(snapshot, isPreview, this.willRender, this)
+          this.performScroll()
           this.adapter.visitRendered(this)
           if (!isPreview) {
             this.complete()
@@ -314,12 +333,19 @@ export class Visit implements FetchRequestDelegate {
     if (this.isSamePage) {
       this.render(async () => {
         this.cacheSnapshot()
+        this.performScroll()
         this.adapter.visitRendered(this)
       })
     }
   }
 
   // Fetch request delegate
+
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
+    if (this.acceptsStreamResponse) {
+      request.acceptResponseType(StreamMessage.contentType)
+    }
+  }
 
   requestStarted() {
     this.startRequest()
@@ -368,7 +394,7 @@ export class Visit implements FetchRequestDelegate {
   // Scrolling
 
   performScroll() {
-    if (!this.scrolled) {
+    if (!this.scrolled && !this.view.forceReloaded) {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
       } else {
@@ -448,9 +474,6 @@ export class Visit implements FetchRequestDelegate {
     })
     await callback()
     delete this.frame
-    if (!this.view.forceReloaded) {
-      this.performScroll()
-    }
   }
 
   cancelRender() {

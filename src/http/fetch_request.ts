@@ -158,6 +158,10 @@ export class FetchRequest {
     return this.abortController.signal
   }
 
+  acceptResponseType(mimeType: string) {
+    this.headers["Accept"] = [mimeType, this.headers["Accept"]].join(", ")
+  }
+
   private async allowRequestToBeIntercepted(fetchOptions: RequestInit) {
     const requestInterception = new Promise((resolve) => (this.resolveRequestPromise = resolve))
     const event = dispatch<TurboBeforeFetchRequestEvent>("turbo:before-fetch-request", {

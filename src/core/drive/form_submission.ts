@@ -162,7 +162,7 @@ export class FormSubmission {
     }
 
     if (this.requestAcceptsTurboStreamResponse(request)) {
-      headers["Accept"] = [StreamMessage.contentType, headers["Accept"]].join(", ")
+      request.acceptResponseType(StreamMessage.contentType)
     }
   }
 
@@ -233,8 +233,8 @@ function buildFormData(formElement: HTMLFormElement, submitter?: HTMLElement): F
   const name = submitter?.getAttribute("name")
   const value = submitter?.getAttribute("value")
 
-  if (name && value != null && formData.get(name) != value) {
-    formData.append(name, value)
+  if (name) {
+    formData.append(name, value || "")
   }
 
   return formData

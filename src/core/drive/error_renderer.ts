@@ -1,5 +1,6 @@
 import { PageSnapshot } from "./page_snapshot"
 import { Renderer } from "../renderer"
+import { activateScriptElement } from "../../util"
 
 export class ErrorRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
@@ -23,7 +24,7 @@ export class ErrorRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     for (const replaceableElement of this.scriptElements) {
       const parentNode = replaceableElement.parentNode
       if (parentNode) {
-        const element = this.createScriptElement(replaceableElement)
+        const element = activateScriptElement(replaceableElement)
         parentNode.replaceChild(element, replaceableElement)
       }
     }
@@ -34,6 +35,6 @@ export class ErrorRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   get scriptElements() {
-    return [...document.documentElement.querySelectorAll("script")]
+    return document.documentElement.querySelectorAll("script")
   }
 }
