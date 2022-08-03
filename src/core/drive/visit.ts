@@ -1,5 +1,5 @@
 import { Adapter } from "../native/adapter"
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
@@ -8,6 +8,7 @@ import { PageSnapshot } from "./page_snapshot"
 import { Action, ResolvingFunctions } from "../types"
 import { getHistoryMethodForAction, uuid } from "../../util"
 import { PageView } from "./page_view"
+import { StreamMessage } from "../streams/stream_message"
 
 export interface VisitDelegate {
   readonly adapter: Adapter
@@ -49,6 +50,7 @@ export type VisitOptions = {
   restorationIdentifier?: string
   shouldCacheSnapshot: boolean
   frame?: string
+  acceptsStreamResponse: boolean
 }
 
 const defaultOptions: VisitOptions = {
@@ -58,6 +60,7 @@ const defaultOptions: VisitOptions = {
   willRender: true,
   updateHistory: true,
   shouldCacheSnapshot: true,
+  acceptsStreamResponse: false,
 }
 
 export type VisitResponse = {
@@ -96,6 +99,7 @@ export class Visit implements FetchRequestDelegate {
   response?: VisitResponse
   scrolled = false
   shouldCacheSnapshot = true
+  acceptsStreamResponse = false
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
@@ -121,6 +125,7 @@ export class Visit implements FetchRequestDelegate {
       willRender,
       updateHistory,
       shouldCacheSnapshot,
+      acceptsStreamResponse,
     } = {
       ...defaultOptions,
       ...options,
@@ -136,6 +141,7 @@ export class Visit implements FetchRequestDelegate {
     this.updateHistory = updateHistory
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
+    this.acceptsStreamResponse = acceptsStreamResponse
   }
 
   get adapter() {
@@ -334,6 +340,12 @@ export class Visit implements FetchRequestDelegate {
   }
 
   // Fetch request delegate
+
+  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
+    if (this.acceptsStreamResponse) {
+      request.acceptResponseType(StreamMessage.contentType)
+    }
+  }
 
   requestStarted() {
     this.startRequest()

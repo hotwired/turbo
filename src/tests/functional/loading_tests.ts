@@ -3,6 +3,7 @@ import { assert } from "chai"
 import {
   attributeForSelector,
   hasSelector,
+  nextAttributeMutationNamed,
   nextBeat,
   nextBody,
   nextEventNamed,
@@ -103,18 +104,16 @@ test("test changing src attribute on a frame with loading=eager navigates", asyn
 })
 
 test("test reloading a frame reloads the content", async ({ page }) => {
-  await nextBeat()
-
   await page.click("#loading-eager summary")
-  await nextBeat()
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   const frameContent = "#loading-eager turbo-frame#frame h2"
   assert.ok(await hasSelector(page, frameContent))
-  assert.ok(await hasSelector(page, "#loading-eager turbo-frame[complete]"), "has [complete] attribute")
+  assert.equal(await nextAttributeMutationNamed(page, "frame", "complete"), "", "has [complete] attribute")
 
   await page.evaluate(() => (document.querySelector("#loading-eager turbo-frame") as any)?.reload())
   assert.ok(await hasSelector(page, frameContent))
-  assert.ok(await hasSelector(page, "#loading-eager turbo-frame:not([complete])"), "clears [complete] attribute")
+  assert.equal(await nextAttributeMutationNamed(page, "frame", "complete"), null, "clears [complete] attribute")
 })
 
 test("test navigating away from a page does not reload its frames", async ({ page }) => {

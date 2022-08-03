@@ -21,6 +21,7 @@ import { FrameElement } from "../elements/frame_element"
 import { FrameViewRenderOptions } from "./frames/frame_view"
 import { FetchResponse } from "../http/fetch_response"
 import { Preloader, PreloaderDelegate } from "./drive/preloader"
+import { FetchRequest } from "../http/fetch_request"
 
 export type FormMode = "on" | "off" | "optin"
 export type TimingData = unknown
@@ -30,6 +31,7 @@ export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
 export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
 export type TurboFrameLoadEvent = CustomEvent
 export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
+export type TurboFetchRequestErrorEvent = CustomEvent<{ request: FetchRequest; error: Error }>
 export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
 export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
 export type TurboRenderEvent = CustomEvent
@@ -59,7 +61,7 @@ export class Session
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
   readonly formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
-  readonly frameRedirector = new FrameRedirector(document.documentElement)
+  readonly frameRedirector = new FrameRedirector(this, document.documentElement)
 
   drive = true
   enabled = true
@@ -191,7 +193,9 @@ export class Session
 
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    this.visit(location.href, { action })
+    const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+
+    this.visit(location.href, { action, acceptsStreamResponse })
   }
 
   // Navigator delegate
