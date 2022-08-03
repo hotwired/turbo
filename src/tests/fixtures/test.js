@@ -48,6 +48,7 @@
   "turbo:before-fetch-response",
   "turbo:visit",
   "turbo:before-frame-render",
+  "turbo:fetch-request-error",
   "turbo:frame-load",
   "turbo:frame-render",
   "turbo:reload"
