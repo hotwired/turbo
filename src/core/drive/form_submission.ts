@@ -3,6 +3,7 @@ import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
 import { dispatch, getMetaContent } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
+import { TurboFetchRequestErrorEvent } from "../session"
 
 export interface FormSubmissionDelegate {
   formSubmissionStarted(formSubmission: FormSubmission): void
@@ -199,6 +200,10 @@ export class FormSubmission {
 
   requestErrored(request: FetchRequest, error: Error) {
     this.result = { success: false, error }
+    dispatch<TurboFetchRequestErrorEvent>("turbo:fetch-request-error", {
+      target: this.formElement,
+      detail: { request, error },
+    })
     this.delegate.formSubmissionErrored(this, error)
   }
 
