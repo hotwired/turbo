@@ -306,6 +306,7 @@ export class Session
   }
 
   frameMissing(frame: FrameElement, fetchResponse: FetchResponse): Promise<void> {
+    console.warn(`Completing full-page visit as matching frame for #${frame.id} was missing from the response`)
     return this.visit(fetchResponse.location)
   }
 
