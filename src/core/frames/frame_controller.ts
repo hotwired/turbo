@@ -32,6 +32,8 @@ import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent, TurboFetchRequestErrorEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
 
+export type TurboFrameMissingEvent = CustomEvent<{ fetchResponse: FetchResponse }>
+
 export class FrameController
   implements
     AppearanceObserverDelegate,
@@ -147,23 +149,29 @@ export class FrameController
       const html = await fetchResponse.responseHTML
       if (html) {
         const { body } = parseHTMLDocument(html)
-        const snapshot = new Snapshot(await this.extractForeignFrameElement(body))
-        const renderer = new FrameRenderer(
-          this,
-          this.view.snapshot,
-          snapshot,
-          FrameRenderer.renderElement,
-          false,
-          false
-        )
-        if (this.view.renderPromise) await this.view.renderPromise
-        this.changeHistory()
+        const newFrameElement = await this.extractForeignFrameElement(body)
 
-        await this.view.render(renderer)
-        this.complete = true
-        session.frameRendered(fetchResponse, this.element)
-        session.frameLoaded(this.element)
-        this.fetchResponseLoaded(fetchResponse)
+        if (newFrameElement) {
+          const snapshot = new Snapshot(newFrameElement)
+          const renderer = new FrameRenderer(
+            this,
+            this.view.snapshot,
+            snapshot,
+            FrameRenderer.renderElement,
+            false,
+            false
+          )
+          if (this.view.renderPromise) await this.view.renderPromise
+          this.changeHistory()
+
+          await this.view.render(renderer)
+          this.complete = true
+          session.frameRendered(fetchResponse, this.element)
+          session.frameLoaded(this.element)
+          this.fetchResponseLoaded(fetchResponse)
+        } else if (this.sessionWillHandleMissingFrame(fetchResponse)) {
+          await session.frameMissing(this.element, fetchResponse)
+        }
       }
     } catch (error) {
       console.error(error)
@@ -390,12 +398,24 @@ export class FrameController
     }
   }
 
+  private sessionWillHandleMissingFrame(fetchResponse: FetchResponse) {
+    this.element.setAttribute("complete", "")
+
+    const event = dispatch<TurboFrameMissingEvent>("turbo:frame-missing", {
+      target: this.element,
+      detail: { fetchResponse },
+      cancelable: true,
+    })
+
+    return !event.defaultPrevented
+  }
+
   private findFrameElement(element: Element, submitter?: HTMLElement) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
-  async extractForeignFrameElement(container: ParentNode): Promise<FrameElement> {
+  async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | null> {
     let element
     const id = CSS.escape(this.id)
 
@@ -410,13 +430,12 @@ export class FrameController
         await element.loaded
         return await this.extractForeignFrameElement(element)
       }
-
-      console.error(`Response has no matching <turbo-frame id="${id}"> element`)
     } catch (error) {
       console.error(error)
+      return new FrameElement()
     }
 
-    return new FrameElement()
+    return null
   }
 
   private formActionIsVisitable(form: HTMLFormElement, submitter?: HTMLElement) {

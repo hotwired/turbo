@@ -51,5 +51,6 @@
   "turbo:fetch-request-error",
   "turbo:frame-load",
   "turbo:frame-render",
+  "turbo:frame-missing",
   "turbo:reload"
 ])
