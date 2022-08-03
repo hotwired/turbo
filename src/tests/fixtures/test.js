@@ -1,16 +1,7 @@
 (function(eventNames) {
-  // limit the amount of times to recursively call this
-  // function to avoid stack max call size errors if
-  // objects are complex
-  let iterations = 0
-
   function serializeToChannel(object, returned = {}) {
     for (const key in object) {
       const value = object[key]
-      if (iterations > 5) {
-        break
-      }
-      iterations++
 
       if (value instanceof URL) {
         returned[key] = value.toJSON()
