@@ -40,6 +40,16 @@ test("test receiving a stream message with css selector target", async ({ page }
   assert.deepEqual(await messages3.allTextContents(), ["Third", "Hello CSS!"])
 })
 
+test("test receiving a message without a template", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="remove" target="messages"></turbo-stream>
+    `)
+  )
+
+  assert.equal(await await page.locator("#messages").count(), 0, "removes target element")
+})
+
 test("test receiving a message with a <script> element", async ({ page }) => {
   const messages = await page.locator("#messages .message")
 
