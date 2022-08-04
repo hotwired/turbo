@@ -109,7 +109,11 @@ export class StreamElement extends HTMLElement {
    * Gets the main `<template>` used for rendering
    */
   get templateElement() {
-    if (this.firstElementChild instanceof HTMLTemplateElement) {
+    if (this.firstElementChild === null) {
+      const template = this.ownerDocument.createElement("template")
+      this.appendChild(template)
+      return template
+    } else if (this.firstElementChild instanceof HTMLTemplateElement) {
       return this.firstElementChild
     }
     this.raise("first child element must be a <template> element")
