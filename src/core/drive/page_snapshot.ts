@@ -30,9 +30,9 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
     const clonedSelectElements = clonedElement.querySelectorAll("select")
 
     for (const [index, source] of selectElements.entries()) {
-      for (const [optionIndex, option] of Array.from(source.options).entries()) {
-        clonedSelectElements[index].options[optionIndex].selected = option.selected
-      }
+      const clone = clonedSelectElements[index]
+      for (const option of clone.selectedOptions) option.selected = false
+      for (const option of source.selectedOptions) clone.options[option.index].selected = true
     }
 
     for (const clonedPasswordInput of clonedElement.querySelectorAll<HTMLInputElement>('input[type="password"]')) {
