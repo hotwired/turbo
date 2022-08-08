@@ -407,12 +407,15 @@ export class Session
 
   elementIsNavigatable(element: Element): boolean {
     const container = element.closest("[data-turbo]")
-    const withinFrame = element.closest("turbo-frame")
 
     // Check if Drive is enabled on the session or we're within a Frame.
-    if (this.drive || withinFrame) {
-      // Element is navigatable by default, unless `data-turbo="false"`.
-      if (container) {
+    if (this.drive || element.closest("turbo-frame")) {
+      // Element is navigatable by default
+      // Use `data-turbo="false"` to disable navigation; add `data-turbo-enforce` to a parent to force Turbo navigation.
+      const enforcedByParent = element.closest("[data-turbo-enforce]")
+      if (enforcedByParent) {
+        return true
+      } else if (container) {
         return container.getAttribute("data-turbo") != "false"
       } else {
         return true

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Drive</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Drive with <code>data-turbo-enforce</code></h1>
+
+    <div data-turbo-enforce>
+      <a id="drive_enabled" href="/src/tests/fixtures/drive_enforced.html">Drive enabled link</a>
+      <a id="drive_enabled_external" href="https://example.com">Drive enabled external link</a>
+      
+      <div data-turbo="false">
+        <a id="drive_disabled" href="/src/tests/fixtures/drive_enforced.html">Drive disabled link</a>
+      </div>
+    </div>
+  </body>
+</html>
