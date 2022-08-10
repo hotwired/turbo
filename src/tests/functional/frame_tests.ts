@@ -113,17 +113,16 @@ test("test following a link driving a frame toggles the [aria-busy=true] attribu
   )
 })
 
-test("test following a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
+test("test successfully following a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
   page,
 }) => {
-  await page.click("#missing a")
-  await noNextEventOnTarget(page, "missing", "turbo:frame-render")
-  await noNextEventOnTarget(page, "missing", "turbo:frame-load")
-  const { fetchResponse } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
+  await page.click("#missing-frame-link")
+  await nextEventOnTarget(page, "missing", "turbo:before-fetch-request")
+  const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
   await noNextEventNamed(page, "turbo:before-fetch-request")
   await nextEventNamed(page, "turbo:load")
 
-  assert.ok(fetchResponse, "dispatchs turbo:frame-missing with event.detail.fetchResponse")
+  assert.ok(response, "dispatches turbo:frame-missing with event.detail.response")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html", "navigates the page")
 
   await page.goBack()
@@ -133,26 +132,73 @@ test("test following a link to a page without a matching frame dispatches a turb
   assert.ok(await innerHTMLForSelector(page, "#missing"))
 })
 
-test("test following a link to a page without a matching frame dispatches a turbo:frame-missing event that can be cancelled", async ({
+test("test failing to follow a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
+  page,
+}) => {
+  await page.click("#missing-page-link")
+  await nextEventOnTarget(page, "missing", "turbo:before-fetch-request")
+  const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+  await noNextEventNamed(page, "turbo:load")
+
+  assert.ok(response, "dispatches turbo:frame-missing with event.detail.response")
+  assert.equal(pathname(page.url()), "/missing.html", "navigates the page")
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
+  assert.ok(await innerHTMLForSelector(page, "#missing"))
+})
+
+test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({
   page,
 }) => {
   await page.locator("#missing").evaluate((frame) => {
     frame.addEventListener(
       "turbo:frame-missing",
-      (event) => {
-        event.preventDefault()
-
-        if (event.target instanceof HTMLElement) {
+      ((event) => {
+        if (event.target instanceof Element) {
+          event.preventDefault()
           event.target.textContent = "Overridden"
         }
-      },
+      }) as EventListener,
       { once: true }
     )
   })
-  await page.click("#missing a")
+  await page.click("#missing-frame-link")
   await nextEventOnTarget(page, "missing", "turbo:frame-missing")
 
   assert.equal(await page.textContent("#missing"), "Overridden")
+})
+
+test("test the turbo:frame-missing event following a link to a page without a matching frame can drive a Visit", async ({
+  page,
+}) => {
+  await page.locator("#missing").evaluate((frame) => {
+    frame.addEventListener(
+      "turbo:frame-missing",
+      ((event: CustomEvent) => {
+        event.preventDefault()
+        const { response, visit } = event.detail
+
+        visit(response)
+      }) as EventListener,
+      { once: true }
+    )
+  })
+  await page.click("#missing-frame-link")
+  await nextEventOnTarget(page, "missing", "turbo:frame-missing")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "Frames: #frame")
+  assert.notOk(await hasSelector(page, "turbo-frame#missing"))
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
+  assert.equal(await innerHTMLForSelector(page, "#missing"), "")
 })
 
 test("test following a link to a page with a matching frame does not dispatch a turbo:frame-missing event", async ({
