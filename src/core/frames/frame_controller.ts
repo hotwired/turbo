@@ -20,7 +20,7 @@ import {
 import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { ViewDelegate, ViewRenderOptions } from "../view"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { Locatable, getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
@@ -32,7 +32,8 @@ import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent, TurboFetchRequestErrorEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
 
-export type TurboFrameMissingEvent = CustomEvent<{ fetchResponse: FetchResponse }>
+type VisitFallback = (location: Response | Locatable, options: Partial<VisitOptions>) => Promise<void>
+export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: VisitFallback }>
 
 export class FrameController
   implements
@@ -169,8 +170,9 @@ export class FrameController
           session.frameRendered(fetchResponse, this.element)
           session.frameLoaded(this.element)
           this.fetchResponseLoaded(fetchResponse)
-        } else if (this.sessionWillHandleMissingFrame(fetchResponse)) {
-          await session.frameMissing(this.element, fetchResponse)
+        } else if (this.willHandleFrameMissingFromResponse(fetchResponse)) {
+          console.error(`Response has no matching <turbo-frame id="${this.element.id}"> element`)
+          this.element.innerHTML = ""
         }
       }
     } catch (error) {
@@ -398,12 +400,25 @@ export class FrameController
     }
   }
 
-  private sessionWillHandleMissingFrame(fetchResponse: FetchResponse) {
+  private willHandleFrameMissingFromResponse(fetchResponse: FetchResponse): boolean {
     this.element.setAttribute("complete", "")
+
+    const response = fetchResponse.response
+    const visit = async (url: Locatable | Response, options: Partial<VisitOptions> = {}) => {
+      if (url instanceof Response) {
+        const wrapped = new FetchResponse(url)
+        const responseHTML = await wrapped.responseHTML
+        const { location, redirected, statusCode } = wrapped
+
+        session.visit(location, { response: { redirected, statusCode, responseHTML }, ...options })
+      } else {
+        session.visit(url, options)
+      }
+    }
 
     const event = dispatch<TurboFrameMissingEvent>("turbo:frame-missing", {
       target: this.element,
-      detail: { fetchResponse },
+      detail: { response, visit },
       cancelable: true,
     })
 
