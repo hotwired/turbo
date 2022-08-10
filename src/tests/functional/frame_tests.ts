@@ -330,20 +330,18 @@ test("test does not evaluate data-turbo-eval=false scripts", async ({ page }) =>
 })
 
 test("test redirecting in a form is still navigatable after redirect", async ({ page }) => {
-  await nextBeat()
   await page.click("#navigate-form-redirect")
-  await nextBeat()
-  assert.ok(await hasSelector(page, "#form-redirect"))
+  await nextEventOnTarget(page, "form-redirect", "turbo:frame-load")
+  assert.equal(await page.textContent("turbo-frame#form-redirect h2"), "Form Redirect")
 
-  await nextBeat()
   await page.click("#submit-form")
-  await nextBeat()
-  assert.ok(await hasSelector(page, "#form-redirected-header"))
+  await nextEventOnTarget(page, "form-redirect", "turbo:frame-load")
+  assert.equal(await page.textContent("turbo-frame#form-redirect h2"), "Form Redirected")
 
-  await nextBeat()
   await page.click("#navigate-form-redirect")
-  await nextBeat()
-  assert.ok(await hasSelector(page, "#form-redirect-header"))
+  await nextEventOnTarget(page, "form-redirect", "turbo:frame-load")
+
+  assert.equal(await page.textContent("turbo-frame#form-redirect h2"), "Form Redirect")
 })
 
 test("test 'turbo:frame-render' is triggered after frame has finished rendering", async ({ page }) => {
