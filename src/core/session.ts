@@ -309,9 +309,13 @@ export class Session
     this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
-  frameMissing(frame: FrameElement, fetchResponse: FetchResponse): Promise<void> {
-    console.warn(`Completing full-page visit as matching frame for #${frame.id} was missing from the response`)
-    return this.visit(fetchResponse.location)
+  async frameMissing(frame: FrameElement, fetchResponse: FetchResponse): Promise<void> {
+    console.warn(`A matching frame for #${frame.id} was missing from the response, transforming into full-page Visit.`)
+
+    const responseHTML = await fetchResponse.responseHTML
+    const { location, redirected, statusCode } = fetchResponse
+
+    return this.visit(location, { response: { redirected, statusCode, responseHTML } })
   }
 
   // Application events

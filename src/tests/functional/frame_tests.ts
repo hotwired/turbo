@@ -120,6 +120,7 @@ test("test following a link to a page without a matching frame dispatches a turb
   await noNextEventOnTarget(page, "missing", "turbo:frame-render")
   await noNextEventOnTarget(page, "missing", "turbo:frame-load")
   const { fetchResponse } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
   await nextEventNamed(page, "turbo:load")
 
   assert.ok(fetchResponse, "dispatchs turbo:frame-missing with event.detail.fetchResponse")
