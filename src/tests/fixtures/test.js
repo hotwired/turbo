@@ -46,6 +46,8 @@
   "turbo:load",
   "turbo:render",
   "turbo:before-fetch-request",
+  "turbo:submit-start",
+  "turbo:submit-end",
   "turbo:before-fetch-response",
   "turbo:visit",
   "turbo:before-frame-render",

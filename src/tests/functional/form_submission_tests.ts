@@ -798,6 +798,24 @@ test("test form submission targeting a frame submits the Turbo-Frame header", as
   assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
 })
 
+test("test link method form submission dispatches events from a connected <form> element", async ({ page }) => {
+  await page.evaluate(() =>
+    new MutationObserver(([record]) => {
+      for (const form of record.addedNodes) {
+        if (form instanceof HTMLFormElement) form.id = "a-form-link"
+      }
+    }).observe(document.body, { childList: true })
+  )
+
+  await page.click("#stream-link-method-within-form-outside-frame")
+  await nextEventOnTarget(page, "a-form-link", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "a-form-link", "turbo:submit-start")
+  await nextEventOnTarget(page, "a-form-link", "turbo:before-fetch-response")
+  await nextEventOnTarget(page, "a-form-link", "turbo:submit-end")
+
+  assert.notOk(await hasSelector(page, "a-form-link"), "the <form> is removed")
+})
+
 test("test link method form submission submits a single request", async ({ page }) => {
   let requestCounter = 0
   page.on("request", () => requestCounter++)
