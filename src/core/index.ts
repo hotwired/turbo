@@ -125,7 +125,9 @@ export function setProgressBarDelay(delay: number) {
   session.setProgressBarDelay(delay)
 }
 
-export function setConfirmMethod(confirmMethod: (message: string, element: HTMLFormElement) => Promise<boolean>) {
+export function setConfirmMethod(
+  confirmMethod: (message: string, element: HTMLFormElement, submitter: HTMLElement | undefined) => Promise<boolean>
+) {
   FormSubmission.confirmMethod = confirmMethod
 }
 
