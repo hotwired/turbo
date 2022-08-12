@@ -11,7 +11,7 @@ import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
-import { StreamObserver } from "../observers/stream_observer"
+import { StreamObserver, StreamDelivery } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
 import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
@@ -260,7 +260,10 @@ export class Session
 
   // Stream observer delegate
 
-  receivedMessageFromStream(message: StreamMessage) {
+  receivedMessageFromStream(message: StreamMessage, delivery: StreamDelivery) {
+    if (delivery === "http") {
+      clearBusyState(document.documentElement)
+    }
     this.renderStreamMessage(message)
   }
 

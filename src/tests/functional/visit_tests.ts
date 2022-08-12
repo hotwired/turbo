@@ -5,6 +5,7 @@ import {
   getSearchParam,
   isScrolledToSelector,
   isScrolledToTop,
+  nextAttributeMutationNamed,
   nextBeat,
   nextEventNamed,
   readEventLogs,
@@ -185,6 +186,21 @@ test("test visits with data-turbo-stream include MIME type & search params", asy
 
   assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
   assert.equal(getSearchParam(url, "key"), "value")
+})
+
+test("test visits with data-turbo-stream set and clear aria-busy", async ({ page }) => {
+  await page.click("#stream-link")
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "html", "aria-busy"),
+    "true",
+    "sets [aria-busy] on the document element"
+  )
+  assert.equal(
+    await nextAttributeMutationNamed(page, "html", "aria-busy"),
+    null,
+    "removes [aria-busy] from the document element"
+  )
 })
 
 test("test cache does not override response after redirect", async ({ page }) => {

@@ -3,8 +3,10 @@ import { FetchResponse } from "../http/fetch_response"
 import { StreamMessage } from "../core/streams/stream_message"
 import { StreamSource } from "../core/types"
 
+export type StreamDelivery = "http" | "event"
+
 export interface StreamObserverDelegate {
-  receivedMessageFromStream(message: StreamMessage): void
+  receivedMessageFromStream(message: StreamMessage, delivery: StreamDelivery): void
 }
 
 export class StreamObserver {
@@ -58,19 +60,19 @@ export class StreamObserver {
 
   receiveMessageEvent = (event: MessageEvent) => {
     if (this.started && typeof event.data == "string") {
-      this.receiveMessageHTML(event.data)
+      this.receiveMessageHTML(event.data, "event")
     }
   }
 
   async receiveMessageResponse(response: FetchResponse) {
     const html = await response.responseHTML
     if (html) {
-      this.receiveMessageHTML(html)
+      this.receiveMessageHTML(html, "http")
     }
   }
 
-  receiveMessageHTML(html: string) {
-    this.delegate.receivedMessageFromStream(StreamMessage.wrap(html))
+  receiveMessageHTML(html: string, delivery: StreamDelivery) {
+    this.delegate.receivedMessageFromStream(StreamMessage.wrap(html), delivery)
   }
 }
 
