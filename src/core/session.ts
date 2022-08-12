@@ -210,6 +210,9 @@ export class Session
   }
 
   visitStarted(visit: Visit) {
+    if (!visit.acceptsStreamResponse) {
+      markAsBusy(document.documentElement)
+    }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
       this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
@@ -217,6 +220,7 @@ export class Session
   }
 
   visitCompleted(visit: Visit) {
+    clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
@@ -346,7 +350,6 @@ export class Session
   }
 
   notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
-    markAsBusy(document.documentElement)
     return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
   }
 
@@ -366,7 +369,6 @@ export class Session
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
-    clearBusyState(document.documentElement)
     return dispatch<TurboLoadEvent>("turbo:load", {
       detail: { url: this.location.href, timing },
     })
