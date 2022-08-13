@@ -1,7 +1,14 @@
 import { JSHandle, Locator, Page } from "@playwright/test"
 
-type EventLog = [string, any, string | null]
-type MutationLog = [string, string | null, string | null]
+type Target = string | null
+
+type EventType = string
+type EventDetail = any
+type EventLog = [EventType, EventDetail, Target]
+
+type MutationAttributeName = string
+type MutationAttributeValue = string | null
+type MutationLog = [MutationAttributeName, Target, MutationAttributeValue]
 
 export function attributeForSelector(page: Page, selector: string, attributeName: string): Promise<string | null> {
   return page.locator(selector).getAttribute(attributeName)

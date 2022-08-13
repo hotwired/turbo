@@ -72,12 +72,12 @@ router.get("/delayed_response", (request, response) => {
 
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
-  const { content, status, type, target, targets } = params
+  const { content, id, status, type, target, targets } = params
   if (typeof content == "string") {
-    receiveMessage(content, target)
+    receiveMessage(content, id, target)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(targets ? renderMessageForTargets(content, targets) : renderMessage(content, target))
+      response.send(targets ? renderMessageForTargets(content, id, targets) : renderMessage(content, id, target))
     } else {
       response.sendStatus(parseInt(status || "201", 10))
     }
@@ -101,10 +101,10 @@ router.put("/messages/:id", (request, response) => {
   const { content, type } = request.body
   const { id } = request.params
   if (typeof content == "string") {
-    receiveMessage(content)
+    receiveMessage(content, id)
     if (type == "stream" && acceptsStreams(request)) {
       response.type("text/vnd.turbo-stream.html; charset=utf-8")
-      response.send(renderMessage(id + ": " + content))
+      response.send(renderMessage(id + ": " + content, id))
     } else {
       response.sendStatus(200)
     }
@@ -130,25 +130,25 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
-function receiveMessage(content: string, target?: string) {
-  const data = renderSSEData(renderMessage(content, target))
+function receiveMessage(content: string, id: string | null, target?: string) {
+  const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
     intern.log("delivering message to stream", response.socket?.remotePort)
     response.write(data)
   }
 }
 
-function renderMessage(content: string, target = "messages") {
+function renderMessage(content: string, id: string | null, target = "messages") {
   return `
-    <turbo-stream action="append" target="${target}"><template>
+    <turbo-stream id="${id}" action="append" target="${target}"><template>
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `
 }
 
-function renderMessageForTargets(content: string, targets: string) {
+function renderMessageForTargets(content: string, id: string | null, targets: string) {
   return `
-    <turbo-stream action="append" targets="${targets}"><template>
+    <turbo-stream id="${id}" action="append" targets="${targets}"><template>
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
   `
