@@ -91,7 +91,7 @@ router.get("/stream-response", (request, response) => {
   const { content, target, targets } = params
   if (acceptsStreams(request)) {
     response.type("text/vnd.turbo-stream.html; charset=utf-8")
-    response.send(targets ? renderMessageForTargets(content, targets) : renderMessage(content, target))
+    response.send(targets ? renderMessageForTargets(content, null, targets) : renderMessage(content, target))
   } else {
     response.sendStatus(422)
   }
