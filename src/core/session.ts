@@ -110,7 +110,7 @@ export class Session
   }
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}): Promise<void> {
-    const frameElement = document.getElementById(options.frame || "")
+    const frameElement = options.frame ? document.getElementById(options.frame) : null
 
     if (frameElement instanceof FrameElement) {
       frameElement.src = location.toString()
