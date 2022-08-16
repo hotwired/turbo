@@ -7,6 +7,7 @@ import {
   isScrolledToTop,
   nextBeat,
   nextEventNamed,
+  nextEventOnTarget,
   noNextAttributeMutationNamed,
   readEventLogs,
   scrollToSelector,
@@ -251,6 +252,15 @@ test("test can scroll to element after history-initiated turbo:visit", async ({ 
   await nextEventNamed(page, "turbo:load")
 
   assert(await isScrolledToSelector(page, "#" + id), "scrolls after history-initiated turbo:load")
+})
+
+test("test Visit with network error", async ({ page }) => {
+  await page.evaluate(() => {
+    addEventListener("turbo:fetch-request-error", (event: Event) => event.preventDefault())
+  })
+  await page.context().setOffline(true)
+  await page.click("#same-origin-link")
+  await nextEventOnTarget(page, "same-origin-link", "turbo:fetch-request-error")
 })
 
 async function visitLocation(page: Page, location: string) {

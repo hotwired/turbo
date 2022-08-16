@@ -442,6 +442,12 @@ test("test invalid form submission with server error status", async ({ page }) =
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
+test("test form submission with network error", async ({ page }) => {
+  await page.context().setOffline(true)
+  await page.click("#reject-form [type=submit]")
+  await nextEventOnTarget(page, "reject-form", "turbo:fetch-request-error")
+})
+
 test("test submitter form submission reads button attributes", async ({ page }) => {
   const button = await page.locator("#submitter form button[type=submit][formmethod=post]")
   await button.click()
