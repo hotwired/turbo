@@ -98,6 +98,15 @@ export async function nextAttributeMutationNamed(
   return attributeValue
 }
 
+export async function noNextAttributeMutationNamed(
+  page: Page,
+  elementId: string,
+  attributeName: string
+): Promise<boolean> {
+  const records = await readMutationLogs(page, 1)
+  return !records.some(([name]) => name == attributeName)
+}
+
 export async function noNextEventNamed(page: Page, eventName: string): Promise<boolean> {
   const records = await readEventLogs(page, 1)
   return !records.some(([name]) => name == eventName)

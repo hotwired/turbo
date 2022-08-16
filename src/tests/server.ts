@@ -86,6 +86,17 @@ router.post("/messages", (request, response) => {
   }
 })
 
+router.get("/stream-response", (request, response) => {
+  const params = { ...request.body, ...request.query }
+  const { content, target, targets } = params
+  if (acceptsStreams(request)) {
+    response.type("text/vnd.turbo-stream.html; charset=utf-8")
+    response.send(targets ? renderMessageForTargets(content, targets) : renderMessage(content, target))
+  } else {
+    response.sendStatus(422)
+  }
+})
+
 router.put("/messages/:id", (request, response) => {
   const { content, type } = request.body
   const { id } = request.params

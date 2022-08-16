@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html id="html">
   <head>
     <meta charset="utf-8">
     <title>Turbo</title>
@@ -19,7 +19,9 @@
       <hr class="push-below-fold">
       <p><a id="below-the-fold-link" href="/src/tests/fixtures/one.html">one.html</a></p>
       <hr class="push-below-fold">
-      <p><a id="stream-link" href="/src/tests/fixtures/one.html?key=value" data-turbo-stream>Stream link with ?key=value</a></p>
+      <p><a id="stream-link" href="/__turbo/stream-response?content=link&type=stream&key=value" data-turbo-stream>Stream link with ?key=value</a></p>
     </section>
+
+    <div id="messages"></div>
   </body>
 </html>
