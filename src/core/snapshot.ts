@@ -37,11 +37,11 @@ export class Snapshot<E extends Element = Element> {
   }
 
   get permanentElements() {
-    return [...this.element.querySelectorAll("[id][data-turbo-permanent]")]
+    return queryPermanentElementsAll(this.element)
   }
 
   getPermanentElementById(id: string) {
-    return this.element.querySelector(`#${id}[data-turbo-permanent]`)
+    return getPermanentElementById(this.element, id)
   }
 
   getPermanentElementMapForSnapshot(snapshot: Snapshot) {
@@ -57,6 +57,14 @@ export class Snapshot<E extends Element = Element> {
 
     return permanentElementMap
   }
+}
+
+export function getPermanentElementById(node: ParentNode, id: string) {
+  return node.querySelector(`#${id}[data-turbo-permanent]`)
+}
+
+export function queryPermanentElementsAll(node: ParentNode) {
+  return node.querySelectorAll("[id][data-turbo-permanent]")
 }
 
 export type PermanentElementMap = Record<string, [Element, Element]>

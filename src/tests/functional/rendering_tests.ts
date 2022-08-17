@@ -395,6 +395,36 @@ test("test preserves permanent element video playback", async ({ page }) => {
   assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
 })
 
+test("test preserves permanent element through Turbo Stream update", async ({ page }) => {
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" target="frame">
+        <template>
+          <div id="permanent-in-frame" data-turbo-permanent>Ignored</div>
+        </template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
+})
+
+test("test preserves permanent element through Turbo Stream append", async ({ page }) => {
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="append" target="frame">
+        <template>
+          <div id="permanent-in-frame" data-turbo-permanent>Ignored</div>
+        </template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
+})
+
 test("test preserves input values", async ({ page }) => {
   await page.fill("#text-input", "test")
   await page.click("#checkbox-input")
