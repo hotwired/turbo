@@ -1,7 +1,7 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
-import { dispatch, getAttribute, getMetaContent } from "../../util"
+import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { TurboFetchRequestErrorEvent } from "../session"
 
@@ -221,7 +221,7 @@ export class FormSubmission {
   }
 
   requestAcceptsTurboStreamResponse(request: FetchRequest) {
-    return !request.isIdempotent || this.formElement.hasAttribute("data-turbo-stream")
+    return !request.isIdempotent || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
   }
 }
 

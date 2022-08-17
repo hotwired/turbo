@@ -30,6 +30,10 @@
         <input type="hidden" name="greeting" value="Hello from a redirect">
         <input id="standard-get-form-with-stream-opt-in-submit" type="submit" value="form[method=get]">
       </form>
+      <form action="/__turbo/redirect" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <button id="standard-get-form-with-stream-opt-in-submitter" data-turbo-stream>form[method=get] button[data-turbo-stream]</button>
+      </form>
       <hr>
       <form>
         <button id="form-action-none-q-a" name="q" value="a">Submit ?q=a to form:not([action])</button>
