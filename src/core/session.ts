@@ -110,7 +110,7 @@ export class Session
   }
 
   visit(location: Locatable, options: Partial<VisitOptions> = {}): Promise<void> {
-    const frameElement = document.getElementById(options.frame || "")
+    const frameElement = options.frame ? document.getElementById(options.frame) : null
 
     if (frameElement instanceof FrameElement) {
       frameElement.src = location.toString()
@@ -210,6 +210,9 @@ export class Session
   }
 
   visitStarted(visit: Visit) {
+    if (!visit.acceptsStreamResponse) {
+      markAsBusy(document.documentElement)
+    }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
       this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
@@ -217,6 +220,7 @@ export class Session
   }
 
   visitCompleted(visit: Visit) {
+    clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
@@ -309,9 +313,13 @@ export class Session
     this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
-  frameMissing(frame: FrameElement, fetchResponse: FetchResponse): Promise<void> {
-    console.warn(`Completing full-page visit as matching frame for #${frame.id} was missing from the response`)
-    return this.visit(fetchResponse.location)
+  async frameMissing(frame: FrameElement, fetchResponse: FetchResponse): Promise<void> {
+    console.warn(`A matching frame for #${frame.id} was missing from the response, transforming into full-page Visit.`)
+
+    const responseHTML = await fetchResponse.responseHTML
+    const { location, redirected, statusCode } = fetchResponse
+
+    return this.visit(location, { response: { redirected, statusCode, responseHTML } })
   }
 
   // Application events
@@ -342,7 +350,6 @@ export class Session
   }
 
   notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
-    markAsBusy(document.documentElement)
     return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
   }
 
@@ -362,7 +369,6 @@ export class Session
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
-    clearBusyState(document.documentElement)
     return dispatch<TurboLoadEvent>("turbo:load", {
       detail: { url: this.location.href, timing },
     })

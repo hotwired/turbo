@@ -24,7 +24,22 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
   }
 
   clone() {
-    return new PageSnapshot(this.element.cloneNode(true), this.headSnapshot)
+    const clonedElement = this.element.cloneNode(true)
+
+    const selectElements = this.element.querySelectorAll("select")
+    const clonedSelectElements = clonedElement.querySelectorAll("select")
+
+    for (const [index, source] of selectElements.entries()) {
+      const clone = clonedSelectElements[index]
+      for (const option of clone.selectedOptions) option.selected = false
+      for (const option of source.selectedOptions) clone.options[option.index].selected = true
+    }
+
+    for (const clonedPasswordInput of clonedElement.querySelectorAll<HTMLInputElement>('input[type="password"]')) {
+      clonedPasswordInput.value = ""
+    }
+
+    return new PageSnapshot(clonedElement, this.headSnapshot)
   }
 
   get headElement() {

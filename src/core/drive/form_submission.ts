@@ -1,7 +1,7 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
-import { dispatch, getMetaContent } from "../../util"
+import { dispatch, getAttribute, getMetaContent } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { TurboFetchRequestErrorEvent } from "../session"
 
@@ -57,7 +57,11 @@ export class FormSubmission {
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
 
-  static confirmMethod(message: string, _element: HTMLFormElement): Promise<boolean> {
+  static confirmMethod(
+    message: string,
+    _element: HTMLFormElement,
+    _submitter: HTMLElement | undefined
+  ): Promise<boolean> {
     return Promise.resolve(confirm(message))
   }
 
@@ -116,21 +120,14 @@ export class FormSubmission {
     }, [] as [string, string][])
   }
 
-  get confirmationMessage() {
-    return this.submitter?.getAttribute("data-turbo-confirm") || this.formElement.getAttribute("data-turbo-confirm")
-  }
-
-  get needsConfirmation() {
-    return this.confirmationMessage !== null
-  }
-
   // The submission process
 
   async start() {
     const { initialized, requesting } = FormSubmissionState
+    const confirmationMessage = getAttribute("data-turbo-confirm", this.submitter, this.formElement)
 
-    if (this.needsConfirmation) {
-      const answer = await FormSubmission.confirmMethod(this.confirmationMessage!, this.formElement)
+    if (typeof confirmationMessage === "string") {
+      const answer = await FormSubmission.confirmMethod(confirmationMessage, this.formElement, this.submitter)
       if (!answer) {
         return
       }

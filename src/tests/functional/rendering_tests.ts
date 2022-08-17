@@ -8,6 +8,8 @@ import {
   nextBody,
   nextEventNamed,
   pathname,
+  propertyForSelector,
+  readEventLogs,
   scrollToSelector,
   selectorHasFocus,
   sleep,
@@ -19,6 +21,7 @@ import {
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/rendering.html")
   await clearLocalStorage(page)
+  await readEventLogs(page)
 })
 
 test("test triggers before-render and render events", async ({ page }) => {
@@ -390,6 +393,61 @@ test("test preserves permanent element video playback", async ({ page }) => {
 
   const timeAfterRender = await videoElement.evaluate((video: HTMLVideoElement) => video.currentTime)
   assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
+})
+
+test("test preserves input values", async ({ page }) => {
+  await page.fill("#text-input", "test")
+  await page.click("#checkbox-input")
+  await page.click("#radio-input")
+  await page.fill("#textarea", "test")
+  await page.selectOption("#select", "2")
+  await page.selectOption("#select-multiple", "2")
+
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await propertyForSelector(page, "#text-input", "value"), "test")
+  assert.equal(await propertyForSelector(page, "#checkbox-input", "checked"), true)
+  assert.equal(await propertyForSelector(page, "#radio-input", "checked"), true)
+  assert.equal(await propertyForSelector(page, "#textarea", "value"), "test")
+  assert.equal(await propertyForSelector(page, "#select", "value"), "2")
+  assert.equal(await propertyForSelector(page, "#select-multiple", "value"), "2")
+})
+
+test("test does not preserve password values", async ({ page }) => {
+  await page.fill("#password-input", "test")
+
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await propertyForSelector(page, "#password-input", "value"), "")
+})
+
+test("test <input type='reset'> clears values when restored from cache", async ({ page }) => {
+  await page.fill("#text-input", "test")
+  await page.click("#checkbox-input")
+  await page.click("#radio-input")
+  await page.fill("#textarea", "test")
+  await page.selectOption("#select", "2")
+  await page.selectOption("#select-multiple", "2")
+
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  await page.click("#reset-input")
+
+  assert.equal(await propertyForSelector(page, "#text-input", "value"), "")
+  assert.equal(await propertyForSelector(page, "#checkbox-input", "checked"), false)
+  assert.equal(await propertyForSelector(page, "#radio-input", "checked"), false)
+  assert.equal(await propertyForSelector(page, "#textarea", "value"), "")
+  assert.equal(await propertyForSelector(page, "#select", "value"), "1")
+  assert.equal(await propertyForSelector(page, "#select-multiple", "value"), "")
 })
 
 test("test before-cache event", async ({ page }) => {

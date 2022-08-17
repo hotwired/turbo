@@ -41,7 +41,7 @@ variable.
 
 First, install the drivers to test the suite in browsers:
 
-``bash
+```bash
 yarn playwright install  --with-deps
 ```
 

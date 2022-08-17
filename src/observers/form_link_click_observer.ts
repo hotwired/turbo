@@ -51,7 +51,7 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
     this.delegate.submittedFormLinkToLocation(link, location, form)
 
     document.body.appendChild(form)
-    form.requestSubmit()
-    form.remove()
+    form.addEventListener("turbo:submit-end", () => form.remove(), { once: true })
+    requestAnimationFrame(() => form.requestSubmit())
   }
 }
