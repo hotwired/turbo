@@ -353,7 +353,7 @@ export class FrameController
   }
 
   frameHashSource(id: string = this.id): string | null {
-    return this.getHash().get(this.frameHashId(id))
+    return getUrlHash().get(this.frameHashId(id))
   }
 
   // Private
@@ -376,7 +376,7 @@ export class FrameController
 
   private navigateWithHash(urlString: string) {
     const url = new URL(urlString)
-    const hash = this.getHash()
+    const hash = getUrlHash()
 
     if (url.origin == window.location.origin) {
       hash.set(this.frameHashId(this.element.id), url.pathname + url.hash)
@@ -522,14 +522,7 @@ export class FrameController
   setHash(hash: URLSearchParams) {
     const url = new URL(window.location.href)
     url.hash = hash.toString()
-
-    // TODO: figure out if this is optimal, maybe this needs to be streamlined with the Turbo History concept
-    // window.history.pushState({}, "", url.toString())
     session.history.push(url)
-  }
-
-  getHash(): URLSearchParams {
-    return getUrlHash()
   }
 
   get sourceURL() {
