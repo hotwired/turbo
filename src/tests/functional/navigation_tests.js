@@ -164,7 +164,7 @@ test("test following a same-origin GET form[data-turbo-action=replace]", async (
 })
 
 test("test following a same-origin GET form button[data-turbo-action=replace]", async ({ page }) => {
-  page.click("#same-origin-replace-form-submitter-get button")
+  await page.click("#same-origin-replace-form-submitter-get button")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")

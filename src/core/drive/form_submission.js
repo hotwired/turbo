@@ -1,4 +1,4 @@
-import { FetchRequest, FetchMethod, fetchMethodFromString } from "../../http/fetch_request"
+import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe } from "../../http/fetch_request"
 import { expandURL } from "../url"
 import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
@@ -18,17 +18,6 @@ export const FormEnctype = {
   plain: "text/plain"
 }
 
-function formEnctypeFromString(encoding) {
-  switch (encoding.toLowerCase()) {
-    case FormEnctype.multipart:
-      return FormEnctype.multipart
-    case FormEnctype.plain:
-      return FormEnctype.plain
-    default:
-      return FormEnctype.urlEncoded
-  }
-}
-
 export class FormSubmission {
   state = FormSubmissionState.initialized
 
@@ -37,53 +26,48 @@ export class FormSubmission {
   }
 
   constructor(delegate, formElement, submitter, mustRedirect = false) {
+    const method = getMethod(formElement, submitter)
+    const action = getAction(getFormAction(formElement, submitter), method)
+    const body = buildFormData(formElement, submitter)
+    const enctype = getEnctype(formElement, submitter)
+
     this.delegate = delegate
     this.formElement = formElement
     this.submitter = submitter
-    this.formData = buildFormData(formElement, submitter)
-    this.location = expandURL(this.action)
-    if (this.method == FetchMethod.get) {
-      mergeFormDataEntries(this.location, [...this.body.entries()])
-    }
-    this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body, this.formElement)
+    this.fetchRequest = new FetchRequest(this, method, action, body, formElement, enctype)
     this.mustRedirect = mustRedirect
   }
 
   get method() {
-    const method = this.submitter?.getAttribute("formmethod") || this.formElement.getAttribute("method") || ""
-    return fetchMethodFromString(method.toLowerCase()) || FetchMethod.get
+    return this.fetchRequest.method
+  }
+
+  set method(value) {
+    this.fetchRequest.method = value
   }
 
   get action() {
-    const formElementAction = typeof this.formElement.action === "string" ? this.formElement.action : null
+    return this.fetchRequest.url.toString()
+  }
 
-    if (this.submitter?.hasAttribute("formaction")) {
-      return this.submitter.getAttribute("formaction") || ""
-    } else {
-      return this.formElement.getAttribute("action") || formElementAction || ""
-    }
+  set action(value) {
+    this.fetchRequest.url = expandURL(value)
   }
 
   get body() {
-    if (this.enctype == FormEnctype.urlEncoded || this.method == FetchMethod.get) {
-      return new URLSearchParams(this.stringFormData)
-    } else {
-      return this.formData
-    }
+    return this.fetchRequest.body
   }
 
   get enctype() {
-    return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
+    return this.fetchRequest.enctype
   }
 
   get isSafe() {
     return this.fetchRequest.isSafe
   }
 
-  get stringFormData() {
-    return [...this.formData].reduce((entries, [name, value]) => {
-      return entries.concat(typeof value == "string" ? [[name, value]] : [])
-    }, [])
+  get location() {
+    return this.fetchRequest.url
   }
 
   // The submission process
@@ -244,16 +228,31 @@ function responseSucceededWithoutRedirect(response) {
   return response.statusCode == 200 && !response.redirected
 }
 
-function mergeFormDataEntries(url, entries) {
-  const searchParams = new URLSearchParams()
+function getFormAction(formElement, submitter) {
+  const formElementAction = typeof formElement.action === "string" ? formElement.action : null
 
-  for (const [name, value] of entries) {
-    if (value instanceof File) continue
+  if (submitter?.hasAttribute("formaction")) {
+    return submitter.getAttribute("formaction") || ""
+  } else {
+    return formElement.getAttribute("action") || formElementAction || ""
+  }
+}
 
-    searchParams.append(name, value)
+function getAction(formAction, fetchMethod) {
+  const action = expandURL(formAction)
+
+  if (isSafe(fetchMethod)) {
+    action.search = ""
   }
 
-  url.search = searchParams.toString()
+  return action
+}
 
-  return url
+function getMethod(formElement, submitter) {
+  const method = submitter?.getAttribute("formmethod") || formElement.getAttribute("method") || ""
+  return fetchMethodFromString(method.toLowerCase()) || FetchMethod.get
+}
+
+function getEnctype(formElement, submitter) {
+  return fetchEnctypeFromString(submitter?.getAttribute("formenctype") || formElement.enctype)
 }
