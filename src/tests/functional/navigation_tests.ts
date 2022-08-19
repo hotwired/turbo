@@ -383,8 +383,8 @@ test("test ignores links that target an iframe", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
 })
 
-test("test turbo:before-visit is dispatched on the initiator", async ({ page }) => {
+test("test visit events are dispatched on the initiator", async ({ page }) => {
   await page.click("#same-origin-unannotated-link")
-  const event = await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-visit")
-  assert.ok(event)
+  await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-visit")
+  await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:visit")
 })

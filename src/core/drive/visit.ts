@@ -51,7 +51,7 @@ export type VisitOptions = {
   shouldCacheSnapshot: boolean
   frame?: string
   acceptsStreamResponse: boolean,
-  initiator?: Element
+  initiator?: HTMLAnchorElement | HTMLFormElement
 }
 
 const defaultOptions: VisitOptions = {
@@ -87,6 +87,7 @@ export class Visit implements FetchRequestDelegate {
   readonly willRender: boolean
   readonly updateHistory: boolean
   readonly promise: Promise<void>
+  readonly initiator?: HTMLAnchorElement | HTMLFormElement
 
   private resolvingFunctions!: ResolvingFunctions<void>
 
@@ -127,6 +128,7 @@ export class Visit implements FetchRequestDelegate {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
+      initiator
     } = {
       ...defaultOptions,
       ...options,
@@ -143,6 +145,7 @@ export class Visit implements FetchRequestDelegate {
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
+    this.initiator = initiator
   }
 
   get adapter() {

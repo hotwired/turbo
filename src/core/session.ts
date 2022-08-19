@@ -191,7 +191,7 @@ export class Session
     )
   }
 
-  followedLinkToLocation(link: Element, location: URL) {
+  followedLinkToLocation(link: HTMLAnchorElement, location: URL) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
 
@@ -215,7 +215,7 @@ export class Session
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
-      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action, visit.initiator)
     }
   }
 
@@ -350,8 +350,11 @@ export class Session
     })
   }
 
-  notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
-    return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
+  notifyApplicationAfterVisitingLocation(location: URL, action: Action, element?: Element) {
+    return dispatch<TurboVisitEvent>("turbo:visit", {
+      target: element,
+      detail: { url: location.href, action }
+    })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
