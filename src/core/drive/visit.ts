@@ -226,7 +226,7 @@ export class Visit implements FetchRequestDelegate {
     if (this.hasPreloadedResponse()) {
       this.simulateRequest()
     } else if (this.shouldIssueRequest() && !this.request) {
-      this.request = new FetchRequest(this, FetchMethod.get, this.location)
+      this.request = new FetchRequest(this, FetchMethod.get, this.location, undefined, this.initiator)
       this.request.perform()
     }
   }

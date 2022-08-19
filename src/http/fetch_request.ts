@@ -62,7 +62,7 @@ export class FetchRequest {
   readonly headers: FetchRequestHeaders
   readonly url: URL
   readonly body?: FetchRequestBody
-  readonly target?: FrameElement | HTMLFormElement | null
+  readonly target?: FrameElement | HTMLFormElement | HTMLAnchorElement | null
   readonly abortController = new AbortController()
   private resolveRequestPromise = (_value: any) => {}
 
@@ -71,7 +71,7 @@ export class FetchRequest {
     method: FetchMethod,
     location: URL,
     body: FetchRequestBody = new URLSearchParams(),
-    target: FrameElement | HTMLFormElement | null = null
+    target: FrameElement | HTMLFormElement | HTMLAnchorElement | null = null
   ) {
     this.delegate = delegate
     this.method = method
