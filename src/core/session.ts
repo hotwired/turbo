@@ -201,7 +201,10 @@ export class Session
   // Navigator delegate
 
   allowsVisitingLocation(location: URL, options: Partial<VisitOptions> = {}) {
-    return this.locationWithActionIsSamePage(location, options.action) || this.applicationAllowsVisitingLocation(location, options)
+    return (
+      this.locationWithActionIsSamePage(location, options.action) ||
+      this.applicationAllowsVisitingLocation(location, options)
+    )
   }
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
@@ -353,7 +356,7 @@ export class Session
   notifyApplicationAfterVisitingLocation(location: URL, action: Action, element?: Element) {
     return dispatch<TurboVisitEvent>("turbo:visit", {
       target: element,
-      detail: { url: location.href, action }
+      detail: { url: location.href, action },
     })
   }
 

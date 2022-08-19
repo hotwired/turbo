@@ -50,7 +50,7 @@ export type VisitOptions = {
   restorationIdentifier?: string
   shouldCacheSnapshot: boolean
   frame?: string
-  acceptsStreamResponse: boolean,
+  acceptsStreamResponse: boolean
   initiator?: HTMLAnchorElement | HTMLFormElement
 }
 
@@ -128,7 +128,7 @@ export class Visit implements FetchRequestDelegate {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
-      initiator
+      initiator,
     } = {
       ...defaultOptions,
       ...options,
