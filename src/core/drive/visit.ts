@@ -50,7 +50,8 @@ export type VisitOptions = {
   restorationIdentifier?: string
   shouldCacheSnapshot: boolean
   frame?: string
-  acceptsStreamResponse: boolean
+  acceptsStreamResponse: boolean,
+  initiator?: Element
 }
 
 const defaultOptions: VisitOptions = {

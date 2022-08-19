@@ -10,6 +10,7 @@ import {
   nextBody,
   nextEventNamed,
   noNextEventNamed,
+  nextEventOnTarget,
   pathname,
   readEventLogs,
   search,
@@ -380,4 +381,10 @@ test("test ignores links that target an iframe", async ({ page }) => {
   await nextBeat()
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+})
+
+test("test turbo:before-visit is dispatched on the initiator", async ({ page }) => {
+  await page.click("#same-origin-unannotated-link")
+  const event = await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-visit")
+  assert.ok(event)
 })
