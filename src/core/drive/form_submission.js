@@ -1,6 +1,6 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe } from "../../http/fetch_request"
 import { expandURL } from "../url"
-import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
+import { clearBusyState, dispatch, getAttribute, getMetaContent, getVisitAction, hasAttribute, markAsBusy } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { prefetchCache } from "./prefetch_cache"
 
@@ -111,6 +111,12 @@ export class FormSubmission {
 
     if (this.requestAcceptsTurboStreamResponse(request)) {
       request.acceptResponseType(StreamMessage.contentType)
+    }
+
+    const turboAction = getVisitAction(this.submitter, this.formElement)
+
+    if (turboAction) {
+      request.headers["Turbo-Action"] = turboAction
     }
   }
 

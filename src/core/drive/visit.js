@@ -295,6 +295,8 @@ export class Visit {
     if (this.acceptsStreamResponse) {
       request.acceptResponseType(StreamMessage.contentType)
     }
+
+    request.headers["Turbo-Action"] = this.action
   }
 
   requestStarted() {

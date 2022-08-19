@@ -642,13 +642,13 @@ test("navigating a frame with a form[method=get] that does not redirect still up
 test("navigating turbo-frame[data-turbo-action=advance] from within pushes URL state", async ({ page }) => {
   await page.click("#add-turbo-action-to-frame")
   await page.click("#link-frame")
+  const { fetchOptions } = await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
   await nextEventNamed(page, "turbo:load")
 
-  const title = await page.textContent("h1")
-  const frameTitle = await page.textContent("#frame h2")
-
-  assert.equal(title, "Frames")
-  assert.equal(frameTitle, "Frame: Loaded")
+  assert.equal(fetchOptions.headers["Turbo-Frame"], "frame", "encodes Turbo-Frame header")
+  assert.equal(fetchOptions.headers["Turbo-Action"], "advance", "encodes Turbo-Action header")
+  assert.equal(await page.textContent("h1"), "Frames")
+  assert.equal(await page.textContent("#frame h2"), "Frame: Loaded")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html")
 })
 
@@ -769,15 +769,16 @@ test("navigating frame with a[data-turbo-action=advance] pushes URL state", asyn
 
 test("navigating frame with form[method=get][data-turbo-action=advance] pushes URL state", async ({ page }) => {
   await page.click("#form-get-frame-action-advance button")
+  const { fetchOptions } = await nextEventOnTarget(page, "form-get-frame-action-advance", "turbo:before-fetch-request")
   await nextEventNamed(page, "turbo:load")
 
-  const title = await page.textContent("h1")
-  const frameTitle = await page.textContent("#frame h2")
-  const src = (await attributeForSelector(page, "#frame", "src")) ?? ""
+  const src = (await attributeForSelector(page, "#frame", "src")) || ""
 
+  assert.equal(fetchOptions.headers["Turbo-Frame"], "frame", "encodes the frame [id] to the Turbo-Frame header")
+  assert.equal(fetchOptions.headers["Turbo-Action"], "advance", "encodes the action to the Turbo-Action header")
   assert.ok(src.includes("/src/tests/fixtures/frames/frame.html"), "updates src attribute")
-  assert.equal(title, "Frames")
-  assert.equal(frameTitle, "Frame: Loaded")
+  assert.equal(await page.textContent("h1"), "Frames")
+  assert.equal(await page.textContent("#frame h2"), "Frame: Loaded")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html")
   assert.ok(await hasSelector(page, "#frame[complete]"), "marks the frame as [complete]")
 })
