@@ -51,7 +51,7 @@ export type VisitOptions = {
   shouldCacheSnapshot: boolean
   frame?: string
   acceptsStreamResponse: boolean
-  initiator?: HTMLAnchorElement | HTMLFormElement
+  initiator?: Element
 }
 
 const defaultOptions: VisitOptions = {
@@ -87,7 +87,7 @@ export class Visit implements FetchRequestDelegate {
   readonly willRender: boolean
   readonly updateHistory: boolean
   readonly promise: Promise<void>
-  readonly initiator?: HTMLAnchorElement | HTMLFormElement
+  readonly initiator?: Element
 
   private resolvingFunctions!: ResolvingFunctions<void>
 

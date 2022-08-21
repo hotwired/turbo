@@ -191,7 +191,7 @@ export class Session
     )
   }
 
-  followedLinkToLocation(link: HTMLAnchorElement, location: URL) {
+  followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
 
