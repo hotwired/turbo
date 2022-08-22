@@ -96,22 +96,22 @@ function elementIsTracked(element: Element) {
 }
 
 function elementIsScript(element: Element) {
-  const tagName = element.tagName.toLowerCase()
+  const tagName = element.localName
   return tagName == "script"
 }
 
 function elementIsNoscript(element: Element) {
-  const tagName = element.tagName.toLowerCase()
+  const tagName = element.localName
   return tagName == "noscript"
 }
 
 function elementIsStylesheet(element: Element) {
-  const tagName = element.tagName.toLowerCase()
+  const tagName = element.localName
   return tagName == "style" || (tagName == "link" && element.getAttribute("rel") == "stylesheet")
 }
 
 function elementIsMetaElementWithName(element: Element, name: string) {
-  const tagName = element.tagName.toLowerCase()
+  const tagName = element.localName
   return tagName == "meta" && element.getAttribute("name") == name
 }
 
