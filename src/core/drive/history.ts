@@ -1,5 +1,6 @@
 import { Position } from "../types"
 import { nextMicrotask, uuid } from "../../util"
+import { getUrlHash } from "../url"
 
 export interface HistoryDelegate {
   historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string): void
@@ -91,10 +92,33 @@ export class History {
 
   // Event handlers
 
+  handleFrameNavigations = (_event: PopStateEvent) => {
+    const hash = Object.fromEntries(getUrlHash(window.location).entries())
+    const oldHash = Object.fromEntries(getUrlHash(this.location).entries())
+
+    const keys = Array.from(new Set(Object.keys(hash).concat(Object.keys(oldHash)))).filter((key) =>
+      key.endsWith("_frame_src")
+    )
+
+    keys.forEach((key) => {
+      const source = hash[key] || window.location.pathname
+
+      if (key.endsWith("_frame_src")) {
+        const frameId = key.replace("_frame_src", "")
+        const frame = document.getElementById(frameId)
+
+        if (frame) {
+          frame.setAttribute("src", source)
+        }
+      }
+    })
+  }
+
   onPopState = (event: PopStateEvent) => {
     if (this.shouldHandlePopState()) {
       const { turbo } = event.state || {}
       if (turbo) {
+        this.handleFrameNavigations(event)
         this.location = new URL(window.location.href)
         const { restorationIdentifier } = turbo
         this.restorationIdentifier = restorationIdentifier
