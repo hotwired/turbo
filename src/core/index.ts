@@ -29,7 +29,6 @@ export {
 
 export { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
 export { TurboFrameMissingEvent } from "./frames/frame_controller"
-export { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent } from "../http/fetch_request"
 
 export { StreamActions, TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
 
