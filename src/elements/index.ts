@@ -7,6 +7,7 @@ FrameElement.delegateConstructor = FrameController
 
 export * from "./frame_element"
 export * from "./stream_element"
+export * from "./stream_source_element"
 
 if (customElements.get("turbo-frame") === undefined) {
   customElements.define("turbo-frame", FrameElement)
