@@ -8,3 +8,5 @@ window.Turbo = Turbo
 Turbo.start()
 
 export * from "./core"
+export * from "./elements"
+export * from "./http"

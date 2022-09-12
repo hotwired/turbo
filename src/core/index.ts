@@ -29,10 +29,8 @@ export {
 
 export { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
 export { TurboFrameMissingEvent } from "./frames/frame_controller"
-export { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent } from "../http/fetch_request"
-export { TurboBeforeStreamRenderEvent } from "../elements/stream_element"
 
-export { StreamActions } from "./streams/stream_actions"
+export { StreamActions, TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
 
 /**
  * Starts the main session.
