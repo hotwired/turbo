@@ -10,6 +10,7 @@ import {
   nextBody,
   nextEventNamed,
   noNextEventNamed,
+  nextEventOnTarget,
   pathname,
   readEventLogs,
   search,
@@ -388,4 +389,16 @@ test("test ignores links that target an iframe", async ({ page }) => {
   await nextBeat()
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+})
+
+test("test visit events are dispatched on the initiator", async ({ page }) => {
+  await page.click("#same-origin-unannotated-link")
+  await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-visit")
+  await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:visit")
+})
+
+test("test fetch events are dispatched on the initiator", async ({ page }) => {
+  await page.click("#same-origin-unannotated-link")
+  await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-fetch-response")
 })

@@ -51,6 +51,7 @@ export type VisitOptions = {
   shouldCacheSnapshot: boolean
   frame?: string
   acceptsStreamResponse: boolean
+  initiator: Element
 }
 
 const defaultOptions: VisitOptions = {
@@ -61,6 +62,7 @@ const defaultOptions: VisitOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
+  initiator: document.documentElement,
 }
 
 export type VisitResponse = {
@@ -86,6 +88,7 @@ export class Visit implements FetchRequestDelegate {
   readonly willRender: boolean
   readonly updateHistory: boolean
   readonly promise: Promise<void>
+  readonly initiator: Element
 
   private resolvingFunctions!: ResolvingFunctions<void>
 
@@ -126,6 +129,7 @@ export class Visit implements FetchRequestDelegate {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
+      initiator,
     } = {
       ...defaultOptions,
       ...options,
@@ -142,6 +146,7 @@ export class Visit implements FetchRequestDelegate {
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
+    this.initiator = initiator
   }
 
   get adapter() {
@@ -222,7 +227,7 @@ export class Visit implements FetchRequestDelegate {
     if (this.hasPreloadedResponse()) {
       this.simulateRequest()
     } else if (this.shouldIssueRequest() && !this.request) {
-      this.request = new FetchRequest(this, FetchMethod.get, this.location)
+      this.request = new FetchRequest(this, FetchMethod.get, this.location, undefined, this.initiator)
       this.request.perform()
     }
   }

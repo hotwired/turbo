@@ -1,5 +1,4 @@
 import { FetchResponse } from "./fetch_response"
-import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
 
 export type TurboBeforeFetchRequestEvent = CustomEvent<{
@@ -62,7 +61,7 @@ export class FetchRequest {
   readonly headers: FetchRequestHeaders
   readonly url: URL
   readonly body?: FetchRequestBody
-  readonly target?: FrameElement | HTMLFormElement | null
+  readonly target?: Element | null
   readonly abortController = new AbortController()
   private resolveRequestPromise = (_value: any) => {}
 
@@ -71,7 +70,7 @@ export class FetchRequest {
     method: FetchMethod,
     location: URL,
     body: FetchRequestBody = new URLSearchParams(),
-    target: FrameElement | HTMLFormElement | null = null
+    target: Element | null = null
   ) {
     this.delegate = delegate
     this.method = method
