@@ -79,7 +79,6 @@ export enum SystemStatusCode {
 
 export class Visit implements FetchRequestDelegate {
   readonly delegate: VisitDelegate
-  readonly identifier = uuid()
   readonly restorationIdentifier: string
   readonly action: Action
   readonly referrer?: URL
