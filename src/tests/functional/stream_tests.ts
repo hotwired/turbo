@@ -20,8 +20,11 @@ test("test receiving a stream message", async ({ page }) => {
 
 test("test dispatches a turbo:before-stream-render event", async ({ page }) => {
   await page.click("#append-target button")
-  const { newStream } = await nextEventNamed(page, "turbo:before-stream-render")
+  await nextEventNamed(page, "turbo:submit-end")
+  const [[type, { newStream }, target]] = await readEventLogs(page, 1)
 
+  assert.equal(type, "turbo:before-stream-render")
+  assert.equal(target, "a-turbo-stream")
   assert.ok(newStream.includes(`action="append"`))
   assert.ok(newStream.includes(`target="messages"`))
 })
@@ -73,9 +76,19 @@ test("test overriding with custom StreamActions", async ({ page }) => {
   const html = "Rendered with Custom Action"
 
   await page.evaluate((html) => {
-    window.Turbo.StreamActions.customUpdate = function () {
-      for (const target of this.targetElements) target.innerHTML = html
+    const CustomActions: Record<string, any> = {
+      customUpdate(newStream: { targetElements: HTMLElement[] }) {
+        for (const target of newStream.targetElements) target.innerHTML = html
+      },
     }
+
+    addEventListener("turbo:before-stream-render", (({ target, detail }: CustomEvent) => {
+      const stream = target as unknown as { action: string }
+
+      const defaultRender = detail.render
+      detail.render = CustomActions[stream.action] || defaultRender
+    }) as EventListener)
+
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="customUpdate" target="messages">
         <template></template>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-skip-event-details="turbo:submit-start turbo:submit-end">
   <head>
     <meta charset="utf-8">
     <title>Turbo Streams</title>
@@ -10,6 +10,7 @@
     <form id="append-target" method="post" action="/__turbo/messages">
       <input type="hidden" name="content" value="Hello world!">
       <input type="hidden" name="type" value="stream">
+      <input type="hidden" name="id" value="a-turbo-stream">
       <button>Create</button>
     </form>
 
