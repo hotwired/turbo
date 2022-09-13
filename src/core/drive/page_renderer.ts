@@ -96,7 +96,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   static get bodySelector() {
     const bodyId = getBodyElementId()
 
-    return bodyId ? `#${bodyId}` : 'body'
+    return bodyId ? `#${bodyId}` : "body"
   }
 
   static getBodyElement(element: HTMLElement): HTMLElement {
