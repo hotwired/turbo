@@ -11,6 +11,7 @@ import { Navigator, NavigatorDelegate } from "./drive/navigator"
 import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
+import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource, isAction } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
@@ -62,6 +63,7 @@ export class Session
   readonly streamObserver = new StreamObserver(this)
   readonly formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
   readonly frameRedirector = new FrameRedirector(this, document.documentElement)
+  readonly streamMessageRenderer = new StreamMessageRenderer()
 
   drive = true
   enabled = true
@@ -129,7 +131,7 @@ export class Session
   }
 
   renderStreamMessage(message: StreamMessage | string) {
-    document.documentElement.appendChild(StreamMessage.wrap(message).fragment)
+    this.streamMessageRenderer.render(StreamMessage.wrap(message))
   }
 
   clearCache() {

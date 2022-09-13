@@ -161,15 +161,15 @@ test("test following a same-origin POST link with data-turbo-action=replace", as
 })
 
 test("test following a same-origin data-turbo=false link", async ({ page }) => {
-  page.click("#same-origin-false-link")
-  await nextBody(page)
+  await page.click("#same-origin-false-link")
+  await page.waitForEvent("load")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "load")
 })
 
 test("test following a same-origin unannotated link inside a data-turbo=false container", async ({ page }) => {
-  page.click("#same-origin-unannotated-link-inside-false-container")
-  await nextBody(page)
+  await page.click("#same-origin-unannotated-link-inside-false-container")
+  await page.waitForEvent("load")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "load")
 })
