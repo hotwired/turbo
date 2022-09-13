@@ -185,8 +185,16 @@ test("test standard GET form submission", async ({ page }) => {
   assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a form")
 })
 
-test("test standard GET form submission with data-turbo-stream", async ({ page }) => {
+test("test standard GET form submission with [data-turbo-stream] declared on the form", async ({ page }) => {
   await page.click("#standard-get-form-with-stream-opt-in-submit")
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+})
+
+test("test standard GET form submission with [data-turbo-stream] declared on submitter", async ({ page }) => {
+  await page.click("#standard-get-form-with-stream-opt-in-submitter")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 

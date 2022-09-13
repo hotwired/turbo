@@ -107,6 +107,10 @@ export function getAttribute(attributeName: string, ...elements: (Element | unde
   return null
 }
 
+export function hasAttribute(attributeName: string, ...elements: (Element | undefined)[]): boolean {
+  return elements.some((element) => element && element.hasAttribute(attributeName))
+}
+
 export function markAsBusy(...elements: Element[]) {
   for (const element of elements) {
     if (element.localName == "turbo-frame") {
