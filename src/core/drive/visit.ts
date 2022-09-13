@@ -465,7 +465,8 @@ export class Visit implements FetchRequestDelegate {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot().then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      const snapshot = this.view.cacheSnapshot()
+      if (snapshot) this.visitCachedSnapshot(snapshot)
       this.snapshotCached = true
     }
   }

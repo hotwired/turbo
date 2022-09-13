@@ -1,4 +1,3 @@
-import { nextEventLoopTick } from "../../util"
 import { View, ViewDelegate, ViewRenderOptions } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
@@ -39,11 +38,10 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     this.snapshotCache.clear()
   }
 
-  async cacheSnapshot() {
+  cacheSnapshot() {
     if (this.shouldCacheSnapshot) {
       this.delegate.viewWillCacheSnapshot()
       const { snapshot, lastRenderedLocation: location } = this
-      await nextEventLoopTick()
       const cachedSnapshot = snapshot.clone()
       this.snapshotCache.put(location, cachedSnapshot)
       return cachedSnapshot
