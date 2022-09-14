@@ -59,7 +59,7 @@ export async function isScrolledToSelector(page: Page, selector: string): Promis
     const { y: pageY } = await scrollPosition(page)
     const { y: elementY } = boundingBox
     const offset = pageY - elementY
-    return Math.abs(offset) < 2
+    return Math.abs(offset) <= 2
   } else {
     return false
   }
