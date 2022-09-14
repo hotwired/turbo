@@ -140,6 +140,7 @@ test("test failing to follow a link to a page without a matching frame dispatche
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
   await noNextEventNamed(page, "turbo:before-fetch-request")
   await noNextEventNamed(page, "turbo:load")
+  await nextEventNamed(page, "turbo:render")
 
   assert.ok(response, "dispatches turbo:frame-missing with event.detail.response")
   assert.equal(pathname(page.url()), "/missing.html", "navigates the page")
