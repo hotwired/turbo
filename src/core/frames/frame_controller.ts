@@ -29,7 +29,7 @@ import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
-import { TurboBeforeFrameRenderEvent, TurboFetchRequestErrorEvent } from "../session"
+import { TurboBeforeFrameRenderEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
 
 type VisitFallback = (location: Response | Locatable, options: Partial<VisitOptions>) => Promise<void>
@@ -260,10 +260,6 @@ export class FrameController
 
   requestErrored(request: FetchRequest, error: Error) {
     console.error(error)
-    dispatch<TurboFetchRequestErrorEvent>("turbo:fetch-request-error", {
-      target: this.element,
-      detail: { request, error },
-    })
     this.resolveVisitPromise()
   }
 

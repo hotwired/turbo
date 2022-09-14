@@ -1,1 +1,5 @@
-export { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent } from "./fetch_request"
+export {
+  TurboBeforeFetchRequestEvent,
+  TurboBeforeFetchResponseEvent,
+  TurboFetchRequestErrorEvent,
+} from "./fetch_request"
