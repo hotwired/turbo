@@ -160,10 +160,6 @@ export function getVisitAction(...elements: (Element | undefined)[]): Action | n
   return isAction(action) ? action : null
 }
 
-export function getBodyElementId(): string | null {
-  return getMetaContent("turbo-body")
-}
-
 export function getMetaElement(name: string): HTMLMetaElement | null {
   return document.querySelector(`meta[name="${name}"]`)
 }
