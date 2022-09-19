@@ -1,6 +1,6 @@
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameElement } from "../../elements/frame_element"
-import { expandURL, getAction, locationIsVisitable } from "../url"
+import { expandURL, getAction } from "../url"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
 import { Session } from "../session"
 
@@ -58,7 +58,7 @@ export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObs
     const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
     const rootLocation = expandURL(meta?.content ?? "/")
 
-    return this.shouldRedirect(form, submitter) && locationIsVisitable(action, rootLocation)
+    return this.shouldRedirect(form, submitter) && this.session.locationIsVisitable(action, rootLocation)
   }
 
   private shouldRedirect(element: Element, submitter?: HTMLElement) {
