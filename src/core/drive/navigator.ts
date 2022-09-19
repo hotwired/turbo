@@ -8,7 +8,7 @@ import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
 export type NavigatorDelegate = VisitDelegate & {
-  allowsVisitingLocation(location: URL, options: Partial<VisitOptions>): boolean
+  allowsVisitingLocationWithAction(location: URL, action?: Action): boolean
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>): Promise<void>
   notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL): void
 }
@@ -24,7 +24,7 @@ export class Navigator {
   }
 
   proposeVisit(location: URL, options: Partial<VisitOptions> = {}) {
-    if (this.delegate.allowsVisitingLocation(location, options)) {
+    if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
       if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
         return this.delegate.visitProposedToLocation(location, options)
       } else {
