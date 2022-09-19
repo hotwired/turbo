@@ -7,7 +7,6 @@ import {
   isScrolledToTop,
   nextBeat,
   nextEventNamed,
-  nextEventOnTarget,
   noNextAttributeMutationNamed,
   readEventLogs,
   scrollToSelector,
@@ -209,7 +208,7 @@ test("test Visit with network error", async ({ page }) => {
   })
   await page.context().setOffline(true)
   await page.click("#same-origin-link")
-  await nextEventOnTarget(page, "same-origin-link", "turbo:fetch-request-error")
+  await nextEventNamed(page, "turbo:fetch-request-error")
 })
 
 async function visitLocation(page: Page, location: string) {
