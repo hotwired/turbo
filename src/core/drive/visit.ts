@@ -5,7 +5,7 @@ import { History } from "./history"
 import { getAnchor } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
-import { Action, ResolvingFunctions } from "../types"
+import { Action } from "../types"
 import { getHistoryMethodForAction, uuid } from "../../util"
 import { PageView } from "./page_view"
 import { StreamMessage } from "../streams/stream_message"
@@ -85,9 +85,6 @@ export class Visit implements FetchRequestDelegate {
   readonly visitCachedSnapshot: (snapshot: Snapshot) => void
   readonly willRender: boolean
   readonly updateHistory: boolean
-  readonly promise: Promise<void>
-
-  private resolvingFunctions!: ResolvingFunctions<void>
 
   followedRedirect = false
   frame?: number
@@ -113,7 +110,6 @@ export class Visit implements FetchRequestDelegate {
     this.delegate = delegate
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
-    this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
 
     const {
       action,
@@ -180,8 +176,6 @@ export class Visit implements FetchRequestDelegate {
       }
       this.cancelRender()
       this.state = VisitState.canceled
-
-      this.resolvingFunctions.reject()
     }
   }
 
@@ -195,8 +189,6 @@ export class Visit implements FetchRequestDelegate {
         this.adapter.visitCompleted(this)
         this.delegate.visitCompleted(this)
       }
-
-      this.resolvingFunctions.resolve()
     }
   }
 
@@ -204,8 +196,6 @@ export class Visit implements FetchRequestDelegate {
     if (this.state == VisitState.started) {
       this.state = VisitState.failed
       this.adapter.visitFailed(this)
-
-      this.resolvingFunctions.reject()
     }
   }
 

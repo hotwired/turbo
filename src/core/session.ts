@@ -109,14 +109,14 @@ export class Session
     this.adapter = adapter
   }
 
-  visit(location: Locatable, options: Partial<VisitOptions> = {}): Promise<void> {
+  visit(location: Locatable, options: Partial<VisitOptions> = {}) {
     const frameElement = options.frame ? document.getElementById(options.frame) : null
 
     if (frameElement instanceof FrameElement) {
       frameElement.src = location.toString()
-      return frameElement.loaded
+      frameElement.loaded
     } else {
-      return this.navigator.proposeVisit(expandURL(location), options)
+      this.navigator.proposeVisit(expandURL(location), options)
     }
   }
 
@@ -206,7 +206,7 @@ export class Session
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
     extendURLWithDeprecatedProperties(location)
-    return this.adapter.visitProposedToLocation(location, options)
+    this.adapter.visitProposedToLocation(location, options)
   }
 
   visitStarted(visit: Visit) {
