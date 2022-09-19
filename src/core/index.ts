@@ -64,8 +64,8 @@ export function registerAdapter(adapter: Adapter) {
  * @param options.snapshotHTML Cached snapshot to render
  * @param options.response Response of the specified location
  */
-export function visit(location: Locatable, options?: Partial<VisitOptions>): Promise<void> {
-  return session.visit(location, options)
+export function visit(location: Locatable, options?: Partial<VisitOptions>) {
+  session.visit(location, options)
 }
 
 /**

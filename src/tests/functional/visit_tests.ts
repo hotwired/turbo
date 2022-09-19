@@ -40,38 +40,9 @@ test("test programmatically visiting a same-origin location", async ({ page }) =
   assert.ok(timing)
 })
 
-test("test programmatically Turbo.visit-ing a same-origin location", async ({ page }) => {
-  const urlBeforeVisit = page.url()
-  await page.evaluate(async () => await window.Turbo.visit("/src/tests/fixtures/one.html"))
-
-  const urlAfterVisit = page.url()
-  assert.notEqual(urlBeforeVisit, urlAfterVisit)
-  assert.equal(await visitAction(page), "advance")
-
-  const { url: urlFromBeforeVisitEvent } = await nextEventNamed(page, "turbo:before-visit")
-  assert.equal(urlFromBeforeVisitEvent, urlAfterVisit)
-
-  const { url: urlFromVisitEvent } = await nextEventNamed(page, "turbo:visit")
-  assert.equal(urlFromVisitEvent, urlAfterVisit)
-
-  const { timing } = await nextEventNamed(page, "turbo:load")
-  assert.ok(timing)
-})
-
 test("skip programmatically visiting a cross-origin location falls back to window.location", async ({ page }) => {
   const urlBeforeVisit = page.url()
   await visitLocation(page, "about:blank")
-
-  const urlAfterVisit = page.url()
-  assert.notEqual(urlBeforeVisit, urlAfterVisit)
-  assert.equal(await visitAction(page), "load")
-})
-
-test("skip programmatically Turbo.visit-ing a cross-origin location falls back to window.location", async ({
-  page,
-}) => {
-  const urlBeforeVisit = page.url()
-  await page.evaluate(async () => await window.Turbo.visit("about:blank"))
 
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
@@ -105,28 +76,6 @@ test("test canceling a before-visit event prevents navigation", async ({ page })
 
   const urlAfterVisit = page.url()
   assert.equal(urlAfterVisit, urlBeforeVisit)
-})
-
-test("test canceling a before-visit event prevents a Turbo.visit-initiated navigation", async ({ page }) => {
-  await cancelNextVisit(page)
-  const urlBeforeVisit = page.url()
-
-  assert.notOk<boolean>(
-    await willChangeBody(page, async () => {
-      await page.evaluate(async () => {
-        try {
-          return await window.Turbo.visit("/src/tests/fixtures/one.html")
-        } catch {
-          const title = document.querySelector("h1")
-          if (title) title.innerHTML = "Visit canceled"
-        }
-      })
-    })
-  )
-
-  const urlAfterVisit = page.url()
-  assert.equal(urlAfterVisit, urlBeforeVisit)
-  assert.equal(await page.textContent("h1"), "Visit canceled")
 })
 
 test("test navigation by history is not cancelable", async ({ page }) => {

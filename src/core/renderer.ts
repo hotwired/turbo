@@ -1,7 +1,11 @@
-import { ResolvingFunctions } from "./types"
 import { Bardo, BardoDelegate } from "./bardo"
 import { Snapshot } from "./snapshot"
 import { ReloadReason } from "./native/browser_adapter"
+
+type ResolvingFunctions<T = unknown> = {
+  resolve(value: T | PromiseLike<T>): void
+  reject(reason?: any): void
+}
 
 export type Render<E> = (newElement: E, currentElement: E) => void
 

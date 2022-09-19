@@ -9,7 +9,7 @@ import { PageSnapshot } from "./page_snapshot"
 
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocationWithAction(location: URL, action?: Action): boolean
-  visitProposedToLocation(location: URL, options: Partial<VisitOptions>): Promise<void>
+  visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void
   notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL): void
 }
 
@@ -26,14 +26,10 @@ export class Navigator {
   proposeVisit(location: URL, options: Partial<VisitOptions> = {}) {
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
       if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        return this.delegate.visitProposedToLocation(location, options)
+        this.delegate.visitProposedToLocation(location, options)
       } else {
         window.location.href = location.toString()
-
-        return Promise.resolve()
       }
-    } else {
-      return Promise.reject()
     }
   }
 
@@ -45,8 +41,6 @@ export class Navigator {
       ...options,
     })
     this.currentVisit.start()
-
-    return this.currentVisit.promise
   }
 
   submitForm(form: HTMLFormElement, submitter?: HTMLElement) {

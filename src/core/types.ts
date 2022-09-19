@@ -18,8 +18,3 @@ export type StreamSource = {
     options?: boolean | EventListenerOptions
   ): void
 }
-
-export type ResolvingFunctions<T = unknown> = {
-  resolve(value: T | PromiseLike<T>): void
-  reject(reason?: any): void
-}
