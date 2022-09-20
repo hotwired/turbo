@@ -2,7 +2,8 @@ import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/
 import { FrameElement } from "../../elements/frame_element"
 import { expandURL, getAction, locationIsVisitable } from "../url"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
-import { Session } from "../session"
+import { Session, TurboClickEvent } from "../session"
+import { dispatch } from "../../util"
 
 export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObserverDelegate {
   readonly session: Session
@@ -27,8 +28,8 @@ export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObs
     this.formSubmitObserver.stop()
   }
 
-  willFollowLinkToLocation(element: Element) {
-    return this.shouldRedirect(element)
+  willFollowLinkToLocation(element: Element, location: URL, event: MouseEvent) {
+    return this.shouldRedirect(element) && this.frameAllowsVisitingLocation(element, location, event)
   }
 
   followedLinkToLocation(element: Element, url: URL) {
@@ -51,6 +52,16 @@ export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObs
     if (frame) {
       frame.delegate.formSubmitted(element, submitter)
     }
+  }
+
+  private frameAllowsVisitingLocation(target: Element, { href: url }: URL, originalEvent: MouseEvent): boolean {
+    const event = dispatch<TurboClickEvent>("turbo:click", {
+      target,
+      detail: { url, originalEvent },
+      cancelable: true,
+    })
+
+    return !event.defaultPrevented
   }
 
   private shouldSubmit(form: HTMLFormElement, submitter?: HTMLElement) {

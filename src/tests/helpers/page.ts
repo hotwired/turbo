@@ -14,6 +14,15 @@ export function attributeForSelector(page: Page, selector: string, attributeName
   return page.locator(selector).getAttribute(attributeName)
 }
 
+type CancellableEvent = "turbo:click" | "turbo:before-visit"
+
+export function cancelNextEvent(page: Page, eventName: CancellableEvent): Promise<void> {
+  return page.evaluate(
+    (eventName) => addEventListener(eventName, (event) => event.preventDefault(), { once: true }),
+    eventName
+  )
+}
+
 export function clickWithoutScrolling(page: Page, selector: string, options = {}) {
   const element = page.locator(selector, options)
 

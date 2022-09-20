@@ -26,7 +26,7 @@ import { FrameView } from "./frame_view"
 import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
 import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
-import { session } from "../index"
+import { TurboClickEvent, session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent } from "../session"
@@ -204,8 +204,8 @@ export class FrameController
 
   // Link click observer delegate
 
-  willFollowLinkToLocation(element: Element) {
-    return this.shouldInterceptNavigation(element)
+  willFollowLinkToLocation(element: Element, location: URL, event: MouseEvent) {
+    return this.shouldInterceptNavigation(element) && this.frameAllowsVisitingLocation(element, location, event)
   }
 
   followedLinkToLocation(element: Element, location: URL) {
@@ -543,6 +543,16 @@ export class FrameController
     const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
     const root = meta?.content ?? "/"
     return expandURL(root)
+  }
+
+  private frameAllowsVisitingLocation(target: Element, { href: url }: URL, originalEvent: MouseEvent): boolean {
+    const event = dispatch<TurboClickEvent>("turbo:click", {
+      target,
+      detail: { url, originalEvent },
+      cancelable: true,
+    })
+
+    return !event.defaultPrevented
   }
 
   private isIgnoringChangesTo(attributeName: FrameElementObservedAttribute): boolean {
