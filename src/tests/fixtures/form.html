@@ -11,6 +11,14 @@
         position: static;
       }
     </style>
+    <script>
+      addEventListener("click", ({ target }) => {
+        if (target.id == "frame-target-top") {
+          const frame = document.getElementById("frame")
+          frame?.setAttribute("target", "_top")
+        }
+      })
+    </script>
   </head>
   <body>
     <h1>Form</h1>
@@ -297,6 +305,24 @@
       </form>
       <div id="messages">
       </div>
+      <h>
+      <form action="/__turbo/redirect" method="post" data-turbo-frame="_top">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <button id="frame-form-targets-top-303">303 data-turbo-frame="_top"</button>
+      </form>
+      <form action="/__turbo/reject" method="post" data-turbo-frame="_top">
+        <input type="hidden" name="status" value="422">
+        <button id="frame-form-targets-top-422">422 form[data-turbo-frame="_top"]</button>
+      </form>
+      <form action="/__turbo/reject" method="post">
+        <input type="hidden" name="status" value="422">
+        <button id="frame-button-targets-top-422" data-turbo-frame="_top">422 button[data-turbo-frame="_top"]</button>
+      </form>
+      <form action="/__turbo/reject" method="post">
+        <input type="hidden" name="status" value="422">
+        <button id="frame-frame-targets-top-422">422 turbo-frame[target="_top"]</button>
+      </form>
+      <button id="set-frame-target-top" type="button">Set #frame[target="_top"]</button>
     </turbo-frame>
     <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>

@@ -31,6 +31,7 @@ import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
+import { navigator } from "../../core"
 
 type VisitFallback = (location: Response | Locatable, options: Partial<VisitOptions>) => Promise<void>
 export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: VisitFallback }>
@@ -274,11 +275,17 @@ export class FrameController
   }
 
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
-    const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
+    const { formElement, submitter } = formSubmission
+    const frame = this.findFrameElement(formElement, submitter)
+    const target = getAttribute("data-turbo-frame", submitter, formElement) || frame.getAttribute("target")
 
-    this.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
-
-    frame.delegate.loadResponse(response)
+    if (target == "_top") {
+      navigator.formSubmission = formSubmission
+      navigator.formSubmissionSucceededWithResponse(formSubmission, response)
+    } else {
+      this.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
+      frame.delegate.loadResponse(response)
+    }
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
@@ -465,11 +472,15 @@ export class FrameController
   private shouldInterceptNavigation(element: Element, submitter?: HTMLElement) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
 
-    if (element instanceof HTMLFormElement && !this.formActionIsVisitable(element, submitter)) {
+    if (!this.enabled) {
       return false
     }
 
-    if (!this.enabled || id == "_top") {
+    if (element instanceof HTMLFormElement) {
+      if (!this.formActionIsVisitable(element, submitter)) {
+        return false
+      }
+    } else if (id == "_top") {
       return false
     }
 
@@ -488,7 +499,7 @@ export class FrameController
       return false
     }
 
-    return true
+    return this.element == element.closest("turbo-frame:not([disabled])")
   }
 
   // Computed properties
