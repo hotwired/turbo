@@ -15,4 +15,4 @@ Read more on [turbo.hotwired.dev](https://turbo.hotwired.dev).
 
 Please read [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-© 2021 Basecamp, LLC.
+© 2021 37signals LLC.

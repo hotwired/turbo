@@ -3,7 +3,7 @@ import typescript from "@rollup/plugin-typescript"
 
 import { version } from "./package.json"
 const year = new Date().getFullYear()
-const banner = `/*\nTurbo ${version}\nCopyright © ${year} Basecamp, LLC\n */`
+const banner = `/*\nTurbo ${version}\nCopyright © ${year} 37signals LLC\n */`
 
 export default [
   {
