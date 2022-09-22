@@ -120,7 +120,7 @@ export async function noNextAttributeMutationNamed(
   attributeName: string
 ): Promise<boolean> {
   const records = await readMutationLogs(page, 1)
-  return !records.some(([name]) => name == attributeName)
+  return !records.some(([name, _, target]) => name == attributeName && target == elementId)
 }
 
 export async function noNextEventNamed(page: Page, eventName: string): Promise<boolean> {

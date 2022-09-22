@@ -6,6 +6,7 @@ import {
   hasSelector,
   innerHTMLForSelector,
   nextAttributeMutationNamed,
+  noNextAttributeMutationNamed,
   nextBeat,
   nextEventNamed,
   nextEventOnTarget,
@@ -111,6 +112,30 @@ test("test following a link driving a frame toggles the [aria-busy=true] attribu
     await nextAttributeMutationNamed(page, "frame", "aria-busy"),
     null,
     "removes [aria-busy] from the #frame"
+  )
+})
+
+test("test following an a[data-turbo-frame=_top] does not toggle the frame's [aria-busy=true] attribute", async ({
+  page,
+}) => {
+  await page.click("#frame #link-top")
+
+  assert.ok(await noNextAttributeMutationNamed(page, "frame", "busy"), "does not toggle [busy] on parent frame")
+  assert.ok(
+    await noNextAttributeMutationNamed(page, "frame", "aria-busy"),
+    "does not toggle [aria-busy=true] on parent frame"
+  )
+})
+
+test("test submitting a form[data-turbo-frame=_top] does not toggle the frame's [aria-busy=true] attribute", async ({
+  page,
+}) => {
+  await page.click("#frame #form-submit-top")
+
+  assert.ok(await noNextAttributeMutationNamed(page, "frame", "busy"), "does not toggle [busy] on parent frame")
+  assert.ok(
+    await noNextAttributeMutationNamed(page, "frame", "aria-busy"),
+    "does not toggle [aria-busy=true] on parent frame"
   )
 })
 
