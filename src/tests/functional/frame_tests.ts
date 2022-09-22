@@ -2,6 +2,7 @@ import { Page, test } from "@playwright/test"
 import { assert, Assertion } from "chai"
 import {
   attributeForSelector,
+  cancelNextEvent,
   hasSelector,
   innerHTMLForSelector,
   nextAttributeMutationNamed,
@@ -401,13 +402,66 @@ test("test 'turbo:frame-render' is triggered after frame has finished rendering"
   assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
 })
 
-test("test navigating a frame fires events", async ({ page }) => {
+test("test navigating a frame from an outer form fires events", async ({ page }) => {
   await page.click("#outside-frame-form")
 
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
   const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
   assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/form.html")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  const otherEvents = await readEventLogs(page)
+  assert.equal(otherEvents.length, 0, "no more events")
+})
+
+test("test navigating a frame from an outer link fires events", async ({ page }) => {
+  await page.click("#outside-frame-form")
+
+  await nextEventOnTarget(page, "outside-frame-form", "turbo:click")
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/form.html")
+
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  const otherEvents = await readEventLogs(page)
+  assert.equal(otherEvents.length, 0, "no more events")
+})
+
+test("test canceling a turbo:cilck event falls back to built-in browser navigation", async ({ page }) => {
+  await cancelNextEvent(page, "turbo:click")
+  await Promise.all([page.waitForNavigation(), page.click("#link-frame")])
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html")
+})
+
+test("test navigating a frame from an inner link fires events", async ({ page }) => {
+  await page.click("#link-frame")
+
+  await nextEventOnTarget(page, "link-frame", "turbo:click")
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/frame.html")
+
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  const otherEvents = await readEventLogs(page)
+  assert.equal(otherEvents.length, 0, "no more events")
+})
+
+test("test navigating a frame targeting _top from an outer link fires events", async ({ page }) => {
+  await page.click("#outside-navigate-top-link")
+
+  await nextEventOnTarget(page, "outside-navigate-top-link", "turbo:click")
+  await nextEventOnTarget(page, "html", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "html", "turbo:before-fetch-response")
+  await nextEventOnTarget(page, "html", "turbo:before-render")
+  await nextEventOnTarget(page, "html", "turbo:render")
+  await nextEventOnTarget(page, "html", "turbo:load")
 
   const otherEvents = await readEventLogs(page)
   assert.equal(otherEvents.length, 0, "no more events")
