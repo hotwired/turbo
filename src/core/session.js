@@ -177,7 +177,7 @@ export class Session {
 
   visitProposedToLocation(location, options) {
     extendURLWithDeprecatedProperties(location)
-    this.adapter.visitProposedToLocation(location, options)
+    this.adapter.visitProposedToLocation(location, this.sanitizeVisitOptionsForTransfer(options))
   }
 
   // Visit delegate
@@ -395,6 +395,18 @@ export class Session {
         return false
       }
     }
+  }
+
+  sanitizeVisitOptionsForTransfer(options) {
+    const sanitized = {}
+    Object.entries(options).forEach(([key, value]) => {
+      try {
+        sanitized[key] = structuredClone(value)
+      } catch (_) {
+        // Ignore non-transferable values
+      }
+    })
+    return sanitized
   }
 
   // Private
