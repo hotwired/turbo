@@ -5,7 +5,7 @@ import { History } from "./history"
 import { getAnchor } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
-import { Action } from "../types"
+import { Action, StructuredCloneValue } from "../types"
 import { getHistoryMethodForAction, uuid } from "../../util"
 import { PageView } from "./page_view"
 import { StreamMessage } from "../streams/stream_message"
@@ -52,6 +52,8 @@ export type VisitOptions = {
   frame?: string
   acceptsStreamResponse: boolean
 }
+
+export type TransferableVisitOptions = Partial<VisitOptions> & { [key: string]: StructuredCloneValue }
 
 const defaultOptions: VisitOptions = {
   action: "advance",

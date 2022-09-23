@@ -13,10 +13,10 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { Action, Position, StreamSource, isAction } from "./types"
+import { Action, Position, StreamSource, isAction, StructuredCloneValue } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
 import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
-import { Visit, VisitOptions } from "./drive/visit"
+import { TransferableVisitOptions, Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
 import { FrameViewRenderOptions } from "./frames/frame_view"
@@ -206,7 +206,7 @@ export class Session
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
     extendURLWithDeprecatedProperties(location)
-    this.adapter.visitProposedToLocation(location, options)
+    this.adapter.visitProposedToLocation(location, this.sanitizeVisitOptionsForTransfer(options))
   }
 
   visitStarted(visit: Visit) {
@@ -422,6 +422,18 @@ export class Session
         return false
       }
     }
+  }
+
+  sanitizeVisitOptionsForTransfer(options: Partial<VisitOptions>): TransferableVisitOptions {
+    const sanitized: { [key: string]: StructuredCloneValue } = {}
+    Object.entries(options).forEach(([key, value]) => {
+      try {
+        sanitized[key] = structuredClone(value)
+      } catch (_) {
+        // Ignore non-transferable values
+      }
+    })
+    return sanitized
   }
 
   // Private

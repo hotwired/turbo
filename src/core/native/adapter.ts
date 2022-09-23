@@ -1,9 +1,9 @@
-import { Visit, VisitOptions } from "../drive/visit"
+import { Visit, TransferableVisitOptions } from "../drive/visit"
 import { FormSubmission } from "../drive/form_submission"
 import { ReloadReason } from "./browser_adapter"
 
 export interface Adapter {
-  visitProposedToLocation(location: URL, options?: Partial<VisitOptions>): void
+  visitProposedToLocation(location: URL, options?: TransferableVisitOptions): void
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
   visitFailed(visit: Visit): void
