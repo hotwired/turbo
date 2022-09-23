@@ -11,6 +11,33 @@ It's all done by sending HTML over the wire. And for those instances when that's
 
 Read more on [turbo.hotwired.dev](https://turbo.hotwired.dev).
 
+# Installation
+CLI:
+
+```bash
+npm i @hotwired/turbo"
+```
+
+Then in your code:
+```javascript
+import * as Turbo from "@hotwired/turbo"
+```
+
+# CDN Installation
+URL: https://unpkg.com/@hotwired/turbo
+
+The URL will redirect you to the latest version. For security, it's recommended to stick to the redirected version rather than use the URL above in the script src.
+
+```html
+<script src="https://unpkg.com/@hotwired/turbo@7.2.0/dist/turbo.es2017-umd.js"></script>
+```
+
+# Confirming that it works
+
+Simply open your site and click any link specified as `<a href=...` and you should notice that it loads almost instantly.
+
+For further proof, open DevTools (F12) and click the network tab, then click a link and you should see that the linked page load dynamically due to the previous page's network requests that are still present.
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](./CONTRIBUTING.md).
