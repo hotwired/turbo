@@ -398,15 +398,8 @@ export class Session {
   }
 
   sanitizeVisitOptionsForTransfer(options) {
-    const sanitized = {}
-    Object.entries(options).forEach(([key, value]) => {
-      try {
-        sanitized[key] = structuredClone(value)
-      } catch (_) {
-        // Ignore non-transferable values
-      }
-    })
-    return sanitized
+    const { referrer, visitCachedSnapshot, ...rest } = options
+    return rest
   }
 
   // Private
