@@ -425,15 +425,8 @@ export class Session
   }
 
   sanitizeVisitOptionsForTransfer(options: Partial<VisitOptions>): TransferableVisitOptions {
-    const sanitized: { [key: string]: StructuredCloneValue } = {}
-    Object.entries(options).forEach(([key, value]) => {
-      try {
-        sanitized[key] = structuredClone(value)
-      } catch (_) {
-        // Ignore non-transferable values
-      }
-    })
-    return sanitized
+    const { referrer, visitCachedSnapshot, ...rest } = options
+    return rest
   }
 
   // Private
