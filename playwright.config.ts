@@ -11,6 +11,7 @@ const config: PlaywrightTestConfig = {
       use: { ...devices["Desktop Firefox"] },
     },
   ],
+  retries: 2,
   testDir: "./src/tests/functional",
   testMatch: /.*_tests\.ts/,
   webServer: {
