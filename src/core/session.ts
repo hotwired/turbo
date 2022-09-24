@@ -424,7 +424,7 @@ export class Session
     }
   }
 
-  sanitizeVisitOptionsForTransfer(options: Partial<VisitOptions>): TransferableVisitOptions {
+  sanitizeVisitOptionsForTransfer(options: Partial<VisitOptions>): Partial<TransferableVisitOptions> {
     const { referrer, visitCachedSnapshot, ...rest } = options
     return rest
   }

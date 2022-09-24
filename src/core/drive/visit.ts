@@ -53,7 +53,7 @@ export type VisitOptions = {
   acceptsStreamResponse: boolean
 }
 
-export type TransferableVisitOptions = Partial<VisitOptions> & { [key: string]: StructuredCloneValue }
+export type TransferableVisitOptions = VisitOptions & { [key: string]: StructuredCloneValue }
 
 const defaultOptions: VisitOptions = {
   action: "advance",

@@ -3,7 +3,7 @@ import { FormSubmission } from "../drive/form_submission"
 import { ReloadReason } from "./browser_adapter"
 
 export interface Adapter {
-  visitProposedToLocation(location: URL, options?: TransferableVisitOptions): void
+  visitProposedToLocation(location: URL, options?: Partial<TransferableVisitOptions>): void
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
   visitFailed(visit: Visit): void
