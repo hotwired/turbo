@@ -24,17 +24,9 @@ export function getExtension(url: URL) {
   return (getLastPathComponent(url).match(/\.[^.]*$/) || [])[0] || ""
 }
 
-export function isHTML(url: URL) {
-  return !!getExtension(url).match(/^(?:|\.(?:htm|html|xhtml|php))$/)
-}
-
 export function isPrefixedBy(baseURL: URL, url: URL) {
   const prefix = getPrefix(url)
   return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
-}
-
-export function locationIsVisitable(location: URL, rootLocation: URL) {
-  return isPrefixedBy(location, rootLocation) && isHTML(location)
 }
 
 export function getRequestURL(url: URL) {
