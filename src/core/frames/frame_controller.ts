@@ -117,6 +117,16 @@ export class FrameController
     }
   }
 
+  sourceURLReloaded() {
+    const { src } = this.element
+    this.ignoringChangesToAttribute("complete", () => {
+      this.element.removeAttribute("complete")
+    })
+    this.element.src = null
+    this.element.src = src
+    return this.element.loaded
+  }
+
   completeChanged() {
     if (this.isIgnoringChangesTo("complete")) return
 
