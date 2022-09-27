@@ -16,6 +16,7 @@ export interface FrameElementDelegate extends LinkClickObserverDelegate, FormSub
   completeChanged(): void
   loadingStyleChanged(): void
   sourceURLChanged(): void
+  sourceURLReloaded(): Promise<void>
   disabledChanged(): void
   loadResponse(response: FetchResponse): void
   fetchResponseLoaded: (fetchResponse: FetchResponse) => void
@@ -63,11 +64,7 @@ export class FrameElement extends HTMLElement {
   }
 
   reload(): Promise<void> {
-    const { src } = this
-    this.removeAttribute("complete")
-    this.src = null
-    this.src = src
-    return this.loaded
+    return this.delegate.sourceURLReloaded()
   }
 
   attributeChangedCallback(name: string) {
