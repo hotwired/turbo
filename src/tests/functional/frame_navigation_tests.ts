@@ -59,19 +59,27 @@ test("test promoted frame navigations are cached", async ({ page }) => {
   await nextEventNamed(page, "turbo:frame-render")
 
   assert.equal(await page.textContent("#tab-content"), "Two")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/two.html")
+  assert.equal(await page.getAttribute("#tab-frame", "complete"), "", "sets [complete]")
 
   await page.click("#tab-3")
   await nextEventNamed(page, "turbo:frame-render")
 
   assert.equal(await page.textContent("#tab-content"), "Three")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/three.html")
+  assert.equal(await page.getAttribute("#tab-frame", "complete"), "", "sets [complete]")
 
   await page.goBack()
   await nextBeat()
 
   assert.equal(await page.textContent("#tab-content"), "Two")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/two.html")
+  assert.equal(await page.getAttribute("#tab-frame", "complete"), "", "caches two.html with [complete]")
 
   await page.goBack()
   await nextBeat()
 
   assert.equal(await page.textContent("#tab-content"), "One")
+  assert.equal(await page.getAttribute("#tab-frame", "src"), null, "caches one.html without #tab-frame[src]")
+  assert.equal(await page.getAttribute("#tab-frame", "complete"), null, "caches one.html without [complete]")
 })
