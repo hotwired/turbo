@@ -38,7 +38,7 @@ export class LinkClickObserver {
     if (event instanceof MouseEvent && this.clickEventIsSignificant(event)) {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = this.findLinkFromClickTarget(target)
-      if (link && doesNotTargetIFrame(link)) {
+      if (link && doesNotTargetIFrame(link) && doesNotIntegrateWithUJS(link)) {
         const location = this.getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location, event)) {
           event.preventDefault()
@@ -77,4 +77,11 @@ function doesNotTargetIFrame(anchor: HTMLAnchorElement): boolean {
   }
 
   return true
+}
+
+function doesNotIntegrateWithUJS(anchor: HTMLAnchorElement): boolean {
+  const value = anchor.getAttribute("data-remote")
+  const remote = /true/i.test(value || "")
+
+  return !remote
 }

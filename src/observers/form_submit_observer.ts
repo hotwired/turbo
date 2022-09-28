@@ -1,3 +1,5 @@
+import { getAttribute } from "../util"
+
 export interface FormSubmitObserverDelegate {
   willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean
   formSubmitted(form: HTMLFormElement, submitter?: HTMLElement): void
@@ -41,6 +43,7 @@ export class FormSubmitObserver {
         form &&
         submissionDoesNotDismissDialog(form, submitter) &&
         submissionDoesNotTargetIFrame(form, submitter) &&
+        submissionDoesNotIntegrateWithUJS(form, submitter) &&
         this.delegate.willSubmitForm(form, submitter)
       ) {
         event.preventDefault()
@@ -64,4 +67,11 @@ function submissionDoesNotTargetIFrame(form: HTMLFormElement, submitter?: HTMLEl
   }
 
   return true
+}
+
+function submissionDoesNotIntegrateWithUJS(form: HTMLFormElement, submitter?: HTMLElement): boolean {
+  const value = getAttribute("data-remote", submitter, form)
+  const remote = /true/i.test(value || "")
+
+  return !remote
 }
