@@ -39,12 +39,12 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     this.snapshotCache.clear()
   }
 
-  async cacheSnapshot() {
-    if (this.shouldCacheSnapshot) {
+  async cacheSnapshot(pageSnapshot?: PageSnapshot) {
+    if (this.shouldCacheSnapshot(pageSnapshot)) {
       this.delegate.viewWillCacheSnapshot()
       const { snapshot, lastRenderedLocation: location } = this
       await nextEventLoopTick()
-      const cachedSnapshot = snapshot.clone()
+      const cachedSnapshot = (pageSnapshot || snapshot).clone()
       this.snapshotCache.put(location, cachedSnapshot)
       return cachedSnapshot
     }
@@ -58,7 +58,7 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     return PageSnapshot.fromElement(this.element)
   }
 
-  get shouldCacheSnapshot() {
-    return this.snapshot.isCacheable
+  shouldCacheSnapshot(pageSnapshot?: PageSnapshot) {
+    return (pageSnapshot || this.snapshot).isCacheable
   }
 }

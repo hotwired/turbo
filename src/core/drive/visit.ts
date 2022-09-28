@@ -51,6 +51,7 @@ export type VisitOptions = {
   shouldCacheSnapshot: boolean
   frame?: string
   acceptsStreamResponse: boolean
+  pageSnapshot?: PageSnapshot
 }
 
 const defaultOptions: VisitOptions = {
@@ -61,6 +62,7 @@ const defaultOptions: VisitOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
+  pageSnapshot: undefined,
 }
 
 export type VisitResponse = {
@@ -100,6 +102,7 @@ export class Visit implements FetchRequestDelegate {
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
+  pageSnapshot?: PageSnapshot
 
   constructor(
     delegate: VisitDelegate,
@@ -122,6 +125,7 @@ export class Visit implements FetchRequestDelegate {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
+      pageSnapshot,
     } = {
       ...defaultOptions,
       ...options,
@@ -138,6 +142,7 @@ export class Visit implements FetchRequestDelegate {
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
+    this.pageSnapshot = pageSnapshot
   }
 
   get adapter() {
@@ -451,7 +456,7 @@ export class Visit implements FetchRequestDelegate {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot().then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      this.view.cacheSnapshot(this.pageSnapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
       this.snapshotCached = true
     }
   }
