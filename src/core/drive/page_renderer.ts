@@ -1,19 +1,22 @@
 import { Renderer } from "../renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { ReloadReason } from "../native/browser_adapter"
-import { activateScriptElement, waitForLoad } from "../../util"
+import { activateScriptElement, waitForLoad, getBodyElementId } from "../../util"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
-  static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
-    if (document.body && newElement instanceof HTMLBodyElement) {
-      document.body.replaceWith(newElement)
+  static renderElement(currentBody: HTMLBodyElement, newBody: HTMLBodyElement) {
+    if (document.body && newBody instanceof HTMLBodyElement) {
+      const currentElement = PageRenderer.getRenderedElement(currentBody) || currentBody
+      const newElement = PageRenderer.getRenderedElement(newBody) || newBody
+
+      currentElement.replaceWith(newElement)
     } else {
-      document.documentElement.appendChild(newElement)
+      document.documentElement.appendChild(newBody)
     }
   }
 
   get shouldRender() {
-    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
+    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical && this.renderedElementMatches
   }
 
   get reloadReason(): ReloadReason {
@@ -26,6 +29,12 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     if (!this.trackedElementsAreIdentical) {
       return {
         reason: "tracked_element_mismatch",
+      }
+    }
+
+    if (!this.renderedElementMatches) {
+      return {
+        reason: "rendered_element_mismatch",
       }
     }
   }
@@ -76,6 +85,24 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   get trackedElementsAreIdentical() {
     return this.currentHeadSnapshot.trackedElementSignature == this.newHeadSnapshot.trackedElementSignature
+  }
+
+  get renderedElementMatches() {
+    return PageRenderer.getRenderedElement(this.newElement) !== null
+  }
+
+  static get bodySelector() {
+    const bodyId = getBodyElementId()
+
+    return bodyId ? `#${bodyId}` : "body"
+  }
+
+  static getRenderedElement(element: HTMLElement): HTMLElement | null {
+    if (element.matches(this.bodySelector)) {
+      return element
+    } else {
+      return element.querySelector(this.bodySelector)
+    }
   }
 
   async copyNewHeadStylesheetElements() {
