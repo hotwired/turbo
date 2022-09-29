@@ -767,7 +767,7 @@ test("test navigating frame with button[data-turbo-action=advance] pushes URL st
   assert.ok(await hasSelector(page, "#frame[complete]"), "marks the frame as [complete]")
 })
 
-test.only("test navigating back after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames previous contents", async ({
+test("test navigating back after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames previous contents", async ({
   page,
 }) => {
   await page.click("#add-turbo-action-to-frame")
