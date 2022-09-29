@@ -384,7 +384,7 @@ export class FrameController
             willRender: false,
             updateHistory: false,
             restorationIdentifier: this.restorationIdentifier,
-            pageSnapshot: this.pageSnapshot,
+            snapshot: this.pageSnapshot,
           }
 
           if (this.action) options.action = this.action
@@ -569,7 +569,7 @@ export class FrameController
   }
 
   private withCurrentNavigationElement(element: Element, callback: () => void) {
-    this.pageSnapshot = PageSnapshot.fromElement(session.view.element).clone()
+    this.pageSnapshot = PageSnapshot.fromElement(element).clone()
     this.currentNavigationElement = element
     callback()
     delete this.currentNavigationElement

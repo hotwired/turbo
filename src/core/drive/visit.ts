@@ -42,6 +42,7 @@ export type VisitOptions = {
   action: Action
   historyChanged: boolean
   referrer?: URL
+  snapshot?: PageSnapshot
   snapshotHTML?: string
   response?: VisitResponse
   visitCachedSnapshot(snapshot: Snapshot): void
@@ -51,7 +52,6 @@ export type VisitOptions = {
   shouldCacheSnapshot: boolean
   frame?: string
   acceptsStreamResponse: boolean
-  pageSnapshot?: PageSnapshot
 }
 
 const defaultOptions: VisitOptions = {
@@ -62,7 +62,6 @@ const defaultOptions: VisitOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
-  pageSnapshot: undefined,
 }
 
 export type VisitResponse = {
@@ -102,7 +101,7 @@ export class Visit implements FetchRequestDelegate {
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
-  pageSnapshot?: PageSnapshot
+  snapshot?: PageSnapshot
 
   constructor(
     delegate: VisitDelegate,
@@ -118,6 +117,7 @@ export class Visit implements FetchRequestDelegate {
       action,
       historyChanged,
       referrer,
+      snapshot,
       snapshotHTML,
       response,
       visitCachedSnapshot,
@@ -125,7 +125,6 @@ export class Visit implements FetchRequestDelegate {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
-      pageSnapshot,
     } = {
       ...defaultOptions,
       ...options,
@@ -133,6 +132,7 @@ export class Visit implements FetchRequestDelegate {
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
+    this.snapshot = snapshot
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
@@ -142,7 +142,6 @@ export class Visit implements FetchRequestDelegate {
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
-    this.pageSnapshot = pageSnapshot
   }
 
   get adapter() {
@@ -456,7 +455,7 @@ export class Visit implements FetchRequestDelegate {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot(this.pageSnapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
       this.snapshotCached = true
     }
   }
