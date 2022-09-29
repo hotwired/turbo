@@ -19,6 +19,7 @@ export interface FrameElementDelegate extends LinkClickObserverDelegate, FormSub
   sourceURLReloaded(): Promise<void>
   disabledChanged(): void
   loadResponse(response: FetchResponse): void
+  proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement): void
   fetchResponseLoaded: (fetchResponse: FetchResponse) => void
   visitCachedSnapshot: (snapshot: Snapshot) => void
   isLoading: boolean
