@@ -358,6 +358,7 @@ export class FrameController
 
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
+    this.pageSnapshot = PageSnapshot.fromElement(element).clone()
 
     this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
@@ -569,7 +570,6 @@ export class FrameController
   }
 
   private withCurrentNavigationElement(element: Element, callback: () => void) {
-    this.pageSnapshot = PageSnapshot.fromElement(element).clone()
     this.currentNavigationElement = element
     callback()
     delete this.currentNavigationElement
