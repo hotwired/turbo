@@ -358,7 +358,7 @@ export class FrameController
 
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
-    this.pageSnapshot = PageSnapshot.fromElement(element).clone()
+    this.pageSnapshot = PageSnapshot.fromElement(frame).clone()
 
     this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
