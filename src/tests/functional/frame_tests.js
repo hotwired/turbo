@@ -505,8 +505,8 @@ test("test navigating a frame targeting _top from an outer link fires events", a
   await page.click("#outside-navigate-top-link")
 
   await nextEventOnTarget(page, "outside-navigate-top-link", "turbo:click")
-  await nextEventOnTarget(page, "html", "turbo:before-fetch-request")
-  await nextEventOnTarget(page, "html", "turbo:before-fetch-response")
+  await nextEventOnTarget(page, "outside-navigate-top-link", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "outside-navigate-top-link", "turbo:before-fetch-response")
   await nextEventOnTarget(page, "html", "turbo:before-render")
   await nextEventOnTarget(page, "html", "turbo:render")
   await nextEventOnTarget(page, "html", "turbo:load")
