@@ -12,8 +12,8 @@ export class Navigator {
   proposeVisit(location, options = {}) {
     if (this.delegate.allowsVisitingLocation(location, options)) {
       if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.withVisitOptions(options, () => {
-          this.delegate.visitProposedToLocation(location, options)
+        this.withTransferableVisitOptions(options, (transferableOptions) => {
+          this.delegate.visitProposedToLocation(location, transferableOptions)
         })
       } else {
         window.location.href = location.toString()
@@ -160,9 +160,14 @@ export class Navigator {
 
   // Private
 
-  withVisitOptions(options, callback) {
+  withTransferableVisitOptions(options, callback) {
     this.currentVisitOptions = options
-    callback.call(this)
+    callback.call(this, this.sanitizeVisitOptionsForTransfer(options))
     this.currentVisitOptions = {}
+  }
+
+  sanitizeVisitOptionsForTransfer(options) {
+    const { initiator, referrer, visitCachedSnapshot, ...rest } = options
+    return rest
   }
 }

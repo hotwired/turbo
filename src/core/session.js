@@ -180,7 +180,7 @@ export class Session {
 
   visitProposedToLocation(location, options) {
     extendURLWithDeprecatedProperties(location)
-    this.adapter.visitProposedToLocation(location, this.sanitizeVisitOptionsForTransfer(options))
+    this.adapter.visitProposedToLocation(location, options)
   }
 
   // Visit delegate
@@ -402,11 +402,6 @@ export class Session {
         return false
       }
     }
-  }
-
-  sanitizeVisitOptionsForTransfer(options) {
-    const { initiator, referrer, visitCachedSnapshot, ...rest } = options
-    return rest
   }
 
   // Private
