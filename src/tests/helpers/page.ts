@@ -14,6 +14,15 @@ export function attributeForSelector(page: Page, selector: string, attributeName
   return page.locator(selector).getAttribute(attributeName)
 }
 
+type CancellableEvent = "turbo:click" | "turbo:before-visit"
+
+export function cancelNextEvent(page: Page, eventName: CancellableEvent): Promise<void> {
+  return page.evaluate(
+    (eventName) => addEventListener(eventName, (event) => event.preventDefault(), { once: true }),
+    eventName
+  )
+}
+
 export function clickWithoutScrolling(page: Page, selector: string, options = {}) {
   const element = page.locator(selector, options)
 
@@ -111,7 +120,7 @@ export async function noNextAttributeMutationNamed(
   attributeName: string
 ): Promise<boolean> {
   const records = await readMutationLogs(page, 1)
-  return !records.some(([name]) => name == attributeName)
+  return !records.some(([name, _, target]) => name == attributeName && target == elementId)
 }
 
 export async function noNextEventNamed(page: Page, eventName: string): Promise<boolean> {

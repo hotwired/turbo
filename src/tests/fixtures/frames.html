@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html id="html" data-skip-event-details="turbo:before-render">
+<html id="html" data-skip-event-details="turbo:click turbo:before-render">
   <head>
     <meta charset="utf-8">
     <title>Frame</title>
@@ -31,6 +31,10 @@
       <a id="link-frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame from within</a>
       <a id="link-frame-with-search-params" href="/src/tests/fixtures/frames/frame.html?key=value">Navigate #frame with ?key=value</a>
       <a id="link-nested-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-action="advance">Navigate #frame from within with a[data-turbo-action="advance"]</a>
+      <a id="link-top" href="/src/tests/fixtures/one.html" data-turbo-frame="_top">Visit one.html</a>
+      <form action="/src/tests/fixtures/one.html" data-turbo-frame="_top">
+        <button id="form-submit-top">Visit one.html</button>
+      </form>
     </turbo-frame>
     <a id="outside-frame-form" href="/src/tests/fixtures/frames/form.html" data-turbo-frame="frame">Navigate #frame to /frames/form.html</a>
 
@@ -88,6 +92,7 @@
       <a href="/src/tests/fixtures/one.html?key=value">Visit one.html?key=value</a>
       <a href="/src/tests/fixtures/one.html" data-turbo-frame="_self">Visit self</a>
     </turbo-frame>
+    <a id="outside-navigate-top-link" href="/src/tests/fixtures/one.html">Visit one.html from outside #navigate-top</a>
 
     <turbo-frame id="missing">
       <a id="missing-frame-link" href="/src/tests/fixtures/frames/frame.html">Missing frame</a>

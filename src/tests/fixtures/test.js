@@ -47,6 +47,7 @@
      }
    }).observe(document, { subtree: true, childList: true, attributes: true })
 })([
+  "turbo:click",
   "turbo:before-stream-render",
   "turbo:before-cache",
   "turbo:before-render",

@@ -2,12 +2,14 @@ import { Page, test } from "@playwright/test"
 import { assert } from "chai"
 import { get } from "http"
 import {
+  cancelNextEvent,
   getSearchParam,
   isScrolledToSelector,
   isScrolledToTop,
   nextBeat,
   nextEventNamed,
   noNextAttributeMutationNamed,
+  pathname,
   readEventLogs,
   scrollToSelector,
   visitAction,
@@ -60,6 +62,13 @@ test("test visiting a location served with a non-HTML content type", async ({ pa
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
   assert.equal(await visitAction(page), "load")
+})
+
+test("test canceling a turbo:click event falls back to built-in browser navigation", async ({ page }) => {
+  await cancelNextEvent(page, "turbo:click")
+  await Promise.all([page.waitForNavigation(), page.click("#same-origin-link")])
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
 })
 
 test("test canceling a before-visit event prevents navigation", async ({ page }) => {
@@ -164,7 +173,7 @@ test("test cache does not override response after redirect", async ({ page }) =>
 })
 
 function cancelNextVisit(page: Page): Promise<void> {
-  return page.evaluate(() => addEventListener("turbo:before-visit", (event) => event.preventDefault(), { once: true }))
+  return cancelNextEvent(page, "turbo:before-visit")
 }
 
 function contentTypeOfURL(url: string): Promise<string | undefined> {
