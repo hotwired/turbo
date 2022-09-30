@@ -65,7 +65,8 @@ export class Visit {
       willRender,
       updateHistory,
       shouldCacheSnapshot,
-      acceptsStreamResponse
+      acceptsStreamResponse,
+      initiator,
     } = {
       ...defaultOptions,
       ...options
@@ -83,6 +84,7 @@ export class Visit {
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
+    this.initiator = initiator
   }
 
   get adapter() {
@@ -158,7 +160,7 @@ export class Visit {
     if (this.hasPreloadedResponse()) {
       this.simulateRequest()
     } else if (this.shouldIssueRequest() && !this.request) {
-      this.request = new FetchRequest(this, FetchMethod.get, this.location)
+      this.request = new FetchRequest(this, FetchMethod.get, this.location, undefined, this.initiator)
       this.request.perform()
     }
   }

@@ -10,9 +10,11 @@ export class Navigator {
   }
 
   proposeVisit(location, options = {}) {
-    if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
+    if (this.delegate.allowsVisitingLocation(location, options)) {
       if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.delegate.visitProposedToLocation(location, options)
+        this.withInitiator(options.initiator, () => {
+          this.delegate.visitProposedToLocation(location, options)
+        })
       } else {
         window.location.href = location.toString()
       }
@@ -22,6 +24,7 @@ export class Navigator {
   startVisit(locatable, restorationIdentifier, options = {}) {
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
+      initiator: this.currentInitiator,
       referrer: this.location,
       ...options
     })
@@ -153,5 +156,13 @@ export class Navigator {
 
   getActionForFormSubmission({ submitter, formElement }) {
     return getVisitAction(submitter, formElement) || "advance"
+  }
+
+  // Private
+
+  withInitiator(initiator, callback) {
+    this.currentInitiator = initiator
+    callback.call(this)
+    delete this.currentInitiator
   }
 }
