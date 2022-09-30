@@ -12,7 +12,7 @@ export class Navigator {
   proposeVisit(location, options = {}) {
     if (this.delegate.allowsVisitingLocation(location, options)) {
       if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.withInitiator(options.initiator, () => {
+        this.withVisitOptions(options, () => {
           this.delegate.visitProposedToLocation(location, options)
         })
       } else {
@@ -24,9 +24,9 @@ export class Navigator {
   startVisit(locatable, restorationIdentifier, options = {}) {
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
-      initiator: this.currentInitiator,
       referrer: this.location,
-      ...options
+      ...this.currentVisitOptions,
+      ...options,
     })
     this.currentVisit.start()
   }
@@ -160,9 +160,9 @@ export class Navigator {
 
   // Private
 
-  withInitiator(initiator, callback) {
-    this.currentInitiator = initiator
+  withVisitOptions(options, callback) {
+    this.currentVisitOptions = options
     callback.call(this)
-    delete this.currentInitiator
+    delete this.currentVisitOptions
   }
 }
