@@ -42,6 +42,7 @@ export type VisitOptions = {
   action: Action
   historyChanged: boolean
   referrer?: URL
+  snapshot?: PageSnapshot
   snapshotHTML?: string
   response?: VisitResponse
   visitCachedSnapshot(snapshot: Snapshot): void
@@ -100,6 +101,7 @@ export class Visit implements FetchRequestDelegate {
   snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
+  snapshot?: PageSnapshot
 
   constructor(
     delegate: VisitDelegate,
@@ -115,6 +117,7 @@ export class Visit implements FetchRequestDelegate {
       action,
       historyChanged,
       referrer,
+      snapshot,
       snapshotHTML,
       response,
       visitCachedSnapshot,
@@ -129,6 +132,7 @@ export class Visit implements FetchRequestDelegate {
     this.action = action
     this.historyChanged = historyChanged
     this.referrer = referrer
+    this.snapshot = snapshot
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
@@ -451,7 +455,7 @@ export class Visit implements FetchRequestDelegate {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot().then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
       this.snapshotCached = true
     }
   }
