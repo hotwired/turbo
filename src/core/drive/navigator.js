@@ -163,6 +163,6 @@ export class Navigator {
   withVisitOptions(options, callback) {
     this.currentVisitOptions = options
     callback.call(this)
-    delete this.currentVisitOptions
+    this.currentVisitOptions = {}
   }
 }
