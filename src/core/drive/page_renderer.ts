@@ -60,10 +60,10 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   async mergeHead() {
+    const mergedHeadElements = this.mergeProvisionalElements()
     const newStylesheetElements = this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
-    this.removeCurrentHeadProvisionalElements()
-    this.copyNewHeadProvisionalElements()
+    await mergedHeadElements
     await newStylesheetElements
   }
 
@@ -94,6 +94,43 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     for (const element of this.newHeadScriptElements) {
       document.head.appendChild(activateScriptElement(element))
     }
+  }
+
+  async mergeProvisionalElements() {
+
+    let newHeadElements = [...this.newHeadProvisionalElements];
+
+    for (const element of this.currentHeadProvisionalElements) {
+      if(!this.isCurrentElementInElementList(element, newHeadElements)){
+        document.head.removeChild(element)
+      }
+    }
+
+    for (const element of newHeadElements) {
+      document.head.appendChild(element)
+    }
+  }
+
+  isCurrentElementInElementList(element: Element, elementList: Element[]){
+
+    for (const [index, newElement] of elementList.entries()){
+      // if title element...
+      if (element.tagName == "TITLE"){
+        if(newElement.tagName != "TITLE"){
+          continue
+        }
+        if (element.innerHTML == newElement.innerHTML){
+          elementList.splice(index, 1);
+          return true;  
+        }
+      }
+      // if any other element...
+      if (newElement.isEqualNode(element)){
+        elementList.splice(index, 1);
+        return true;
+      }
+    }
+    return false
   }
 
   removeCurrentHeadProvisionalElements() {
