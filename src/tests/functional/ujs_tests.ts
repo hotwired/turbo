@@ -8,6 +8,8 @@ test.beforeEach(async ({ page }) => {
 
 test("test clicking a [data-remote=true] anchor within a turbo-frame", async ({ page }) => {
   await assertRequestLimit(page, 1, async () => {
+    assert.equal(await page.textContent("#frame h2"), "Frames: #frame")
+
     await page.click("#frame a[data-remote=true]")
     await noNextEventOnTarget(page, "frame", "turbo:frame-load")
 
@@ -17,10 +19,12 @@ test("test clicking a [data-remote=true] anchor within a turbo-frame", async ({ 
 
 test("test submitting a [data-remote=true] form within a turbo-frame", async ({ page }) => {
   await assertRequestLimit(page, 1, async () => {
+    assert.equal(await page.textContent("#frame h2"), "Frames: #frame")
+
     await page.click("#frame form[data-remote=true] button")
     await noNextEventOnTarget(page, "frame", "turbo:frame-load")
 
-    assert.equal(await page.textContent("#frame h2"), "Frames: #frame", "does not navigate the target frame")
+    assert.equal(await page.textContent("#frame h2"), "Frame: Loaded", "navigates the target frame")
   })
 })
 
