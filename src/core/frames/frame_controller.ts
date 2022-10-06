@@ -23,7 +23,7 @@ import { ViewDelegate, ViewRenderOptions } from "../view"
 import { Locatable, getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
-import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
+import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
 import { TurboClickEvent, session } from "../index"
@@ -43,14 +43,14 @@ export class FrameController
     FormSubmissionDelegate,
     FrameElementDelegate,
     FormLinkClickObserverDelegate,
-    LinkClickObserverDelegate,
+    LinkInterceptorDelegate,
     ViewDelegate<FrameElement, Snapshot<FrameElement>>
 {
   readonly element: FrameElement
   readonly view: FrameView
   readonly appearanceObserver: AppearanceObserver
   readonly formLinkClickObserver: FormLinkClickObserver
-  readonly linkClickObserver: LinkClickObserver
+  readonly linkInterceptor: LinkInterceptor
   readonly formSubmitObserver: FormSubmitObserver
   formSubmission?: FormSubmission
   fetchResponseLoaded = (_fetchResponse: FetchResponse) => {}
@@ -70,7 +70,7 @@ export class FrameController
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.formLinkClickObserver = new FormLinkClickObserver(this, this.element)
-    this.linkClickObserver = new LinkClickObserver(this, this.element)
+    this.linkInterceptor = new LinkInterceptor(this, this.element)
     this.restorationIdentifier = uuid()
     this.formSubmitObserver = new FormSubmitObserver(this, this.element)
   }
@@ -84,7 +84,7 @@ export class FrameController
         this.loadSourceURL()
       }
       this.formLinkClickObserver.start()
-      this.linkClickObserver.start()
+      this.linkInterceptor.start()
       this.formSubmitObserver.start()
     }
   }
@@ -94,7 +94,7 @@ export class FrameController
       this.connected = false
       this.appearanceObserver.stop()
       this.formLinkClickObserver.stop()
-      this.linkClickObserver.stop()
+      this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
     }
   }
@@ -204,7 +204,7 @@ export class FrameController
   // Form link click observer delegate
 
   willSubmitFormLinkToLocation(link: Element): boolean {
-    return link.closest("turbo-frame") == this.element && this.shouldInterceptNavigation(link)
+    return this.shouldInterceptNavigation(link)
   }
 
   submittedFormLinkToLocation(link: Element, _location: URL, form: HTMLFormElement): void {
@@ -212,14 +212,14 @@ export class FrameController
     if (frame) form.setAttribute("data-turbo-frame", frame.id)
   }
 
-  // Link click observer delegate
+  // Link interceptor delegate
 
-  willFollowLinkToLocation(element: Element, location: URL, event: MouseEvent) {
-    return this.shouldInterceptNavigation(element) && this.frameAllowsVisitingLocation(element, location, event)
+  shouldInterceptLinkClick(element: Element, url: string, originalEvent: MouseEvent) {
+    return this.shouldInterceptNavigation(element) && this.frameAllowsVisitingLocation(element, url, originalEvent)
   }
 
-  followedLinkToLocation(element: Element, location: URL) {
-    this.navigateFrame(element, location.href)
+  linkClickIntercepted(element: Element, url: string) {
+    this.navigateFrame(element, url)
   }
 
   // Form submit observer delegate
@@ -555,7 +555,7 @@ export class FrameController
     return expandURL(root)
   }
 
-  private frameAllowsVisitingLocation(target: Element, { href: url }: URL, originalEvent: MouseEvent): boolean {
+  private frameAllowsVisitingLocation(target: Element, url: string, originalEvent: MouseEvent): boolean {
     const event = dispatch<TurboClickEvent>("turbo:click", {
       target,
       detail: { url, originalEvent },

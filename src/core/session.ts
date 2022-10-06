@@ -60,7 +60,7 @@ export class Session
   readonly scrollObserver = new ScrollObserver(this)
   readonly streamObserver = new StreamObserver(this)
   readonly formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
-  readonly frameRedirector = new FrameRedirector(this, document.documentElement)
+  readonly frameRedirector = new FrameRedirector(document.documentElement)
   readonly streamMessageRenderer = new StreamMessageRenderer()
 
   drive = true

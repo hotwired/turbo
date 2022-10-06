@@ -1,41 +1,39 @@
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameElement } from "../../elements/frame_element"
+import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { expandURL, getAction, locationIsVisitable } from "../url"
-import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
-import { Session, TurboClickEvent } from "../session"
+import { TurboClickEvent } from "../session"
 import { dispatch } from "../../util"
 
-export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObserverDelegate {
-  readonly session: Session
+export class FrameRedirector implements LinkInterceptorDelegate, FormSubmitObserverDelegate {
   readonly element: Element
-  readonly linkClickObserver: LinkClickObserver
+  readonly linkInterceptor: LinkInterceptor
   readonly formSubmitObserver: FormSubmitObserver
 
-  constructor(session: Session, element: Element) {
-    this.session = session
+  constructor(element: Element) {
     this.element = element
-    this.linkClickObserver = new LinkClickObserver(this, element)
+    this.linkInterceptor = new LinkInterceptor(this, element)
     this.formSubmitObserver = new FormSubmitObserver(this, element)
   }
 
   start() {
-    this.linkClickObserver.start()
+    this.linkInterceptor.start()
     this.formSubmitObserver.start()
   }
 
   stop() {
-    this.linkClickObserver.stop()
+    this.linkInterceptor.stop()
     this.formSubmitObserver.stop()
   }
 
-  willFollowLinkToLocation(element: Element, location: URL, event: MouseEvent) {
-    return this.shouldRedirect(element) && this.frameAllowsVisitingLocation(element, location, event)
+  shouldInterceptLinkClick(element: Element, url: string, originalEvent: MouseEvent) {
+    return this.shouldRedirect(element) && this.frameAllowsVisitingLocation(element, url, originalEvent)
   }
 
-  followedLinkToLocation(element: Element, url: URL) {
+  linkClickIntercepted(element: Element, url: string, originalEvent: MouseEvent) {
     const frame = this.findFrameElement(element)
     if (frame) {
-      frame.delegate.followedLinkToLocation(element, url)
+      frame.delegate.linkClickIntercepted(element, url, originalEvent)
     }
   }
 
@@ -54,7 +52,7 @@ export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObs
     }
   }
 
-  private frameAllowsVisitingLocation(target: Element, { href: url }: URL, originalEvent: MouseEvent): boolean {
+  private frameAllowsVisitingLocation(target: Element, url: string, originalEvent: MouseEvent): boolean {
     const event = dispatch<TurboClickEvent>("turbo:click", {
       target,
       detail: { url, originalEvent },
@@ -73,17 +71,8 @@ export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObs
   }
 
   private shouldRedirect(element: Element, submitter?: HTMLElement) {
-    const isNavigatable =
-      element instanceof HTMLFormElement
-        ? this.session.submissionIsNavigatable(element, submitter)
-        : this.session.elementIsNavigatable(element)
-
-    if (isNavigatable) {
-      const frame = this.findFrameElement(element, submitter)
-      return frame ? frame != element.closest("turbo-frame") : false
-    } else {
-      return false
-    }
+    const frame = this.findFrameElement(element, submitter)
+    return frame ? frame != element.closest("turbo-frame") : false
   }
 
   private findFrameElement(element: Element, submitter?: HTMLElement) {
