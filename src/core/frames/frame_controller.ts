@@ -26,7 +26,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
-import { TurboClickEvent, session } from "../index"
+import { session } from "../index"
 import { isAction, Action } from "../types"
 import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent } from "../session"
@@ -214,12 +214,12 @@ export class FrameController
 
   // Link interceptor delegate
 
-  shouldInterceptLinkClick(element: Element, url: string, originalEvent: MouseEvent) {
-    return this.shouldInterceptNavigation(element) && this.frameAllowsVisitingLocation(element, url, originalEvent)
+  shouldInterceptLinkClick(element: Element, _location: string, _event: MouseEvent) {
+    return this.shouldInterceptNavigation(element)
   }
 
-  linkClickIntercepted(element: Element, url: string) {
-    this.navigateFrame(element, url)
+  linkClickIntercepted(element: Element, location: string) {
+    this.navigateFrame(element, location)
   }
 
   // Form submit observer delegate
@@ -553,16 +553,6 @@ export class FrameController
     const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
     const root = meta?.content ?? "/"
     return expandURL(root)
-  }
-
-  private frameAllowsVisitingLocation(target: Element, url: string, originalEvent: MouseEvent): boolean {
-    const event = dispatch<TurboClickEvent>("turbo:click", {
-      target,
-      detail: { url, originalEvent },
-      cancelable: true,
-    })
-
-    return !event.defaultPrevented
   }
 
   private isIgnoringChangesTo(attributeName: FrameElementObservedAttribute): boolean {

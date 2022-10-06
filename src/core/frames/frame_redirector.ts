@@ -2,15 +2,15 @@ import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/
 import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { expandURL, getAction, locationIsVisitable } from "../url"
-import { TurboClickEvent } from "../session"
-import { dispatch } from "../../util"
-
+import { Session } from "../session"
 export class FrameRedirector implements LinkInterceptorDelegate, FormSubmitObserverDelegate {
+  readonly session: Session
   readonly element: Element
   readonly linkInterceptor: LinkInterceptor
   readonly formSubmitObserver: FormSubmitObserver
 
-  constructor(element: Element) {
+  constructor(session: Session, element: Element) {
+    this.session = session
     this.element = element
     this.linkInterceptor = new LinkInterceptor(this, element)
     this.formSubmitObserver = new FormSubmitObserver(this, element)
@@ -26,14 +26,14 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormSubmitObser
     this.formSubmitObserver.stop()
   }
 
-  shouldInterceptLinkClick(element: Element, url: string, originalEvent: MouseEvent) {
-    return this.shouldRedirect(element) && this.frameAllowsVisitingLocation(element, url, originalEvent)
+  shouldInterceptLinkClick(element: Element, _location: string, _event: MouseEvent) {
+    return this.shouldRedirect(element)
   }
 
-  linkClickIntercepted(element: Element, url: string, originalEvent: MouseEvent) {
+  linkClickIntercepted(element: Element, url: string, event: MouseEvent) {
     const frame = this.findFrameElement(element)
     if (frame) {
-      frame.delegate.linkClickIntercepted(element, url, originalEvent)
+      frame.delegate.linkClickIntercepted(element, url, event)
     }
   }
 
@@ -52,16 +52,6 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormSubmitObser
     }
   }
 
-  private frameAllowsVisitingLocation(target: Element, url: string, originalEvent: MouseEvent): boolean {
-    const event = dispatch<TurboClickEvent>("turbo:click", {
-      target,
-      detail: { url, originalEvent },
-      cancelable: true,
-    })
-
-    return !event.defaultPrevented
-  }
-
   private shouldSubmit(form: HTMLFormElement, submitter?: HTMLElement) {
     const action = getAction(form, submitter)
     const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
@@ -71,8 +61,17 @@ export class FrameRedirector implements LinkInterceptorDelegate, FormSubmitObser
   }
 
   private shouldRedirect(element: Element, submitter?: HTMLElement) {
-    const frame = this.findFrameElement(element, submitter)
-    return frame ? frame != element.closest("turbo-frame") : false
+    const isNavigatable =
+      element instanceof HTMLFormElement
+        ? this.session.submissionIsNavigatable(element, submitter)
+        : this.session.elementIsNavigatable(element)
+
+    if (isNavigatable) {
+      const frame = this.findFrameElement(element, submitter)
+      return frame ? frame != element.closest("turbo-frame") : false
+    } else {
+      return false
+    }
   }
 
   private findFrameElement(element: Element, submitter?: HTMLElement) {

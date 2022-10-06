@@ -2,9 +2,9 @@ import { Page, test } from "@playwright/test"
 import { assert, Assertion } from "chai"
 import {
   attributeForSelector,
-  cancelNextEvent,
   hasSelector,
   innerHTMLForSelector,
+  listenForEventOnTarget,
   nextAttributeMutationNamed,
   noNextAttributeMutationNamed,
   nextBeat,
@@ -442,6 +442,7 @@ test("test navigating a frame from an outer form fires events", async ({ page })
 })
 
 test("test navigating a frame from an outer link fires events", async ({ page }) => {
+  await listenForEventOnTarget(page, "outside-frame-form", "turbo:click")
   await page.click("#outside-frame-form")
 
   await nextEventOnTarget(page, "outside-frame-form", "turbo:click")
@@ -456,14 +457,8 @@ test("test navigating a frame from an outer link fires events", async ({ page })
   assert.equal(otherEvents.length, 0, "no more events")
 })
 
-test("test canceling a turbo:cilck event falls back to built-in browser navigation", async ({ page }) => {
-  await cancelNextEvent(page, "turbo:click")
-  await Promise.all([page.waitForNavigation(), page.click("#link-frame")])
-
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html")
-})
-
 test("test navigating a frame from an inner link fires events", async ({ page }) => {
+  await listenForEventOnTarget(page, "link-frame", "turbo:click")
   await page.click("#link-frame")
 
   await nextEventOnTarget(page, "link-frame", "turbo:click")
@@ -479,6 +474,7 @@ test("test navigating a frame from an inner link fires events", async ({ page })
 })
 
 test("test navigating a frame targeting _top from an outer link fires events", async ({ page }) => {
+  await listenForEventOnTarget(page, "outside-navigate-top-link", "turbo:click")
   await page.click("#outside-navigate-top-link")
 
   await nextEventOnTarget(page, "outside-navigate-top-link", "turbo:click")
