@@ -151,6 +151,13 @@ test("test following a POST form clears cache", async ({ page }) => {
   assert.notOk(await hasSelector(page, "some-cached-element"))
 })
 
+test("test following a same-origin POST form with [target=_blank]", async ({ page }) => {
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#targeted-form-post-submit")])
+
+  assert.equal(pathname(popup.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(popup), "load")
+})
+
 test("test following a same-origin POST link with data-turbo-action=replace", async ({ page }) => {
   page.click("#same-origin-replace-post-link")
   await nextBody(page)
