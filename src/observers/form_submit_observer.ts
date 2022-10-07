@@ -41,6 +41,7 @@ export class FormSubmitObserver {
         form &&
         submissionDoesNotDismissDialog(form, submitter) &&
         submissionDoesNotTargetIFrame(form, submitter) &&
+        submissionDoesNotTargetBlankWindow(form, submitter) &&
         this.delegate.willSubmitForm(form, submitter)
       ) {
         event.preventDefault()
@@ -64,4 +65,10 @@ function submissionDoesNotTargetIFrame(form: HTMLFormElement, submitter?: HTMLEl
   }
 
   return true
+}
+
+function submissionDoesNotTargetBlankWindow(form: HTMLFormElement, submitter?: HTMLElement): boolean {
+  const target = submitter?.getAttribute("formtarget") || form.target
+
+  return target != "_blank"
 }
