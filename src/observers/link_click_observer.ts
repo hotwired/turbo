@@ -38,7 +38,7 @@ export class LinkClickObserver {
     if (event instanceof MouseEvent && this.clickEventIsSignificant(event)) {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = this.findLinkFromClickTarget(target)
-      if (link && doesNotTargetIFrame(link)) {
+      if (link && doesNotHaveSpecificTarget(link)) {
         const location = this.getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location, event)) {
           event.preventDefault()
@@ -71,10 +71,6 @@ export class LinkClickObserver {
   }
 }
 
-function doesNotTargetIFrame(anchor: HTMLAnchorElement): boolean {
-  for (const element of document.getElementsByName(anchor.target)) {
-    if (element instanceof HTMLIFrameElement) return false
-  }
-
-  return true
+function doesNotHaveSpecificTarget(anchor: HTMLAnchorElement): boolean {
+  return anchor.target != "_self"
 }

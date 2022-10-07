@@ -40,8 +40,7 @@ export class FormSubmitObserver {
       if (
         form &&
         submissionDoesNotDismissDialog(form, submitter) &&
-        submissionDoesNotTargetIFrame(form, submitter) &&
-        submissionDoesNotTargetBlankWindow(form, submitter) &&
+        submissionDoesNotHaveSpecificTarget(form, submitter) &&
         this.delegate.willSubmitForm(form, submitter)
       ) {
         event.preventDefault()
@@ -57,18 +56,8 @@ function submissionDoesNotDismissDialog(form: HTMLFormElement, submitter?: HTMLE
   return method != "dialog"
 }
 
-function submissionDoesNotTargetIFrame(form: HTMLFormElement, submitter?: HTMLElement): boolean {
+function submissionDoesNotHaveSpecificTarget(form: HTMLFormElement, submitter?: HTMLElement): boolean {
   const target = submitter?.getAttribute("formtarget") || form.target
 
-  for (const element of document.getElementsByName(target)) {
-    if (element instanceof HTMLIFrameElement) return false
-  }
-
-  return true
-}
-
-function submissionDoesNotTargetBlankWindow(form: HTMLFormElement, submitter?: HTMLElement): boolean {
-  const target = submitter?.getAttribute("formtarget") || form.target
-
-  return target != "_blank"
+  return target != "_self"
 }
