@@ -151,6 +151,14 @@ test("test following a POST form clears cache", async ({ page }) => {
   assert.notOk(await hasSelector(page, "some-cached-element"))
 })
 
+test("test following a same-origin POST form with [target=_self]", async ({ page }) => {
+  await page.click("#self-targeted-form-post-submit")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
+})
+
 test("test following a same-origin POST form with [target=_blank]", async ({ page }) => {
   const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#targeted-form-post-submit")])
 
@@ -217,6 +225,13 @@ test("test following a same-origin [target] link", async ({ page }) => {
 
   assert.equal(pathname(popup.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(popup), "load")
+})
+
+test("test following a same-origin [target=_self] link", async ({ page }) => {
+  page.click("#same-origin-self-targeted-link")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
 })
 
 test("test following a same-origin [download] link", async ({ page }) => {

@@ -59,5 +59,5 @@ function submissionDoesNotDismissDialog(form: HTMLFormElement, submitter?: HTMLE
 function submissionDoesNotHaveSpecificTarget(form: HTMLFormElement, submitter?: HTMLElement): boolean {
   const target = submitter?.getAttribute("formtarget") || form.target
 
-  return target != "_self"
+  return !target || target == "_self"
 }

@@ -55,6 +55,10 @@
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <input type="submit" id="targeted-form-post-submit" value="Submit with [target=_blank]"/>
       </form>
+      <form id="self-targeted-form-post" method="post" action="/__turbo/redirect" target="_self">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <input type="submit" id="self-targeted-form-post-submit" value="Submit with [target=_self]"/>
+      </form>
       <p><a id="same-origin-false-link" href="/src/tests/fixtures/one.html" data-turbo="false">Same-origin data-turbo=false link</a></p>
       <p data-turbo="false"><a id="same-origin-unannotated-link-inside-false-container" href="/src/tests/fixtures/one.html">Same-origin unannotated link inside data-turbo=false container</a></p>
       <p data-turbo="false"><a id="same-origin-true-link-inside-false-container" href="/src/tests/fixtures/one.html" data-turbo="true">Same-origin data-turbo=true link inside data-turbo=false container</a></p>
@@ -62,6 +66,7 @@
       <p><a id="same-origin-anchored-link-named" href="/src/tests/fixtures/one.html#named-anchor">Same-origin link to named anchor</a></p>
       <p><a id="cross-origin-unannotated-link" href="about:blank">Cross-origin unannotated link</a></p>
       <p><a id="same-origin-targeted-link" href="/src/tests/fixtures/one.html" target="_blank">Same-origin targeted link</a></p>
+      <p><a id="same-origin-self-targeted-link" href="/src/tests/fixtures/one.html" target="_self">Same-origin link with [target=_self]</a></p>
       <p><a id="same-origin-download-link" href="/intentionally_missing_fake_download.html" download="x.html">Same-origin download link</a></p>
       <svg width="600" height="100" viewbox="-300 -50 600 100"><text><a id="same-origin-link-inside-svg-element" href="/src/tests/fixtures/one.html">Same-origin link inside SVG element</a></text></svg>
       <svg width="600" height="100" viewbox="-300 -50 600 100"><text><a id="cross-origin-link-inside-svg-element" href="about:blank">Cross-origin link inside SVG element</a></text></svg>

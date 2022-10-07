@@ -62,7 +62,7 @@ export class LinkClickObserver {
 
   findLinkFromClickTarget(target: EventTarget | null) {
     if (target instanceof Element) {
-      return target.closest<HTMLAnchorElement>("a[href]:not([target^=_]):not([download])")
+      return target.closest<HTMLAnchorElement>("a[href]:not([download])")
     }
   }
 
@@ -72,5 +72,5 @@ export class LinkClickObserver {
 }
 
 function doesNotHaveSpecificTarget(anchor: HTMLAnchorElement): boolean {
-  return anchor.target != "_self"
+  return !anchor.target || anchor.target == "_self"
 }
