@@ -61,7 +61,6 @@ export class FrameController
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
   private action: Action | null = null
-  private frame?: FrameElement
   readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
   private currentNavigationElement?: Element
@@ -288,7 +287,7 @@ export class FrameController
   formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
     const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
-    this.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
+    frame.delegate.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.loadResponse(response)
   }
@@ -370,16 +369,15 @@ export class FrameController
     const frame = this.findFrameElement(element, submitter)
     this.pageSnapshot = PageSnapshot.fromElement(frame).clone()
 
-    this.proposeVisitIfNavigatedWithAction(frame, element, submitter)
+    frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
     this.withCurrentNavigationElement(element, () => {
       frame.src = url
     })
   }
 
-  private proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
+  proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
     this.action = getVisitAction(submitter, element, frame)
-    this.frame = frame
 
     if (isAction(this.action)) {
       const { visitCachedSnapshot } = frame.delegate
@@ -407,9 +405,9 @@ export class FrameController
   }
 
   changeHistory() {
-    if (this.action && this.frame) {
+    if (this.action) {
       const method = getHistoryMethodForAction(this.action)
-      session.history.update(method, expandURL(this.frame.src || ""), this.restorationIdentifier)
+      session.history.update(method, expandURL(this.element.src || ""), this.restorationIdentifier)
     }
   }
 
