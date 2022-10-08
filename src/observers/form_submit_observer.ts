@@ -44,6 +44,7 @@ export class FormSubmitObserver {
         this.delegate.willSubmitForm(form, submitter)
       ) {
         event.preventDefault()
+        event.stopImmediatePropagation()
         this.delegate.formSubmitted(form, submitter)
       }
     }
