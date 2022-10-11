@@ -86,6 +86,10 @@ router.post("/messages", (request, response) => {
   }
 })
 
+router.post("/notfound", (request, response) => {
+  response.type("html").status(404).send("<html><body><h1>Not found</h1></body></html>")
+})
+
 router.get("/stream-response", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, target, targets } = params
