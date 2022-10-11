@@ -86,6 +86,41 @@ test("test following a same-origin unannotated custom element link", async ({ pa
   assert.equal(await visitAction(page), "advance")
 })
 
+test("test drive enabled; click an element in the shadow DOM wrapped by a link in the light DOM", async ({ page }) => {
+  page.click("#shadow-dom-drive-enabled span")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
+})
+
+test("test drive disabled; click an element in the shadow DOM within data-turbo='false'", async ({ page }) => {
+  page.click("#shadow-dom-drive-disabled span")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "load")
+})
+
+test("test drive enabled; click an element in the slot", async ({ page }) => {
+  page.click("#element-in-slot")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
+})
+
+test("test drive disabled; click an element in the slot within data-turbo='false'", async ({ page }) => {
+  page.click("#element-in-slot-disabled")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "load")
+})
+
+test("test drive disabled; click an element in the nested slot within data-turbo='false'", async ({ page }) => {
+  page.click("#element-in-nested-slot-disabled")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "load")
+})
+
 test("test following a same-origin unannotated link with search params", async ({ page }) => {
   page.click("#same-origin-unannotated-link-search-params")
   await nextBody(page)

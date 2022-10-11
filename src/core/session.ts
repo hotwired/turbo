@@ -14,7 +14,7 @@ import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource } from "./types"
-import { clearBusyState, dispatch, getVisitAction, markAsBusy } from "../util"
+import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy } from "../util"
 import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
@@ -403,8 +403,8 @@ export class Session
   }
 
   elementIsNavigatable(element: Element): boolean {
-    const container = element.closest("[data-turbo]")
-    const withinFrame = element.closest("turbo-frame")
+    const container = findClosestRecursively(element, "[data-turbo]")
+    const withinFrame = findClosestRecursively(element, "turbo-frame")
 
     // Check if Drive is enabled on the session or we're within a Frame.
     if (this.drive || withinFrame) {

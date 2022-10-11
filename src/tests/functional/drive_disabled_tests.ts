@@ -53,3 +53,8 @@ test("test drive disabled by default; forms within <turbo-frame> navigate with T
   await page.click("#frame button")
   await nextEventOnTarget(page, "frame", "turbo:frame-render")
 })
+
+test("test drive disabled by default; slot within <turbo-frame> navigate with Turbo", async ({ page }) => {
+  await page.click("#frame-navigation-with-slot")
+  await nextEventOnTarget(page, "frame", "turbo:frame-render")
+})
