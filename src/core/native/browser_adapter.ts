@@ -123,9 +123,7 @@ export class BrowserAdapter implements Adapter {
   reload(reason: ReloadReason) {
     dispatch("turbo:reload", { detail: reason })
 
-    if (!this.location) return
-
-    window.location.href = this.location.toString()
+    window.location.href = this.location?.toString() || window.location.href
   }
 
   get navigator() {
