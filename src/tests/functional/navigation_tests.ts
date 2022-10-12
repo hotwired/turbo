@@ -12,6 +12,7 @@ import {
   noNextEventNamed,
   pathname,
   readEventLogs,
+  scrollToSelector,
   search,
   selectorHasFocus,
   visitAction,
@@ -246,6 +247,7 @@ test("test following a same-origin [download] link", async ({ page }) => {
 })
 
 test("test following a same-origin link inside an SVG element", async ({ page }) => {
+  await scrollToSelector(page, "#svg-element-with-same-origin-link-inside + *")
   await page.click("#same-origin-link-inside-svg-element", { force: true })
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
@@ -253,6 +255,7 @@ test("test following a same-origin link inside an SVG element", async ({ page })
 })
 
 test("test following a cross-origin link inside an SVG element", async ({ page }) => {
+  await scrollToSelector(page, "#svg-element-with-cross-origin-link-inside + *")
   await page.click("#cross-origin-link-inside-svg-element", { force: true })
   await nextBody(page)
   assert.equal(page.url(), "about:blank")
