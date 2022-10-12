@@ -72,5 +72,7 @@ export class LinkClickObserver {
 }
 
 function doesNotHaveSpecificTarget(anchor: HTMLAnchorElement): boolean {
-  return !anchor.target || anchor.target == "_self"
+  const target = anchor.getAttribute("target")
+
+  return !target || target == "_self"
 }
