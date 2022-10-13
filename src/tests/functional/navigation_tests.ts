@@ -189,6 +189,16 @@ test("test following a same-origin anchored link", async ({ page }) => {
   assert(await isScrolledToSelector(page, "#element-id"))
 })
 
+test("test following a same-origin redirect link", async ({ page }) => {
+  await page.click("#same-origin-unannotated-link-redirect-with-hash")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(hash(page.url()), "#element-id")
+  assert.equal(await visitAction(page), "advance")
+  assert(await isScrolledToSelector(page, "#element-id"))
+})
+
 test("test following a same-origin link to a named anchor", async ({ page }) => {
   await page.click("#same-origin-anchored-link-named")
   await nextBody(page)
