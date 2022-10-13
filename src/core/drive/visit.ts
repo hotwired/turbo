@@ -322,6 +322,7 @@ export class Visit implements FetchRequestDelegate {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
         action: "replace",
         response: this.response,
+        lifecycleIdentifier: this.lifecycleIdentifier,
       })
       this.followedRedirect = true
     }

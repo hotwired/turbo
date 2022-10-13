@@ -406,3 +406,14 @@ test("test lifecycleIdentifier is present in event details", async ({ page }) =>
     )
   }
 })
+
+test("test redirection visits have the same lifecycleIdentifier", async ({ page }) => {
+  await page.click("#redirection-link")
+  const { lifecycleIdentifier } = await nextEventNamed(page, "turbo:visit")
+
+  assert.equal(
+    (await nextEventNamed(page, "turbo:visit")).lifecycleIdentifier,
+    lifecycleIdentifier,
+    "lifecycleIdentifier for redirection visit matches initial lifecycleIdentifier"
+  )
+})
