@@ -389,3 +389,20 @@ test("test ignores links that target an iframe", async ({ page }) => {
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
 })
+
+test("test lifecycleIdentifier is present in event details", async ({ page }) => {
+  await page.click("#same-origin-unannotated-link")
+  const { lifecycleIdentifier } = await nextEventNamed(page, "turbo:click")
+  assert.ok(lifecycleIdentifier, "lifecycleIdentifier present in turbo:click events")
+
+  const events = ["turbo:before-visit", "turbo:visit", "turbo:before-render", "turbo:render", "turbo:load"]
+
+  for (let i = 0; i < events.length; i++) {
+    const eventName = events[i]
+    assert.equal(
+      (await nextEventNamed(page, eventName)).lifecycleIdentifier,
+      lifecycleIdentifier,
+      `correct lifecycleIdentifier present in ${eventName}`
+    )
+  }
+})

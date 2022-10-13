@@ -1,8 +1,10 @@
+import { InitiationOptions } from "../core/types"
 import { expandURL } from "../core/url"
+import { uuid } from "../util"
 
 export interface LinkClickObserverDelegate {
-  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
-  followedLinkToLocation(link: Element, location: URL): void
+  willFollowLinkToLocation(link: Element, location: URL, options: InitiationOptions): boolean
+  followedLinkToLocation(link: Element, location: URL, options: InitiationOptions): void
 }
 
 export class LinkClickObserver {
@@ -40,9 +42,10 @@ export class LinkClickObserver {
       const link = this.findLinkFromClickTarget(target)
       if (link && doesNotTargetIFrame(link)) {
         const location = this.getLocationForLink(link)
-        if (this.delegate.willFollowLinkToLocation(link, location, event)) {
+        const options = { lifecycleIdentifier: uuid(), event }
+        if (this.delegate.willFollowLinkToLocation(link, location, options)) {
           event.preventDefault()
-          this.delegate.followedLinkToLocation(link, location)
+          this.delegate.followedLinkToLocation(link, location, options)
         }
       }
     }
