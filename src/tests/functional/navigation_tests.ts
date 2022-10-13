@@ -270,6 +270,8 @@ test("test skip link with hash-only path scrolls to the anchor without a visit",
   )
 
   assert.ok(await isScrolledToSelector(page, "#main"), "scrolled to #main")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+  assert.equal(hash(page.url()), "#main")
 })
 
 test("test skip link with hash-only path moves focus and changes tab order", async ({ page }) => {
@@ -282,12 +284,16 @@ test("test skip link with hash-only path moves focus and changes tab order", asy
     await selectorHasFocus(page, "#same-origin-unannotated-link"),
     "skips to first interactive element after #main"
   )
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+  assert.equal(hash(page.url()), "#main")
 })
 
 test("test same-page anchored replace link assumes the intention was a refresh", async ({ page }) => {
   await page.click("#refresh-link")
   await nextBody(page)
   assert.ok(await isScrolledToSelector(page, "#main"), "scrolled to #main")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+  assert.equal(hash(page.url()), "#main")
 })
 
 test("test navigating back to anchored URL", async ({ page }) => {
@@ -302,6 +308,8 @@ test("test navigating back to anchored URL", async ({ page }) => {
   await nextBody(page)
 
   assert.ok(await isScrolledToSelector(page, "#main"), "scrolled to #main")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+  assert.equal(hash(page.url()), "#main")
 })
 
 test("test following a redirection", async ({ page }) => {
