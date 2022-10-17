@@ -72,6 +72,10 @@ export class LinkClickObserver {
 }
 
 function doesNotTargetIFrame(anchor: HTMLAnchorElement): boolean {
+  if (anchor.target === "") {
+    return true
+  }
+
   for (const element of document.getElementsByName(anchor.target)) {
     if (element instanceof HTMLIFrameElement) return false
   }
