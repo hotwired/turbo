@@ -60,6 +60,10 @@ function submissionDoesNotDismissDialog(form: HTMLFormElement, submitter?: HTMLE
 function submissionDoesNotTargetIFrame(form: HTMLFormElement, submitter?: HTMLElement): boolean {
   const target = submitter?.getAttribute("formtarget") || form.target
 
+  if (target === "") {
+    return true
+  }
+
   for (const element of document.getElementsByName(target)) {
     if (element instanceof HTMLIFrameElement) return false
   }
