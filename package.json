@@ -68,7 +68,7 @@
     "release": "npm publish && git commit -am \"$npm_package_name v$npm_package_version\" && git push",
     "lint": "eslint . --ext .ts"
   },
-  "engines": {
+  "devEngines": {
     "node": ">= 14"
   }
 }
