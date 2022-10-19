@@ -327,6 +327,7 @@ export class Visit implements FetchRequestDelegate {
       this.render(async () => {
         this.cacheSnapshot()
         this.performScroll()
+        this.changeHistory()
         this.adapter.visitRendered(this)
       })
     }
