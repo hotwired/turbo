@@ -1,5 +1,5 @@
 import { Page, test } from "@playwright/test"
-import { assert, Assertion } from "chai"
+import { assert } from "chai"
 import {
   attributeForSelector,
   hasSelector,
@@ -20,15 +20,6 @@ import {
   searchParams,
 } from "../helpers/page"
 
-assert.equal = function (actual: any, expected: any, message?: string) {
-  actual = typeof actual == "string" ? actual.trim() : actual
-  expected = typeof expected == "string" ? expected.trim() : expected
-
-  const assertExpectation = new Assertion(expected)
-
-  assertExpectation.to.equal(expected, message)
-}
-
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/frames.html")
   await readEventLogs(page)
@@ -41,13 +32,13 @@ test("test navigating a frame with Turbo.visit", async ({ page }) => {
   await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
   await nextBeat()
 
-  assert.equal(await page.textContent("#frame h2"), "Frames: #frame", "does not navigate a disabled frame")
+  assert.equal(trim(await page.textContent("#frame h2")), "Frames: #frame", "does not navigate a disabled frame")
 
   await page.locator("#frame").evaluate((frame) => frame.removeAttribute("disabled"))
   await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
   await nextBeat()
 
-  assert.equal(await page.textContent("#frame h2"), "Frame: loaded", "navigates the target frame")
+  assert.equal(trim(await page.textContent("#frame h2")), "Frame: Loaded", "navigates the target frame")
 })
 
 test("test navigating a frame a second time does not leak event listeners", async ({ page }) => {
@@ -225,7 +216,8 @@ test("test the turbo:frame-missing event following a link to a page without a ma
   await nextEventNamed(page, "turbo:load")
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
-  assert.equal(await innerHTMLForSelector(page, "#missing"), "")
+  assert.ok(await hasSelector(page, "#missing #missing-frame-link"))
+  assert.ok(await hasSelector(page, "#missing #missing-page-link"))
 })
 
 test("test following a link to a page with a matching frame does not dispatch a turbo:frame-missing event", async ({
@@ -272,9 +264,9 @@ test("test following a link within a descendant frame whose ancestor declares a 
   const frame = await page.textContent("#frame h2")
   const nestedRoot = await page.textContent("#nested-root h2")
   const nestedChild = await page.textContent("#nested-child")
-  assert.equal(frame, "Frames: #frame")
-  assert.equal(nestedRoot, "Frames: #nested-root")
-  assert.equal(nestedChild, "Frame: Loaded")
+  assert.equal(trim(frame), "Frames: #frame")
+  assert.equal(trim(nestedRoot), "Frames: #nested-root")
+  assert.equal(trim(nestedChild), "Frame: Loaded")
   assert.equal(await attributeForSelector(page, "#frame", "src"), null)
   assert.equal(await attributeForSelector(page, "#nested-root", "src"), null)
   assert.equal(await attributeForSelector(page, "#nested-child", "src"), href || "")
@@ -337,10 +329,10 @@ test("test following a link that declares data-turbo-frame='_self' within a fram
   await nextBeat()
 
   const title = await page.textContent("body > h1")
-  assert.equal(title, "Frames")
+  assert.equal(trim(title), "Frames")
   assert.ok(await hasSelector(page, "#navigate-top"))
   const frame = await page.textContent("#navigate-top")
-  assert.equal(frame, "Replaced only the frame")
+  assert.equal(trim(frame), "Replaced only the frame")
 })
 
 test("test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
@@ -391,9 +383,11 @@ test("test evaluates frame script elements on each render", async ({ page }) => 
   assert.equal(await frameScriptEvaluationCount(page), undefined)
 
   await page.click("#body-script-link")
+  await nextEventOnTarget(page, "body-script", "turbo:frame-load")
   assert.equal(await frameScriptEvaluationCount(page), 1)
 
   await page.click("#body-script-link")
+  await nextEventOnTarget(page, "body-script", "turbo:frame-load")
   assert.equal(await frameScriptEvaluationCount(page), 2)
 })
 
@@ -908,6 +902,10 @@ async function withoutChangingEventListenersCount(page: Page, callback: () => Pr
 
 function frameScriptEvaluationCount(page: Page): Promise<number | undefined> {
   return page.evaluate(() => window.frameScriptEvaluationCount)
+}
+
+function trim(value: string | null): string {
+  return value ? value.trim() : ""
 }
 
 declare global {
