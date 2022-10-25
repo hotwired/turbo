@@ -100,6 +100,18 @@ export async function nextEventOnTarget(page: Page, elementId: string, eventName
   return record[1]
 }
 
+export async function listenForEventOnTarget(page: Page, elementId: string, eventName: string): Promise<void> {
+  return page.locator("#" + elementId).evaluate((element, eventName) => {
+    const eventLogs = (window as any).eventLogs
+
+    element.addEventListener(eventName, ({ target, type }) => {
+      if (target instanceof Element) {
+        eventLogs.push([type, {}, target.id])
+      }
+    })
+  }, eventName)
+}
+
 export async function nextAttributeMutationNamed(
   page: Page,
   elementId: string,

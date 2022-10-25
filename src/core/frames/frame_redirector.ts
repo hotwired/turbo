@@ -1,41 +1,39 @@
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
 import { FrameElement } from "../../elements/frame_element"
+import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { expandURL, getAction } from "../url"
-import { LinkClickObserver, LinkClickObserverDelegate } from "../../observers/link_click_observer"
-import { Session, TurboClickEvent } from "../session"
-import { dispatch } from "../../util"
-
-export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObserverDelegate {
+import { Session } from "../session"
+export class FrameRedirector implements LinkInterceptorDelegate, FormSubmitObserverDelegate {
   readonly session: Session
   readonly element: Element
-  readonly linkClickObserver: LinkClickObserver
+  readonly linkInterceptor: LinkInterceptor
   readonly formSubmitObserver: FormSubmitObserver
 
   constructor(session: Session, element: Element) {
     this.session = session
     this.element = element
-    this.linkClickObserver = new LinkClickObserver(this, element)
+    this.linkInterceptor = new LinkInterceptor(this, element)
     this.formSubmitObserver = new FormSubmitObserver(this, element)
   }
 
   start() {
-    this.linkClickObserver.start()
+    this.linkInterceptor.start()
     this.formSubmitObserver.start()
   }
 
   stop() {
-    this.linkClickObserver.stop()
+    this.linkInterceptor.stop()
     this.formSubmitObserver.stop()
   }
 
-  willFollowLinkToLocation(element: Element, location: URL, event: MouseEvent) {
-    return this.shouldRedirect(element) && this.frameAllowsVisitingLocation(element, location, event)
+  shouldInterceptLinkClick(element: Element, _location: string, _event: MouseEvent) {
+    return this.shouldRedirect(element)
   }
 
-  followedLinkToLocation(element: Element, url: URL) {
+  linkClickIntercepted(element: Element, url: string, event: MouseEvent) {
     const frame = this.findFrameElement(element)
     if (frame) {
-      frame.delegate.followedLinkToLocation(element, url)
+      frame.delegate.linkClickIntercepted(element, url, event)
     }
   }
 
@@ -52,16 +50,6 @@ export class FrameRedirector implements LinkClickObserverDelegate, FormSubmitObs
     if (frame) {
       frame.delegate.formSubmitted(element, submitter)
     }
-  }
-
-  private frameAllowsVisitingLocation(target: Element, { href: url }: URL, originalEvent: MouseEvent): boolean {
-    const event = dispatch<TurboClickEvent>("turbo:click", {
-      target,
-      detail: { url, originalEvent },
-      cancelable: true,
-    })
-
-    return !event.defaultPrevented
   }
 
   private shouldSubmit(form: HTMLFormElement, submitter?: HTMLElement) {

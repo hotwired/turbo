@@ -6,20 +6,20 @@ export type FormLinkClickObserverDelegate = {
 }
 
 export class FormLinkClickObserver implements LinkClickObserverDelegate {
-  readonly linkClickObserver: LinkClickObserver
+  readonly linkInterceptor: LinkClickObserver
   readonly delegate: FormLinkClickObserverDelegate
 
   constructor(delegate: FormLinkClickObserverDelegate, element: HTMLElement) {
     this.delegate = delegate
-    this.linkClickObserver = new LinkClickObserver(this, element)
+    this.linkInterceptor = new LinkClickObserver(this, element)
   }
 
   start() {
-    this.linkClickObserver.start()
+    this.linkInterceptor.start()
   }
 
   stop() {
-    this.linkClickObserver.stop()
+    this.linkInterceptor.stop()
   }
 
   willFollowLinkToLocation(link: Element, location: URL, originalEvent: MouseEvent): boolean {

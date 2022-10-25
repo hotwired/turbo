@@ -297,6 +297,10 @@
       </form>
       <div id="messages">
       </div>
+      <form id="form-with-external-inputs" action="/src/tests/fixtures/frames/hello.html" data-turbo-action="replace" data-turbo-frame="hello"></form>
+      <select id="external-select" form="form-with-external-inputs" name="greeting">
+        <option selected>Hello from a replace Visit</option>
+      </select>
     </turbo-frame>
     <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>
