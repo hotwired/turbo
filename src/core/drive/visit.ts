@@ -258,7 +258,8 @@ export class Visit implements FetchRequestDelegate {
         if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender, this)
+          let willRender = this.hasReplaceAction() ? false : this.willRender
+          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, willRender, this)
           this.performScroll()
           this.adapter.visitRendered(this)
           this.complete()
@@ -313,13 +314,17 @@ export class Visit implements FetchRequestDelegate {
   }
 
   followRedirect() {
-    if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
-      this.adapter.visitProposedToLocation(this.redirectedToLocation, {
+    if (this.hasReplaceAction()) {
+      this.adapter.visitProposedToLocation(this.redirectedToLocation!, {
         action: "replace",
         response: this.response,
       })
       this.followedRedirect = true
     }
+  }
+
+  hasReplaceAction() {
+    return this.redirectedToLocation && !this.followedRedirect && this.response?.redirected
   }
 
   goToSamePageAnchor() {
