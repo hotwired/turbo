@@ -258,7 +258,7 @@ export class Visit implements FetchRequestDelegate {
         if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          let willRender = this.hasReplaceAction() ? false : this.willRender
+          const willRender = this.hasReplaceAction() ? false : this.willRender
           await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, willRender, this)
           this.performScroll()
           this.adapter.visitRendered(this)
