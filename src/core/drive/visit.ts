@@ -164,6 +164,10 @@ export class Visit implements FetchRequestDelegate {
     return this.isSamePage
   }
 
+  get willRedirectAsReplaceAction() {
+    return this.redirectedToLocation && !this.followedRedirect && this.response?.redirected
+  }
+
   start() {
     if (this.state == VisitState.initialized) {
       this.recordTimingMetric(TimingMetric.visitStart)
@@ -258,7 +262,7 @@ export class Visit implements FetchRequestDelegate {
         if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          const willRender = this.hasReplaceAction() ? false : this.willRender
+          const willRender = this.willRedirectAsReplaceAction ? false : this.willRender
           await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, willRender, this)
           this.performScroll()
           this.adapter.visitRendered(this)
@@ -314,17 +318,13 @@ export class Visit implements FetchRequestDelegate {
   }
 
   followRedirect() {
-    if (this.hasReplaceAction()) {
+    if (this.willRedirectAsReplaceAction) {
       this.adapter.visitProposedToLocation(this.redirectedToLocation!, {
         action: "replace",
         response: this.response,
       })
       this.followedRedirect = true
     }
-  }
-
-  hasReplaceAction() {
-    return this.redirectedToLocation && !this.followedRedirect && this.response?.redirected
   }
 
   goToSamePageAnchor() {
