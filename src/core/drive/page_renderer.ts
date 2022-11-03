@@ -115,6 +115,8 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   activateNewBodyScriptElements() {
     for (const inertScriptElement of this.newBodyScriptElements) {
+      if (inertScriptElement.type === "application/json") continue
+
       const activatedScriptElement = activateScriptElement(inertScriptElement)
       inertScriptElement.replaceWith(activatedScriptElement)
     }

@@ -72,6 +72,8 @@ export class FrameRenderer extends Renderer<FrameElement> {
 
   activateScriptElements() {
     for (const inertScriptElement of this.newScriptElements) {
+      if (inertScriptElement.type === "application/json") continue
+
       const activatedScriptElement = activateScriptElement(inertScriptElement)
       inertScriptElement.replaceWith(activatedScriptElement)
     }
