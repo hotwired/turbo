@@ -18,6 +18,7 @@ import {
   scrollPosition,
   scrollToSelector,
   searchParams,
+  cancelNextEvent,
 } from "../helpers/page"
 
 assert.equal = function (actual: any, expected: any, message?: string) {
@@ -446,6 +447,7 @@ test("test navigating a frame from an outer link fires events", async ({ page })
   await page.click("#outside-frame-form")
 
   await nextEventOnTarget(page, "outside-frame-form", "turbo:click")
+  await nextEventOnTarget(page, "outside-frame-form", "turbo:frame-click")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
   const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
@@ -462,6 +464,7 @@ test("test navigating a frame from an inner link fires events", async ({ page })
   await page.click("#link-frame")
 
   await nextEventOnTarget(page, "link-frame", "turbo:click")
+  await nextEventOnTarget(page, "link-frame", "turbo:frame-click")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
   const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
@@ -486,6 +489,13 @@ test("test navigating a frame targeting _top from an outer link fires events", a
 
   const otherEvents = await readEventLogs(page)
   assert.equal(otherEvents.length, 0, "no more events")
+})
+
+test("test canceling a turbo:frame-click event falls back to built-in browser navigation", async ({ page }) => {
+  await cancelNextEvent(page, "turbo:frame-click")
+  await Promise.all([page.waitForNavigation(), page.click("#link-frame")])
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html")
 })
 
 test("test invoking .reload() re-fetches the frame's content", async ({ page }) => {

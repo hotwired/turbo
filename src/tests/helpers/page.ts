@@ -14,7 +14,7 @@ export function attributeForSelector(page: Page, selector: string, attributeName
   return page.locator(selector).getAttribute(attributeName)
 }
 
-type CancellableEvent = "turbo:click" | "turbo:before-visit"
+type CancellableEvent = "turbo:click" | "turbo:before-visit" | "turbo:frame-click"
 
 export function cancelNextEvent(page: Page, eventName: CancellableEvent): Promise<void> {
   return page.evaluate(
