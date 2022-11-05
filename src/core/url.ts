@@ -1,3 +1,5 @@
+import { getMetaContent } from "../util";
+
 export type Locatable = URL | string
 
 export function expandURL(locatable: Locatable) {
@@ -25,7 +27,8 @@ export function getExtension(url: URL) {
 }
 
 export function isHTML(url: URL) {
-  return !!getExtension(url).match(/^(?:|\.(?:htm|html|xhtml|php))$/)
+  const pattern = new RegExp(getMetaContent('turbo-html-url-pattern') || '^(?:|\.(?:htm|html|xhtml|php))$')
+  return !!getExtension(url).match(pattern)
 }
 
 export function isPrefixedBy(baseURL: URL, url: URL) {
