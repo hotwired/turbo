@@ -38,7 +38,7 @@ export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: Vi
 
 export class FrameController
   implements
-    AppearanceObserverDelegate,
+    AppearanceObserverDelegate<FrameElement>,
     FetchRequestDelegate,
     FormSubmitObserverDelegate,
     FormSubmissionDelegate,
@@ -49,7 +49,7 @@ export class FrameController
 {
   readonly element: FrameElement
   readonly view: FrameView
-  readonly appearanceObserver: AppearanceObserver
+  readonly appearanceObserver: AppearanceObserver<FrameElement>
   readonly formLinkClickObserver: FormLinkClickObserver
   readonly linkInterceptor: LinkInterceptor
   readonly formSubmitObserver: FormSubmitObserver
@@ -198,7 +198,9 @@ export class FrameController
 
   // Appearance observer delegate
 
-  elementAppearedInViewport(_element: Element) {
+  elementAppearedInViewport(element: FrameElement) {
+    this.pageSnapshot = PageSnapshot.fromElement(element).clone()
+    this.proposeVisitIfNavigatedWithAction(element, element)
     this.loadSourceURL()
   }
 

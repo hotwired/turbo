@@ -1,14 +1,14 @@
-export interface AppearanceObserverDelegate {
-  elementAppearedInViewport(element: Element): void
+export interface AppearanceObserverDelegate<T extends Element> {
+  elementAppearedInViewport(element: T): void
 }
 
-export class AppearanceObserver {
-  readonly delegate: AppearanceObserverDelegate
-  readonly element: Element
+export class AppearanceObserver<T extends Element> {
+  readonly delegate: AppearanceObserverDelegate<T>
+  readonly element: T
   readonly intersectionObserver: IntersectionObserver
   started = false
 
-  constructor(delegate: AppearanceObserverDelegate, element: Element) {
+  constructor(delegate: AppearanceObserverDelegate<T>, element: T) {
     this.delegate = delegate
     this.element = element
     this.intersectionObserver = new IntersectionObserver(this.intersect)

@@ -1,5 +1,5 @@
 import { test } from "@playwright/test"
-import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname } from "../helpers/page"
+import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
 import { assert } from "chai"
 
 test("test frame navigation with descendant link", async ({ page }) => {
@@ -28,6 +28,18 @@ test("test frame navigation emits fetch-request-error event when offline", async
   await page.context().setOffline(true)
   await page.click("#tab-2")
   await nextEventOnTarget(page, "tab-frame", "turbo:fetch-request-error")
+})
+
+test("test lazy-loaded frame promotes navigation", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+
+  assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Not Loaded")
+
+  await scrollToSelector(page, "#eager-loaded-frame")
+  await nextEventOnTarget(page, "eager-loaded-frame", "turbo:frame-load")
+
+  assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Loaded")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame_for_eager.html")
 })
 
 test("test promoted frame navigation updates the URL before rendering", async ({ page }) => {
