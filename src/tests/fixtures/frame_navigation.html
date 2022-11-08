@@ -17,6 +17,13 @@
         <a id="self" href="/src/tests/fixtures/frame_navigation.html" data-turbo-frame="_self">Self Frame</a>
         <a id="top" href="/src/tests/fixtures/frame_navigation.html" data-turbo-frame="_top">Top</a>
       </turbo-frame>
+
+      <div style="height: calc(100vh*2);"></div>
+
+      <turbo-frame id="eager-loaded-frame" src="/src/tests/fixtures/frames/frame_for_eager.html" loading="lazy"
+                   data-turbo-action="advance">
+        <h2>Eager-loaded frame: Not Loaded</h2>
+      </turbo-frame>
     </div>
   </body>
 </html>
