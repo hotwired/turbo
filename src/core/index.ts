@@ -19,6 +19,7 @@ export {
   TurboBeforeRenderEvent,
   TurboBeforeVisitEvent,
   TurboClickEvent,
+  TurboFrameClickEvent,
   TurboBeforeFrameRenderEvent,
   TurboFrameLoadEvent,
   TurboFrameRenderEvent,
