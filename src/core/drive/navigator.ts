@@ -2,7 +2,7 @@ import { Action, isAction } from "../types"
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
-import { expandURL, getAnchor, getRequestURL, Locatable, locationIsVisitable } from "../url"
+import { expandURL, getAnchor, getRequestURL, Locatable } from "../url"
 import { getAttribute } from "../../util"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
@@ -10,6 +10,7 @@ import { PageSnapshot } from "./page_snapshot"
 export type NavigatorDelegate = VisitDelegate & {
   allowsVisitingLocationWithAction(location: URL, action?: Action): boolean
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void
+  locationIsVisitable(location: URL, rootLocation: URL): boolean
   notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL): void
 }
 
@@ -24,7 +25,7 @@ export class Navigator {
 
   proposeVisit(location: URL, options: Partial<VisitOptions> = {}) {
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
-      if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
+      if (this.delegate.locationIsVisitable(location, this.view.snapshot.rootLocation)) {
         this.delegate.visitProposedToLocation(location, options)
       } else {
         window.location.href = location.toString()
