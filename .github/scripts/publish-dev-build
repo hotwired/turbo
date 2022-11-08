@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eux
 
-DEV_BUILD_REPO_NAME="hotwired/dev-builds"
+DEV_BUILD_REPO_NAME="manuelpuyol/turbo-dev"
 DEV_BUILD_ORIGIN_URL="https://${1}@github.com/${DEV_BUILD_REPO_NAME}.git"
 BUILD_PATH="$HOME/publish-dev-build"
 
