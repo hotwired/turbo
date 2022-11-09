@@ -1,5 +1,12 @@
 import { test } from "@playwright/test"
-import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
+import {
+  getFromLocalStorage,
+  nextBeat,
+  nextEventNamed,
+  nextEventOnTarget,
+  pathname,
+  scrollToSelector,
+} from "../helpers/page"
 import { assert } from "chai"
 
 test("test frame navigation with descendant link", async ({ page }) => {
@@ -96,4 +103,29 @@ test("test promoted frame navigations are cached", async ({ page }) => {
   assert.equal(await page.textContent("#tab-content"), "One")
   assert.equal(await page.getAttribute("#tab-frame", "src"), null, "caches one.html without #tab-frame[src]")
   assert.equal(await page.getAttribute("#tab-frame", "complete"), null, "caches one.html without [complete]")
+})
+
+test.only("test canceling frame requests don't mutate the history", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/tabs.html")
+
+  await page.click("#tab-2")
+  await page.click("#tab-3")
+
+  await nextEventOnTarget(page, "tab-frame", "turbo:frame-load")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("#tab-content"), "Three")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/three.html")
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("#tab-content"), "One")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/one.html")
+
+  // Make sure the frame is not mutated after some time.
+  await nextBeat()
+
+  assert.equal(await page.textContent("#tab-content"), "One")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/one.html")
 })
