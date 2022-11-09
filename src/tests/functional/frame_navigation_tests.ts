@@ -105,10 +105,20 @@ test("test promoted frame navigations are cached", async ({ page }) => {
   assert.equal(await page.getAttribute("#tab-frame", "complete"), null, "caches one.html without [complete]")
 })
 
-test.only("test canceling frame requests don't mutate the history", async ({ page }) => {
+test("test canceling frame requests don't mutate the history", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
 
   await page.click("#tab-2")
+
+  await nextEventOnTarget(page, "tab-frame", "turbo:frame-load")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("#tab-content"), "Two")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/two.html")
+  assert.equal(await page.getAttribute("#tab-frame", "complete"), "", "sets [complete]")
+
+  // This request will be canceled
+  page.click("#tab-1")
   await page.click("#tab-3")
 
   await nextEventOnTarget(page, "tab-frame", "turbo:frame-load")
@@ -120,12 +130,12 @@ test.only("test canceling frame requests don't mutate the history", async ({ pag
   await page.goBack()
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("#tab-content"), "One")
-  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/one.html")
+  assert.equal(await page.textContent("#tab-content"), "Two")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/two.html")
 
   // Make sure the frame is not mutated after some time.
   await nextBeat()
 
-  assert.equal(await page.textContent("#tab-content"), "One")
-  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/one.html")
+  assert.equal(await page.textContent("#tab-content"), "Two")
+  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/two.html")
 })

@@ -354,7 +354,7 @@ export class FrameController
   private async visit(url: URL) {
     const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
 
-    this.currentFetchRequest?.cancel()
+    this.cancelInFlightNavigation()
     this.currentFetchRequest = request
 
     return new Promise<void>((resolve) => {
@@ -367,8 +367,32 @@ export class FrameController
     })
   }
 
+  private cancelInFlightNavigation(frame?: FrameElement) {
+    if (!this.currentFetchRequest) return
+
+    this.currentFetchRequest.cancel()
+    this.currentFetchRequest = null
+
+    if (!frame) return
+
+    // Restore the frame attributes to their previous state, ensuring that the canceled
+    // request won't be cached.
+    this.ignoringChangesToAttribute("src", () => {
+      frame.src = frame.previousSrc
+      clearBusyState(frame)
+    })
+
+    if (frame.previousSrc) {
+      this.ignoringChangesToAttribute("complete", () => {
+        frame.setAttribute("complete", "")
+      })
+    }
+  }
+
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
+
+    this.cancelInFlightNavigation(frame)
     this.pageSnapshot = PageSnapshot.fromElement(frame).clone()
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
@@ -543,6 +567,7 @@ export class FrameController
     this.ignoringChangesToAttribute("complete", () => {
       if (value) {
         this.element.setAttribute("complete", "")
+        this.element.previousSrc = this.element.src
       } else {
         this.element.removeAttribute("complete")
       }
