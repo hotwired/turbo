@@ -124,12 +124,14 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
           return true;  
         }
       }
+
       // if any other element...
       if (newElement.isEqualNode(element)){
         elementList.splice(index, 1);
         return true;
       }
     }
+
     return false
   }
 
