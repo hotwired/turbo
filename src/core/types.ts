@@ -18,3 +18,8 @@ export type StreamSource = {
     options?: boolean | EventListenerOptions
   ): void
 }
+
+export type InitiationOptions = {
+  event: MouseEvent
+  lifecycleIdentifier: string
+}

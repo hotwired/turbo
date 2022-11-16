@@ -52,6 +52,7 @@ export type VisitOptions = {
   shouldCacheSnapshot: boolean
   frame?: string
   acceptsStreamResponse: boolean
+  lifecycleIdentifier: string
 }
 
 const defaultOptions: VisitOptions = {
@@ -62,6 +63,7 @@ const defaultOptions: VisitOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
+  lifecycleIdentifier: uuid(),
 }
 
 export type VisitResponse = {
@@ -102,6 +104,7 @@ export class Visit implements FetchRequestDelegate {
   snapshotCached = false
   state = VisitState.initialized
   snapshot?: PageSnapshot
+  lifecycleIdentifier: string
 
   constructor(
     delegate: VisitDelegate,
@@ -125,6 +128,7 @@ export class Visit implements FetchRequestDelegate {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
+      lifecycleIdentifier,
     } = {
       ...defaultOptions,
       ...options,
@@ -142,6 +146,7 @@ export class Visit implements FetchRequestDelegate {
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
+    this.lifecycleIdentifier = lifecycleIdentifier
   }
 
   get adapter() {
@@ -317,6 +322,7 @@ export class Visit implements FetchRequestDelegate {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
         action: "replace",
         response: this.response,
+        lifecycleIdentifier: this.lifecycleIdentifier,
       })
       this.followedRedirect = true
     }

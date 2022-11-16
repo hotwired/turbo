@@ -13,7 +13,7 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { Action, Position, StreamSource, isAction } from "./types"
+import { Action, Position, StreamSource, isAction, InitiationOptions } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
 import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
@@ -26,15 +26,17 @@ import { Preloader, PreloaderDelegate } from "./drive/preloader"
 export type FormMode = "on" | "off" | "optin"
 export type TimingData = unknown
 export type TurboBeforeCacheEvent = CustomEvent
-export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
-export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
-export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
+export type TurboBeforeRenderEvent = CustomEvent<
+  { newBody: HTMLBodyElement; lifecycleIdentifier?: string } & PageViewRenderOptions
+>
+export type TurboBeforeVisitEvent = CustomEvent<{ url: string; lifecycleIdentifier?: string }>
+export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent; lifecycleIdentifier: string }>
 export type TurboFrameLoadEvent = CustomEvent
 export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
 export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
-export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
-export type TurboRenderEvent = CustomEvent
-export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
+export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData; lifecycleIdentifier?: string }>
+export type TurboRenderEvent = CustomEvent<{ lifecycleIdentifier?: string }>
+export type TurboVisitEvent = CustomEvent<{ url: string; action: Action; lifecycleIdentifier: string }>
 
 export class Session
   implements
@@ -152,6 +154,10 @@ export class Session
     return this.history.restorationIdentifier
   }
 
+  get lifecycleIdentifier(): string | undefined {
+    return this.navigator.currentVisit?.lifecycleIdentifier
+  }
+
   // History delegate
 
   historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string) {
@@ -183,25 +189,28 @@ export class Session
 
   // Link click observer delegate
 
-  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent) {
+  willFollowLinkToLocation(link: Element, location: URL, options: InitiationOptions) {
     return (
       this.elementIsNavigatable(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
-      this.applicationAllowsFollowingLinkToLocation(link, location, event)
+      this.applicationAllowsFollowingLinkToLocation(link, location, options)
     )
   }
 
-  followedLinkToLocation(link: Element, location: URL) {
+  followedLinkToLocation(link: Element, location: URL, options: InitiationOptions) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
 
-    this.visit(location.href, { action, acceptsStreamResponse })
+    this.visit(location.href, { action, acceptsStreamResponse, lifecycleIdentifier: options.lifecycleIdentifier })
   }
 
   // Navigator delegate
 
-  allowsVisitingLocationWithAction(location: URL, action?: Action) {
-    return this.locationWithActionIsSamePage(location, action) || this.applicationAllowsVisitingLocation(location)
+  allowsVisitingLocation(location: URL, options: Partial<VisitOptions>) {
+    return (
+      this.locationWithActionIsSamePage(location, options.action) ||
+      this.applicationAllowsVisitingLocation(location, options)
+    )
   }
 
   visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
@@ -215,7 +224,7 @@ export class Session
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
-      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+      this.notifyApplicationAfterVisitingLocation(visit)
     }
   }
 
@@ -315,33 +324,43 @@ export class Session
 
   // Application events
 
-  applicationAllowsFollowingLinkToLocation(link: Element, location: URL, ev: MouseEvent) {
-    const event = this.notifyApplicationAfterClickingLinkToLocation(link, location, ev)
+  applicationAllowsFollowingLinkToLocation(link: Element, location: URL, options: InitiationOptions) {
+    const event = this.notifyApplicationAfterClickingLinkToLocation(link, location, options)
     return !event.defaultPrevented
   }
 
-  applicationAllowsVisitingLocation(location: URL) {
-    const event = this.notifyApplicationBeforeVisitingLocation(location)
+  applicationAllowsVisitingLocation(location: URL, options: Partial<VisitOptions>) {
+    const event = this.notifyApplicationBeforeVisitingLocation(location, options)
     return !event.defaultPrevented
   }
 
-  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL, event: MouseEvent) {
+  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL, options: InitiationOptions) {
     return dispatch<TurboClickEvent>("turbo:click", {
       target: link,
-      detail: { url: location.href, originalEvent: event },
+      detail: {
+        url: location.href,
+        originalEvent: options.event,
+        lifecycleIdentifier: options.lifecycleIdentifier,
+      },
       cancelable: true,
     })
   }
 
-  notifyApplicationBeforeVisitingLocation(location: URL) {
+  notifyApplicationBeforeVisitingLocation(location: URL, options: Partial<VisitOptions>) {
     return dispatch<TurboBeforeVisitEvent>("turbo:before-visit", {
-      detail: { url: location.href },
+      detail: { url: location.href, lifecycleIdentifier: options.lifecycleIdentifier },
       cancelable: true,
     })
   }
 
-  notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
-    return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
+  notifyApplicationAfterVisitingLocation(visit: Visit) {
+    return dispatch<TurboVisitEvent>("turbo:visit", {
+      detail: {
+        url: visit.location.href,
+        action: visit.action,
+        lifecycleIdentifier: visit.lifecycleIdentifier,
+      },
+    })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
@@ -350,18 +369,26 @@ export class Session
 
   notifyApplicationBeforeRender(newBody: HTMLBodyElement, options: PageViewRenderOptions) {
     return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
-      detail: { newBody, ...options },
+      detail: {
+        newBody,
+        lifecycleIdentifier: this.lifecycleIdentifier,
+        ...options,
+      },
       cancelable: true,
     })
   }
 
   notifyApplicationAfterRender() {
-    return dispatch<TurboRenderEvent>("turbo:render")
+    return dispatch<TurboRenderEvent>("turbo:render", {
+      detail: {
+        lifecycleIdentifier: this.lifecycleIdentifier,
+      },
+    })
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
     return dispatch<TurboLoadEvent>("turbo:load", {
-      detail: { url: this.location.href, timing },
+      detail: { url: this.location.href, timing, lifecycleIdentifier: this.lifecycleIdentifier },
     })
   }
 

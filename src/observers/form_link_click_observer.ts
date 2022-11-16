@@ -1,7 +1,8 @@
+import { InitiationOptions } from "../core/types"
 import { LinkClickObserver, LinkClickObserverDelegate } from "./link_click_observer"
 
 export type FormLinkClickObserverDelegate = {
-  willSubmitFormLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
+  willSubmitFormLinkToLocation(link: Element, location: URL, options: InitiationOptions): boolean
   submittedFormLinkToLocation(link: Element, location: URL, form: HTMLFormElement): void
 }
 
@@ -22,11 +23,8 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
     this.linkInterceptor.stop()
   }
 
-  willFollowLinkToLocation(link: Element, location: URL, originalEvent: MouseEvent): boolean {
-    return (
-      this.delegate.willSubmitFormLinkToLocation(link, location, originalEvent) &&
-      link.hasAttribute("data-turbo-method")
-    )
+  willFollowLinkToLocation(link: Element, location: URL, options: InitiationOptions): boolean {
+    return this.delegate.willSubmitFormLinkToLocation(link, location, options) && link.hasAttribute("data-turbo-method")
   }
 
   followedLinkToLocation(link: Element, location: URL): void {
