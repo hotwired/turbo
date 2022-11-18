@@ -138,19 +138,6 @@ test("test following a same-origin POST form button[data-turbo-action=replace]",
   assert.equal(await visitAction(page), "replace")
 })
 
-test("test following a POST form clears cache", async ({ page }) => {
-  await page.evaluate(() => {
-    const cachedElement = document.createElement("some-cached-element")
-    document.body.appendChild(cachedElement)
-  })
-
-  await page.click("#form-post-submit")
-  await nextBeat() // 301 redirect response
-  await nextBeat() // 200 response
-  await page.goBack()
-  assert.notOk(await hasSelector(page, "some-cached-element"))
-})
-
 test("test following a same-origin POST link with data-turbo-action=replace", async ({ page }) => {
   page.click("#same-origin-replace-post-link")
   await nextBody(page)
