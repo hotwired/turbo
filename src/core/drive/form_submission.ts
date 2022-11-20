@@ -1,4 +1,4 @@
-import { FetchRequest, FetchMethod, fetchMethodFromString, FetchRequestHeaders } from "../../http/fetch_request"
+import { FetchRequest, FetchMethod, fetchMethodFromString } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
 import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
@@ -149,11 +149,11 @@ export class FormSubmission {
 
   // Fetch request delegate
 
-  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
+  prepareRequest(request: FetchRequest) {
     if (!request.isIdempotent) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
-        headers["X-CSRF-Token"] = token
+        request.headers["X-CSRF-Token"] = token
       }
     }
 
