@@ -758,7 +758,7 @@ test("test frame form submission with stream response", async ({ page }) => {
   assert.notOk(await page.getAttribute("#frame", "src"), "does not change frame's src")
 })
 
-test("test frame standard GET form submission with stream response does not clear cache", async ({ page }) => {
+test("test frame standard GET form submission does not clear cache", async ({ page }) => {
   await page.goto("/src/tests/fixtures/one.html")
   await appendCachedElementTracking(page)
   await page.click("#form-link")
@@ -772,7 +772,7 @@ test("test frame standard GET form submission with stream response does not clea
   assert.ok(await hasSelector(page, "some-cached-element"))
 })
 
-test("test frame standard POST form submission with stream response clears cache", async ({ page }) => {
+test("test frame standard POST form submission clears cache", async ({ page }) => {
   await page.goto("/src/tests/fixtures/one.html")
   await appendCachedElementTracking(page)
   await page.click("#form-link")
