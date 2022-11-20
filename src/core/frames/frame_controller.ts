@@ -27,7 +27,7 @@ import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
-import { isAction, Action } from "../types"
+import { Action } from "../types"
 import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
@@ -381,7 +381,7 @@ export class FrameController
   proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
     this.action = getVisitAction(submitter, element, frame)
 
-    if (isAction(this.action)) {
+    if (this.action) {
       const { visitCachedSnapshot } = frame.delegate
 
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
