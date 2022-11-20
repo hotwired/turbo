@@ -758,6 +758,33 @@ test("test frame form submission with stream response", async ({ page }) => {
   assert.notOk(await page.getAttribute("#frame", "src"), "does not change frame's src")
 })
 
+test("test frame standard GET form submission with stream response does not clear cache", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/one.html")
+  await appendCachedElementTracking(page)
+  await page.click("#form-link")
+  await nextBeat()
+  const button = await page.locator("#frame form.get[method=get] input[type=submit]")
+  await button.click()
+  await nextBody(page)
+  await page.goBack()
+  await nextBeat()
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.ok(await hasSelector(page, "some-cached-element"))
+})
+
+test("test frame standard POST form submission with stream response clears cache", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/one.html")
+  await appendCachedElementTracking(page)
+  await page.click("#form-link")
+  await nextBeat()
+  const button = await page.locator("#frame form.redirect input[type=submit]")
+  await button.click()
+  await nextBody(page)
+  await page.goBack()
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.notOk(await hasSelector(page, "some-cached-element"))
+})
+
 test("test standard GET form submission with stream response does not clear cache", async ({ page }) => {
   await page.goto("/src/tests/fixtures/one.html")
   await appendCachedElementTracking(page)
@@ -774,11 +801,9 @@ test("test standard GET form submission with stream response does not clear cach
 
 test("test standard POST form submission with stream response clears cache", async ({ page }) => {
   await page.goto("/src/tests/fixtures/one.html")
-  await page.evaluate(() => {
-    const cachedElement = document.createElement("some-cached-element")
-    document.body.appendChild(cachedElement)
-  })
+  await appendCachedElementTracking(page)
   await page.click("#form-link")
+  await nextBeat()
 
   const button = await page.locator("#frame form.stream[method=post] input[type=submit]")
   await button.click()
