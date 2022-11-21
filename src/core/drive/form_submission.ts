@@ -3,6 +3,7 @@ import { FetchResponse } from "../../http/fetch_response"
 import { expandURL } from "../url"
 import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
+import { TurboSubmitStartEvent, TurboSubmitEndEvent } from "../../events"
 
 export interface FormSubmissionDelegate {
   formSubmissionStarted(formSubmission: FormSubmission): void
@@ -28,11 +29,6 @@ enum FormEnctype {
   multipart = "multipart/form-data",
   plain = "text/plain",
 }
-
-export type TurboSubmitStartEvent = CustomEvent<{ formSubmission: FormSubmission }>
-export type TurboSubmitEndEvent = CustomEvent<
-  { formSubmission: FormSubmission } & { [K in keyof FormSubmissionResult]?: FormSubmissionResult[K] }
->
 
 function formEnctypeFromString(encoding: string): FormEnctype {
   switch (encoding.toLowerCase()) {

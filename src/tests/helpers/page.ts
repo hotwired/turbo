@@ -1,4 +1,5 @@
 import { JSHandle, Locator, Page } from "@playwright/test"
+import { TurboClickEvent, TurboBeforeVisitEvent } from "../../events"
 
 type Target = string | null
 
@@ -18,7 +19,10 @@ type CancellableEvent = "turbo:click" | "turbo:before-visit"
 
 export function cancelNextEvent(page: Page, eventName: CancellableEvent): Promise<void> {
   return page.evaluate(
-    (eventName) => addEventListener(eventName, (event) => event.preventDefault(), { once: true }),
+    (eventName) =>
+      addEventListener(eventName, (event: TurboClickEvent | TurboBeforeVisitEvent) => event.preventDefault(), {
+        once: true,
+      }),
     eventName
   )
 }

@@ -2,6 +2,8 @@ import { test } from "@playwright/test"
 import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
 import { assert } from "chai"
 
+import { TurboBeforeFrameRenderEvent } from "../../events"
+
 test("test frame navigation with descendant link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#inside")
@@ -46,7 +48,7 @@ test("test promoted frame navigation updates the URL before rendering", async ({
   await page.goto("/src/tests/fixtures/tabs.html")
 
   page.evaluate(() => {
-    addEventListener("turbo:before-frame-render", () => {
+    addEventListener("turbo:before-frame-render", (_event: TurboBeforeFrameRenderEvent) => {
       localStorage.setItem("beforeRenderUrl", window.location.pathname)
       localStorage.setItem("beforeRenderContent", document.querySelector("#tab-content")?.textContent || "")
     })

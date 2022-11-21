@@ -4,6 +4,7 @@ import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
 import { FormSubmission } from "../drive/form_submission"
 import { Session } from "../session"
 import { uuid, dispatch } from "../../util"
+import { TurboReloadEvent } from "../../events"
 
 export type ReloadReason = StructuredReason | undefined
 interface StructuredReason {
@@ -121,7 +122,7 @@ export class BrowserAdapter implements Adapter {
   }
 
   reload(reason: ReloadReason) {
-    dispatch("turbo:reload", { detail: reason })
+    dispatch<TurboReloadEvent>("turbo:reload", { detail: reason })
 
     window.location.href = this.location?.toString() || window.location.href
   }

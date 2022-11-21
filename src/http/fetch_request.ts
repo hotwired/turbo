@@ -1,19 +1,7 @@
 import { FetchResponse } from "./fetch_response"
 import { FrameElement } from "../elements/frame_element"
+import { TurboBeforeFetchRequestEvent, TurboBeforeFetchResponseEvent, TurboFetchRequestErrorEvent } from "../events"
 import { dispatch } from "../util"
-
-export type TurboBeforeFetchRequestEvent = CustomEvent<{
-  fetchOptions: RequestInit
-  url: URL
-  resume: (value: any) => void
-}>
-export type TurboBeforeFetchResponseEvent = CustomEvent<{
-  fetchResponse: FetchResponse
-}>
-export type TurboFetchRequestErrorEvent = CustomEvent<{
-  request: FetchRequest
-  error: Error
-}>
 
 export interface FetchRequestDelegate {
   referrer?: URL

@@ -16,6 +16,8 @@ import {
   willChangeBody,
 } from "../helpers/page"
 
+import { TurboFetchRequestErrorEvent, TurboLoadEvent, TurboBeforeFetchResponseEvent } from "../../events"
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/visit.html")
   await readEventLogs(page)
@@ -118,7 +120,7 @@ test("test turbo:before-fetch-response open new site", async ({ page }) => {
   page.evaluate(() =>
     addEventListener(
       "turbo:before-fetch-response",
-      async function eventListener(event: any) {
+      async function eventListener(event: TurboBeforeFetchResponseEvent) {
         removeEventListener("turbo:before-fetch-response", eventListener, false)
         ;(window as any).fetchResponseResult = {
           responseText: await event.detail.fetchResponse.responseText,
@@ -185,7 +187,7 @@ function contentTypeOfURL(url: string): Promise<string | undefined> {
 test("test can scroll to element after click-initiated turbo:visit", async ({ page }) => {
   const id = "below-the-fold-link"
   await page.evaluate((id) => {
-    addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
+    addEventListener("turbo:load", (_event: TurboLoadEvent) => document.getElementById(id)?.scrollIntoView())
   }, id)
 
   assert(await isScrolledToTop(page), "starts unscrolled")
@@ -199,7 +201,7 @@ test("test can scroll to element after click-initiated turbo:visit", async ({ pa
 test("test can scroll to element after history-initiated turbo:visit", async ({ page }) => {
   const id = "below-the-fold-link"
   await page.evaluate((id) => {
-    addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
+    addEventListener("turbo:load", (_event: TurboLoadEvent) => document.getElementById(id)?.scrollIntoView())
   }, id)
 
   await scrollToSelector(page, "#" + id)
@@ -213,7 +215,7 @@ test("test can scroll to element after history-initiated turbo:visit", async ({ 
 
 test("test Visit with network error", async ({ page }) => {
   await page.evaluate(() => {
-    addEventListener("turbo:fetch-request-error", (event: Event) => event.preventDefault())
+    addEventListener("turbo:fetch-request-error", (event: TurboFetchRequestErrorEvent) => event.preventDefault())
   })
   await page.context().setOffline(true)
   await page.click("#same-origin-link")

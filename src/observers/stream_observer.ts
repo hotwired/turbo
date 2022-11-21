@@ -1,4 +1,4 @@
-import { TurboBeforeFetchResponseEvent } from "../http/fetch_request"
+import { TurboBeforeFetchResponseEvent } from "../events"
 import { FetchResponse } from "../http/fetch_response"
 import { StreamMessage } from "../core/streams/stream_message"
 import { StreamSource } from "../core/types"
@@ -48,13 +48,13 @@ export class StreamObserver {
     return this.sources.has(source)
   }
 
-  inspectFetchResponse = <EventListener>((event: TurboBeforeFetchResponseEvent) => {
+  inspectFetchResponse = (event: TurboBeforeFetchResponseEvent) => {
     const response = fetchResponseFromEvent(event)
     if (response && fetchResponseIsStream(response)) {
       event.preventDefault()
       this.receiveMessageResponse(response)
     }
-  })
+  }
 
   receiveMessageEvent = (event: MessageEvent) => {
     if (this.started && typeof event.data == "string") {

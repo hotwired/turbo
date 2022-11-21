@@ -13,28 +13,27 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { Action, Position, StreamSource, isAction } from "./types"
+import { Action, Position, StreamSource, TimingData, isAction } from "./types"
 import { clearBusyState, dispatch, markAsBusy } from "../util"
 import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
-import { FrameViewRenderOptions } from "./frames/frame_view"
 import { FetchResponse } from "../http/fetch_response"
 import { Preloader, PreloaderDelegate } from "./drive/preloader"
+import {
+  TurboBeforeCacheEvent,
+  TurboBeforeRenderEvent,
+  TurboBeforeVisitEvent,
+  TurboClickEvent,
+  TurboFrameLoadEvent,
+  TurboFrameRenderEvent,
+  TurboLoadEvent,
+  TurboRenderEvent,
+  TurboVisitEvent,
+} from "../events"
 
 export type FormMode = "on" | "off" | "optin"
-export type TimingData = unknown
-export type TurboBeforeCacheEvent = CustomEvent
-export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
-export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
-export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
-export type TurboFrameLoadEvent = CustomEvent
-export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
-export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
-export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
-export type TurboRenderEvent = CustomEvent
-export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
 
 export class Session
   implements

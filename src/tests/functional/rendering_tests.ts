@@ -18,6 +18,15 @@ import {
   visitAction,
 } from "../helpers/page"
 
+import { FrameElement } from "../../elements/frame_element"
+
+import {
+  TurboReloadEvent,
+  TurboBeforeFrameRenderEvent,
+  TurboBeforeRenderEvent,
+  TurboBeforeCacheEvent,
+} from "../../events"
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/rendering.html")
   await clearLocalStorage(page)
@@ -48,8 +57,8 @@ test("test reloads when tracked elements change", async ({ page }) => {
   await page.evaluate(() =>
     window.addEventListener(
       "turbo:reload",
-      (e: any) => {
-        localStorage.setItem("reloadReason", e.detail.reason)
+      (event: TurboReloadEvent) => {
+        localStorage.setItem("reloadReason", event.detail.reason)
       },
       { once: true }
     )
@@ -70,8 +79,8 @@ test("test reloads when tracked elements change due to failed form submission", 
   await page.evaluate(() => {
     window.addEventListener(
       "turbo:reload",
-      (e: any) => {
-        localStorage.setItem("reason", e.detail.reason)
+      (event: TurboReloadEvent) => {
+        localStorage.setItem("reason", event.detail.reason)
       },
       { once: true }
     )
@@ -98,8 +107,8 @@ test("test reloads when tracked elements change due to failed form submission", 
 
 test("test before-render event supports custom render function", async ({ page }) => {
   await page.evaluate(() =>
-    addEventListener("turbo:before-render", (event) => {
-      const { detail } = event as CustomEvent
+    addEventListener("turbo:before-render", (event: TurboBeforeRenderEvent) => {
+      const { detail } = event
       const { render } = detail
       detail.render = (currentElement: HTMLBodyElement, newElement: HTMLBodyElement) => {
         newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered</span>`)
@@ -126,7 +135,7 @@ test("test reloads when turbo-visit-control setting is reload", async ({ page })
   await page.evaluate(() =>
     window.addEventListener(
       "turbo:reload",
-      (e: any) => {
+      (e: TurboReloadEvent) => {
         localStorage.setItem("reloadReason", e.detail.reason)
       },
       { once: true }
@@ -359,11 +368,11 @@ test("test restores focus during page rendering when transposing an ancestor of 
 
 test("test before-frame-render event supports custom render function within turbo-frames", async ({ page }) => {
   const frame = await page.locator("#frame")
-  await frame.evaluate((frame) =>
-    frame.addEventListener("turbo:before-frame-render", (event) => {
-      const { detail } = event as CustomEvent
+  await frame.evaluate((frame: FrameElement) =>
+    frame.addEventListener("turbo:before-frame-render", (event: TurboBeforeFrameRenderEvent) => {
+      const { detail } = event
       const { render } = detail
-      detail.render = (currentElement: Element, newElement: Element) => {
+      detail.render = (currentElement: FrameElement, newElement: FrameElement) => {
         newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered Frame</span>`)
         render(currentElement, newElement)
       }
@@ -513,7 +522,9 @@ test("test <input type='reset'> clears values when restored from cache", async (
 
 test("test before-cache event", async ({ page }) => {
   await page.evaluate(() => {
-    addEventListener("turbo:before-cache", () => (document.body.innerHTML = "Modified"), { once: true })
+    addEventListener("turbo:before-cache", (_event: TurboBeforeCacheEvent) => (document.body.innerHTML = "Modified"), {
+      once: true,
+    })
   })
   await page.click("#same-origin-link")
   await nextBody(page)

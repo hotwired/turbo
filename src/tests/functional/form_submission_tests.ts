@@ -761,7 +761,7 @@ test("test frame form submission with [data-turbo=false] on the submitter", asyn
 })
 
 test("test frame form submission ignores submissions with their defaultPrevented", async ({ page }) => {
-  await page.evaluate(() => document.addEventListener("submit", (event) => event.preventDefault(), true))
+  await page.evaluate(() => document.addEventListener("submit", (event: SubmitEvent) => event.preventDefault(), true))
   await page.click("#frame .redirect [type=submit]")
   await nextBeat()
 

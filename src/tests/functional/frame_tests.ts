@@ -20,6 +20,9 @@ import {
   searchParams,
 } from "../helpers/page"
 
+import { FrameElement } from "../../elements"
+import { TurboFrameMissingEvent } from "../../events"
+
 assert.equal = function (actual: any, expected: any, message?: string) {
   actual = typeof actual == "string" ? actual.trim() : actual
   expected = typeof expected == "string" ? expected.trim() : expected
@@ -181,15 +184,15 @@ test("test failing to follow a link to a page without a matching frame dispatche
 test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({
   page,
 }) => {
-  await page.locator("#missing").evaluate((frame) => {
+  await page.locator("#missing").evaluate((frame: FrameElement) => {
     frame.addEventListener(
       "turbo:frame-missing",
-      ((event) => {
+      (event: TurboFrameMissingEvent) => {
         if (event.target instanceof Element) {
           event.preventDefault()
           event.target.textContent = "Overridden"
         }
-      }) as EventListener,
+      },
       { once: true }
     )
   })
@@ -202,15 +205,15 @@ test("test the turbo:frame-missing event following a link to a page without a ma
 test("test the turbo:frame-missing event following a link to a page without a matching frame can drive a Visit", async ({
   page,
 }) => {
-  await page.locator("#missing").evaluate((frame) => {
+  await page.locator("#missing").evaluate((frame: FrameElement) => {
     frame.addEventListener(
       "turbo:frame-missing",
-      ((event: CustomEvent) => {
+      (event: TurboFrameMissingEvent) => {
         event.preventDefault()
         const { response, visit } = event.detail
 
-        visit(response)
-      }) as EventListener,
+        visit(response, {})
+      },
       { once: true }
     )
   })

@@ -1,4 +1,5 @@
 import { LinkClickObserver, LinkClickObserverDelegate } from "./link_click_observer"
+import { TurboSubmitEndEvent } from "../events"
 
 export type FormLinkClickObserverDelegate = {
   willSubmitFormLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
@@ -54,7 +55,7 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
     this.delegate.submittedFormLinkToLocation(link, location, form)
 
     document.body.appendChild(form)
-    form.addEventListener("turbo:submit-end", () => form.remove(), { once: true })
+    form.addEventListener("turbo:submit-end", (_event: TurboSubmitEndEvent) => form.remove(), { once: true })
     requestAnimationFrame(() => form.requestSubmit())
   }
 }

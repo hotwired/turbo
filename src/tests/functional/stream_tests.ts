@@ -1,6 +1,7 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
 import { nextBeat, nextEventNamed, readEventLogs } from "../helpers/page"
+import { TurboBeforeStreamRenderEvent } from "../../events"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/stream.html")
@@ -82,12 +83,12 @@ test("test overriding with custom StreamActions", async ({ page }) => {
       },
     }
 
-    addEventListener("turbo:before-stream-render", (({ target, detail }: CustomEvent) => {
+    addEventListener("turbo:before-stream-render", ({ target, detail }: TurboBeforeStreamRenderEvent) => {
       const stream = target as unknown as { action: string }
 
       const defaultRender = detail.render
       detail.render = CustomActions[stream.action] || defaultRender
-    }) as EventListener)
+    })
 
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="customUpdate" target="messages">
