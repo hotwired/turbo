@@ -6,6 +6,7 @@
 Please note we have a [code of conduct](https://github.com/hotwired/turbo/blob/main/CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 ## Sending a Pull Request
+
 The core team is monitoring for pull requests. We will review your pull request and either merge it, request changes to it, or close it with an explanation.
 
 Before submitting a pull request, please make sure the following is done:
@@ -30,10 +31,12 @@ git checkout -b '<your_branch_name>'
 ```
 
 Once you are done developing the feature or bug fix you have 2 options:
+
 1. Run the test suite
 2. Run a local webserver and checkout your changes manually
 
 ### Testing
+
 The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in [intern.json](./intern.json) and [playwright.config.ts](./playwright.config.ts). Check them out to see the used browser environments.
 
 To override the ChromeDriver version, declare the `CHROMEVER` environment
@@ -77,6 +80,7 @@ yarn test:browser --project=chrome --headed
 ```
 
 ### Test files
+
 Please add your tests in the test files closely related to the feature itself. For example when touching the `src/core/drive/page_renderer.ts` your test will probably endup in the `src/tests/functional/rendering_tests.ts`.
 
 The html files needed for the tests are stored in: `src/tests/fixtures/`
@@ -85,13 +89,13 @@ The html files needed for the tests are stored in: `src/tests/fixtures/`
 
 To focus on single test, pass its file path:
 
-```bas
+```bash
 yarn test:browser TEST_FILE
 ```
 
 Where the `TEST_FILE` is the name of test you want to run. For example:
 
-```base
+```bash
 yarn test:browser src/tests/functional/drive_tests.ts
 ```
 
@@ -103,6 +107,7 @@ yarn test:browser src/tests/functional/drive_tests.ts:11
 ```
 
 ### Local webserver
+
 Since the tests are running in headless browsers it's not easy to debug them easily without using the debugger. Sometimes it's easier to run the supplied webserver and manually click through the test fixtures.
 
 To run the webserver:

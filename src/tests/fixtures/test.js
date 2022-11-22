@@ -66,3 +66,42 @@
   "turbo:frame-missing",
   "turbo:reload"
 ])
+
+customElements.define('custom-link-element', class extends HTMLElement {
+  constructor() {
+    super()
+    this.attachShadow({ mode: 'open' })
+  }
+  connectedCallback() {
+    this.shadowRoot.innerHTML = `
+      <a href="${this.getAttribute('link')}">
+        ${this.getAttribute('text') || `<slot></slot>`}
+      </a>
+    `
+  }
+})
+
+customElements.define('custom-button', class extends HTMLElement {
+  constructor() {
+    super()
+    this.attachShadow({ mode: 'open' }).innerHTML = `
+      <span>
+        Drive in Shadow DOM
+      </span>
+    `
+  }
+})
+
+customElements.define('turbo-toggle', class extends HTMLElement {
+  constructor() {
+    super()
+    this.attachShadow({ mode: 'open' })
+  }
+  connectedCallback() {
+    this.shadowRoot.innerHTML = `
+      <div data-turbo="${this.getAttribute('turbo') || 'true'}">
+        <slot></slot>
+      </div>
+    `
+  }
+})

@@ -160,6 +160,17 @@ export function pathname(url: string): string {
   return pathname
 }
 
+export async function pathnameForIFrame(page: Page, name: string) {
+  const locator = await page.locator(`[name="${name}"]`)
+  const location = await locator.evaluate((iframe: HTMLIFrameElement) => iframe.contentWindow?.location)
+
+  if (location) {
+    return pathname(location.href)
+  } else {
+    return ""
+  }
+}
+
 export function propertyForSelector(page: Page, selector: string, propertyName: string): Promise<any> {
   return page.locator(selector).evaluate((element, propertyName) => (element as any)[propertyName], propertyName)
 }

@@ -1,4 +1,5 @@
 import { expandURL } from "../core/url"
+import { findClosestRecursively } from "../util"
 
 export interface LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
@@ -60,10 +61,8 @@ export class LinkClickObserver {
     )
   }
 
-  findLinkFromClickTarget(target: EventTarget | null) {
-    if (target instanceof Element) {
-      return target.closest<HTMLAnchorElement>("a[href]:not([target^=_]):not([download])")
-    }
+  findLinkFromClickTarget(target: EventTarget | null): HTMLAnchorElement | undefined {
+    return findClosestRecursively<HTMLAnchorElement>(target as Element, "a[href]:not([target^=_]):not([download])")
   }
 
   getLocationForLink(link: Element): URL {
@@ -72,9 +71,13 @@ export class LinkClickObserver {
 }
 
 function doesNotTargetIFrame(anchor: HTMLAnchorElement): boolean {
-  for (const element of document.getElementsByName(anchor.target)) {
-    if (element instanceof HTMLIFrameElement) return false
-  }
+  if (anchor.hasAttribute("target")) {
+    for (const element of document.getElementsByName(anchor.target)) {
+      if (element instanceof HTMLIFrameElement) return false
+    }
 
-  return true
+    return true
+  } else {
+    return true
+  }
 }

@@ -1,4 +1,4 @@
-import { Action, isAction } from "./core/types"
+import { Action } from "./core/types"
 
 export type DispatchOptions<T extends CustomEvent> = {
   target: EventTarget
@@ -41,6 +41,7 @@ export function dispatch<T extends CustomEvent>(
   const event = new CustomEvent<T["detail"]>(eventName, {
     cancelable,
     bubbles: true,
+    composed: true,
     detail,
   })
 
@@ -154,6 +155,10 @@ export function getHistoryMethodForAction(action: Action) {
   }
 }
 
+export function isAction(action: any): action is Action {
+  return action == "advance" || action == "replace" || action == "restore"
+}
+
 export function getVisitAction(...elements: (Element | undefined)[]): Action | null {
   const action = getAttribute("data-turbo-action", ...elements)
 
@@ -182,4 +187,13 @@ export function setMetaContent(name: string, content: string) {
   element.setAttribute("content", content)
 
   return element
+}
+
+export function findClosestRecursively<E extends Element>(element: Element | null, selector: string): E | undefined {
+  if (element instanceof Element) {
+    return (
+      element.closest<E>(selector) ||
+      findClosestRecursively(element.assignedSlot || (element.getRootNode() as ShadowRoot)?.host, selector)
+    )
+  }
 }

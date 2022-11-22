@@ -18,7 +18,7 @@ const config: PlaywrightTestConfig = {
     command: "yarn start",
     url: "http://localhost:9000/src/tests/fixtures/test.js",
     timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !!process.env.CI,
   },
   use: {
     baseURL: "http://localhost:9000/",

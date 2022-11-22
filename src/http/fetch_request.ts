@@ -6,7 +6,7 @@ import { dispatch } from "../util"
 export interface FetchRequestDelegate {
   referrer?: URL
 
-  prepareHeadersForRequest?(headers: FetchRequestHeaders, request: FetchRequest): void
+  prepareRequest(request: FetchRequest): void
   requestStarted(request: FetchRequest): void
   requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): void
@@ -91,7 +91,7 @@ export class FetchRequest {
 
   async perform(): Promise<FetchResponse | void> {
     const { fetchOptions } = this
-    this.delegate.prepareHeadersForRequest?.(this.headers, this)
+    this.delegate.prepareRequest(this)
     await this.allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)

@@ -76,6 +76,8 @@ test("test reloads when tracked elements change", async ({ page }) => {
 
 test("test reloads when tracked elements change due to failed form submission", async ({ page }) => {
   await page.click("#tracked-asset-change-form button")
+  await nextBeat()
+
   await page.evaluate(() => {
     window.addEventListener(
       "turbo:reload",
@@ -121,6 +123,36 @@ test("test before-render event supports custom render function", async ({ page }
 
   const customRendered = await page.locator("#custom-rendered")
   assert.equal(await customRendered.textContent(), "Custom Rendered", "renders with custom function")
+})
+
+test("test before-render event supports async custom render function", async ({ page }) => {
+  await page.evaluate(() => {
+    const nextEventLoopTick = () =>
+      new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 0)
+      })
+
+    addEventListener("turbo:before-render", (event) => {
+      const { detail } = event as CustomEvent
+      const { render } = detail
+      detail.render = async (currentElement: HTMLBodyElement, newElement: HTMLBodyElement) => {
+        await nextEventLoopTick()
+
+        newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered</span>`)
+        render(currentElement, newElement)
+      }
+    })
+
+    addEventListener("turbo:load", () => {
+      localStorage.setItem("renderedElement", document.getElementById("custom-rendered")?.textContent || "")
+    })
+  })
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+
+  const renderedElement = await page.evaluate(() => localStorage.getItem("renderedElement"))
+
+  assert.equal(renderedElement, "Custom Rendered", "renders with custom function")
 })
 
 test("test wont reload when tracked elements has a nonce", async ({ page }) => {

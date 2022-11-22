@@ -4,7 +4,7 @@ import {
   FrameLoadingStyle,
   FrameElementObservedAttribute,
 } from "../../elements/frame_element"
-import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import {
@@ -27,7 +27,7 @@ import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
 import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
-import { isAction, Action } from "../types"
+import { Action } from "../types"
 import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent, TurboFrameMissingEvent } from "../../events"
 import { StreamMessage } from "../streams/stream_message"
@@ -61,7 +61,6 @@ export class FrameController
   readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
   private currentNavigationElement?: Element
-  pageSnapshot?: PageSnapshot
 
   constructor(element: FrameElement) {
     this.element = element
@@ -196,7 +195,6 @@ export class FrameController
   // Appearance observer delegate
 
   elementAppearedInViewport(element: FrameElement) {
-    this.pageSnapshot = PageSnapshot.fromElement(element).clone()
     this.proposeVisitIfNavigatedWithAction(element, element)
     this.loadSourceURL()
   }
@@ -235,14 +233,14 @@ export class FrameController
 
     this.formSubmission = new FormSubmission(this, element, submitter)
     const { fetchRequest } = this.formSubmission
-    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
+    this.prepareRequest(fetchRequest)
     this.formSubmission.start()
   }
 
   // Fetch request delegate
 
-  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
-    headers["Turbo-Frame"] = this.id
+  prepareRequest(request: FetchRequest) {
+    request.headers["Turbo-Frame"] = this.id
 
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
       request.acceptResponseType(StreamMessage.contentType)
@@ -366,7 +364,6 @@ export class FrameController
 
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
-    this.pageSnapshot = PageSnapshot.fromElement(frame).clone()
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
@@ -378,7 +375,8 @@ export class FrameController
   proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
     this.action = getVisitAction(submitter, element, frame)
 
-    if (isAction(this.action)) {
+    if (this.action) {
+      const pageSnapshot = PageSnapshot.fromElement(frame).clone()
       const { visitCachedSnapshot } = frame.delegate
 
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
@@ -392,7 +390,7 @@ export class FrameController
             willRender: false,
             updateHistory: false,
             restorationIdentifier: this.restorationIdentifier,
-            snapshot: this.pageSnapshot,
+            snapshot: pageSnapshot,
           }
 
           if (this.action) options.action = this.action

@@ -5,6 +5,9 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script type="importmap" nonce="123">
+      { "imports": { "turbo": "/dist/turbo.es2017-umd.js?123"} }
+    </script>
     <script type="module">
       const permanentVideoElementLoaded = new Promise(resolve => {
         addEventListener("DOMContentLoaded", () => {
@@ -20,9 +23,6 @@
           element.play()
         }
       })
-    </script>
-    <script type="importmap" nonce="123">
-      { "imports": { "turbo": "/dist/turbo.es2017-umd.js?123"} }
     </script>
     <style>
       .push-off-screen { margin-top: 1000px; }
