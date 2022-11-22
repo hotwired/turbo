@@ -41,6 +41,7 @@ export function dispatch<T extends CustomEvent>(
   const event = new CustomEvent<T["detail"]>(eventName, {
     cancelable,
     bubbles: true,
+    composed: true,
     detail,
   })
 
