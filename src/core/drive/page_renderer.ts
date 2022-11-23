@@ -97,11 +97,10 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   async mergeProvisionalElements() {
-
-    let newHeadElements = [...this.newHeadProvisionalElements];
+    const newHeadElements = [...this.newHeadProvisionalElements]
 
     for (const element of this.currentHeadProvisionalElements) {
-      if(!this.isCurrentElementInElementList(element, newHeadElements)){
+      if (!this.isCurrentElementInElementList(element, newHeadElements)) {
         document.head.removeChild(element)
       }
     }
@@ -111,24 +110,23 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  isCurrentElementInElementList(element: Element, elementList: Element[]){
-
-    for (const [index, newElement] of elementList.entries()){
+  isCurrentElementInElementList(element: Element, elementList: Element[]) {
+    for (const [index, newElement] of elementList.entries()) {
       // if title element...
-      if (element.tagName == "TITLE"){
-        if(newElement.tagName != "TITLE"){
+      if (element.tagName == "TITLE") {
+        if (newElement.tagName != "TITLE") {
           continue
         }
-        if (element.innerHTML == newElement.innerHTML){
-          elementList.splice(index, 1);
-          return true;  
+        if (element.innerHTML == newElement.innerHTML) {
+          elementList.splice(index, 1)
+          return true
         }
       }
 
       // if any other element...
-      if (newElement.isEqualNode(element)){
-        elementList.splice(index, 1);
-        return true;
+      if (newElement.isEqualNode(element)) {
+        elementList.splice(index, 1)
+        return true
       }
     }
 
