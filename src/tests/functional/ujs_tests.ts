@@ -11,8 +11,8 @@ test("test clicking a [data-remote=true] anchor within a turbo-frame", async ({ 
     assert.equal(await page.textContent("#frame h2"), "Frames: #frame")
 
     await page.click("#frame a[data-remote=true]")
-    await noNextEventOnTarget(page, "frame", "turbo:frame-load")
 
+    assert.ok(await noNextEventOnTarget(page, "frame", "turbo:frame-load"))
     assert.equal(await page.textContent("#frame h2"), "Frames: #frame", "does not navigate the target frame")
   })
 })
@@ -22,8 +22,8 @@ test("test submitting a [data-remote=true] form within a turbo-frame", async ({ 
     assert.equal(await page.textContent("#frame h2"), "Frames: #frame")
 
     await page.click("#frame form[data-remote=true] button")
-    await noNextEventOnTarget(page, "frame", "turbo:frame-load")
 
+    assert.ok(await noNextEventOnTarget(page, "frame", "turbo:frame-load"))
     assert.equal(await page.textContent("#frame h2"), "Frame: Loaded", "navigates the target frame")
   })
 })

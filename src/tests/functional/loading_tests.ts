@@ -148,7 +148,8 @@ test("test changing [src] attribute on a [complete] frame with loading=lazy defe
   await nextEventNamed(page, "turbo:load")
   await page.goBack()
   await nextEventNamed(page, "turbo:load")
-  await noNextEventOnTarget(page, "hello", "turbo:frame-load")
+
+  assert.ok(await noNextEventOnTarget(page, "hello", "turbo:frame-load"))
 
   let src = new URL((await attributeForSelector(page, "#hello", "src")) || "")
 
@@ -156,8 +157,8 @@ test("test changing [src] attribute on a [complete] frame with loading=lazy defe
   assert.equal(src.pathname, "/src/tests/fixtures/frames/hello.html", "lazy frame retains [src]")
 
   await page.click("#link-lazy-frame")
-  await noNextEventOnTarget(page, "hello", "turbo:frame-load")
 
+  assert.ok(await noNextEventOnTarget(page, "hello", "turbo:frame-load"))
   assert.ok(await hasSelector(page, "#loading-lazy turbo-frame:not([complete])"), "lazy frame is not complete")
 
   await page.click("#loading-lazy summary")
