@@ -1,5 +1,5 @@
 import { Adapter } from "../native/adapter"
-import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
 import { getAnchor } from "../url"
@@ -335,7 +335,7 @@ export class Visit implements FetchRequestDelegate {
 
   // Fetch request delegate
 
-  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
+  prepareRequest(request: FetchRequest) {
     if (this.acceptsStreamResponse) {
       request.acceptResponseType(StreamMessage.contentType)
     }

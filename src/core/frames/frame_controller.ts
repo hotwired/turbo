@@ -4,7 +4,7 @@ import {
   FrameLoadingStyle,
   FrameElementObservedAttribute,
 } from "../../elements/frame_element"
-import { FetchMethod, FetchRequest, FetchRequestDelegate, FetchRequestHeaders } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import {
@@ -238,14 +238,14 @@ export class FrameController
 
     this.formSubmission = new FormSubmission(this, element, submitter)
     const { fetchRequest } = this.formSubmission
-    this.prepareHeadersForRequest(fetchRequest.headers, fetchRequest)
+    this.prepareRequest(fetchRequest)
     this.formSubmission.start()
   }
 
   // Fetch request delegate
 
-  prepareHeadersForRequest(headers: FetchRequestHeaders, request: FetchRequest) {
-    headers["Turbo-Frame"] = this.id
+  prepareRequest(request: FetchRequest) {
+    request.headers["Turbo-Frame"] = this.id
 
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
       request.acceptResponseType(StreamMessage.contentType)
