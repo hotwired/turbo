@@ -13,8 +13,8 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { Action, Position, StreamSource, isAction } from "./types"
-import { clearBusyState, dispatch, markAsBusy } from "../util"
+import { Action, Position, StreamSource } from "./types"
+import { clearBusyState, dispatch, getVisitAction, markAsBusy } from "../util"
 import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
@@ -427,8 +427,7 @@ export class Session
   // Private
 
   getActionForLink(link: Element): Action {
-    const action = link.getAttribute("data-turbo-action")
-    return isAction(action) ? action : "advance"
+    return getVisitAction(link) || "advance"
   }
 
   get snapshot() {

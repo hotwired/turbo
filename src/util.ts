@@ -1,4 +1,4 @@
-import { Action, isAction } from "./core/types"
+import { Action } from "./core/types"
 
 export type DispatchOptions<T extends CustomEvent> = {
   target: EventTarget
@@ -152,6 +152,10 @@ export function getHistoryMethodForAction(action: Action) {
     case "restore":
       return history.pushState
   }
+}
+
+export function isAction(action: any): action is Action {
+  return action == "advance" || action == "replace" || action == "restore"
 }
 
 export function getVisitAction(...elements: (Element | undefined)[]): Action | null {

@@ -1,9 +1,9 @@
-import { Action, isAction } from "../types"
+import { Action } from "../types"
+import { getVisitAction } from "../../util"
 import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
 import { expandURL, getAnchor, getRequestURL, Locatable, locationIsVisitable } from "../url"
-import { getAttribute } from "../../util"
 import { Visit, VisitDelegate, VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -164,9 +164,7 @@ export class Navigator {
     return this.history.restorationIdentifier
   }
 
-  getActionForFormSubmission(formSubmission: FormSubmission): Action {
-    const { formElement, submitter } = formSubmission
-    const action = getAttribute("data-turbo-action", submitter, formElement)
-    return isAction(action) ? action : "advance"
+  getActionForFormSubmission({ submitter, formElement }: FormSubmission): Action {
+    return getVisitAction(submitter, formElement) || "advance"
   }
 }

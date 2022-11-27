@@ -1,4 +1,5 @@
 import { LinkClickObserver, LinkClickObserverDelegate } from "./link_click_observer"
+import { getVisitAction } from "../util"
 
 export type FormLinkClickObserverDelegate = {
   willSubmitFormLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
@@ -42,7 +43,7 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
     const turboFrame = link.getAttribute("data-turbo-frame")
     if (turboFrame) form.setAttribute("data-turbo-frame", turboFrame)
 
-    const turboAction = link.getAttribute("data-turbo-action")
+    const turboAction = getVisitAction(link)
     if (turboAction) form.setAttribute("data-turbo-action", turboAction)
 
     const turboConfirm = link.getAttribute("data-turbo-confirm")
