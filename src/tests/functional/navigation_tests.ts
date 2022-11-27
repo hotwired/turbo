@@ -370,7 +370,9 @@ test("test does not fire turbo:load twice after following a redirect", async ({ 
   page.click("#redirection-link")
 
   await nextBeat() // 301 redirect response
-  await noNextEventNamed(page, "turbo:load")
+
+  assert.ok(await noNextEventNamed(page, "turbo:load"))
+
   await nextBeat() // 200 response
   await nextBody(page)
   await nextEventNamed(page, "turbo:load")

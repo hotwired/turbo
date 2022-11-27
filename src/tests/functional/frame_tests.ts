@@ -145,7 +145,9 @@ test("test successfully following a link to a page without a matching frame disp
   await page.click("#missing-frame-link")
   await nextEventOnTarget(page, "missing", "turbo:before-fetch-request")
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
-  await noNextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
+
   await nextEventNamed(page, "turbo:load")
 
   assert.ok(response, "dispatches turbo:frame-missing with event.detail.response")
@@ -164,8 +166,10 @@ test("test failing to follow a link to a page without a matching frame dispatche
   await page.click("#missing-page-link")
   await nextEventOnTarget(page, "missing", "turbo:before-fetch-request")
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
-  await noNextEventNamed(page, "turbo:before-fetch-request")
-  await noNextEventNamed(page, "turbo:load")
+
+  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
+  assert.ok(await noNextEventNamed(page, "turbo:load"))
+
   await nextEventNamed(page, "turbo:render")
 
   assert.ok(response, "dispatches turbo:frame-missing with event.detail.response")
@@ -232,7 +236,9 @@ test("test following a link to a page with a matching frame does not dispatch a 
   page,
 }) => {
   await page.click("#link-frame")
-  await noNextEventNamed(page, "turbo:frame-missing")
+
+  assert.ok(await noNextEventNamed(page, "turbo:frame-missing"))
+
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   const src = await attributeForSelector(page, "#frame", "src")
@@ -601,7 +607,8 @@ test("test navigating a frame with a form[method=get] that does not redirect sti
   await nextEventNamed(page, "turbo:before-fetch-response")
   await nextEventOnTarget(page, "frame", "turbo:frame-render")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
-  await noNextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
 
   const src = (await attributeForSelector(page, "#frame", "src")) ?? ""
 
@@ -670,8 +677,8 @@ test("test a turbo-frame that has been driven by a[data-turbo-action] can be nav
 
   await page.click("#hello a")
   await nextEventOnTarget(page, "hello", "turbo:frame-load")
-  await noNextEventNamed(page, "turbo:load")
 
+  assert.ok(await noNextEventNamed(page, "turbo:load"))
   assert.equal(await page.textContent("#hello h2"), "Frames: #hello")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/hello.html")
 })
