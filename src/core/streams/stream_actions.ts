@@ -31,6 +31,9 @@ export const StreamActions: TurboStreamActions = {
   },
 
   update() {
-    this.targetElements.forEach((e) => e.replaceChildren(this.templateContent))
+    this.targetElements.forEach((targetElement) => {
+      targetElement.innerHTML = ""
+      targetElement.append(this.templateContent)
+    })
   },
 }
