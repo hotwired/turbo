@@ -9,14 +9,14 @@ export class Bardo {
   readonly permanentElementMap: PermanentElementMap
   readonly delegate: BardoDelegate
 
-  static preservingPermanentElements(
+  static async preservingPermanentElements(
     delegate: BardoDelegate,
     permanentElementMap: PermanentElementMap,
     callback: () => void
   ) {
     const bardo = new this(delegate, permanentElementMap)
     bardo.enter()
-    callback()
+    await callback()
     bardo.leave()
   }
 

@@ -36,7 +36,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   async render() {
     if (this.willRender) {
-      this.replaceBody()
+      await this.replaceBody()
     }
   }
 
@@ -67,10 +67,10 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     await newStylesheetElements
   }
 
-  replaceBody() {
-    this.preservingPermanentElements(() => {
+  async replaceBody() {
+    await this.preservingPermanentElements(async () => {
       this.activateNewBody()
-      this.assignNewBody()
+      await this.assignNewBody()
     })
   }
 
@@ -157,8 +157,8 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  assignNewBody() {
-    this.renderElement(this.currentElement, this.newElement)
+  async assignNewBody() {
+    await this.renderElement(this.currentElement, this.newElement)
   }
 
   get newHeadStylesheetElements() {
