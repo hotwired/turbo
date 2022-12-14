@@ -118,7 +118,8 @@ export class Navigator {
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
-    console.error(error)
+    // should we rescue the type error in here and render the error page?
+    console.error(error, formSubmission)
   }
 
   formSubmissionFinished(formSubmission: FormSubmission) {

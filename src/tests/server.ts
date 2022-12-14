@@ -70,6 +70,10 @@ router.get("/delayed_response", (request, response) => {
   setTimeout(() => response.status(200).sendFile(fixture), 1000)
 })
 
+router.get("/bad_https_redirect", (request, response) => {
+  response.redirect('https://expired.badssl.com/')
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, id, status, type, target, targets } = params

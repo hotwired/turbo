@@ -211,12 +211,12 @@ test("test can scroll to element after history-initiated turbo:visit", async ({ 
   assert(await isScrolledToSelector(page, "#" + id), "scrolls after history-initiated turbo:load")
 })
 
-test("test Visit with network error", async ({ page }) => {
+test("test visit with a network error (e.g. https cert failure)", async ({ page }) => {
   await page.evaluate(() => {
     addEventListener("turbo:fetch-request-error", (event: Event) => event.preventDefault())
   })
-  await page.context().setOffline(true)
-  await page.click("#same-origin-link")
+
+  await page.click("#bad-https-link")
   await nextEventNamed(page, "turbo:fetch-request-error")
 })
 

@@ -15,6 +15,9 @@
       <p><a id="same-origin-link" href="/src/tests/fixtures/one.html">Same-origin link</a></p>
       <p><a id="same-origin-link-search-params" href="/src/tests/fixtures/one.html?key=value">Same-origin link with ?key=value</a></p>
       <p><a id="sample-response" href="/src/tests/fixtures/one.html">Sample response</a></p>
+      <form action="/__turbo/bad_https_redirect" method="get" data-turbo="true">
+        <input id="bad-https-link" type="submit" value="Form submit with bad HTTPS redirect" />
+      </form>
       <p><a id="same-page-link" href="/src/tests/fixtures/visit.html">Same page link</a></p>
       <hr class="push-below-fold">
       <p><a id="below-the-fold-link" href="/src/tests/fixtures/one.html">one.html</a></p>
