@@ -7,7 +7,7 @@ type ResolvingFunctions<T = unknown> = {
   reject(reason?: any): void
 }
 
-export type Render<E> = (newElement: E, currentElement: E) => void
+export type Render<E> = (currentElement: E, newElement: E) => void
 
 export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapshot<E>> implements BardoDelegate {
   readonly currentSnapshot: S
