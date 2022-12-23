@@ -46,6 +46,7 @@ export class FrameElement extends HTMLElement {
 
   loaded: Promise<void> = Promise.resolve()
   readonly delegate: FrameElementDelegate
+  previousSrc: string | null = null
 
   static get observedAttributes(): FrameElementObservedAttribute[] {
     return ["disabled", "complete", "loading", "src"]
