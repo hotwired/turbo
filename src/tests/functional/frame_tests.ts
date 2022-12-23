@@ -3,7 +3,6 @@ import { assert, Assertion } from "chai"
 import {
   attributeForSelector,
   hasSelector,
-  innerHTMLForSelector,
   listenForEventOnTarget,
   nextAttributeMutationNamed,
   noNextAttributeMutationNamed,
@@ -142,47 +141,50 @@ test("test submitting a form[data-turbo-frame=_top] does not toggle the frame's 
   )
 })
 
-test("test successfully following a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
+test("successfully following a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
   page,
 }) => {
   await page.click("#missing-frame-link")
-  await nextEventOnTarget(page, "missing", "turbo:before-fetch-request")
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-
-  await nextEventNamed(page, "turbo:load")
-
-  assert.ok(response, "dispatches turbo:frame-missing with event.detail.response")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html", "navigates the page")
-
-  await page.goBack()
-  await nextEventNamed(page, "turbo:load")
-
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
-  assert.ok(await innerHTMLForSelector(page, "#missing"))
+  assert.equal(200, response.status)
 })
 
-test("test failing to follow a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
+test("successfully following a link to a page without a matching frame shows an error and throws an exception", async ({
+  page,
+}) => {
+  let error: Error | undefined = undefined
+  page.once("pageerror", (e) => (error = e))
+
+  await page.click("#missing-frame-link")
+
+  assert.match(await page.innerText("#missing"), /Content missing/)
+
+  assert.exists(error)
+  assert.equal(error!.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
+})
+
+test("failing to follow a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
   page,
 }) => {
   await page.click("#missing-page-link")
-  await nextEventOnTarget(page, "missing", "turbo:before-fetch-request")
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.ok(await noNextEventNamed(page, "turbo:load"))
+  assert.equal(404, response.status)
+})
 
-  await nextEventNamed(page, "turbo:render")
+test("failing to follow a link to a page without a matching frame shows an error and throws an exception", async ({
+  page,
+}) => {
+  let error: Error | undefined = undefined
+  page.once("pageerror", (e) => (error = e))
 
-  assert.ok(response, "dispatches turbo:frame-missing with event.detail.response")
-  assert.equal(pathname(page.url()), "/missing.html", "navigates the page")
+  await page.click("#missing-page-link")
 
-  await page.goBack()
-  await nextEventNamed(page, "turbo:load")
+  assert.match(await page.innerText("#missing"), /Content missing/)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
-  assert.ok(await innerHTMLForSelector(page, "#missing"))
+  assert.exists(error)
+  assert.equal(error!.message, `The response (404) did not contain the expected <turbo-frame id="missing">`)
 })
 
 test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({
