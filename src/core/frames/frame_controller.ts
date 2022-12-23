@@ -64,7 +64,6 @@ export class FrameController
   readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
   private currentNavigationElement?: Element
-  pageSnapshot?: PageSnapshot
 
   constructor(element: FrameElement) {
     this.element = element
@@ -199,7 +198,6 @@ export class FrameController
   // Appearance observer delegate
 
   elementAppearedInViewport(element: FrameElement) {
-    this.pageSnapshot = PageSnapshot.fromElement(element).clone()
     this.proposeVisitIfNavigatedWithAction(element, element)
     this.loadSourceURL()
   }
@@ -369,7 +367,6 @@ export class FrameController
 
   private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
     const frame = this.findFrameElement(element, submitter)
-    this.pageSnapshot = PageSnapshot.fromElement(frame).clone()
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
@@ -382,6 +379,7 @@ export class FrameController
     this.action = getVisitAction(submitter, element, frame)
 
     if (this.action) {
+      const pageSnapshot = PageSnapshot.fromElement(frame).clone()
       const { visitCachedSnapshot } = frame.delegate
 
       frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
@@ -395,7 +393,7 @@ export class FrameController
             willRender: false,
             updateHistory: false,
             restorationIdentifier: this.restorationIdentifier,
-            snapshot: this.pageSnapshot,
+            snapshot: pageSnapshot,
           }
 
           if (this.action) options.action = this.action
