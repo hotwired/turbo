@@ -66,3 +66,17 @@
   "turbo:frame-missing",
   "turbo:reload"
 ])
+
+window.customElements.define('custom-link-element', class extends HTMLElement {
+  constructor() {
+    super()
+    this.attachShadow({ mode: 'open' })
+  }
+  connectedCallback() {
+    this.shadowRoot.innerHTML = `
+      <a href="${this.getAttribute('link')}">
+        ${this.getAttribute('text')}
+      </a>
+    `
+  }
+})
