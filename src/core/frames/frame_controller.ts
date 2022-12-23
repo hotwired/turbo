@@ -29,7 +29,7 @@ import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { Action } from "../types"
 import { VisitOptions } from "../drive/visit"
-import { TurboBeforeFrameRenderEvent } from "../session"
+import { TurboBeforeFrameRenderEvent, TurboFrameClickEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
 
@@ -217,8 +217,10 @@ export class FrameController
 
   // Link interceptor delegate
 
-  shouldInterceptLinkClick(element: Element, _location: string, _event: MouseEvent) {
-    return this.shouldInterceptNavigation(element)
+  shouldInterceptLinkClick(element: Element, location: string, event: MouseEvent) {
+    return (
+      this.shouldInterceptNavigation(element) && this.frameAllowsVisitingLocation(element, expandURL(location), event)
+    )
   }
 
   linkClickIntercepted(element: Element, location: string) {
@@ -557,6 +559,16 @@ export class FrameController
     const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
     const root = meta?.content ?? "/"
     return expandURL(root)
+  }
+
+  private frameAllowsVisitingLocation(target: Element, { href: url }: URL, originalEvent: MouseEvent): boolean {
+    const event = dispatch<TurboFrameClickEvent>("turbo:frame-click", {
+      target,
+      detail: { url, originalEvent },
+      cancelable: true,
+    })
+
+    return !event.defaultPrevented
   }
 
   private isIgnoringChangesTo(attributeName: FrameElementObservedAttribute): boolean {

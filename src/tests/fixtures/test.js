@@ -1,4 +1,4 @@
-(function(eventNames) {
+;(function (eventNames) {
   function serializeToChannel(object, visited = new Set()) {
     const returned = {}
 
@@ -10,7 +10,7 @@
       } else if (value instanceof Element) {
         returned[key] = value.outerHTML
       } else if (typeof value == "object") {
-        if (visited.has(value))  {
+        if (visited.has(value)) {
           returned[key] = "skipped to prevent infinitely recursing"
         } else {
           visited.add(value)
@@ -39,15 +39,16 @@
   }
   window.mutationLogs = []
 
-   new MutationObserver((mutations) => {
-     for (const { attributeName, target } of mutations.filter(({ type }) => type == "attributes")) {
-       if (target instanceof Element) {
-         mutationLogs.push([attributeName, target.id, target.getAttribute(attributeName)])
-       }
-     }
-   }).observe(document, { subtree: true, childList: true, attributes: true })
+  new MutationObserver((mutations) => {
+    for (const { attributeName, target } of mutations.filter(({ type }) => type == "attributes")) {
+      if (target instanceof Element) {
+        mutationLogs.push([attributeName, target.id, target.getAttribute(attributeName)])
+      }
+    }
+  }).observe(document, { subtree: true, childList: true, attributes: true })
 })([
   "turbo:click",
+  "turbo:frame-click",
   "turbo:before-stream-render",
   "turbo:before-cache",
   "turbo:before-render",
@@ -64,7 +65,7 @@
   "turbo:frame-load",
   "turbo:frame-render",
   "turbo:frame-missing",
-  "turbo:reload"
+  "turbo:reload",
 ])
 
 window.customElements.define('custom-link-element', class extends HTMLElement {
