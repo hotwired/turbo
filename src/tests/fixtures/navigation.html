@@ -51,6 +51,33 @@
       <p><a id="redirection-link" href="/__turbo/redirect?path=/src/tests/fixtures/one.html">Redirection link</a></p>
       <p><a id="headers-link" href="/__turbo/headers">Headers link</a></p>
       <p><custom-link-element id="custom-link-element" link="/src/tests/fixtures/one.html" text="Same-origin unannotated custom element link"></custom-link-element></p>
+      <p>
+        <a href="/src/tests/fixtures/one.html">
+          <custom-button id="shadow-dom-drive-enabled"></custom-button>
+        </a>
+      </p>
+      <p data-turbo="false">
+        <a href="/src/tests/fixtures/one.html">
+          <custom-button id="shadow-dom-drive-disabled"></custom-button>
+        </a>
+      </p>
+      <p>
+        <custom-link-element link="/src/tests/fixtures/one.html">
+          <span id="element-in-slot">Link in slot</span>
+        </custom-link-element>
+      </p>
+      <p data-turbo="false">
+        <custom-link-element link="/src/tests/fixtures/one.html">
+          <span id="element-in-slot-disabled">Link in slot (disabled)</span>
+        </custom-link-element>
+      </p>
+      <p>
+        <turbo-toggle turbo="false">
+          <custom-link-element link="/src/tests/fixtures/one.html">
+            <span id="element-in-nested-slot-disabled">Link in slot (disabled)</span>
+          </custom-link-element>
+        </turbo-toggle>
+      </p>
       <p><a id="delayed-link" href="/__turbo/delayed_response">Delayed link</a></p>
       <p><a id="targets-iframe" href="/src/tests/fixtures/one.html" target="iframe">Targets iframe</a></p>
       <p><a id="redirect-to-cache-observer" href="/__turbo/redirect?path=/src/tests/fixtures/cache_observer.html">Redirect to cache_observer.html</a></p>

@@ -188,3 +188,12 @@ export function setMetaContent(name: string, content: string) {
 
   return element
 }
+
+export function findClosestRecursively<E extends Element>(element: Element | null, selector: string): E | undefined {
+  if (element instanceof Element) {
+    return (
+      element.closest<E>(selector) ||
+      findClosestRecursively(element.assignedSlot || (element.getRootNode() as ShadowRoot)?.host, selector)
+    )
+  }
+}
