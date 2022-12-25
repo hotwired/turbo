@@ -370,8 +370,10 @@ export class FrameController
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
+    const srcFrame = element.getAttribute("data-turbo-src-frame")
     this.withCurrentNavigationElement(element, () => {
       frame.src = url
+      if (srcFrame) frame.setAttribute("data-turbo-src-frame", srcFrame)
     })
   }
 
@@ -447,7 +449,7 @@ export class FrameController
 
   async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | null> {
     let element
-    const id = CSS.escape(this.id)
+    const id = CSS.escape(this.element.getAttribute('data-turbo-src-frame') || this.id)
 
     try {
       element = activateElement(container.querySelector(`turbo-frame#${id}`), this.sourceURL)

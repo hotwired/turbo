@@ -299,6 +299,14 @@ test("test following a link that declares data-turbo-frame within a frame whose 
   assert.notOk(await hasSelector(page, "#nested-child"))
 })
 
+test("test following a link that declares data-turbo-src-frame tries to match this frame in the respsone", async ({ page }) => {
+  await page.click("#src-frame-link")
+  await nextBeat()
+
+  const frameText = await page.textContent("#src-frame h2")
+  assert.equal(frameText, "Frames: #frame-part")
+})
+
 test("test following a form within a nested frame with form target top", async ({ page }) => {
   await page.click("#nested-child-navigate-form-top-submit")
   await nextBeat()

@@ -124,6 +124,10 @@
       <input id="outer-frame-submit" type="submit" value="Outer form submit">
     </form>
 
+    <a id="src-frame-link" href="/src/tests/fixtures/frames/part.html" data-turbo-frame="src-frame" data-turbo-src-frame="part">Src frame link</a>
+    <turbo-frame id="src-frame">
+    </turbo-frame>
+
     <hr class="push-off-screen">
     <input id="below-the-fold-input">
     <a id="below-the-fold-link-frame-action" data-turbo-action="advance" data-turbo-frame="frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame</a>
