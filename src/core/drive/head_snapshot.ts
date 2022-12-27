@@ -1,71 +1,37 @@
 import { Snapshot } from "../snapshot"
 
-type ElementDetailMap = { [outerHTML: string]: ElementDetails }
-
-type ElementDetails = {
-  type?: ElementType
-  tracked: boolean
-  elements: Element[]
-}
-
-type ElementType = "script" | "stylesheet"
-
 export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
-  readonly detailsByOuterHTML = this.children
-    .filter((element) => !elementIsNoscript(element))
-    .map((element) => elementWithoutNonce(element))
-    .reduce((result, element) => {
-      const { outerHTML } = element
-      const details: ElementDetails =
-        outerHTML in result
-          ? result[outerHTML]
-          : {
-              type: elementType(element),
-              tracked: elementIsTracked(element),
-              elements: [],
-            }
-      return {
-        ...result,
-        [outerHTML]: {
-          ...details,
-          elements: [...details.elements, element],
-        },
-      }
-    }, {} as ElementDetailMap)
+  elements: { [key: string]: Array<Element> } = {}
+  stylesheetElements: Array<Element> = []
+  trackedElemements: Array<Element> = []
+
+  constructor(element: HTMLHeadElement) {
+    super(element)
+    this.parseDetailsByOuterHTML()
+  }
+
+  parseDetailsByOuterHTML() {
+    for (let element of this.children) {
+      element = elementWithoutNonce(element)
+      if (elementIsStylesheet(element)) this.stylesheetElements.push(element)
+      else if (Object.prototype.hasOwnProperty.call(this.elements, element.localName))
+        this.elements[element.localName].push(element)
+      else this.elements[element.localName] = [element]
+
+      if (element.getAttribute("data-turbo-track") == "reload") this.trackedElemements.push(element)
+    }
+  }
 
   get trackedElementSignature(): string {
-    return Object.keys(this.detailsByOuterHTML)
-      .filter((outerHTML) => this.detailsByOuterHTML[outerHTML].tracked)
-      .join("")
+    return this.trackedElemements.map((e) => e.outerHTML).join("")
   }
 
-  getScriptElementsNotInSnapshot(snapshot: HeadSnapshot) {
-    return this.getElementsMatchingTypeNotInSnapshot<HTMLScriptElement>("script", snapshot)
+  get stylesheets(): Array<Element> {
+    return this.stylesheetElements
   }
 
-  getStylesheetElementsNotInSnapshot(snapshot: HeadSnapshot) {
-    return this.getElementsMatchingTypeNotInSnapshot<HTMLLinkElement>("stylesheet", snapshot)
-  }
-
-  getElementsMatchingTypeNotInSnapshot<T extends Element>(matchedType: ElementType, snapshot: HeadSnapshot): T[] {
-    return Object.keys(this.detailsByOuterHTML)
-      .filter((outerHTML) => !(outerHTML in snapshot.detailsByOuterHTML))
-      .map((outerHTML) => this.detailsByOuterHTML[outerHTML])
-      .filter(({ type }) => type == matchedType)
-      .map(({ elements: [element] }) => element) as T[]
-  }
-
-  get provisionalElements(): Element[] {
-    return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
-      const { type, tracked, elements } = this.detailsByOuterHTML[outerHTML]
-      if (type == null && !tracked) {
-        return [...result, ...elements]
-      } else if (elements.length > 1) {
-        return [...result, ...elements.slice(1)]
-      } else {
-        return result
-      }
-    }, [] as Element[])
+  getElements(localName: string): Array<Element> {
+    return this.elements[localName] || []
   }
 
   getMetaValue(name: string): string | null {
@@ -74,45 +40,13 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
   }
 
   findMetaElementByName(name: string) {
-    return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
-      const {
-        elements: [element],
-      } = this.detailsByOuterHTML[outerHTML]
-      return elementIsMetaElementWithName(element, name) ? element : result
-    }, undefined as Element | undefined)
+    return this.getElements("meta").filter((e) => (e as HTMLMetaElement).name == name)[0] as Element | undefined
   }
-}
-
-function elementType(element: Element) {
-  if (elementIsScript(element)) {
-    return "script"
-  } else if (elementIsStylesheet(element)) {
-    return "stylesheet"
-  }
-}
-
-function elementIsTracked(element: Element) {
-  return element.getAttribute("data-turbo-track") == "reload"
-}
-
-function elementIsScript(element: Element) {
-  const tagName = element.localName
-  return tagName == "script"
-}
-
-function elementIsNoscript(element: Element) {
-  const tagName = element.localName
-  return tagName == "noscript"
 }
 
 function elementIsStylesheet(element: Element) {
   const tagName = element.localName
   return tagName == "style" || (tagName == "link" && element.getAttribute("rel") == "stylesheet")
-}
-
-function elementIsMetaElementWithName(element: Element, name: string) {
-  const tagName = element.localName
-  return tagName == "meta" && element.getAttribute("name") == name
 }
 
 function elementWithoutNonce(element: Element) {
