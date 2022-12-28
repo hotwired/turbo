@@ -61,8 +61,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
 
   async mergeHead() {
     // Load new stylesheets and get them to preload before switching out other elements.
-    const mergeStylesheets = this.copyNewHeadStylesheetElements() //this.mergeElements("link", false, true);
-
+    const mergeStylesheets = this.copyNewHeadStylesheetElements()
     this.mergeNonScriptElements()
     this.mergeElements("script", false, (e: Element): Element => {
       return activateScriptElement(e as HTMLScriptElement)

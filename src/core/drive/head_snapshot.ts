@@ -3,7 +3,7 @@ import { Snapshot } from "../snapshot"
 export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
   elements: { [key: string]: Array<Element> } = {}
   stylesheetElements: Array<Element> = []
-  trackedElemements: Array<Element> = []
+  trackedElements: Array<Element> = []
 
   constructor(element: HTMLHeadElement) {
     super(element)
@@ -14,16 +14,18 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
     for (let element of this.children) {
       element = elementWithoutNonce(element)
       if (elementIsStylesheet(element)) this.stylesheetElements.push(element)
-      else if (Object.prototype.hasOwnProperty.call(this.elements, element.localName))
-        this.elements[element.localName].push(element)
-      else this.elements[element.localName] = [element]
+      else {
+        const collection = this.elements[element.localName] || []
+        collection.push(element)
+        this.elements[element.localName] = collection
+      }
 
-      if (element.getAttribute("data-turbo-track") == "reload") this.trackedElemements.push(element)
+      if (element.getAttribute("data-turbo-track") == "reload") this.trackedElements.push(element)
     }
   }
 
   get trackedElementSignature(): string {
-    return this.trackedElemements.map((e) => e.outerHTML).join("")
+    return this.trackedElements.map((e) => e.outerHTML).join("")
   }
 
   get stylesheets(): Array<Element> {
@@ -40,7 +42,7 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
   }
 
   findMetaElementByName(name: string) {
-    return this.getElements("meta").filter((e) => (e as HTMLMetaElement).name == name)[0] as Element | undefined
+    return this.getElements("meta").find((e) => (e as HTMLMetaElement).name == name) as Element | undefined
   }
 }
 
