@@ -67,6 +67,8 @@ test("test reloads when tracked elements change", async ({ page }) => {
 
 test("test reloads when tracked elements change due to failed form submission", async ({ page }) => {
   await page.click("#tracked-asset-change-form button")
+  await nextBeat()
+
   await page.evaluate(() => {
     window.addEventListener(
       "turbo:reload",
