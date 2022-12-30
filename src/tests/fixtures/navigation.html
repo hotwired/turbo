@@ -79,12 +79,34 @@
         </turbo-toggle>
       </p>
       <p><a id="delayed-link" href="/__turbo/delayed_response">Delayed link</a></p>
-      <p><a id="targets-iframe" href="/src/tests/fixtures/one.html" target="iframe">Targets iframe</a></p>
+      <p><a id="link-target-iframe" href="/src/tests/fixtures/one.html" target="iframe">Targets iframe[name="iframe"]</a></p>
+      <p><a id="link-target-empty-name-iframe" href="/src/tests/fixtures/one.html" target="">Targets iframe[name=""]</a></p>
+      <p>
+        <form id="form-target-iframe" action="/src/tests/fixtures/one.html" target="iframe">
+          <button>Targets iframe[name="iframe"]</button>
+        </form>
+      </p>
+      <p>
+        <form id="form-target-empty-name-iframe" action="/src/tests/fixtures/one.html" target="">
+          <button>Targets iframe[name=""]</button>
+        </form>
+      </p>
+      <p>
+        <form action="/src/tests/fixtures/one.html">
+          <button id="button-formtarget-iframe" formtarget="iframe">Targets iframe[name="iframe"]</button>
+        </form>
+      </p>
+      <p>
+        <form action="/src/tests/fixtures/one.html">
+          <button id="button-formtarget-empty-name-iframe" formtarget="">Targets iframe[name=""]</button>
+        </form>
+      </p>
       <p><a id="redirect-to-cache-observer" href="/__turbo/redirect?path=/src/tests/fixtures/cache_observer.html">Redirect to cache_observer.html</a></p>
     </section>
 
     <turbo-frame id="hello" disabled></turbo-frame>
 
     <iframe name="iframe"></iframe>
+    <iframe name=""></iframe>
   </body>
 </html>
