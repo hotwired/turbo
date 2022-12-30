@@ -44,6 +44,27 @@ test("test navigating renders a progress bar", async ({ page }) => {
   assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
 })
 
+test("test navigating link with data-turbo-progress-bar renders a progress bar before expiring the delay", async ({
+  page,
+}) => {
+  assert.equal(
+    await page.locator("style").evaluate((style) => style.nonce),
+    "123",
+    "renders progress bar stylesheet inline with nonce"
+  )
+
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(1000))
+  await page.click("#explicit-turbo-progress-bar")
+
+  await waitUntilSelector(page, ".turbo-progress-bar")
+  assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+
+  await nextEventNamed(page, "turbo:load")
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
+
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
+})
+
 test("test navigating does not render a progress bar before expiring the delay", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(1000))
   await page.click("#same-origin-unannotated-link")

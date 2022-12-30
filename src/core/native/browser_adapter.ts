@@ -36,7 +36,10 @@ export class BrowserAdapter implements Adapter {
 
   visitRequestStarted(visit: Visit) {
     this.progressBar.setValue(0)
-    if (visit.hasCachedSnapshot() || visit.action != "restore") {
+
+    if (visit.withProgressBar) {
+      this.showProgressBar()
+    } else if (visit.hasCachedSnapshot() || visit.action != "restore") {
       this.showVisitProgressBarAfterDelay()
     } else {
       this.showProgressBar()

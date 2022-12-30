@@ -70,6 +70,11 @@ router.get("/delayed_response", (request, response) => {
   setTimeout(() => response.status(200).sendFile(fixture), 1000)
 })
 
+router.get("/with_progress_bar", (request, response) => {
+  const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
+  setTimeout(() => response.status(200).sendFile(fixture), 300)
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, id, status, type, target, targets } = params

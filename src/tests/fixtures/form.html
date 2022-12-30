@@ -20,6 +20,11 @@
         <input type="hidden" name="greeting" value="Hello from a redirect">
         <input id="standard-post-form-submit" type="submit" value="form[method=post]">
       </form>
+      <form action="/__turbo/redirect" method="post" class="redirect" data-turbo-progress-bar="true">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <input id="turbo-progress-bar-post-form-submit" type="submit" value="form[method=post]">
+      </form>
       <form action="/__turbo/redirect" method="get" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="hidden" name="greeting" value="Hello from a redirect">
