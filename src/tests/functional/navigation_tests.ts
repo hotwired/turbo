@@ -2,6 +2,7 @@ import { test } from "@playwright/test"
 import { assert } from "chai"
 import {
   clickWithoutScrolling,
+  getSearchParam,
   hash,
   hasSelector,
   isScrolledToSelector,
@@ -134,6 +135,17 @@ test("test following a same-origin unannotated form[method=GET]", async ({ page 
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
+})
+
+test("test following a same-origin data-turbo-method=get link", async ({ page }) => {
+  await page.click("#same-origin-get-link-form")
+  await nextEventNamed(page, "turbo:submit-start")
+  await nextEventNamed(page, "turbo:submit-end")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
+  assert.equal(getSearchParam(page.url(), "a"), "one")
+  assert.equal(getSearchParam(page.url(), "b"), "two")
 })
 
 test("test following a same-origin data-turbo-action=replace link", async ({ page }) => {

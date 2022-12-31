@@ -31,10 +31,16 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
   }
 
   followedLinkToLocation(link: Element, location: URL): void {
-    const action = location.href
     const form = document.createElement("form")
+
+    const type = "hidden"
+    for (const [name, value] of location.searchParams) {
+      form.append(Object.assign(document.createElement("input"), { type, name, value }))
+    }
+
+    const action = Object.assign(location, { search: "" })
     form.setAttribute("data-turbo", "true")
-    form.setAttribute("action", action)
+    form.setAttribute("action", action.href)
     form.setAttribute("hidden", "")
 
     const method = link.getAttribute("data-turbo-method")
