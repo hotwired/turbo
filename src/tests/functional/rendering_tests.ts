@@ -97,6 +97,7 @@ test("test reloads when tracked elements change due to failed form submission", 
   })
 
   await page.click("#tracked-asset-change-form button")
+  await nextBeat()
 
   const reason = await page.evaluate(() => localStorage.getItem("reason"))
   const unloaded = await page.evaluate(() => localStorage.getItem("unloaded"))
