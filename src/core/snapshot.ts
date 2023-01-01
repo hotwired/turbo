@@ -18,7 +18,10 @@ export class Snapshot<E extends Element = Element> {
   }
 
   getElementForAnchor(anchor: string | undefined) {
-    return anchor ? this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`) : null
+    if (!anchor) return null
+
+    const decoded = decodeURIComponent(anchor)
+    return this.element.querySelector(`[id='${anchor}'], [id='${decoded}'], a[name='${anchor}'], a[name='${decoded}']`)
   }
 
   get isConnected() {
