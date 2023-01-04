@@ -159,16 +159,20 @@ export function isAction(action: any): action is Action {
   return action == "advance" || action == "replace" || action == "restore"
 }
 
+function isProgressBar(progressBar: any): boolean {
+  return progressBar == "true" || progressBar == "false"
+}
+
 export function getVisitAction(...elements: (Element | undefined)[]): Action | null {
   const action = getAttribute("data-turbo-action", ...elements)
 
   return isAction(action) ? action : null
 }
 
-export function getProgressBarValue(...elements: (Element | undefined)[]): boolean {
+export function getProgressBarValue(...elements: (Element | undefined)[]): boolean | null {
   const progressBar = getAttribute("data-turbo-progress-bar", ...elements)
 
-  return progressBar == "true"
+  return isProgressBar(progressBar) ? progressBar == "true" : null
 }
 
 export function getMetaElement(name: string): HTMLMetaElement | null {

@@ -67,9 +67,22 @@ test("test navigating link with data-turbo-progress-bar renders a progress bar b
 
 test("test navigating does not render a progress bar before expiring the delay", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(1000))
-  await page.click("#same-origin-unannotated-link")
+  await page.click("#same-origin-unannotated-link-with-disabled-progress-bar")
 
   assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar before delay")
+})
+
+test("test navigating renders a progress bar before expiring the delay", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(1000))
+  await page.click("#same-origin-unannotated-link")
+
+  await waitUntilSelector(page, ".turbo-progress-bar")
+  assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+
+  await nextEventNamed(page, "turbo:load")
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
+
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
 })
 
 test("test after loading the page", async ({ page }) => {

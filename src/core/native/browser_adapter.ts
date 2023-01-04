@@ -39,6 +39,10 @@ export class BrowserAdapter implements Adapter {
 
     if (visit.withProgressBar) {
       this.showProgressBar()
+    } else if (visit.action === "advance" && visit.withProgressBar == false) {
+      this.showVisitProgressBarAfterDelay()
+    } else if (visit.action === "advance") {
+      this.showProgressBar()
     } else if (visit.hasCachedSnapshot() || visit.action != "restore") {
       this.showVisitProgressBarAfterDelay()
     } else {

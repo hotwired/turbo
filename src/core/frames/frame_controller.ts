@@ -62,7 +62,7 @@ export class FrameController
   private hasBeenLoaded = false
   private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
   private action: Action | null = null
-  private withProgressBar = false
+  private withProgressBar: boolean | null = null
   readonly restorationIdentifier: string
   private previousFrameElement?: FrameElement
   private currentNavigationElement?: Element
@@ -400,7 +400,7 @@ export class FrameController
           }
 
           if (this.action) options.action = this.action
-          if (this.withProgressBar) options.withProgressBar = this.withProgressBar
+          if (this.withProgressBar != null) options.withProgressBar = this.withProgressBar
 
           session.visit(frame.src, options)
         }

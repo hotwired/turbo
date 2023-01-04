@@ -1,5 +1,14 @@
 import { test } from "@playwright/test"
-import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
+import {
+  getFromLocalStorage,
+  nextEventNamed,
+  nextEventOnTarget,
+  pathname,
+  scrollToSelector,
+  waitUntilSelector,
+  hasSelector,
+  waitUntilNoSelector,
+} from "../helpers/page"
 import { assert } from "chai"
 
 test("test frame navigation with descendant link", async ({ page }) => {
@@ -28,6 +37,68 @@ test("test frame navigation with exterior link in Shadow DOM", async ({ page }) 
   await page.click("#outside-in-shadow-dom")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
+})
+
+test("test frame navigation with data-turbo-action advance renders progress bar", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#with-progress-bar")
+
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(1000))
+
+  await nextEventOnTarget(page, "progress-bar-frame", "turbo:frame-load")
+
+  await waitUntilSelector(page, ".turbo-progress-bar")
+  assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+
+  await nextEventNamed(page, "turbo:load")
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
+
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
+})
+
+test("test frame navigation with any data-turbo-action and data-turbo-progress-bar=true renders progress bar", async ({
+  page,
+}) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#progress-bar-frame-with-action")
+
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(1000))
+
+  await nextEventOnTarget(page, "progress-bar-frame-with-action", "turbo:frame-load")
+
+  await waitUntilSelector(page, ".turbo-progress-bar")
+  assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+
+  await nextEventNamed(page, "turbo:load")
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
+
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
+})
+
+test("test frame navigation with data-turbo-action advance and data-turbo-progress-bar=false does not render progress bar", async ({
+  page,
+}) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#no-progress-bar")
+
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
+
+  await nextEventOnTarget(page, "no-progress-bar-frame", "turbo:frame-load")
+
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+})
+
+test("test frame navigation with data-turbo-progress-bar=true without action specified does not render progress bar", async ({
+  page,
+}) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#no-progress-bar-frame-no-action")
+
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
+
+  await nextEventOnTarget(page, "no-progress-bar-frame-no-action", "turbo:frame-load")
+
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
 })
 
 test("test frame navigation emits fetch-request-error event when offline", async ({ page }) => {

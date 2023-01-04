@@ -200,8 +200,8 @@ export class Session
 
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
-    const withProgressBar = this.getProgressBarForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+    const withProgressBar = getProgressBarValue(link)
 
     this.visit(location.href, { action, acceptsStreamResponse, withProgressBar })
   }
@@ -436,10 +436,6 @@ export class Session
 
   getActionForLink(link: Element): Action {
     return getVisitAction(link) || "advance"
-  }
-
-  getProgressBarForLink(link: Element): boolean {
-    return getProgressBarValue(link)
   }
 
   get snapshot() {
