@@ -46,6 +46,17 @@
        }
      }
    }).observe(document, { subtree: true, childList: true, attributes: true })
+
+  window.bodyMutationLogs = []
+  addEventListener("turbo:load", () => {
+    new MutationObserver((mutations) => {
+      for (const { addedNodes } of mutations) {
+        for (const { localName, outerHTML } of addedNodes) {
+          if (localName == "body") bodyMutationLogs.push([outerHTML])
+        }
+      }
+    }).observe(document.documentElement, { childList: true })
+  }, { once: true })
 })([
   "turbo:click",
   "turbo:before-stream-render",
