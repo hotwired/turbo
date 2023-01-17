@@ -97,7 +97,12 @@ export class Navigator {
           shouldCacheSnapshot,
           response: { statusCode, responseHTML, redirected },
         }
-        this.proposeVisit(fetchResponse.location, visitOptions)
+
+        const location = fetchResponse.location
+        if (redirected) {
+          location.hash = formSubmission.fetchRequest.location.hash
+        }
+        this.proposeVisit(location, visitOptions)
       }
     }
   }

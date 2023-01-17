@@ -243,7 +243,7 @@ test("test following a same-origin redirect link", async ({ page }) => {
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(hash(page.url()), "#element-id")
-  assert.equal(await visitAction(page), "advance")
+  assert.equal(await visitAction(page), "replace")
   assert(await isScrolledToSelector(page, "#element-id"))
 })
 

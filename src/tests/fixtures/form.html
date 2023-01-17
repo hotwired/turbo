@@ -25,9 +25,8 @@
         <input type="hidden" name="greeting" value="Hello from a redirect">
         <input id="standard-get-form-submit" type="submit" value="form[method=get]">
       </form>
-      <form action="/__turbo/redirect" method="get" class="redirect">
+      <form action="/__turbo/redirect#element-id" method="get" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
-        <input type="hidden" name="hash" value="element-id">
         <button id="standard-get-form-submit-redirect-with-hash">Redirect with hash</button>
       </form>
       <form action="/__turbo/redirect" method="get" data-turbo-stream class="redirect">

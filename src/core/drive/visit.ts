@@ -359,6 +359,9 @@ export class Visit implements FetchRequestDelegate {
       })
     } else {
       this.redirectedToLocation = response.redirected ? response.location : undefined
+      if (this.redirectedToLocation) {
+        this.redirectedToLocation.hash = request.url.hash
+      }
       this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
     }
   }
