@@ -34,13 +34,13 @@ router.post("/redirect", (request, response) => {
 })
 
 router.get("/redirect", (request, response) => {
-  const { path, ...query } = request.query as any
+  const { hash, path, ...query } = request.query as any
   const pathname = path ?? "/src/tests/fixtures/one.html"
   const enctype = request.get("Content-Type")
   if (enctype) {
     query.enctype = enctype
   }
-  response.redirect(301, url.format({ pathname, query }))
+  response.redirect(301, url.format({ hash, pathname, query }))
 })
 
 router.post("/reject/tall", (request, response) => {
