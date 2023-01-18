@@ -46,41 +46,67 @@ export type TurboFetchRequestErrorEvent = CustomEvent<{
   error: Error
 }>
 
-interface TurboGlobalEventMap {
-  "turbo:before-cache": TurboBeforeCacheEvent
+// GlobalEventHandlersEventMap
+// ├─ DocumentEventMap
+// ├─ WindowEventMap
+// ├─ HTMLElementEventMap
+// |  ├─ HTMLBodyElementEventMap
+// |  ├─ HTMLFrameSetElementEventMap
+// |  ├─ HTMLMarqueeElementEventMap
+// |  ├─ HTMLMediaElementEventMap
+// |
+// ├─ SVGElementEventMap
+// |  ├─ SVGSVGElementEventMap
+
+// DocumentAndElementEventHandlersEventMap
+// ├─ DocumentEventMap
+// ├─ HTMLElementEventMap
+// |  ├─ HTMLBodyElementEventMap
+// |  ├─ HTMLFrameSetElementEventMap
+// |  ├─ HTMLMarqueeElementEventMap
+// |  ├─ HTMLMediaElementEventMap
+// |
+// ├─ SVGElementEventMap
+// |  ├─ SVGSVGElementEventMap
+
+// WindowEventHandlersEventMap
+// ├─ HTMLBodyElementEventMap
+// ├─ HTMLFrameSetElementEventMap
+// ├─ WindowEventMap
+
+// ElementEventMap
+// ├─ SVGElementEventMap
+// ├─ HTMLElementEventMap
+// |  ├─ HTMLBodyElementEventMap
+// |  ├─ HTMLFrameSetElementEventMap
+// |  ├─ HTMLMarqueeElementEventMap
+// |  ├─ HTMLMediaElementEventMap
+
+export interface TurboElementEventMap {
+  "turbo:before-frame-render": TurboBeforeFrameRenderEvent
   "turbo:before-fetch-request": TurboBeforeFetchRequestEvent
   "turbo:before-fetch-response": TurboBeforeFetchResponseEvent
-  "turbo:before-frame-render": TurboBeforeFrameRenderEvent
+  "turbo:fetch-request-error": TurboFetchRequestErrorEvent
+  "turbo:frame-load": TurboFrameLoadEvent
+  "turbo:frame-render": TurboFrameRenderEvent
+  "turbo:frame-missing": TurboFrameMissingEvent
+  "turbo:submit-start": TurboSubmitStartEvent
+  "turbo:submit-end": TurboSubmitEndEvent
+}
+
+export interface TurboGlobalEventHandlersEventMap extends TurboElementEventMap {
+  "turbo:before-cache": TurboBeforeCacheEvent
   "turbo:before-stream-render": TurboBeforeStreamRenderEvent
   "turbo:before-render": TurboBeforeRenderEvent
   "turbo:before-visit": TurboBeforeVisitEvent
   "turbo:click": TurboClickEvent
-  "turbo:fetch-request-error": TurboFetchRequestErrorEvent
-  "turbo:frame-load": TurboFrameLoadEvent
-  "turbo:frame-render": TurboFrameRenderEvent
-  "turbo:frame-missing": TurboFrameMissingEvent
   "turbo:load": TurboLoadEvent
   "turbo:render": TurboRenderEvent
   "turbo:reload": TurboReloadEvent
-  "turbo:submit-start": TurboSubmitStartEvent
-  "turbo:submit-end": TurboSubmitEndEvent
   "turbo:visit": TurboVisitEvent
 }
 
-interface TurboElementEventMap {
-  "turbo:before-frame-render": TurboBeforeFrameRenderEvent
-  "turbo:before-fetch-request": TurboBeforeFetchRequestEvent
-  "turbo:before-fetch-response": TurboBeforeFetchResponseEvent
-  "turbo:fetch-request-error": TurboFetchRequestErrorEvent
-  "turbo:frame-load": TurboFrameLoadEvent
-  "turbo:frame-render": TurboFrameRenderEvent
-  "turbo:frame-missing": TurboFrameMissingEvent
-  "turbo:submit-start": TurboSubmitStartEvent
-  "turbo:submit-end": TurboSubmitEndEvent
-}
-
 declare global {
-  interface DocumentEventMap extends TurboGlobalEventMap {}
-  interface WindowEventMap extends TurboGlobalEventMap {}
   interface ElementEventMap extends TurboElementEventMap {}
+  interface GlobalEventHandlersEventMap extends TurboGlobalEventHandlersEventMap {}
 }
