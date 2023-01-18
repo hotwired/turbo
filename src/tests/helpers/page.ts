@@ -11,6 +11,9 @@ type MutationAttributeName = string
 type MutationAttributeValue = string | null
 type MutationLog = [MutationAttributeName, Target, MutationAttributeValue]
 
+type BodyHTML = string
+type BodyMutationLog = [BodyHTML]
+
 export function attributeForSelector(page: Page, selector: string, attributeName: string): Promise<string | null> {
   return page.locator(selector).getAttribute(attributeName)
 }
@@ -116,6 +119,19 @@ export async function listenForEventOnTarget(page: Page, elementId: string, even
   }, eventName)
 }
 
+export async function nextBodyMutation(page: Page): Promise<string | null> {
+  let record: BodyMutationLog | undefined
+  while (!record) {
+    ;[record] = await readBodyMutationLogs(page, 1)
+  }
+  return record[0]
+}
+
+export async function noNextBodyMutation(page: Page): Promise<boolean> {
+  const records = await readBodyMutationLogs(page, 1)
+  return !records.some((record) => !!record)
+}
+
 export async function nextAttributeMutationNamed(
   page: Page,
   elementId: string,
@@ -187,6 +203,10 @@ async function readArray<T>(page: Page, identifier: string, length?: number): Pr
     },
     { identifier, length }
   )
+}
+
+export function readBodyMutationLogs(page: Page, length?: number): Promise<BodyMutationLog[]> {
+  return readArray<BodyMutationLog>(page, "bodyMutationLogs", length)
 }
 
 export function readEventLogs(page: Page, length?: number): Promise<EventLog[]> {
