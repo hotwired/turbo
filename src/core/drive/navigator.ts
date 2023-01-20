@@ -99,7 +99,7 @@ export class Navigator {
         }
 
         const location = fetchResponse.location
-        if (redirected) {
+        if (redirected && fetchResponse.location.hash === "") {
           location.hash = formSubmission.fetchRequest.location.hash
         }
         this.proposeVisit(location, visitOptions)
