@@ -7,16 +7,12 @@ jobs:
 
     runs-on: ubuntu-latest
 
-
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
         node-version: '16'
-    - uses: actions/cache@v3
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        cache: 'yarn'
 
     - run: yarn install
     - run: yarn run playwright install --with-deps
@@ -39,7 +35,3 @@ jobs:
 
     - name: Firefox Test
       run: yarn test:browser --project=firefox
-
-    - name: Publish dev build
-      run: .github/scripts/publish-dev-build '${{ secrets.DEV_BUILD_GITHUB_TOKEN }}'
-      if: ${{ github.event_name == 'push' }}
