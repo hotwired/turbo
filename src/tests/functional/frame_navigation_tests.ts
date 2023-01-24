@@ -1,5 +1,12 @@
 import { test } from "@playwright/test"
-import { getFromLocalStorage, nextBeat, nextEventNamed, nextEventOnTarget, pathname } from "../helpers/page"
+import {
+  getFromLocalStorage,
+  nextBeat,
+  nextEventNamed,
+  nextEventOnTarget,
+  pathname,
+  propertyForSelector,
+} from "../helpers/page"
 import { assert } from "chai"
 
 test("test frame navigation with descendant link", async ({ page }) => {
@@ -74,4 +81,18 @@ test("test promoted frame navigations are cached", async ({ page }) => {
   await nextBeat()
 
   assert.equal(await page.textContent("#tab-content"), "One")
+})
+
+test("test promoted frame navigation loads images after rendering", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/tabs.html")
+
+  await page.click("#tab-with-image")
+  await nextEventNamed(page, "turbo:frame-render")
+
+  assert.equal(await page.textContent("#tab-content"), "With image")
+
+  assert.equal(
+    await propertyForSelector(page, "#tab-image", "currentSrc"),
+    "http://localhost:9000/src/tests/fixtures/images/turbo.png"
+  )
 })
