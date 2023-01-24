@@ -1,5 +1,5 @@
 import { FrameElement } from "../../elements/frame_element"
-import { activateScriptElement, nextAnimationFrame } from "../../util"
+import { activateImageElement, activateScriptElement, nextAnimationFrame } from "../../util"
 import { Render, Renderer } from "../renderer"
 import { Snapshot } from "../snapshot"
 
@@ -49,6 +49,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
     this.focusFirstAutofocusableElement()
     await nextAnimationFrame()
     this.activateScriptElements()
+    this.activateImageElements()
   }
 
   loadFrameElement() {
@@ -77,8 +78,19 @@ export class FrameRenderer extends Renderer<FrameElement> {
     }
   }
 
+  activateImageElements() {
+    for (const inertImageElement of this.imageElements) {
+      const activatedImageElement = activateImageElement(inertImageElement)
+      inertImageElement.replaceWith(activatedImageElement)
+    }
+  }
+
   get newScriptElements() {
     return this.currentElement.querySelectorAll("script")
+  }
+
+  get imageElements() {
+    return this.currentElement.querySelectorAll("img")
   }
 }
 
