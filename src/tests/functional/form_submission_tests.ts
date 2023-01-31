@@ -971,6 +971,24 @@ test("test link method form submission inside frame with confirmation cancelled"
   assert.notOk(await hasSelector(page, "#frame div.message"), "Not confirming form submission does not submit the form")
 })
 
+test("test link method form submission with custom confirmation", async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    assert.equal(dialog.message(), "Submitter: #link-method-inside-frame-with-confirmation")
+    dialog.accept()
+  })
+
+  await page.evaluate(() =>
+    window.Turbo.setConfirmMethod((_message, _form, submitter) =>
+      Promise.resolve(submitter ? confirm(`Submitter: #${submitter.id}`) : false)
+    )
+  )
+
+  await page.click("#link-method-inside-frame-with-confirmation")
+  await nextBeat()
+
+  assert.equal(await page.textContent("#frame div.message"), "Link!")
+})
+
 test("test link method form submission outside frame", async ({ page }) => {
   await page.click("#link-method-outside-frame")
   await nextBody(page)
