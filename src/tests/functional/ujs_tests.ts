@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/ujs.html")
 })
 
-test("does NOT handle [data-remote=true] anchors within a turbo-frame", async ({ page }) => {
+test("allows UJS to intercept and cancel Turbo requests for anchors inside a turbo-frame", async ({ page }) => {
   await assertRequestLimit(page, 1, async () => {
     assert.equal(await page.textContent("#frame h2"), "Frames: #frame")
 
