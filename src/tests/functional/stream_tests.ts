@@ -50,7 +50,7 @@ test("test receiving a message without a template", async ({ page }) => {
     `)
   )
 
-  assert.equal(await await page.locator("#messages").count(), 0, "removes target element")
+  assert.equal(await page.locator("#messages").count(), 0, "removes target element")
 })
 
 test("test receiving a message with a <script> element", async ({ page }) => {
