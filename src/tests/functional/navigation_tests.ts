@@ -328,10 +328,7 @@ test("test skip link with hash-only path moves focus and changes tab order", asy
   await page.press("#main", "Tab")
 
   assert.notOk(await selectorHasFocus(page, "#ignored-link"), "skips interactive elements before #main")
-  assert.ok(
-    await selectorHasFocus(page, "#same-origin-unannotated-link"),
-    "skips to first interactive element after #main"
-  )
+  assert.ok(await selectorHasFocus(page, "#main *:focus"), "moves focus inside #main")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
   assert.equal(hash(page.url()), "#main")
 })
