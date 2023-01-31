@@ -1,6 +1,6 @@
 {
   "name": "@hotwired/turbo",
-  "version": "7.2.4",
+  "version": "7.2.5",
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
   "main": "dist/turbo.es2017-umd.js",
