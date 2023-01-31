@@ -1,6 +1,6 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
-import { nextBeat, nextEventNamed, readEventLogs } from "../helpers/page"
+import { nextBeat, nextEventNamed, readEventLogs, waitUntilNoSelector, waitUntilText } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/stream.html")
@@ -50,12 +50,10 @@ test("test receiving a message without a template", async ({ page }) => {
     `)
   )
 
-  assert.equal(await await page.locator("#messages").count(), 0, "removes target element")
+  assert.notOk(await waitUntilNoSelector(page, "#messages"), "removes target element")
 })
 
 test("test receiving a message with a <script> element", async ({ page }) => {
-  const messages = await page.locator("#messages .message")
-
   await page.evaluate(() =>
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="append" target="messages">
@@ -69,7 +67,7 @@ test("test receiving a message with a <script> element", async ({ page }) => {
     `)
   )
 
-  assert.deepEqual(await messages.allTextContents(), ["Hello from script"])
+  assert.ok(await waitUntilText(page, "Hello from script"))
 })
 
 test("test overriding with custom StreamActions", async ({ page }) => {
@@ -96,10 +94,10 @@ test("test overriding with custom StreamActions", async ({ page }) => {
     `)
   }, html)
 
-  assert.equal(await page.textContent("#messages"), html, "evaluates custom StreamAction")
+  assert.ok(await waitUntilText(page, "Rendered with Custom Action"), "evaluates custom StreamAction")
 })
 
-test("test receiving a stream message asynchronously", async ({ page }) => {
+test("test receiving a stream message over SSE", async ({ page }) => {
   await page.evaluate(() => {
     document.body.insertAdjacentHTML(
       "afterbegin",
@@ -111,8 +109,8 @@ test("test receiving a stream message asynchronously", async ({ page }) => {
   assert.deepEqual(await messages.allTextContents(), ["First"])
 
   await page.click("#async button")
-  await nextBeat()
 
+  await waitUntilText(page, "Hello world!")
   assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
 
   await page.evaluate(() => document.getElementById("stream-source")?.remove())
