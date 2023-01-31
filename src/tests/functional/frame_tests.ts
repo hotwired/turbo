@@ -23,13 +23,16 @@ import {
 import { FrameElement } from "../../elements"
 import { TurboFrameMissingEvent } from "../../events"
 
-assert.equal = function (actual: any, expected: any, message?: string) {
-  actual = typeof actual == "string" ? actual.trim() : actual
-  expected = typeof expected == "string" ? expected.trim() : expected
+declare global {
+  namespace Chai {
+    interface AssertStatic {
+      equalIgnoringWhitespace(actual: string | null | undefined, expected: string, message?: string): void
+    }
+  }
+}
 
-  const assertExpectation = new Assertion(expected)
-
-  assertExpectation.to.equal(expected, message)
+assert.equalIgnoringWhitespace = function (actual: string | null | undefined, expected: string, message?: string) {
+  new Assertion(actual?.trim()).to.equal(expected.trim(), message)
 }
 
 test.beforeEach(async ({ page }) => {
@@ -50,7 +53,7 @@ test("test navigating a frame with Turbo.visit", async ({ page }) => {
   await page.evaluate((pathname) => window.Turbo.visit(pathname, { frame: "frame" }), pathname)
   await nextBeat()
 
-  assert.equal(await page.textContent("#frame h2"), "Frame: loaded", "navigates the target frame")
+  assert.equal(await page.textContent("#frame h2"), "Frame: Loaded", "navigates the target frame")
 })
 
 test("test navigating a frame a second time does not leak event listeners", async ({ page }) => {
@@ -232,7 +235,7 @@ test("test the turbo:frame-missing event following a link to a page without a ma
   await nextEventNamed(page, "turbo:load")
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames.html")
-  assert.equal(await innerHTMLForSelector(page, "#missing"), "")
+  assert.ok(await hasSelector(page, "#missing-frame-link"))
 })
 
 test("test following a link to a page with a matching frame does not dispatch a turbo:frame-missing event", async ({
@@ -283,7 +286,7 @@ test("test following a link within a descendant frame whose ancestor declares a 
   const nestedChild = await page.textContent("#nested-child")
   assert.equal(frame, "Frames: #frame")
   assert.equal(nestedRoot, "Frames: #nested-root")
-  assert.equal(nestedChild, "Frame: Loaded")
+  assert.equalIgnoringWhitespace(nestedChild, "Frame: Loaded")
   assert.equal(await attributeForSelector(page, "#frame", "src"), null)
   assert.equal(await attributeForSelector(page, "#nested-root", "src"), null)
   assert.equal(await attributeForSelector(page, "#nested-child", "src"), href || "")
@@ -349,7 +352,7 @@ test("test following a link that declares data-turbo-frame='_self' within a fram
   assert.equal(title, "Frames")
   assert.ok(await hasSelector(page, "#navigate-top"))
   const frame = await page.textContent("#navigate-top")
-  assert.equal(frame, "Replaced only the frame")
+  assert.equalIgnoringWhitespace(frame, "Replaced only the frame")
 })
 
 test("test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
@@ -400,9 +403,11 @@ test("test evaluates frame script elements on each render", async ({ page }) => 
   assert.equal(await frameScriptEvaluationCount(page), undefined)
 
   await page.click("#body-script-link")
+  await nextEventOnTarget(page, "body-script", "turbo:frame-load")
   assert.equal(await frameScriptEvaluationCount(page), 1)
 
   await page.click("#body-script-link")
+  await nextEventOnTarget(page, "body-script", "turbo:frame-load")
   assert.equal(await frameScriptEvaluationCount(page), 2)
 })
 

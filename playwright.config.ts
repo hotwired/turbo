@@ -12,13 +12,13 @@ const config: PlaywrightTestConfig = {
     },
   ],
   retries: 2,
-  testDir: "./src/tests/functional",
-  testMatch: /.*_tests\.ts/,
+  testDir: "./src/tests/",
+  testMatch: /(functional|integration)\/.*_tests\.ts/,
   webServer: {
     command: "yarn start",
     url: "http://localhost:9000/src/tests/fixtures/test.js",
     timeout: 120 * 1000,
-    reuseExistingServer: !!process.env.CI,
+    reuseExistingServer: !process.env.CI,
   },
   use: {
     baseURL: "http://localhost:9000/",
