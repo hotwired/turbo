@@ -1,29 +1,29 @@
 import { Page, test } from "@playwright/test"
 import { assert } from "chai"
-import { noNextEventOnTarget } from "../helpers/page"
+import { nextEventOnTarget, noNextEventOnTarget } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/ujs.html")
 })
 
-test("test clicking a [data-remote=true] anchor within a turbo-frame", async ({ page }) => {
+test("does NOT handle [data-remote=true] anchors within a turbo-frame", async ({ page }) => {
   await assertRequestLimit(page, 1, async () => {
     assert.equal(await page.textContent("#frame h2"), "Frames: #frame")
 
     await page.click("#frame a[data-remote=true]")
 
+    assert.equal(await page.textContent("#frame"), "Content from UJS response")
     assert.ok(await noNextEventOnTarget(page, "frame", "turbo:frame-load"))
-    assert.equal(await page.textContent("#frame h2"), "Frames: #frame", "does not navigate the target frame")
   })
 })
 
-test("test submitting a [data-remote=true] form within a turbo-frame", async ({ page }) => {
+test("handles [data-remote=true] forms within a turbo-frame", async ({ page }) => {
   await assertRequestLimit(page, 1, async () => {
     assert.equal(await page.textContent("#frame h2"), "Frames: #frame")
 
     await page.click("#frame form[data-remote=true] button")
 
-    assert.ok(await noNextEventOnTarget(page, "frame", "turbo:frame-load"))
+    assert.ok(await nextEventOnTarget(page, "frame", "turbo:frame-load"))
     assert.equal(await page.textContent("#frame h2"), "Frame: Loaded", "navigates the target frame")
   })
 })
