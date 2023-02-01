@@ -175,6 +175,18 @@ test("test standard POST form submission toggles submitter [disabled] attribute"
   )
 })
 
+test("test standard POST form submission clears cache", async ({ page }) => {
+  await appendCachedElementTracking(page)
+  const startingUrl = page.url()
+  await page.click("#standard-post-form-submit")
+  await nextBeat()
+  assert.notEqual(page.url(), startingUrl)
+  await page.goBack()
+  await nextBeat()
+  assert.equal(page.url(), startingUrl)
+  assert.notOk(await hasSelector(page, "some-cached-element"))
+})
+
 test("test standard GET form submission", async ({ page }) => {
   await page.click("#standard form.greeting input[type=submit]")
   await nextBody(page)
@@ -183,6 +195,15 @@ test("test standard GET form submission", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
   assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a form")
+})
+
+test("test standard GET form submission does not clear cache", async ({ page }) => {
+  await appendCachedElementTracking(page)
+  await page.click("#standard form.greeting input[type=submit]")
+  await nextBeat()
+  assert.notOk(await hasSelector(page, "some-cached-element"))
+  await page.goBack()
+  assert.ok(await hasSelector(page, "some-cached-element"))
 })
 
 test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
@@ -737,6 +758,65 @@ test("test frame form submission with stream response", async ({ page }) => {
   assert.notOk(await page.getAttribute("#frame", "src"), "does not change frame's src")
 })
 
+test("test frame standard GET form submission does not clear cache", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/one.html")
+  await appendCachedElementTracking(page)
+  await page.click("#form-link")
+  await nextBeat()
+  const button = await page.locator("#frame form.get[method=get] input[type=submit]")
+  await button.click()
+  await nextBody(page)
+  await page.goBack()
+  await nextBeat()
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.ok(await hasSelector(page, "some-cached-element"))
+})
+
+test("test frame standard POST form submission clears cache", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/one.html")
+  await appendCachedElementTracking(page)
+  await page.click("#form-link")
+  await nextBeat()
+  const button = await page.locator("#frame form.redirect input[type=submit]")
+  await button.click()
+  await nextBody(page)
+  await page.goBack()
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.notOk(await hasSelector(page, "some-cached-element"))
+})
+
+test("test standard GET form submission with stream response does not clear cache", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/one.html")
+  await appendCachedElementTracking(page)
+  await page.click("#form-link")
+  await nextBeat()
+  const button = await page.locator("#standard-get-form-with-stream-opt-in-submitter")
+  await button.click()
+  await nextBeat()
+  await page.goBack()
+  await nextBeat()
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.ok(await hasSelector(page, "some-cached-element"))
+})
+
+test("test standard POST form submission with stream response clears cache", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/one.html")
+  await appendCachedElementTracking(page)
+  await page.click("#form-link")
+  await nextBeat()
+
+  const button = await page.locator("#frame form.stream[method=post] input[type=submit]")
+  await button.click()
+  await nextBeat()
+
+  const message = await page.locator("#frame div.message")
+  assert.ok(await hasSelector(page, "#frame form.redirect"))
+  assert.equal(await message.textContent(), "Hello!")
+  await page.goBack()
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.notOk(await hasSelector(page, "some-cached-element"))
+})
+
 test("test frame form submission with HTTP verb other than GET or POST", async ({ page }) => {
   await page.click("#frame form.put.stream input[type=submit]")
   await nextBeat()
@@ -1117,4 +1197,11 @@ function formSubmitStarted(page: Page) {
 
 function formSubmitEnded(page: Page) {
   return getFromLocalStorage(page, "formSubmitEnded")
+}
+
+async function appendCachedElementTracking(page: Page) {
+  await page.evaluate(() => {
+    const cachedElement = document.createElement("some-cached-element")
+    document.body.appendChild(cachedElement)
+  })
 }
