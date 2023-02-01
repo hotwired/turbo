@@ -1,4 +1,4 @@
-import { DOMTestCase } from "../helpers/dom_test_case"
+import { test } from "@jest/globals"
 import * as Turbo from "../../index"
 
 export {
@@ -30,22 +30,18 @@ export {
   TurboVisitEvent,
 } from "../../index"
 
-export class ExportTests extends DOMTestCase {
-  async "test Turbo interface"() {
-    this.assert.equal(typeof Turbo.start, "function")
-    this.assert.equal(typeof Turbo.registerAdapter, "function")
-    this.assert.equal(typeof Turbo.visit, "function")
-    this.assert.equal(typeof Turbo.connectStreamSource, "function")
-    this.assert.equal(typeof Turbo.disconnectStreamSource, "function")
-    this.assert.equal(typeof Turbo.renderStreamMessage, "function")
-    this.assert.equal(typeof Turbo.clearCache, "function")
-    this.assert.equal(typeof Turbo.setProgressBarDelay, "function")
-    this.assert.equal(typeof Turbo.setConfirmMethod, "function")
-    this.assert.equal(typeof Turbo.setFormMode, "function")
-    this.assert.equal(typeof Turbo.cache, "object")
-    this.assert.equal(typeof Turbo.navigator, "object")
-    this.assert.equal(typeof Turbo.session, "object")
-  }
-}
-
-ExportTests.registerSuite()
+test("Turbo interface", () => {
+  expect(typeof Turbo.start).toEqual("function")
+  expect(typeof Turbo.registerAdapter).toEqual("function")
+  expect(typeof Turbo.visit).toEqual("function")
+  expect(typeof Turbo.connectStreamSource).toEqual("function")
+  expect(typeof Turbo.disconnectStreamSource).toEqual("function")
+  expect(typeof Turbo.renderStreamMessage).toEqual("function")
+  expect(typeof Turbo.clearCache).toEqual("function")
+  expect(typeof Turbo.setProgressBarDelay).toEqual("function")
+  expect(typeof Turbo.setConfirmMethod).toEqual("function")
+  expect(typeof Turbo.setFormMode).toEqual("function")
+  expect(typeof Turbo.cache).toEqual("object")
+  expect(typeof Turbo.navigator).toEqual("object")
+  expect(typeof Turbo.session).toEqual("object")
+})

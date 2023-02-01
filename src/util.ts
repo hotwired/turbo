@@ -70,6 +70,14 @@ export function parseHTMLDocument(html = "") {
   return new DOMParser().parseFromString(html, "text/html")
 }
 
+export function nextBeat() {
+  return delay(100)
+}
+
+export function delay(ms = 1) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export function unindent(strings: TemplateStringsArray, ...values: any[]): string {
   const lines = interpolate(strings, values).replace(/^\n/, "").split("\n")
   const match = lines[0].match(/^\s+/)

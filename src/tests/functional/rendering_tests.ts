@@ -40,7 +40,7 @@ test("test triggers before-render and render events for error pages", async ({ p
   await page.click("#nonexistent-link")
   const { newBody } = await nextEventNamed(page, "turbo:before-render")
 
-  assert.equal(await textContent(page, newBody), "404 Not Found: /nonexistent\n")
+  assert.equal(await textContent(page, newBody), "\nCannot GET /nonexistent\n\n\n")
 
   await nextEventNamed(page, "turbo:render")
   assert.equal(await newBody, await page.evaluate(() => document.body.outerHTML))
@@ -570,7 +570,7 @@ test("test error pages", async ({ page }) => {
   await page.click("#nonexistent-link")
   await nextBody(page)
 
-  assert.equal(await page.textContent("body"), "404 Not Found: /nonexistent\n")
+  assert.equal(await page.textContent("body"), "\nCannot GET /nonexistent\n\n\n")
 })
 
 test("test rendering a redirect response replaces the body once and only once", async ({ page }) => {
