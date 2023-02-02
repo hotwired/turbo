@@ -427,15 +427,15 @@ export class FrameController
   }
 
   private handleFrameMissingFromResponse(fetchResponse: FetchResponse) {
-    this.showFrameMissingError()
-    this.throwFrameMissingException(fetchResponse)
+    this.renderFrameMissingError()
+    this.throwFrameMissingError(fetchResponse)
   }
 
-  private showFrameMissingError() {
+  private renderFrameMissingError() {
     this.element.innerHTML = `<strong class="turbo-frame-error">Content missing</strong>`
   }
 
-  private throwFrameMissingException(fetchResponse: FetchResponse) {
+  private throwFrameMissingError(fetchResponse: FetchResponse) {
     const message = `The response (${fetchResponse.statusCode}) did not contain the expected <turbo-frame id="${this.element.id}">`
     throw new TurboFrameMissingError(message)
   }
