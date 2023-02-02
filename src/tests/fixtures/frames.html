@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Frame</title>
-    <meta name="turbo-frame-breakout-paths" content="/src/tests/fixtures/frames/breakout_frame.html /somewhere_else">
+    <meta name="turbo-frame-escape-paths" content="/src/tests/fixtures/frames/escape_frame.html /somewhere_else">
 
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
@@ -98,8 +98,8 @@
 
     <turbo-frame id="missing">
       <a id="missing-frame-link" href="/src/tests/fixtures/frames/frame.html">Missing frame</a>
-      <a id="breakout-frame-link" href="/src/tests/fixtures/frames/breakout_frame.html">Missing frame with breakout</a>
-      <a id="breakout-redirect-link" href="/__turbo/redirect?path=/src/tests/fixtures/frames/breakout_frame.html">Missing frame with breakout (via redirect)</a>
+      <a id="escape-frame-link" href="/src/tests/fixtures/frames/escape_frame.html">Missing frame with escape</a>
+      <a id="escape-redirect-link" href="/__turbo/redirect?path=/src/tests/fixtures/frames/escape_frame.html">Missing frame with escape (via redirect)</a>
       <a id="missing-page-link" href="/missing.html">404</a>
     </turbo-frame>
 

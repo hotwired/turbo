@@ -187,35 +187,35 @@ test("failing to follow a link to a page without a matching frame shows an error
   assert.match(error!.message, /The response \(404\) did not contain the expected <turbo-frame id="missing">/)
 })
 
-test("following a link to a breakoutable page without a matching frame dispatches a turbo:frame-missing event", async ({
+test("following a link to an escapeable page without a matching frame dispatches a turbo:frame-missing event", async ({
   page,
 }) => {
-  await page.click("#breakout-frame-link")
+  await page.click("#escape-frame-link")
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
 
   assert.equal(200, response.status)
 })
 
-test("successfully following a link to a breakoutable page without a matching frame performs a visit", async ({
+test("successfully following a link to an escapeable page without a matching frame performs a visit", async ({
   page,
 }) => {
-  await page.click("#breakout-frame-link")
+  await page.click("#escape-frame-link")
 
   await nextEventNamed(page, "turbo:render")
 
-  assert.equal(await page.innerText("h1"), "Breakout frame")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/breakout_frame.html")
+  assert.equal(await page.innerText("h1"), "Escape frame")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/escape_frame.html")
 })
 
-test("successfully following a link via a redirect to a breakoutable page without a matching frame performs a visit", async ({
+test("successfully following a link via a redirect to an escapeable page without a matching frame performs a visit", async ({
   page,
 }) => {
-  await page.click("#breakout-redirect-link")
+  await page.click("#escape-redirect-link")
 
   await nextEventNamed(page, "turbo:render")
 
-  assert.equal(await page.innerText("h1"), "Breakout frame")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/breakout_frame.html")
+  assert.equal(await page.innerText("h1"), "Escape frame")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/escape_frame.html")
 })
 
 test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({

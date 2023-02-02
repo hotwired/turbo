@@ -427,8 +427,8 @@ export class FrameController
   }
 
   private handleFrameMissingFromResponse(fetchResponse: FetchResponse) {
-    if (this.responsePermittedToBreakOutOfFrame(fetchResponse)) {
-      this.warnFrameMissingBreakout(fetchResponse)
+    if (this.responsePermittedToEscapeFrame(fetchResponse)) {
+      this.warnResponseEscapingFrame(fetchResponse)
       this.visitResponse(fetchResponse.response)
     } else {
       this.view.missing()
@@ -436,16 +436,16 @@ export class FrameController
     }
   }
 
-  private responsePermittedToBreakOutOfFrame(fetchResponse: FetchResponse) {
+  private responsePermittedToEscapeFrame(fetchResponse: FetchResponse) {
     const allowedPathsTag = this.element.ownerDocument.querySelector<HTMLMetaElement>(
-      `meta[name=turbo-frame-breakout-paths]`
+      `meta[name=turbo-frame-escape-paths]`
     )
     const allowedPaths = allowedPathsTag?.content?.split(/\s+/) || []
 
     return allowedPaths.includes(fetchResponse.location.pathname)
   }
 
-  private warnFrameMissingBreakout(fetchResponse: FetchResponse) {
+  private warnResponseEscapingFrame(fetchResponse: FetchResponse) {
     console.warn(this.frameMissingMessage(fetchResponse, "Performing a full-page visit."))
   }
 
@@ -453,7 +453,7 @@ export class FrameController
     throw new TurboFrameMissingError(
       this.frameMissingMessage(
         fetchResponse,
-        "To transform the response into a full-page visit, include its path in a turbo-frame-breakout-paths meta tag."
+        "To transform the response into a full-page visit, include its path in a turbo-frame-escape-paths meta tag."
       )
     )
   }
