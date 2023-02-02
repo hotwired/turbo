@@ -160,7 +160,7 @@ export class FrameController
     try {
       const html = await fetchResponse.responseHTML
       if (html) {
-        const { body, head } = parseHTMLDocument(html)
+        const { body } = parseHTMLDocument(html)
         const newFrameElement = await this.extractForeignFrameElement(body)
 
         if (newFrameElement) {
@@ -182,7 +182,7 @@ export class FrameController
           session.frameLoaded(this.element)
           this.fetchResponseLoaded(fetchResponse)
         } else if (this.willHandleFrameMissingFromResponse(fetchResponse)) {
-          this.handleFrameMissingFromResponse(fetchResponse, head)
+          this.handleFrameMissingFromResponse(fetchResponse)
         }
       }
     } finally {
@@ -426,8 +426,8 @@ export class FrameController
     return !event.defaultPrevented
   }
 
-  private handleFrameMissingFromResponse(fetchResponse: FetchResponse, head: HTMLHeadElement) {
-    if (this.responsePermittedToBreakOutOfFrame(head)) {
+  private handleFrameMissingFromResponse(fetchResponse: FetchResponse) {
+    if (this.responsePermittedToBreakOutOfFrame(fetchResponse)) {
       this.warnFrameMissingBreakout(fetchResponse)
       this.visitResponse(fetchResponse.response)
     } else {
@@ -436,8 +436,13 @@ export class FrameController
     }
   }
 
-  private responsePermittedToBreakOutOfFrame(head: HTMLHeadElement) {
-    return !!head.querySelector(`meta[name=turbo-frame-missing][content=visit]`)
+  private responsePermittedToBreakOutOfFrame(fetchResponse: FetchResponse) {
+    const allowedPathsTag = this.element.ownerDocument.querySelector<HTMLMetaElement>(
+      `meta[name=turbo-frame-breakout-paths]`
+    )
+    const allowedPaths = allowedPathsTag?.content?.split(/\s+/) || []
+
+    return allowedPaths.includes(fetchResponse.location.pathname)
   }
 
   private warnFrameMissingBreakout(fetchResponse: FetchResponse) {
@@ -448,7 +453,7 @@ export class FrameController
     throw new TurboFrameMissingError(
       this.frameMissingMessage(
         fetchResponse,
-        "To transform the response into a full-page visit, include the turbo-frame-missing meta tag."
+        "To transform the response into a full-page visit, include its path in a turbo-frame-breakout-paths meta tag."
       )
     )
   }
