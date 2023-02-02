@@ -161,7 +161,7 @@ test("successfully following a link to a page without a matching frame shows an 
   assert.match(await page.innerText("#missing"), /Content missing/)
 
   assert.exists(error)
-  assert.equal(error!.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
+  assert.match(error!.message, /The response \(200\) did not contain the expected <turbo-frame id="missing">/)
 })
 
 test("failing to follow a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
@@ -184,7 +184,38 @@ test("failing to follow a link to a page without a matching frame shows an error
   assert.match(await page.innerText("#missing"), /Content missing/)
 
   assert.exists(error)
-  assert.equal(error!.message, `The response (404) did not contain the expected <turbo-frame id="missing">`)
+  assert.match(error!.message, /The response \(404\) did not contain the expected <turbo-frame id="missing">/)
+})
+
+test("following a link to a breakoutable page without a matching frame dispatches a turbo:frame-missing event", async ({
+  page,
+}) => {
+  await page.click("#breakout-frame-link")
+  const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
+
+  assert.equal(200, response.status)
+})
+
+test("successfully following a link to a breakoutable page without a matching frame performs a visit", async ({
+  page,
+}) => {
+  await page.click("#breakout-frame-link")
+
+  await nextEventNamed(page, "turbo:render")
+
+  assert.equal(await page.innerText("h1"), "Breakout frame")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/breakout_frame.html")
+})
+
+test("successfully following a link via a redirect to a breakoutable page without a matching frame performs a visit", async ({
+  page,
+}) => {
+  await page.click("#breakout-redirect-link")
+
+  await nextEventNamed(page, "turbo:render")
+
+  assert.equal(await page.innerText("h1"), "Breakout frame")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/breakout_frame.html")
 })
 
 test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({
