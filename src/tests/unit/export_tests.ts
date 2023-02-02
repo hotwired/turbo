@@ -1,6 +1,7 @@
-import { DOMTestCase } from "../helpers/dom_test_case"
+import { assert } from "@open-wc/testing"
 import * as Turbo from "../../index"
 
+// ESBuild loader does not like these types.
 export {
   PageRenderer,
   PageSnapshot,
@@ -30,22 +31,18 @@ export {
   TurboVisitEvent,
 } from "../../index"
 
-export class ExportTests extends DOMTestCase {
-  async "test Turbo interface"() {
-    this.assert.equal(typeof Turbo.start, "function")
-    this.assert.equal(typeof Turbo.registerAdapter, "function")
-    this.assert.equal(typeof Turbo.visit, "function")
-    this.assert.equal(typeof Turbo.connectStreamSource, "function")
-    this.assert.equal(typeof Turbo.disconnectStreamSource, "function")
-    this.assert.equal(typeof Turbo.renderStreamMessage, "function")
-    this.assert.equal(typeof Turbo.clearCache, "function")
-    this.assert.equal(typeof Turbo.setProgressBarDelay, "function")
-    this.assert.equal(typeof Turbo.setConfirmMethod, "function")
-    this.assert.equal(typeof Turbo.setFormMode, "function")
-    this.assert.equal(typeof Turbo.cache, "object")
-    this.assert.equal(typeof Turbo.navigator, "object")
-    this.assert.equal(typeof Turbo.session, "object")
-  }
-}
-
-ExportTests.registerSuite()
+it("test Turbo interface", () =>  {
+  assert.equal(typeof Turbo.start, "function")
+  assert.equal(typeof Turbo.registerAdapter, "function")
+  assert.equal(typeof Turbo.visit, "function")
+  assert.equal(typeof Turbo.connectStreamSource, "function")
+  assert.equal(typeof Turbo.disconnectStreamSource, "function")
+  assert.equal(typeof Turbo.renderStreamMessage, "function")
+  assert.equal(typeof Turbo.clearCache, "function")
+  assert.equal(typeof Turbo.setProgressBarDelay, "function")
+  assert.equal(typeof Turbo.setConfirmMethod, "function")
+  assert.equal(typeof Turbo.setFormMode, "function")
+  assert.equal(typeof Turbo.cache, "object")
+  assert.equal(typeof Turbo.navigator, "object")
+  assert.equal(typeof Turbo.session, "object")
+})

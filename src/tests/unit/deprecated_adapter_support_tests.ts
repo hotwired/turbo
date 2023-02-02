@@ -3,8 +3,9 @@ import { FormSubmission } from "../../core/drive/form_submission"
 import { Adapter } from "../../core/native/adapter"
 import * as Turbo from "../../index"
 import { DOMTestCase } from "../helpers/dom_test_case"
+import { assert } from "@open-wc/testing"
 
-export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter {
+class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter {
   locations: any[] = []
   originalAdapter = Turbo.navigator.adapter
 
@@ -14,22 +15,6 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
 
   async teardown() {
     Turbo.registerAdapter(this.originalAdapter)
-  }
-
-  async "test visit proposal location includes deprecated absoluteURL property"() {
-    Turbo.navigator.proposeVisit(new URL(window.location.toString()))
-    this.assert.equal(this.locations.length, 1)
-
-    const [location] = this.locations
-    this.assert.equal(location.toString(), location.absoluteURL)
-  }
-
-  async "test visit start location includes deprecated absoluteURL property"() {
-    Turbo.navigator.startVisit(window.location.toString(), "123")
-    this.assert.equal(this.locations.length, 1)
-
-    const [location] = this.locations
-    this.assert.equal(location.toString(), location.absoluteURL)
   }
 
   // Adapter interface
@@ -64,4 +49,24 @@ export class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter
   pageInvalidated(): void {}
 }
 
-DeprecatedAdapterSupportTest.registerSuite()
+it("test visit proposal location includes deprecated absoluteURL property", async () => {
+  const adapter = new DeprecatedAdapterSupportTest()
+  adapter.setup();
+  Turbo.navigator.proposeVisit(new URL(window.location.toString()))
+  assert.equal(adapter.locations.length, 1)
+
+  const [location] = adapter.locations
+  assert.equal(location.toString(), location.absoluteURL)
+});
+
+
+it("test visit start location includes deprecated absoluteURL property", async () => {
+  const adapter = new DeprecatedAdapterSupportTest()
+  adapter.setup();
+  Turbo.navigator.startVisit(window.location.toString(), "123")
+  assert.equal(adapter.locations.length, 1)
+
+  const [location] = adapter.locations
+  assert.equal(location.toString(), location.absoluteURL)
+})
+

@@ -31,31 +31,6 @@ export default [
   },
 
   {
-    input: "src/tests/unit/index.ts",
-    output: [
-      {
-        name: "tests_unit",
-        file: "dist/tests/unit.js",
-        format: "iife",
-        sourcemap: true,
-        globals: {
-          intern: "intern"
-        }
-      }
-    ],
-    plugins: [
-      resolve(),
-      typescript()
-    ],
-    external: [
-      "intern"
-    ],
-    watch: {
-      include: "src/tests/**"
-    }
-  },
-
-  {
     input: "src/tests/server.ts",
     output: [
       {
