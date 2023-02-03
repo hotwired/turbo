@@ -52,16 +52,12 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "express": "^4.18.2",
-    "intern": "^4.9.0",
     "multer": "^1.4.2",
     "prettier": "2.6.2",
     "rollup": "^2.35.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
     "typescript": "^4.9.5"
-  },
-  "resolutions": {
-    "esbuild": "0.16.17"
   },
   "scripts": {
     "clean": "rm -fr dist",
