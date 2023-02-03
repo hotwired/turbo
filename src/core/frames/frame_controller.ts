@@ -427,12 +427,8 @@ export class FrameController
   }
 
   private handleFrameMissingFromResponse(fetchResponse: FetchResponse) {
-    this.renderFrameMissingError()
+    this.view.missing()
     this.throwFrameMissingError(fetchResponse)
-  }
-
-  private renderFrameMissingError() {
-    this.element.innerHTML = `<strong class="turbo-frame-error">Content missing</strong>`
   }
 
   private throwFrameMissingError(fetchResponse: FetchResponse) {
