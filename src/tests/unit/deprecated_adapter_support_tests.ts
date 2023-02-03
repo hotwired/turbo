@@ -51,22 +51,20 @@ class DeprecatedAdapterSupportTest extends DOMTestCase implements Adapter {
 
 it("test visit proposal location includes deprecated absoluteURL property", async () => {
   const adapter = new DeprecatedAdapterSupportTest()
-  adapter.setup();
+  adapter.setup()
   Turbo.navigator.proposeVisit(new URL(window.location.toString()))
-  assert.equal(adapter.locations.length, 1)
-
-  const [location] = adapter.locations
-  assert.equal(location.toString(), location.absoluteURL)
-});
-
-
-it("test visit start location includes deprecated absoluteURL property", async () => {
-  const adapter = new DeprecatedAdapterSupportTest()
-  adapter.setup();
-  Turbo.navigator.startVisit(window.location.toString(), "123")
   assert.equal(adapter.locations.length, 1)
 
   const [location] = adapter.locations
   assert.equal(location.toString(), location.absoluteURL)
 })
 
+it("test visit start location includes deprecated absoluteURL property", async () => {
+  const adapter = new DeprecatedAdapterSupportTest()
+  adapter.setup()
+  Turbo.navigator.startVisit(window.location.toString(), "123")
+  assert.equal(adapter.locations.length, 1)
+
+  const [location] = adapter.locations
+  assert.equal(location.toString(), location.absoluteURL)
+})

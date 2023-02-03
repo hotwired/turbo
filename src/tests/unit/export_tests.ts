@@ -31,7 +31,7 @@ export type {
   TurboVisitEvent,
 } from "../../index"
 
-it("test Turbo interface", () =>  {
+it("test Turbo interface", () => {
   assert.equal(typeof Turbo.start, "function")
   assert.equal(typeof Turbo.registerAdapter, "function")
   assert.equal(typeof Turbo.visit, "function")

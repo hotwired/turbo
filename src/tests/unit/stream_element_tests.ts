@@ -47,11 +47,7 @@ it("test action=append", async () => {
 })
 
 it("test action=append with children ID already present in target", async () => {
-  const element = createStreamElement(
-    "append",
-    "hello",
-    createTemplateElement(' <div id="child_1">First</div> tail1 ')
-  )
+  const element = createStreamElement("append", "hello", createTemplateElement(' <div id="child_1">First</div> tail1 '))
   const element2 = createStreamElement(
     "append",
     "hello",
@@ -90,11 +86,7 @@ it("test action=prepend", async () => {
 })
 
 it("test action=prepend with children ID already present in target", async () => {
-  const element = createStreamElement(
-    "prepend",
-    "hello",
-    createTemplateElement('<div id="child_1">First</div> tail1 ')
-  )
+  const element = createStreamElement("prepend", "hello", createTemplateElement('<div id="child_1">First</div> tail1 '))
   const element2 = createStreamElement(
     "prepend",
     "hello",
@@ -175,4 +167,3 @@ it("test action=before", async () => {
   assert.ok(subject.find("h1#before"))
   assert.isNull(element.parentElement)
 })
-
