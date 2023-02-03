@@ -67,6 +67,10 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
     return this.getSetting("visit-control") != "reload"
   }
 
+  get frameEscapePaths() {
+    return this.getSetting("frame-escape-paths")?.split(/\s+/) || []
+  }
+
   // Private
 
   getSetting(name: string) {

@@ -437,12 +437,7 @@ export class FrameController
   }
 
   private responsePermittedToEscapeFrame(fetchResponse: FetchResponse) {
-    const allowedPathsTag = this.element.ownerDocument.querySelector<HTMLMetaElement>(
-      `meta[name=turbo-frame-escape-paths]`
-    )
-    const allowedPaths = allowedPathsTag?.content?.split(/\s+/) || []
-
-    return allowedPaths.includes(fetchResponse.location.pathname)
+    return session.snapshot.frameEscapePaths.includes(fetchResponse.location.pathname)
   }
 
   private warnResponseEscapingFrame(fetchResponse: FetchResponse) {
