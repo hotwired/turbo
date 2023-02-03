@@ -28,30 +28,5 @@ export default [
     watch: {
       include: "src/**"
     }
-  },
-
-  {
-    input: "src/tests/server.ts",
-    output: [
-      {
-        file: "dist/tests/server.js",
-        format: "cjs",
-        sourcemap: true
-      }
-    ],
-    plugins: [
-      resolve(),
-      typescript()
-    ],
-    external: [
-      "express",
-      "multer",
-      "path",
-      "url",
-      "fs"
-    ],
-    watch: {
-      include: "src/tests/**"
-    }
   }
 ]

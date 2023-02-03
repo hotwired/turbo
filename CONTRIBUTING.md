@@ -37,7 +37,7 @@ Once you are done developing the feature or bug fix you have 2 options:
 
 ### Testing
 
-The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in [intern.json](./intern.json) and [playwright.config.ts](./playwright.config.ts). Check them out to see the used browser environments.
+The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in [web-test-runner.config.mjs](./web-test-runner.config.mjs) and [playwright.config.ts](./playwright.config.ts). Check them out to see the used browser environments.
 
 To override the ChromeDriver version, declare the `CHROMEVER` environment
 variable.

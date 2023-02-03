@@ -2,7 +2,7 @@ import { assert } from "@open-wc/testing"
 import * as Turbo from "../../index"
 
 // ESBuild loader does not like these types.
-export {
+export type {
   PageRenderer,
   PageSnapshot,
   FrameRenderer,

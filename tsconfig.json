@@ -11,6 +11,7 @@
     "noEmit": true,
     "removeComments": true,
     "skipLibCheck": true,
+    "isolatedModules": true
   },
   "exclude": [ "dist", "src/tests/fixtures", "playwright.config.ts" ]
 }

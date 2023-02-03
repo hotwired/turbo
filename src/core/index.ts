@@ -14,7 +14,7 @@ const session = new Session()
 const cache = new Cache(session)
 const { navigator } = session
 export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
-export {
+export type {
   TurboBeforeCacheEvent,
   TurboBeforeRenderEvent,
   TurboBeforeVisitEvent,
@@ -27,10 +27,11 @@ export {
   TurboVisitEvent,
 } from "./session"
 
-export { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
-export { TurboFrameMissingEvent } from "./frames/frame_controller"
+export type { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
+export type { TurboFrameMissingEvent } from "./frames/frame_controller"
 
-export { StreamActions, TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
+export { StreamActions } from "./streams/stream_actions"
+export type { TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
 
 /**
  * Starts the main session.

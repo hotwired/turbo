@@ -12,7 +12,8 @@ export default {
   ],
   nodeResolve: true,
   files: "./src/tests/unit/**/*_tests.ts",
+
   plugins: [
-    esbuildPlugin({ ts: true, target: "auto" })
+    esbuildPlugin({ ts: true, target: "es2020" })
   ],
 };

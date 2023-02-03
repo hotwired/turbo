@@ -17,164 +17,162 @@ function createTemplateElement(html: string) {
   return element
 }
 
-export class StreamElementTests extends DOMTestCase {
-  get fixtureHTML() {
-    return `<div><div id="hello">Hello Turbo</div></div>`
-  }
-}
+export class StreamElementTests extends DOMTestCase {}
 
 let subject: StreamElementTests
 
 beforeEach(() => {
   subject = new StreamElementTests()
+  subject.setup()
+  subject.fixtureHTML = `<div><div id="hello">Hello Turbo</div></div>`
 })
 
-  it("test action=append", async () => {
-    const element = createStreamElement("append", "hello", createTemplateElement("<span> Streams</span>"))
-    const element2 = createStreamElement("append", "hello", createTemplateElement("<span> and more</span>"))
+it("test action=append", async () => {
+  const element = createStreamElement("append", "hello", createTemplateElement("<span> Streams</span>"))
+  const element2 = createStreamElement("append", "hello", createTemplateElement("<span> and more</span>"))
 
-    assert.equal(document.querySelector("#hello")?.textContent, "Hello Turbo")
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo Streams")
-    assert.isNull(element.parentElement)
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo Streams")
+  assert.isNull(element.parentElement)
 
-    subject.append(element2)
-    await nextAnimationFrame()
+  subject.append(element2)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo Streams and more")
-    assert.isNull(element2.parentElement)
-  })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo Streams and more")
+  assert.isNull(element2.parentElement)
+})
 
-  it("test action=append with children ID already present in target", async () => {
-    const element = createStreamElement(
-      "append",
-      "hello",
-      createTemplateElement(' <div id="child_1">First</div> tail1 ')
-    )
-    const element2 = createStreamElement(
-      "append",
-      "hello",
-      createTemplateElement('<div id="child_1">New First</div> <div id="child_2">Second</div> tail2 ')
-    )
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+it("test action=append with children ID already present in target", async () => {
+  const element = createStreamElement(
+    "append",
+    "hello",
+    createTemplateElement(' <div id="child_1">First</div> tail1 ')
+  )
+  const element2 = createStreamElement(
+    "append",
+    "hello",
+    createTemplateElement('<div id="child_1">New First</div> <div id="child_2">Second</div> tail2 ')
+  )
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo First tail1 ")
-    assert.isNull(element.parentElement)
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo First tail1 ")
+  assert.isNull(element.parentElement)
 
-    subject.append(element2)
-    await nextAnimationFrame()
+  subject.append(element2)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo  tail1 New First Second tail2 ")
-  })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo  tail1 New First Second tail2 ")
+})
 
-  it("test action=prepend", async () => {
-    const element = createStreamElement("prepend", "hello", createTemplateElement("<span>Streams </span>"))
-    const element2 = createStreamElement("prepend", "hello", createTemplateElement("<span>and more </span>"))
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+it("test action=prepend", async () => {
+  const element = createStreamElement("prepend", "hello", createTemplateElement("<span>Streams </span>"))
+  const element2 = createStreamElement("prepend", "hello", createTemplateElement("<span>and more </span>"))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "Streams Hello Turbo")
-    assert.isNull(element.parentElement)
+  assert.equal(subject.find("#hello")?.textContent, "Streams Hello Turbo")
+  assert.isNull(element.parentElement)
 
-    subject.append(element2)
-    await nextAnimationFrame()
+  subject.append(element2)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "and more Streams Hello Turbo")
-    assert.isNull(element.parentElement)
-  })
+  assert.equal(subject.find("#hello")?.textContent, "and more Streams Hello Turbo")
+  assert.isNull(element.parentElement)
+})
 
-  it("test action=prepend with children ID already present in target", async () => {
-    const element = createStreamElement(
-      "prepend",
-      "hello",
-      createTemplateElement('<div id="child_1">First</div> tail1 ')
-    )
-    const element2 = createStreamElement(
-      "prepend",
-      "hello",
-      createTemplateElement('<div id="child_1">New First</div> <div id="child_2">Second</div> tail2 ')
-    )
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+it("test action=prepend with children ID already present in target", async () => {
+  const element = createStreamElement(
+    "prepend",
+    "hello",
+    createTemplateElement('<div id="child_1">First</div> tail1 ')
+  )
+  const element2 = createStreamElement(
+    "prepend",
+    "hello",
+    createTemplateElement('<div id="child_1">New First</div> <div id="child_2">Second</div> tail2 ')
+  )
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "First tail1 Hello Turbo")
-    assert.isNull(element.parentElement)
+  assert.equal(subject.find("#hello")?.textContent, "First tail1 Hello Turbo")
+  assert.isNull(element.parentElement)
 
-    subject.append(element2)
-    await nextAnimationFrame()
+  subject.append(element2)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "New First Second tail2  tail1 Hello Turbo")
-  })
+  assert.equal(subject.find("#hello")?.textContent, "New First Second tail2  tail1 Hello Turbo")
+})
 
-  it("test action=remove", async () => {
-    const element = createStreamElement("remove", "hello")
-    assert.ok(subject.find("#hello"))
+it("test action=remove", async () => {
+  const element = createStreamElement("remove", "hello")
+  assert.ok(subject.find("#hello"))
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.notOk(subject.find("#hello"))
-    assert.isNull(element.parentElement)
-  })
+  assert.notOk(subject.find("#hello"))
+  assert.isNull(element.parentElement)
+})
 
-  it("test action=replace", async () => {
-    const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello">Hello Turbo</h1>`))
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
-    assert.ok(subject.find("div#hello"))
+it("test action=replace", async () => {
+  const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello">Hello Turbo</h1>`))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.ok(subject.find("div#hello"))
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
-    assert.notOk(subject.find("div#hello"))
-    assert.ok(subject.find("h1#hello"))
-    assert.isNull(element.parentElement)
-  })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.notOk(subject.find("div#hello"))
+  assert.ok(subject.find("h1#hello"))
+  assert.isNull(element.parentElement)
+})
 
-  it("test action=update", async () => {
-    const element = createStreamElement("update", "hello", createTemplateElement("Goodbye Turbo"))
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+it("test action=update", async () => {
+  const element = createStreamElement("update", "hello", createTemplateElement("Goodbye Turbo"))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.textContent, "Goodbye Turbo")
-    assert.isNull(element.parentElement)
-  })
+  assert.equal(subject.find("#hello")?.textContent, "Goodbye Turbo")
+  assert.isNull(element.parentElement)
+})
 
-  it("test action=after", async () => {
-    const element = createStreamElement("after", "hello", createTemplateElement(`<h1 id="after">After Turbo</h1>`))
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+it("test action=after", async () => {
+  const element = createStreamElement("after", "hello", createTemplateElement(`<h1 id="after">After Turbo</h1>`))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.nextSibling?.textContent, "After Turbo")
-    assert.ok(subject.find("div#hello"))
-    assert.ok(subject.find("h1#after"))
-    assert.isNull(element.parentElement)
-  })
+  assert.equal(subject.find("#hello")?.nextSibling?.textContent, "After Turbo")
+  assert.ok(subject.find("div#hello"))
+  assert.ok(subject.find("h1#after"))
+  assert.isNull(element.parentElement)
+})
 
-  it("test action=before", async () => {
-    const element = createStreamElement("before", "hello", createTemplateElement(`<h1 id="before">Before Turbo</h1>`))
-    assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+it("test action=before", async () => {
+  const element = createStreamElement("before", "hello", createTemplateElement(`<h1 id="before">Before Turbo</h1>`))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
-    subject.append(element)
-    await nextAnimationFrame()
+  subject.append(element)
+  await nextAnimationFrame()
 
-    assert.equal(subject.find("#hello")?.previousSibling?.textContent, "Before Turbo")
-    assert.ok(subject.find("div#hello"))
-    assert.ok(subject.find("h1#before"))
-    assert.isNull(element.parentElement)
-  })
+  assert.equal(subject.find("#hello")?.previousSibling?.textContent, "Before Turbo")
+  assert.ok(subject.find("div#hello"))
+  assert.ok(subject.find("h1#before"))
+  assert.isNull(element.parentElement)
+})
 
