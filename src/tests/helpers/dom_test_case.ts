@@ -1,6 +1,4 @@
-import { InternTestCase } from "./intern_test_case"
-
-export class DOMTestCase extends InternTestCase {
+export class DOMTestCase {
   fixtureElement = document.createElement("main")
 
   async setup() {
