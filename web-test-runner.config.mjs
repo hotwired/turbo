@@ -1,9 +1,7 @@
-// import { rollupBundlePlugin } from '@web/dev-server-rollup';
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 import { playwrightLauncher } from '@web/test-runner-playwright';
-// import resolve from "@rollup/plugin-node-resolve"
-// import typescript from "@rollup/plugin-typescript"
 
+/** @type {import("@web/test-runner").TestRunnerConfig} */
 export default {
   browsers: [
     playwrightLauncher({ product: 'chromium' }),
@@ -12,7 +10,11 @@ export default {
   ],
   nodeResolve: true,
   files: "./src/tests/unit/**/*_tests.ts",
-
+  testFramework: {
+    config: {
+      ui: "tdd"
+    }
+  },
   plugins: [
     esbuildPlugin({ ts: true, target: "es2020" })
   ],
