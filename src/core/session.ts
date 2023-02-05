@@ -20,6 +20,7 @@ import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameElement } from "../elements/frame_element"
 import { FrameViewRenderOptions } from "./frames/frame_view"
+import { FetchRequest } from "../http/fetch_request"
 import { FetchResponse } from "../http/fetch_response"
 import { Preloader, PreloaderDelegate } from "./drive/preloader"
 
@@ -29,9 +30,10 @@ export type TurboBeforeCacheEvent = CustomEvent
 export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
 export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
 export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
-export type TurboFrameLoadEvent = CustomEvent
+export type TurboFrameLoadEvent = CustomEvent<{ fetchResponse: FetchResponse }>
 export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
-export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
+export type TurboFetchRequestErrorEvent = CustomEvent<{ request: FetchRequest; error: Error }>
+export type TurboFrameRenderEvent = CustomEvent
 export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
 export type TurboRenderEvent = CustomEvent
 export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
@@ -305,12 +307,12 @@ export class Session
 
   // Frame element
 
-  frameLoaded(frame: FrameElement) {
-    this.notifyApplicationAfterFrameLoad(frame)
+  frameLoaded(frame: FrameElement, fetchResponse: FetchResponse) {
+    this.notifyApplicationAfterFrameLoad(frame, fetchResponse)
   }
 
-  frameRendered(fetchResponse: FetchResponse, frame: FrameElement) {
-    this.notifyApplicationAfterFrameRender(fetchResponse, frame)
+  frameRendered(frame: FrameElement, fetchResponse?: FetchResponse) {
+    this.notifyApplicationAfterFrameRender(frame, fetchResponse)
   }
 
   // Application events
@@ -374,13 +376,24 @@ export class Session
     )
   }
 
-  notifyApplicationAfterFrameLoad(frame: FrameElement) {
-    return dispatch<TurboFrameLoadEvent>("turbo:frame-load", { target: frame })
+  notifyApplicationAfterFrameLoad(frame: FrameElement, fetchResponse: FetchResponse) {
+    return dispatch<TurboFrameLoadEvent>("turbo:frame-load", {
+      detail: { fetchResponse },
+      target: frame,
+    })
   }
 
-  notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {
+  notifyApplicationAfterFrameRender(frame: FrameElement, fetchResponse?: FetchResponse) {
+    const detailWithDeprecation = {
+      get fetchResponse() {
+        console.warn(
+          "DEPRECATED: If your event listener needs to access the detail.fetchResponse, listen for the turbo:frame-load event"
+        )
+        return fetchResponse
+      },
+    }
     return dispatch<TurboFrameRenderEvent>("turbo:frame-render", {
-      detail: { fetchResponse },
+      detail: detailWithDeprecation,
       target: frame,
       cancelable: true,
     })

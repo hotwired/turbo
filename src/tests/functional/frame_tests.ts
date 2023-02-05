@@ -429,11 +429,25 @@ test("test redirecting in a form is still navigatable after redirect", async ({ 
   assert.equal(await page.textContent("turbo-frame#form-redirect h2"), "Form Redirect")
 })
 
+test("test 'turbo:frame-render' is triggered when a frame is connected to the document", async ({ page }) => {
+  await page.evaluate(() => {
+    const frame = document.getElementById("frame")
+
+    if (frame) {
+      document.body.replaceChildren(frame)
+    }
+  })
+
+  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+
+  assert.notOk(fetchResponse, "dispatches turbo:frame-render without fetchResponse")
+})
+
 test("test 'turbo:frame-render' is triggered after frame has finished rendering", async ({ page }) => {
   await page.click("#frame-part")
 
-  await nextEventNamed(page, "turbo:frame-render") // recursive
-  const { fetchResponse } = await nextEventNamed(page, "turbo:frame-render")
+  await nextEventOnTarget(page, "part", "turbo:frame-render")
+  const { fetchResponse } = await nextEventOnTarget(page, "part", "turbo:frame-load")
 
   assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
 })
