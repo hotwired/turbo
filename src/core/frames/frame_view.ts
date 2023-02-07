@@ -5,8 +5,8 @@ import { View, ViewRenderOptions } from "../view"
 export type FrameViewRenderOptions = ViewRenderOptions<FrameElement>
 
 export class FrameView extends View<FrameElement> {
-  invalidate() {
-    this.element.innerHTML = ""
+  missing() {
+    this.element.innerHTML = `<strong class="turbo-frame-error">Content missing</strong>`
   }
 
   get snapshot() {

@@ -32,6 +32,7 @@ import { VisitOptions } from "../drive/visit"
 import { TurboBeforeFrameRenderEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
+import { TurboFrameMissingError } from "../errors"
 
 type VisitFallback = (location: Response | Locatable, options: Partial<VisitOptions>) => Promise<void>
 export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: VisitFallback }>
@@ -181,15 +182,9 @@ export class FrameController
           session.frameLoaded(this.element)
           this.fetchResponseLoaded(fetchResponse)
         } else if (this.willHandleFrameMissingFromResponse(fetchResponse)) {
-          console.warn(
-            `A matching frame for #${this.element.id} was missing from the response, transforming into full-page Visit.`
-          )
-          this.visitResponse(fetchResponse.response)
+          this.handleFrameMissingFromResponse(fetchResponse)
         }
       }
-    } catch (error) {
-      console.error(error)
-      this.view.invalidate()
     } finally {
       this.fetchResponseLoaded = () => {}
     }
@@ -264,7 +259,6 @@ export class FrameController
   }
 
   async requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
-    console.error(response)
     await this.loadResponse(response)
     this.resolveVisitPromise()
   }
@@ -430,6 +424,16 @@ export class FrameController
     })
 
     return !event.defaultPrevented
+  }
+
+  private handleFrameMissingFromResponse(fetchResponse: FetchResponse) {
+    this.view.missing()
+    this.throwFrameMissingError(fetchResponse)
+  }
+
+  private throwFrameMissingError(fetchResponse: FetchResponse) {
+    const message = `The response (${fetchResponse.statusCode}) did not contain the expected <turbo-frame id="${this.element.id}">`
+    throw new TurboFrameMissingError(message)
   }
 
   private async visitResponse(response: Response): Promise<void> {
