@@ -161,7 +161,16 @@ test("successfully following a link to a page without a matching frame shows an 
   assert.match(await page.innerText("#missing"), /Content missing/)
 
   assert.exists(error)
-  assert.equal(error!.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
+  assert.include(error!.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
+})
+
+test("successfully following a link to a page with `turbo-visit-control` `reload` performs a full page reload", async ({
+  page,
+}) => {
+  await page.click("#unvisitable-page-link")
+  await page.getByText("Unvisitable page loaded").waitFor()
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/unvisitable.html")
 })
 
 test("failing to follow a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
@@ -184,7 +193,7 @@ test("failing to follow a link to a page without a matching frame shows an error
   assert.match(await page.innerText("#missing"), /Content missing/)
 
   assert.exists(error)
-  assert.equal(error!.message, `The response (404) did not contain the expected <turbo-frame id="missing">`)
+  assert.include(error!.message, `The response (404) did not contain the expected <turbo-frame id="missing">`)
 })
 
 test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({

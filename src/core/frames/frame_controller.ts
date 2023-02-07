@@ -160,29 +160,13 @@ export class FrameController
     try {
       const html = await fetchResponse.responseHTML
       if (html) {
-        const { body } = parseHTMLDocument(html)
-        const newFrameElement = await this.extractForeignFrameElement(body)
+        const document = parseHTMLDocument(html)
+        const pageSnapshot = PageSnapshot.fromDocument(document)
 
-        if (newFrameElement) {
-          const snapshot = new Snapshot(newFrameElement)
-          const renderer = new FrameRenderer(
-            this,
-            this.view.snapshot,
-            snapshot,
-            FrameRenderer.renderElement,
-            false,
-            false
-          )
-          if (this.view.renderPromise) await this.view.renderPromise
-          this.changeHistory()
-
-          await this.view.render(renderer)
-          this.complete = true
-          session.frameRendered(fetchResponse, this.element)
-          session.frameLoaded(this.element)
-          this.fetchResponseLoaded(fetchResponse)
-        } else if (this.willHandleFrameMissingFromResponse(fetchResponse)) {
-          this.handleFrameMissingFromResponse(fetchResponse)
+        if (pageSnapshot.isVisitable) {
+          await this.loadFrameResponse(fetchResponse, document)
+        } else {
+          await this.handleUnvisitableFrameResponse(fetchResponse)
         }
       }
     } finally {
@@ -343,6 +327,25 @@ export class FrameController
 
   // Private
 
+  private async loadFrameResponse(fetchResponse: FetchResponse, document: Document) {
+    const newFrameElement = await this.extractForeignFrameElement(document.body)
+
+    if (newFrameElement) {
+      const snapshot = new Snapshot(newFrameElement)
+      const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
+      if (this.view.renderPromise) await this.view.renderPromise
+      this.changeHistory()
+
+      await this.view.render(renderer)
+      this.complete = true
+      session.frameRendered(fetchResponse, this.element)
+      session.frameLoaded(this.element)
+      this.fetchResponseLoaded(fetchResponse)
+    } else if (this.willHandleFrameMissingFromResponse(fetchResponse)) {
+      this.handleFrameMissingFromResponse(fetchResponse)
+    }
+  }
+
   private async visit(url: URL) {
     const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
 
@@ -405,6 +408,14 @@ export class FrameController
     }
   }
 
+  private async handleUnvisitableFrameResponse(fetchResponse: FetchResponse) {
+    console.warn(
+      `The response (${fetchResponse.statusCode}) from <turbo-frame id="${this.element.id}"> is performing a full page visit due to turbo-visit-control.`
+    )
+
+    await this.visitResponse(fetchResponse.response)
+  }
+
   private willHandleFrameMissingFromResponse(fetchResponse: FetchResponse): boolean {
     this.element.setAttribute("complete", "")
 
@@ -432,7 +443,7 @@ export class FrameController
   }
 
   private throwFrameMissingError(fetchResponse: FetchResponse) {
-    const message = `The response (${fetchResponse.statusCode}) did not contain the expected <turbo-frame id="${this.element.id}">`
+    const message = `The response (${fetchResponse.statusCode}) did not contain the expected <turbo-frame id="${this.element.id}"> and will be ignored. To perform a full page visit instead, set turbo-visit-control to reload.`
     throw new TurboFrameMissingError(message)
   }
 
