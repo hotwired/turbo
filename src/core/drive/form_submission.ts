@@ -55,6 +55,7 @@ export class FormSubmission {
   readonly mustRedirect: boolean
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
+  originalSubmitText?: string
 
   static confirmMethod(
     message: string,
@@ -165,6 +166,7 @@ export class FormSubmission {
   requestStarted(_request: FetchRequest) {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
+    this.setSubmittingText()
     dispatch<TurboSubmitStartEvent>("turbo:submit-start", {
       target: this.formElement,
       detail: { formSubmission: this },
@@ -202,6 +204,7 @@ export class FormSubmission {
   requestFinished(_request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
+    this.resetSubmittingText()
     dispatch<TurboSubmitEndEvent>("turbo:submit-end", {
       target: this.formElement,
       detail: { formSubmission: this, ...this.result },
@@ -211,12 +214,40 @@ export class FormSubmission {
 
   // Private
 
+  setSubmittingText() {
+    if (!this.submitter || !this.submittingText) return
+
+    if (this.submitter.matches("button")) {
+      this.originalSubmitText = this.submitter.innerHTML
+      this.submitter.innerHTML = this.submittingText
+    } else if (this.submitter.matches("input")) {
+      const input = this.submitter as HTMLInputElement
+      this.originalSubmitText = input.value
+      input.value = this.submittingText
+    }
+  }
+
+  resetSubmittingText() {
+    if (!this.submitter || !this.originalSubmitText) return
+
+    if (this.submitter.matches("button")) {
+      this.submitter.innerHTML = this.originalSubmitText
+    } else if (this.submitter.matches("input")) {
+      const input = this.submitter as HTMLInputElement
+      input.value = this.originalSubmitText
+    }
+  }
+
   requestMustRedirect(request: FetchRequest) {
     return !request.isIdempotent && this.mustRedirect
   }
 
   requestAcceptsTurboStreamResponse(request: FetchRequest) {
     return !request.isIdempotent || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
+  }
+
+  get submittingText() {
+    return this.submitter?.getAttribute("data-turbo-submitting-text")
   }
 }
 
