@@ -18,6 +18,7 @@ import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 import { Cache } from "./cache"
+import { Confirmation } from "./confirmation"
 import { config } from "./config"
 
 export class Session {
@@ -229,9 +230,17 @@ export class Session {
     )
   }
 
-  followedLinkToLocation(link, location) {
+  async followedLinkToLocation(link, location) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+    const confirmationMessage = link.getAttribute("data-turbo-confirm")
+
+    if (typeof confirmationMessage === "string") {
+      const answer = await Confirmation.confirmMethod(confirmationMessage, link, link)
+      if (!answer) {
+        return
+      }
+    }
 
     this.visit(location.href, { action, acceptsStreamResponse })
   }
