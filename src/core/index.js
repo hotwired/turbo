@@ -2,7 +2,7 @@ import { Session } from "./session"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
-import { FormSubmission } from "./drive/form_submission"
+import { Confirmation } from "./confirmation"
 import { fetch, recentRequests } from "../http/fetch"
 
 const session = new Session(recentRequests)
@@ -101,7 +101,7 @@ export function setProgressBarDelay(delay) {
 }
 
 export function setConfirmMethod(confirmMethod) {
-  FormSubmission.confirmMethod = confirmMethod
+  Confirmation.confirmMethod = confirmMethod
 }
 
 export function setFormMode(mode) {
