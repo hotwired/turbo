@@ -1,6 +1,7 @@
 import { Adapter } from "./native/adapter"
 import { BrowserAdapter, ReloadReason } from "./native/browser_adapter"
 import { CacheObserver } from "../observers/cache_observer"
+import { Confirmation } from "./confirmation"
 import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History, HistoryDelegate } from "./drive/history"
@@ -191,9 +192,17 @@ export class Session
     )
   }
 
-  followedLinkToLocation(link: Element, location: URL) {
+  async followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+    const confirmationMessage = link.getAttribute("data-turbo-confirm")
+
+    if (typeof confirmationMessage === "string") {
+      const answer = await Confirmation.confirmMethod(confirmationMessage, link, link)
+      if (!answer) {
+        return
+      }
+    }
 
     this.visit(location.href, { action, acceptsStreamResponse })
   }

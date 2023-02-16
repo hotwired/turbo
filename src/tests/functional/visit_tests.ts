@@ -223,3 +223,28 @@ test("test Visit with network error", async ({ page }) => {
 async function visitLocation(page: Page, location: string) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
 }
+
+test("test data-turbo-confirm on anchor element without data-turbo-method", async ({ page }) => {
+  let confirmed = false
+
+  page.on("dialog", (alert) => {
+    assert.equal(alert.message(), "Are you sure?")
+    alert.accept()
+    confirmed = true
+  })
+
+  await page.evaluate(() => {
+    const link = document.querySelector<HTMLAnchorElement>("#same-origin-link")
+
+    if (link) link.dataset.turboConfirm = "Are you sure?"
+  })
+
+  assert.equal(await page.locator("#same-origin-link[data-turbo-confirm]:not([data-turbo-method])").count(), 1)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/visit.html")
+
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.isTrue(confirmed)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+})
