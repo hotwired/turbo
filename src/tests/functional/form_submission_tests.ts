@@ -175,6 +175,40 @@ test("test standard POST form submission toggles submitter [disabled] attribute"
   )
 })
 
+test("replaces input value with data-turbo-submits-with on form submission", async ({ page }) => {
+  page.click("#submits-with-form-input")
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "submits-with-form-input", "value"),
+    "Saving...",
+    "sets data-turbo-submits-with on the submitter"
+  )
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "submits-with-form-input", "value"),
+    "Save",
+    "restores the original submitter text value"
+  )
+})
+
+test("replaces button innerHTML with data-turbo-submits-with on form submission", async ({ page }) => {
+  await page.click("#submits-with-form-button")
+
+  await nextEventNamed(page, "turbo:submit-start")
+  assert.equal(
+    await page.textContent("#submits-with-form-button"),
+    "Saving...",
+    "sets data-turbo-submits-with on the submitter"
+  )
+
+  await nextEventNamed(page, "turbo:submit-end")
+  assert.equal(
+    await page.textContent("#submits-with-form-button"),
+    "Save",
+    "sets data-turbo-submits-with on the submitter"
+  )
+})
+
 test("test standard GET form submission", async ({ page }) => {
   await page.click("#standard form.greeting input[type=submit]")
   await nextBody(page)
