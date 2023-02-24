@@ -5,7 +5,7 @@ import { dispatch } from "../util"
 export type TurboBeforeFetchRequestEvent = CustomEvent<{
   fetchOptions: RequestInit
   url: URL
-  resume: (value: any) => void
+  resume: (value?: any) => void
 }>
 export type TurboBeforeFetchResponseEvent = CustomEvent<{
   fetchResponse: FetchResponse
