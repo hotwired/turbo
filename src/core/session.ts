@@ -14,7 +14,14 @@ import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
 import { Action, Position, StreamSource } from "./types"
-import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy } from "../util"
+import {
+  clearBusyState,
+  dispatch,
+  findClosestRecursively,
+  getVisitAction,
+  markAsBusy,
+  getProgressBarValue,
+} from "../util"
 import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
 import { Visit, VisitOptions } from "./drive/visit"
 import { PageSnapshot } from "./drive/page_snapshot"
@@ -194,8 +201,9 @@ export class Session
   followedLinkToLocation(link: Element, location: URL) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+    const withProgressBar = getProgressBarValue(link)
 
-    this.visit(location.href, { action, acceptsStreamResponse })
+    this.visit(location.href, { action, acceptsStreamResponse, withProgressBar })
   }
 
   // Navigator delegate

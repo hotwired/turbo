@@ -22,6 +22,23 @@
         <a id="top" href="/src/tests/fixtures/frame_navigation.html" data-turbo-frame="_top">Top</a>
       </turbo-frame>
 
+      <turbo-frame id="progress-bar-frame" data-turbo-action="advance">
+        <a id="with-progress-bar" href="/src/tests/fixtures/frame_navigation.html">Enabled for action advance by default</a>
+      </turbo-frame>
+
+      <turbo-frame id="progress-bar-frame-with-action" data-turbo-progress-bar="true" data-turbo-action="replace">
+        <a id="with-explicit-progress-bar" href="/src/tests/fixtures/frame_navigation.html">Can be enabled explicitly for other actions</a>
+      </turbo-frame>
+
+      <turbo-frame id="no-progress-bar-frame" data-turbo-progress-bar="false" data-turbo-action="advance">
+        <a id="no-progress-bar" href="/src/tests/fixtures/frame_navigation.html">Explicitly disabled by progress bar attr</a>
+      </turbo-frame>
+
+      <turbo-frame id="no-progress-bar-frame-no-action" data-turbo-progress-bar="true">
+        <a id="no-progress-bar" href="/src/tests/fixtures/frame_navigation.html">Has no effect if action not specified</a>
+      </turbo-frame>
+
+
       <div style="height: calc(100vh*2);"></div>
 
       <turbo-frame id="eager-loaded-frame" src="/src/tests/fixtures/frames/frame_for_eager.html" loading="lazy"

@@ -111,6 +111,21 @@ test("test standard form submission does not render a progress bar before expiri
   assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar before delay")
 })
 
+test("test standard form with data-turbo-progress-bar submission renders a progress bar before expiring the delay", async ({
+  page,
+}) => {
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(500))
+  page.click("#turbo-progress-bar-post-form-submit")
+
+  await waitUntilSelector(page, ".turbo-progress-bar")
+  assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+
+  await nextBody(page)
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
+
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
+})
+
 test("test standard form submission with redirect response", async ({ page }) => {
   await page.click("#standard form.redirect input[type=submit]")
   await nextBody(page)

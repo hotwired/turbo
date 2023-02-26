@@ -18,11 +18,13 @@
     <section id="main">
       <h1>Navigation</h1>
       <p><a id="same-origin-unannotated-link" href="/src/tests/fixtures/one.html">Same-origin unannotated link</a></p>
+      <p><a id="same-origin-unannotated-link-with-disabled-progress-bar" href="/src/tests/fixtures/one.html" data-turbo-progress-bar="false">Same-origin unannotated link with disabled progress bar</a></p>
       <p><a id="same-origin-unannotated-link-search-params" href="/src/tests/fixtures/one.html?key=value">Same-origin unannotated link ?key=value</a></p>
       <p><form id="same-origin-unannotated-form" method="get" action="/src/tests/fixtures/one.html"><button>Same-origin unannotated form</button></form></p>
       <p><a id="same-origin-replace-link" href="/src/tests/fixtures/one.html" data-turbo-action="replace">Same-origin data-turbo-action=replace link</a></p>
       <p><form id="same-origin-replace-form-get" action="/src/tests/fixtures/one.html" data-turbo-action="replace"><button>Same-origin data-turbo-action=replace form</button></form></p>
       <p><form id="same-origin-replace-form-submitter-get" action="/src/tests/fixtures/one.html"><button data-turbo-action="replace">Same-origin data-turbo-action=replace form</button></form></p>
+      <p><a id="explicit-turbo-progress-bar" href="/__turbo/with_progress_bar" data-turbo-progress-bar="true">Explicit progress bar</a></p>
       <form id="same-origin-replace-form-post" method="post" action="/__turbo/redirect" data-turbo-action="replace">
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <button>Same-origin form[method="post"][data-turbo-action="replace"]</button>
