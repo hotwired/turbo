@@ -266,12 +266,16 @@ export class FrameController
     const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
-
     frame.delegate.loadResponse(response)
+
+    if (formSubmission.method !== FetchMethod.get) {
+      session.clearCache()
+    }
   }
 
   formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
     this.element.delegate.loadResponse(fetchResponse)
+    session.clearCache()
   }
 
   formSubmissionErrored(formSubmission: FormSubmission, error: Error) {

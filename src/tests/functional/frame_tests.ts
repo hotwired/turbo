@@ -1,4 +1,4 @@
-import { Page, test } from "@playwright/test"
+import { Page, test, expect } from "@playwright/test"
 import { assert, Assertion } from "chai"
 import {
   attributeForSelector,
@@ -875,6 +875,22 @@ test("test navigating a eager frame with a link[method=get] that does not fetch 
   assert.equal(await page.textContent("h1"), "Eager-loaded frame")
   assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Loaded")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/page_with_eager_frame.html")
+})
+
+test("form submissions from frames clear snapshot cache", async ({ page }) => {
+  await page.evaluate(() => {
+    document.querySelector("h1")!.textContent = "Changed"
+  })
+
+  await expect(page.locator("h1")).toHaveText("Changed")
+
+  await page.click("#navigate-form-redirect-as-new")
+  await expect(page.locator("h1")).toHaveText("Page One Form")
+  await page.click("#submit-form")
+  await expect(page.locator("h2")).toHaveText("Form Redirected")
+  await page.goBack()
+
+  await expect(page.locator("h1")).not.toHaveText("Changed")
 })
 
 async function withoutChangingEventListenersCount(page: Page, callback: () => Promise<void>) {
