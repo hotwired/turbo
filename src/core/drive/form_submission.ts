@@ -110,8 +110,8 @@ export class FormSubmission {
     return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
   }
 
-  get isIdempotent() {
-    return this.fetchRequest.isIdempotent
+  get isSafe() {
+    return this.fetchRequest.isSafe
   }
 
   get stringFormData() {
@@ -151,7 +151,7 @@ export class FormSubmission {
   // Fetch request delegate
 
   prepareRequest(request: FetchRequest) {
-    if (!request.isIdempotent) {
+    if (!request.isSafe) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
         request.headers["X-CSRF-Token"] = token
@@ -239,11 +239,11 @@ export class FormSubmission {
   }
 
   requestMustRedirect(request: FetchRequest) {
-    return !request.isIdempotent && this.mustRedirect
+    return !request.isSafe && this.mustRedirect
   }
 
   requestAcceptsTurboStreamResponse(request: FetchRequest) {
-    return !request.isIdempotent || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
+    return !request.isSafe || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
   }
 
   get submitsWith() {

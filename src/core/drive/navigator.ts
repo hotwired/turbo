@@ -1,6 +1,5 @@
 import { Action } from "../types"
 import { getVisitAction } from "../../util"
-import { FetchMethod } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { FormSubmission } from "./form_submission"
 import { expandURL, getAnchor, getRequestURL, Locatable, locationIsVisitable } from "../url"
@@ -85,7 +84,7 @@ export class Navigator {
     if (formSubmission == this.formSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
-        const shouldCacheSnapshot = formSubmission.method == FetchMethod.get
+        const shouldCacheSnapshot = formSubmission.isSafe
         if (!shouldCacheSnapshot) {
           this.view.clearSnapshotCache()
         }

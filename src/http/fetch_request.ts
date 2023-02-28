@@ -144,7 +144,7 @@ export class FetchRequest {
       credentials: "same-origin",
       headers: this.headers,
       redirect: "follow",
-      body: this.isIdempotent ? null : this.body,
+      body: this.isSafe ? null : this.body,
       signal: this.abortSignal,
       referrer: this.delegate.referrer?.href,
     }
@@ -156,8 +156,8 @@ export class FetchRequest {
     }
   }
 
-  get isIdempotent() {
-    return this.method == FetchMethod.get
+  get isSafe() {
+    return this.method === FetchMethod.get
   }
 
   get abortSignal() {
