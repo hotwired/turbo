@@ -268,7 +268,7 @@ export class FrameController
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
     frame.delegate.loadResponse(response)
 
-    if (formSubmission.method !== FetchMethod.get) {
+    if (!formSubmission.isSafe) {
       session.clearCache()
     }
   }
