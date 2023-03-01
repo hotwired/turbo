@@ -1,3 +1,5 @@
+import { HTMLFormSubmission } from "../core/drive/html_form_submission"
+
 export class FormSubmitObserver {
   started = false
 
@@ -27,34 +29,32 @@ export class FormSubmitObserver {
 
   submitBubbled = (event) => {
     if (!event.defaultPrevented) {
-      const form = event.target instanceof HTMLFormElement ? event.target : undefined
-      const submitter = event.submitter || undefined
+      const submission =
+        event.target instanceof HTMLFormElement
+          ? new HTMLFormSubmission(event.target, event.submitter || undefined)
+          : undefined
 
       if (
-        form &&
-        submissionDoesNotDismissDialog(form, submitter) &&
-        submissionDoesNotTargetIFrame(form, submitter) &&
-        this.delegate.willSubmitForm(form, submitter)
+        submission &&
+        submissionDoesNotDismissDialog(submission) &&
+        submissionDoesNotTargetIFrame(submission) &&
+        this.delegate.willSubmitForm(submission)
       ) {
         event.preventDefault()
         event.stopImmediatePropagation()
-        this.delegate.formSubmitted(form, submitter)
+        this.delegate.formSubmitted(submission)
       }
     }
   }
 }
 
-function submissionDoesNotDismissDialog(form, submitter) {
-  const method = submitter?.getAttribute("formmethod") || form.getAttribute("method")
-
-  return method != "dialog"
+function submissionDoesNotDismissDialog(htmlFormSubmission) {
+  return htmlFormSubmission.method != "dialog"
 }
 
-function submissionDoesNotTargetIFrame(form, submitter) {
-  if (submitter?.hasAttribute("formtarget") || form.hasAttribute("target")) {
-    const target = submitter?.getAttribute("formtarget") || form.target
-
-    for (const element of document.getElementsByName(target)) {
+function submissionDoesNotTargetIFrame(htmlFormSubmission) {
+  if (htmlFormSubmission.target) {
+    for (const element of document.getElementsByName(htmlFormSubmission.target)) {
       if (element instanceof HTMLIFrameElement) return false
     }
 

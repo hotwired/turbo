@@ -12,12 +12,6 @@ export function getAnchor(url) {
   }
 }
 
-export function getAction(form, submitter) {
-  const action = submitter?.getAttribute("formaction") || form.getAttribute("action") || form.action
-
-  return expandURL(action)
-}
-
 export function getExtension(url) {
   return (getLastPathComponent(url).match(/\.[^.]*$/) || [])[0] || ""
 }
