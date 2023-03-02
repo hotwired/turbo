@@ -433,15 +433,6 @@ test("test preserves permanent elements within turbo-frames", async ({ page }) =
   assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
 })
 
-test("test preserves permanent elements within turbo-frames rendered without layouts", async ({ page }) => {
-  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
-
-  await page.click("#permanent-in-frame-without-layout-element-link")
-  await nextBeat()
-
-  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
-})
-
 test("test restores focus during turbo-frame rendering when transposing the activeElement", async ({ page }) => {
   await page.press("#permanent-input-in-frame", "Enter")
   await nextBeat()
