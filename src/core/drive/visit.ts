@@ -2,7 +2,7 @@ import { Adapter } from "../native/adapter"
 import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { History } from "./history"
-import { getAnchor } from "../url"
+import { getAnchor, toCacheKey } from "../url"
 import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
 import { Action } from "../types"
@@ -293,11 +293,12 @@ export class Visit implements FetchRequestDelegate {
 
   loadCachedSnapshot() {
     const snapshot = this.getCachedSnapshot()
+    const isSameCacheKey = toCacheKey(this.location) === toCacheKey(this.view.lastRenderedLocation)
     if (snapshot) {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        if (this.isSamePage) {
+        if (isSameCacheKey) {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
