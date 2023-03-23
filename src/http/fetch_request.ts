@@ -6,6 +6,7 @@ export type TurboBeforeFetchRequestEvent = CustomEvent<{
   fetchOptions: RequestInit
   url: URL
   resume: (value?: any) => void
+  response?: Promise<any>
 }>
 export type TurboBeforeFetchResponseEvent = CustomEvent<{
   fetchResponse: FetchResponse
@@ -104,10 +105,10 @@ export class FetchRequest {
   async perform(): Promise<FetchResponse | void> {
     const { fetchOptions } = this
     this.delegate.prepareRequest(this)
-    await this.allowRequestToBeIntercepted(fetchOptions)
+    const event = await this.allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
-      const response = await fetch(this.url.href, fetchOptions)
+      const response = await (event.detail.response || fetch(this.url.href, fetchOptions))
       return await this.receive(response)
     } catch (error) {
       if ((error as Error).name !== "AbortError") {
@@ -180,6 +181,8 @@ export class FetchRequest {
       target: this.target as EventTarget,
     })
     if (event.defaultPrevented) await requestInterception
+
+    return event
   }
 
   private willDelegateErrorHandling(error: Error) {
