@@ -9,11 +9,12 @@ import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
+import { Preloader } from "./drive/preloader"
 
 const session = new Session()
 const cache = new Cache(session)
 const { navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, Preloader }
 export type {
   TurboBeforeCacheEvent,
   TurboBeforeRenderEvent,
