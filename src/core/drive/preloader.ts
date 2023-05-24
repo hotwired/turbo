@@ -42,7 +42,7 @@ export class Preloader {
     }
 
     try {
-      const response = await fetch(location.toString(), { headers: { "VND.PREFETCH": "true", Accept: "text/html" } })
+      const response = await fetch(location.toString(), { headers: { "x-purpose": "preview", Accept: "text/html" } })
       const responseText = await response.text()
       const snapshot = PageSnapshot.fromHTMLString(responseText)
 
