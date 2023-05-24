@@ -10,7 +10,7 @@ export interface ViewRenderOptions<E> {
 }
 
 export interface ViewDelegate<E extends Element, S extends Snapshot<E>> {
-  allowsImmediateRender(snapshot: S, options: ViewRenderOptions<E>): boolean
+  allowsImmediateRender(snapshot: S, isPreview: boolean, options: ViewRenderOptions<E>): boolean
   preloadOnLoadLinksForView(element: Element): void
   viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
   viewInvalidated(reason: ReloadReason): void
@@ -91,7 +91,7 @@ export abstract class View<
 
         const renderInterception = new Promise((resolve) => (this.resolveInterceptionPromise = resolve))
         const options = { resume: this.resolveInterceptionPromise, render: this.renderer.renderElement }
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, isPreview, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)

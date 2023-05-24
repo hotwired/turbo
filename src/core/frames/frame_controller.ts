@@ -288,7 +288,11 @@ export class FrameController
 
   // View delegate
 
-  allowsImmediateRender({ element: newFrame }: Snapshot<FrameElement>, options: ViewRenderOptions<FrameElement>) {
+  allowsImmediateRender(
+    { element: newFrame }: Snapshot<FrameElement>,
+    _isPreview: boolean,
+    options: ViewRenderOptions<FrameElement>
+  ) {
     const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
