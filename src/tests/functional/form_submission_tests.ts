@@ -234,6 +234,15 @@ test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", asyn
   assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a replace Visit", "encodes <form> into request")
 })
 
+test("test GET HTMLFormElement.requestSubmit() triggered by javascript", async ({ page }) => {
+  await page.click("#request-submit-trigger")
+
+  await nextEventNamed(page, "turbo:load")
+
+  assert.notEqual(pathname(page.url()), "/src/tests/fixtures/one.html", "SubmitEvent was triggered without a submitter")
+  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "navigates #hello turbo frame")
+})
+
 test("test standard GET form submission with [data-turbo-stream] declared on the form", async ({ page }) => {
   await page.click("#standard-get-form-with-stream-opt-in-submit")
 
