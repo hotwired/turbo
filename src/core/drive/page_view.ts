@@ -4,6 +4,7 @@ import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
+import { withViewTransition } from "./view_transitions"
 import { Visit } from "./visit"
 
 export type PageViewRenderOptions = ViewRenderOptions<HTMLBodyElement>
@@ -20,13 +21,16 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
   forceReloaded = false
 
   renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit) {
+    const shouldTransition = this.snapshot.prefersViewTransitions && snapshot.prefersViewTransitions
     const renderer = new PageRenderer(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
+
     if (!renderer.shouldRender) {
       this.forceReloaded = true
     } else {
       visit?.changeHistory()
     }
-    return this.render(renderer)
+
+    return withViewTransition(shouldTransition, () => this.render(renderer))
   }
 
   renderError(snapshot: PageSnapshot, visit?: Visit) {
