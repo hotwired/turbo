@@ -352,6 +352,9 @@ export class FrameController
 
   private async visit(url: URL) {
     const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
+    if (this.element) {
+      this.action = getVisitAction(this.element)
+    }
 
     this.currentFetchRequest?.cancel()
     this.currentFetchRequest = request
