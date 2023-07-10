@@ -23,6 +23,8 @@ function importStreamElements(fragment: DocumentFragment): DocumentFragment {
     const streamElement = document.importNode(element, true)
 
     for (const inertScriptElement of streamElement.templateElement.content.querySelectorAll("script")) {
+      if (inertScriptElement.type === "application/json") continue
+
       inertScriptElement.replaceWith(activateScriptElement(inertScriptElement))
     }
 
