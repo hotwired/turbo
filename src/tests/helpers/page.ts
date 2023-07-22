@@ -286,6 +286,10 @@ export function waitForPathname(page: Page, pathname: string): Promise<void> {
   return page.waitForURL((url) => url.pathname == pathname)
 }
 
+export function waitUntilText(page: Page, text: string, state: "visible" | "attached" = "visible") {
+  return page.waitForSelector(`text='${text}'`, { state })
+}
+
 export function waitUntilSelector(page: Page, selector: string, state: "visible" | "attached" = "visible") {
   return page.waitForSelector(selector, { state })
 }

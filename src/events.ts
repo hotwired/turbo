@@ -34,7 +34,7 @@ export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: Vi
 export type TurboBeforeFetchRequestEvent = CustomEvent<{
   fetchOptions: RequestInit
   url: URL
-  resume: (value: any) => void
+  resume: (value?: any) => void
 }>
 
 export type TurboBeforeFetchResponseEvent = CustomEvent<{

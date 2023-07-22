@@ -5,7 +5,7 @@ import { Position } from "./types"
 import { getAnchor } from "./url"
 
 export interface ViewRenderOptions<E> {
-  resume: (value: any) => void
+  resume: (value?: any) => void
   render: Render<E>
 }
 

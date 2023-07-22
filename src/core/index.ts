@@ -15,7 +15,9 @@ const cache = new Cache(session)
 const { navigator } = session
 
 export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
-export { StreamActions, TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
+
+export { StreamActions } from "./streams/stream_actions"
+export type { TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
 
 /**
  * Starts the main session.

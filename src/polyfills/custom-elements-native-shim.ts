@@ -45,3 +45,6 @@
   HTMLElement.prototype.constructor = HTMLElement
   Object.setPrototypeOf(HTMLElement, BuiltInHTMLElement)
 })()
+
+// Required with --isolatedModules
+export {}

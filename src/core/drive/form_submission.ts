@@ -51,6 +51,7 @@ export class FormSubmission {
   readonly mustRedirect: boolean
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
+  originalSubmitText?: string
 
   static confirmMethod(
     message: string,
@@ -105,8 +106,8 @@ export class FormSubmission {
     return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
   }
 
-  get isIdempotent() {
-    return this.fetchRequest.isIdempotent
+  get isSafe() {
+    return this.fetchRequest.isSafe
   }
 
   get stringFormData() {
@@ -146,7 +147,7 @@ export class FormSubmission {
   // Fetch request delegate
 
   prepareRequest(request: FetchRequest) {
-    if (!request.isIdempotent) {
+    if (!request.isSafe) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
         request.headers["X-CSRF-Token"] = token
@@ -161,6 +162,7 @@ export class FormSubmission {
   requestStarted(_request: FetchRequest) {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
+    this.setSubmitsWith()
     dispatch<TurboSubmitStartEvent>("turbo:submit-start", {
       target: this.formElement,
       detail: { formSubmission: this },
@@ -198,6 +200,7 @@ export class FormSubmission {
   requestFinished(_request: FetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
+    this.resetSubmitterText()
     dispatch<TurboSubmitEndEvent>("turbo:submit-end", {
       target: this.formElement,
       detail: { formSubmission: this, ...this.result },
@@ -207,12 +210,40 @@ export class FormSubmission {
 
   // Private
 
+  setSubmitsWith() {
+    if (!this.submitter || !this.submitsWith) return
+
+    if (this.submitter.matches("button")) {
+      this.originalSubmitText = this.submitter.innerHTML
+      this.submitter.innerHTML = this.submitsWith
+    } else if (this.submitter.matches("input")) {
+      const input = this.submitter as HTMLInputElement
+      this.originalSubmitText = input.value
+      input.value = this.submitsWith
+    }
+  }
+
+  resetSubmitterText() {
+    if (!this.submitter || !this.originalSubmitText) return
+
+    if (this.submitter.matches("button")) {
+      this.submitter.innerHTML = this.originalSubmitText
+    } else if (this.submitter.matches("input")) {
+      const input = this.submitter as HTMLInputElement
+      input.value = this.originalSubmitText
+    }
+  }
+
   requestMustRedirect(request: FetchRequest) {
-    return !request.isIdempotent && this.mustRedirect
+    return !request.isSafe && this.mustRedirect
   }
 
   requestAcceptsTurboStreamResponse(request: FetchRequest) {
-    return !request.isIdempotent || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
+    return !request.isSafe || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
+  }
+
+  get submitsWith() {
+    return this.submitter?.getAttribute("data-turbo-submits-with")
   }
 }
 

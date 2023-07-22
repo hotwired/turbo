@@ -56,15 +56,19 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
   }
 
   get isPreviewable() {
-    return this.cacheControlValue != "no-preview"
+    return this.cacheControlValue != "no-preview" && !this.prefersViewTransitions
   }
 
   get isCacheable() {
-    return this.cacheControlValue != "no-cache"
+    return this.cacheControlValue != "no-cache" && !this.prefersViewTransitions
   }
 
   get isVisitable() {
     return this.getSetting("visit-control") != "reload"
+  }
+
+  get prefersViewTransitions() {
+    return this.headSnapshot.getMetaValue("view-transition") === "same-origin"
   }
 
   // Private

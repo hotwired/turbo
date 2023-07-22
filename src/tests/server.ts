@@ -1,4 +1,6 @@
 import { Request, Response, Router } from "express"
+import express from "express"
+import { json, urlencoded } from "body-parser"
 import multer from "multer"
 import path from "path"
 import url from "url"
@@ -137,7 +139,7 @@ router.get("/messages", (request, response) => {
 function receiveMessage(content: string, id: string | null, target?: string) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
-    intern.log("delivering message to stream", response.socket?.remotePort)
+    console.log("delivering message to stream", response.socket?.remotePort)
     response.write(data)
   }
 }
@@ -174,5 +176,16 @@ function renderSSEData(data: any) {
 function escapeHTML(html: string) {
   return html.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 }
+const app = express()
+
+app.use(json({ limit: "1mb" }), urlencoded({ extended: true }))
+app.use(express.static("."))
+app.use(/\/__turbo/, router)
+
+const port = parseInt(process.env.PORT || "9000")
+
+app.listen(port, () => {
+  console.log(`Test server listening on port ${port}`)
+})
 
 export const TestServer = router

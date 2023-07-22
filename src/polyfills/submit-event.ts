@@ -19,16 +19,18 @@ function clickCaptured(event: Event) {
 ;(function () {
   if ("submitter" in Event.prototype) return
 
-  let prototype
+  let prototype = window.Event.prototype
   // Certain versions of Safari 15 have a bug where they won't
   // populate the submitter. This hurts TurboDrive's enable/disable detection.
   // See https://bugs.webkit.org/show_bug.cgi?id=229660
-  if ("SubmitEvent" in window && /Apple Computer/.test(navigator.vendor)) {
-    prototype = window.SubmitEvent.prototype
-  } else if ("SubmitEvent" in window) {
-    return // polyfill not needed
-  } else {
-    prototype = window.Event.prototype
+  if ("SubmitEvent" in window) {
+    const prototypeOfSubmitEvent = window.SubmitEvent.prototype
+
+    if (/Apple Computer/.test(navigator.vendor) && !("submitter" in prototypeOfSubmitEvent)) {
+      prototype = prototypeOfSubmitEvent
+    } else {
+      return // polyfill not needed
+    }
   }
 
   addEventListener("click", clickCaptured, true)

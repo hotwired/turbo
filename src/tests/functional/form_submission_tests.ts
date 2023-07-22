@@ -175,6 +175,40 @@ test("test standard POST form submission toggles submitter [disabled] attribute"
   )
 })
 
+test("replaces input value with data-turbo-submits-with on form submission", async ({ page }) => {
+  page.click("#submits-with-form-input")
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "submits-with-form-input", "value"),
+    "Saving...",
+    "sets data-turbo-submits-with on the submitter"
+  )
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "submits-with-form-input", "value"),
+    "Save",
+    "restores the original submitter text value"
+  )
+})
+
+test("replaces button innerHTML with data-turbo-submits-with on form submission", async ({ page }) => {
+  await page.click("#submits-with-form-button")
+
+  await nextEventNamed(page, "turbo:submit-start")
+  assert.equal(
+    await page.textContent("#submits-with-form-button"),
+    "Saving...",
+    "sets data-turbo-submits-with on the submitter"
+  )
+
+  await nextEventNamed(page, "turbo:submit-end")
+  assert.equal(
+    await page.textContent("#submits-with-form-button"),
+    "Save",
+    "sets data-turbo-submits-with on the submitter"
+  )
+})
+
 test("test standard GET form submission", async ({ page }) => {
   await page.click("#standard form.greeting input[type=submit]")
   await nextBody(page)
@@ -198,6 +232,15 @@ test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", asyn
   assert.equal(await visitAction(page), "replace", "reads Turbo Action from <form>")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/hello.html", "promotes frame navigation to page Visit")
   assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a replace Visit", "encodes <form> into request")
+})
+
+test("test GET HTMLFormElement.requestSubmit() triggered by javascript", async ({ page }) => {
+  await page.click("#request-submit-trigger")
+
+  await nextEventNamed(page, "turbo:load")
+
+  assert.notEqual(pathname(page.url()), "/src/tests/fixtures/one.html", "SubmitEvent was triggered without a submitter")
+  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "navigates #hello turbo frame")
 })
 
 test("test standard GET form submission with [data-turbo-stream] declared on the form", async ({ page }) => {
