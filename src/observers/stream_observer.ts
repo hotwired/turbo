@@ -48,13 +48,13 @@ export class StreamObserver {
     return this.sources.has(source)
   }
 
-  inspectFetchResponse = (event: TurboBeforeFetchResponseEvent) => {
+  inspectFetchResponse = <EventListener>((event: TurboBeforeFetchResponseEvent) => {
     const response = fetchResponseFromEvent(event)
     if (response && fetchResponseIsStream(response)) {
       event.preventDefault()
       this.receiveMessageResponse(response)
     }
-  }
+  })
 
   receiveMessageEvent = (event: MessageEvent) => {
     if (this.started && typeof event.data == "string") {
