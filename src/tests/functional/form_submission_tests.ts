@@ -3,8 +3,10 @@ import { assert } from "chai"
 import {
   getFromLocalStorage,
   getSearchParam,
+  hash,
   hasSelector,
   isScrolledToTop,
+  isScrolledToSelector,
   nextAttributeMutationNamed,
   nextBeat,
   nextBody,
@@ -217,6 +219,15 @@ test("test standard GET form submission", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
   assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a form")
+})
+
+test("test standard GET form submission redirect with hash", async ({ page }) => {
+  await page.click("#standard-get-form-submit-redirect-with-hash")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(hash(page.url()), "#element-id")
+  assert.equal(await visitAction(page), "advance")
+  assert(await isScrolledToSelector(page, "#element-id"))
 })
 
 test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
