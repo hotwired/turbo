@@ -56,11 +56,11 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
   }
 
   get isPreviewable() {
-    return this.cacheControlValue != "no-preview" && !this.prefersViewTransitions
+    return this.cacheControlValue != "no-preview"
   }
 
   get isCacheable() {
-    return this.cacheControlValue != "no-cache" && !this.prefersViewTransitions
+    return this.cacheControlValue != "no-cache"
   }
 
   get isVisitable() {

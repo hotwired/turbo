@@ -9,6 +9,7 @@ import { Action } from "../types"
 import { getHistoryMethodForAction, uuid } from "../../util"
 import { PageView } from "./page_view"
 import { StreamMessage } from "../streams/stream_message"
+import { ViewTransitioner } from "./view_transitioner"
 
 export interface VisitDelegate {
   readonly adapter: Adapter
@@ -102,6 +103,7 @@ export class Visit implements FetchRequestDelegate {
   snapshotCached = false
   state = VisitState.initialized
   snapshot?: PageSnapshot
+  viewTransitioner = new ViewTransitioner()
 
   constructor(
     delegate: VisitDelegate,
@@ -257,9 +259,11 @@ export class Visit implements FetchRequestDelegate {
       this.render(async () => {
         if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
+
         if (isSuccessful(statusCode) && responseHTML != null) {
-          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender, this)
-          this.performScroll()
+          const snapshot = PageSnapshot.fromHTMLString(responseHTML)
+          await this.renderPageSnapshot(snapshot, false)
+
           this.adapter.visitRendered(this)
           this.complete()
         } else {
@@ -301,8 +305,9 @@ export class Visit implements FetchRequestDelegate {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
-          await this.view.renderPage(snapshot, isPreview, this.willRender, this)
-          this.performScroll()
+
+          await this.renderPageSnapshot(snapshot, isPreview)
+
           this.adapter.visitRendered(this)
           if (!isPreview) {
             this.complete()
@@ -470,6 +475,13 @@ export class Visit implements FetchRequestDelegate {
     })
     await callback()
     delete this.frame
+  }
+
+  async renderPageSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
+    await this.viewTransitioner.renderChange(this.view.shouldTransitionTo(snapshot), async () => {
+      await this.view.renderPage(snapshot, isPreview, this.willRender, this)
+      this.performScroll()
+    })
   }
 
   cancelRender() {
