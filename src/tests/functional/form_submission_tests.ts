@@ -111,7 +111,7 @@ test("test standard form submission does not render a progress bar before expiri
   assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar before delay")
 })
 
-test("test standard form submission with redirect response", async ({ page }) => {
+test("test standard POST form submission with redirect response", async ({ page }) => {
   await page.click("#standard form.redirect input[type=submit]")
   await nextBody(page)
 
@@ -684,7 +684,7 @@ test("test frame form submission with redirect response", async ({ page }) => {
   assert.equal(await page.getAttribute("#frame", "src"), url.href, "redirects the target frame")
 })
 
-test("test frame form submission toggles the ancestor frame's [aria-busy] attribute", async ({ page }) => {
+test("test frame POST form submission toggles the ancestor frame's [aria-busy] attribute", async ({ page }) => {
   await page.click("#frame form.redirect input[type=submit]")
   await nextBeat()
 
@@ -698,7 +698,7 @@ test("test frame form submission toggles the ancestor frame's [aria-busy] attrib
   )
 })
 
-test("test frame form submission toggles the target frame's [aria-busy] attribute", async ({ page }) => {
+test("test frame POST form submission toggles the target frame's [aria-busy] attribute", async ({ page }) => {
   await page.click('#targets-frame form.frame [type="submit"]')
   await nextBeat()
 
