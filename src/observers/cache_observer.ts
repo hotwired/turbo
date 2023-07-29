@@ -1,4 +1,4 @@
-import { TurboBeforeCacheEvent } from "../core/session"
+import { TurboBeforeCacheEvent } from "../events"
 
 export class CacheObserver {
   readonly selector: string = "[data-turbo-temporary]"

@@ -1,4 +1,4 @@
-import { TurboBeforeFetchResponseEvent } from "../http/fetch_request"
+import { TurboBeforeFetchResponseEvent } from "../events"
 import { FetchResponse } from "../http/fetch_response"
 import { StreamMessage } from "../core/streams/stream_message"
 import { StreamSource } from "../core/types"

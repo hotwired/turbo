@@ -29,13 +29,10 @@ import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
 import { Action } from "../types"
 import { VisitOptions } from "../drive/visit"
-import { TurboBeforeFrameRenderEvent } from "../session"
+import { TurboBeforeFrameRenderEvent, TurboFrameMissingEvent } from "../../events"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
 import { TurboFrameMissingError } from "../errors"
-
-type VisitFallback = (location: Response | Locatable, options: Partial<VisitOptions>) => Promise<void>
-export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: VisitFallback }>
 
 export class FrameController
   implements

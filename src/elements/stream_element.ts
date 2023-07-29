@@ -1,9 +1,6 @@
 import { StreamActions } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
-
-type Render = (currentElement: StreamElement) => Promise<void>
-
-export type TurboBeforeStreamRenderEvent = CustomEvent<{ newStream: StreamElement; render: Render }>
+import { TurboBeforeStreamRenderEvent } from "../events"
 
 // <turbo-stream action=replace target=id><template>...
 

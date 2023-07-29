@@ -1,4 +1,4 @@
-import { TurboClickEvent, TurboBeforeVisitEvent } from "../session"
+import { TurboClickEvent, TurboBeforeVisitEvent } from "../../events"
 
 export interface LinkInterceptorDelegate {
   shouldInterceptLinkClick(element: Element, url: string, originalEvent: MouseEvent): boolean
