@@ -217,6 +217,16 @@ test("test standard GET form submission", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
   assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a form")
+  assert.equal(
+    await nextAttributeMutationNamed(page, "html", "aria-busy"),
+    "true",
+    "sets [aria-busy] on the document element"
+  )
+  assert.equal(
+    await nextAttributeMutationNamed(page, "html", "aria-busy"),
+    null,
+    "removes [aria-busy] from the document element"
+  )
 })
 
 test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
