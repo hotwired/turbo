@@ -1,6 +1,7 @@
 import { Adapter } from "./native/adapter"
 import { FormMode, Session } from "./session"
 import { Cache } from "./cache"
+import { Confirmation } from "./confirmation"
 import { Locatable } from "./url"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamSource } from "./types"
@@ -8,7 +9,6 @@ import { VisitOptions } from "./drive/visit"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
-import { FormSubmission } from "./drive/form_submission"
 
 const session = new Session()
 const cache = new Cache(session)
@@ -125,9 +125,9 @@ export function setProgressBarDelay(delay: number) {
 }
 
 export function setConfirmMethod(
-  confirmMethod: (message: string, element: HTMLFormElement, submitter: HTMLElement | undefined) => Promise<boolean>
+  confirmMethod: (message: string, element: HTMLElement, submitter: HTMLElement | undefined) => Promise<boolean>
 ) {
-  FormSubmission.confirmMethod = confirmMethod
+  Confirmation.confirmMethod = confirmMethod
 }
 
 export function setFormMode(mode: FormMode) {

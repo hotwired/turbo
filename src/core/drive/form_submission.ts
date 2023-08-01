@@ -1,5 +1,6 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
+import { Confirmation } from "../confirmation"
 import { expandURL } from "../url"
 import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
@@ -56,14 +57,6 @@ export class FormSubmission {
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
   originalSubmitText?: string
-
-  static confirmMethod(
-    message: string,
-    _element: HTMLFormElement,
-    _submitter: HTMLElement | undefined
-  ): Promise<boolean> {
-    return Promise.resolve(confirm(message))
-  }
 
   constructor(
     delegate: FormSubmissionDelegate,
@@ -127,7 +120,7 @@ export class FormSubmission {
     const confirmationMessage = getAttribute("data-turbo-confirm", this.submitter, this.formElement)
 
     if (typeof confirmationMessage === "string") {
-      const answer = await FormSubmission.confirmMethod(confirmationMessage, this.formElement, this.submitter)
+      const answer = await Confirmation.confirmMethod(confirmationMessage, this.formElement, this.submitter)
       if (!answer) {
         return
       }
