@@ -202,6 +202,7 @@ export class Visit implements FetchRequestDelegate {
     if (this.state == VisitState.started) {
       this.state = VisitState.failed
       this.adapter.visitFailed(this)
+      this.delegate.visitCompleted(this)
     }
   }
 
