@@ -46,7 +46,7 @@ test("test includes isPreview in render event details", async ({ page }) => {
   assert.equal(await isPreview, false)
 })
 
-test("test triggers before-render and render events for error pages", async ({ page }) => {
+test("test triggers before-render, render, and load events for error pages", async ({ page }) => {
   await page.click("#nonexistent-link")
   const { newBody } = await nextEventNamed(page, "turbo:before-render")
 
@@ -54,6 +54,8 @@ test("test triggers before-render and render events for error pages", async ({ p
 
   await nextEventNamed(page, "turbo:render")
   assert.equal(await newBody, await page.evaluate(() => document.body.outerHTML))
+
+  await nextEventNamed(page, "turbo:load")
 })
 
 test("test reloads when tracked elements change", async ({ page }) => {
