@@ -26,14 +26,16 @@ import { Preloader, PreloaderDelegate } from "./drive/preloader"
 export type FormMode = "on" | "off" | "optin"
 export type TimingData = unknown
 export type TurboBeforeCacheEvent = CustomEvent
-export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & PageViewRenderOptions>
+export type TurboBeforeRenderEvent = CustomEvent<
+  { newBody: HTMLBodyElement; isPreview: boolean } & PageViewRenderOptions
+>
 export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
 export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
 export type TurboFrameLoadEvent = CustomEvent
 export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
 export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
 export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
-export type TurboRenderEvent = CustomEvent
+export type TurboRenderEvent = CustomEvent<{ isPreview: boolean }>
 export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
 
 export class Session
@@ -276,8 +278,8 @@ export class Session
     }
   }
 
-  allowsImmediateRender({ element }: PageSnapshot, options: PageViewRenderOptions) {
-    const event = this.notifyApplicationBeforeRender(element, options)
+  allowsImmediateRender({ element }: PageSnapshot, isPreview: boolean, options: PageViewRenderOptions) {
+    const event = this.notifyApplicationBeforeRender(element, isPreview, options)
     const {
       defaultPrevented,
       detail: { render },
@@ -290,9 +292,9 @@ export class Session
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot: PageSnapshot, _isPreview: boolean) {
+  viewRenderedSnapshot(_snapshot: PageSnapshot, isPreview: boolean) {
     this.view.lastRenderedLocation = this.history.location
-    this.notifyApplicationAfterRender()
+    this.notifyApplicationAfterRender(isPreview)
   }
 
   preloadOnLoadLinksForView(element: Element) {
@@ -348,15 +350,15 @@ export class Session
     return dispatch<TurboBeforeCacheEvent>("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement, options: PageViewRenderOptions) {
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, isPreview: boolean, options: PageViewRenderOptions) {
     return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
-      detail: { newBody, ...options },
+      detail: { newBody, isPreview, ...options },
       cancelable: true,
     })
   }
 
-  notifyApplicationAfterRender() {
-    return dispatch<TurboRenderEvent>("turbo:render")
+  notifyApplicationAfterRender(isPreview: boolean) {
+    return dispatch<TurboRenderEvent>("turbo:render", { detail: { isPreview } })
   }
 
   notifyApplicationAfterPageLoad(timing: TimingData = {}) {
