@@ -470,8 +470,8 @@ export class FrameController
 
   async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | null> {
     let element
-    const id = CSS.escape(this.id)
-
+    const id = CSS.escape(this.foreignId)
+    
     try {
       element = activateElement(container.querySelector(`turbo-frame#${id}`), this.sourceURL)
       if (element) {
@@ -530,6 +530,10 @@ export class FrameController
 
   get id() {
     return this.element.id
+  }
+
+  get foreignId() {
+    return this.element.foreignId
   }
 
   get enabled() {

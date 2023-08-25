@@ -81,6 +81,25 @@ export class FrameElement extends HTMLElement {
   }
 
   /**
+   * Gets the id of the foreign turbo_frame. Defaults to the current id
+   */
+  get foreignId() : string {
+    return this.getAttribute('foreign-id') || this.id
+  }
+
+
+  /**
+   * Sets the id of the foreign turbo_frame
+   */
+  set foreignId(value: string | null) {
+    if (value) {
+      this.setAttribute("foreign-id", value)
+    } else {
+      this.removeAttribute("foreign-id")
+    }
+  }
+
+  /**
    * Gets the URL to lazily load source HTML from
    */
   get src() {

@@ -262,6 +262,15 @@ test("test following a link to a page with a matching frame does not dispatch a 
   )
 })
 
+test("test that you can specify the foreign turbo_frame id", async ({
+  page,
+}) => {
+  await page.click('#different-id a')
+  await nextBeat()
+
+  assert.match(await page.innerText("#different-id"), /Hello from a frame/)
+})
+
 test("test following a link within a frame with a target set navigates the target frame", async ({ page }) => {
   await page.click("#hello a")
   await nextBeat()
