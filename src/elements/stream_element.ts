@@ -166,22 +166,31 @@ export class StreamElement extends HTMLElement {
   }
 
   private get targetElementsById() {
+    const elements = []
     const element = this.ownerDocument?.getElementById(this.target!)
-
+    
     if (element !== null) {
-      return [element]
-    } else {
-      return []
+      elements.push(element)
     }
+
+    for (const template of this.ownerDocument?.querySelectorAll("template")) {
+      const elementInTemplate = template.content.getElementById(this.target!)
+
+      if (elementInTemplate !== null) {
+        elements.push(elementInTemplate)
+      }
+    }
+
+    return elements
   }
 
   private get targetElementsByQuery() {
-    const elements = this.ownerDocument?.querySelectorAll(this.targets!)
-
-    if (elements.length !== 0) {
-      return Array.prototype.slice.call(elements)
-    } else {
-      return []
+    const elements = [...this.ownerDocument?.querySelectorAll(this.targets!)]
+    
+    for (const template of this.ownerDocument?.querySelectorAll("template")) {
+      elements.push(...template.content.querySelectorAll(this.targets!))
     }
+
+    return elements
   }
 }
