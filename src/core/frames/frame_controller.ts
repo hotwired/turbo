@@ -215,14 +215,15 @@ export class FrameController
 
     this.formSubmission = new FormSubmission(this, element, submitter)
     const { fetchRequest } = this.formSubmission
-    this.prepareRequest(fetchRequest)
+    const frame = this.findFrameElement(element, submitter)
+    this.prepareRequest(fetchRequest, frame)
     this.formSubmission.start()
   }
 
   // Fetch request delegate
 
-  prepareRequest(request: FetchRequest) {
-    request.headers["Turbo-Frame"] = this.id
+  prepareRequest(request: FetchRequest, frame: FrameElement = this.element) {
+    request.headers["Turbo-Frame"] = frame.id
 
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
       request.acceptResponseType(StreamMessage.contentType)
