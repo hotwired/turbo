@@ -861,6 +861,26 @@ test("test form submission targeting a frame submits the Turbo-Frame header", as
   assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
 })
 
+test("test form submission targeting another frame submits the Turbo-Frame header", async ({ page }) => {
+  await page.click("#frame form[method=get][data-turbo-frame=hello] [type=submit]")
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+  assert.equal("hello", fetchOptions.headers["Turbo-Frame"])
+})
+
+test("test form submission with submitter referencing another frame submits the Turbo-Frame header", async ({
+  page,
+}) => {
+  await page.click("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+  assert.equal("hello", fetchOptions.headers["Turbo-Frame"])
+})
+
 test("test link method form submission dispatches events from a connected <form> element", async ({ page }) => {
   await page.evaluate(() =>
     new MutationObserver(([record]) => {
