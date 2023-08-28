@@ -220,6 +220,31 @@ test("test Visit with network error", async ({ page }) => {
   await nextEventNamed(page, "turbo:fetch-request-error")
 })
 
+test("test clicking link to current page does not preview a stale cache snapshot", async ({ page }) => {
+  const timestamps: number[] = []
+  const fetchTimestamp = async () => timestamps.push(parseFloat(await page.locator("#timestamp").innerText()))
+  const assertTimestampNotDecreasing = () => {
+    const n = timestamps.length
+    if (n < 2) return
+    assert(timestamps[n - 1] >= timestamps[n - 2], "timestamps are non-decreasing")
+  }
+
+  await visitLocation(page, "/__turbo/timestamp")
+  await nextEventNamed(page, "turbo:load")
+  await fetchTimestamp()
+
+  for (let i = 0; i < 5; i++) {
+    await page.click("a#refresh")
+    await nextEventNamed(page, "turbo:render")
+    await fetchTimestamp()
+    assertTimestampNotDecreasing()
+
+    await nextEventNamed(page, "turbo:load")
+    await fetchTimestamp()
+    assertTimestampNotDecreasing()
+  }
+})
+
 async function visitLocation(page: Page, location: string) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
 }

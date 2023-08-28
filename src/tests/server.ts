@@ -67,6 +67,12 @@ router.get("/headers", (request, response) => {
     .send(template.replace("$HEADERS", JSON.stringify(request.headers, null, 4)))
 })
 
+router.get("/timestamp", (request, response) => {
+  const template = fs.readFileSync("src/tests/fixtures/timestamp.html").toString()
+  const timestamp = (new Date().getTime() / 1000).toString()
+  setTimeout(() => response.type("html").status(200).send(template.replaceAll("$TIMESTAMP", timestamp)), 500)
+})
+
 router.get("/delayed_response", (request, response) => {
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
   setTimeout(() => response.status(200).sendFile(fixture), 1000)
