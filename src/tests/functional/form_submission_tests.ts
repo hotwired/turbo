@@ -3,8 +3,10 @@ import { assert } from "chai"
 import {
   getFromLocalStorage,
   getSearchParam,
+  hash,
   hasSelector,
   isScrolledToTop,
+  isScrolledToSelector,
   nextAttributeMutationNamed,
   nextBeat,
   nextBody,
@@ -227,6 +229,15 @@ test("test standard GET form submission", async ({ page }) => {
     null,
     "removes [aria-busy] from the document element"
   )
+})
+
+test("test standard GET form submission redirect with hash", async ({ page }) => {
+  await page.click("#standard-get-form-submit-redirect-with-hash")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(hash(page.url()), "#element-id")
+  assert.equal(await visitAction(page), "advance")
+  assert(await isScrolledToSelector(page, "#element-id"))
 })
 
 test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
