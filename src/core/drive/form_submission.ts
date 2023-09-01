@@ -127,7 +127,11 @@ export class FormSubmission {
     const confirmationMessage = getAttribute("data-turbo-confirm", this.submitter, this.formElement)
 
     if (typeof confirmationMessage === "string") {
-      const answer = await FormSubmission.confirmMethod(confirmationMessage, this.formElement, this.submitter)
+      const answer = await FormSubmission.confirmMethod(
+        confirmationMessage,
+        this.formElement,
+        this.submitter || this.formElement.originalElement
+      )
       if (!answer) {
         return
       }

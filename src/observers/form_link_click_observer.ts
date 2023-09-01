@@ -53,7 +53,10 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
     if (turboAction) form.setAttribute("data-turbo-action", turboAction)
 
     const turboConfirm = link.getAttribute("data-turbo-confirm")
-    if (turboConfirm) form.setAttribute("data-turbo-confirm", turboConfirm)
+    if (turboConfirm) {
+      form.setAttribute("data-turbo-confirm", turboConfirm)
+      form.originalElement = link
+    }
 
     const turboStream = link.hasAttribute("data-turbo-stream")
     if (turboStream) form.setAttribute("data-turbo-stream", "")
