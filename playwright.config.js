@@ -18,6 +18,7 @@ const config = {
     command: "yarn start",
     url: "http://localhost:9000/src/tests/fixtures/test.js",
     timeout: 120 * 1000,
+    // eslint-disable-next-line no-undef
     reuseExistingServer: !process.env.CI,
   },
   use: {
