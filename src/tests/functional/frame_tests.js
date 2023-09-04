@@ -930,6 +930,7 @@ async function withoutChangingEventListenersCount(page, callback) {
     }, name)
   }
 
+  await nextBeat()
   const originalCount = await setup()
   await callback()
   const finalCount = await teardown()
