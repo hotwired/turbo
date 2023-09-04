@@ -2,6 +2,7 @@ import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor } from "./link_interceptor"
 import { expandURL, getAction, locationIsVisitable } from "../url"
+
 export class FrameRedirector {
   constructor(session, element) {
     this.session = session
