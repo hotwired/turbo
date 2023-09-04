@@ -18,11 +18,11 @@ export class CacheObserver {
     }
   }
 
-  removeTemporaryElements = ((_event) => {
+  removeTemporaryElements = (_event) => {
     for (const element of this.temporaryElements) {
       element.remove()
     }
-  })
+  }
 
   get temporaryElements() {
     return [...document.querySelectorAll(this.selector), ...this.temporaryElementsWithDeprecation]

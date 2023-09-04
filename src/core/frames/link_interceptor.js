@@ -1,4 +1,3 @@
-
 export class LinkInterceptor {
   constructor(delegate, element) {
     this.delegate = delegate
@@ -25,7 +24,7 @@ export class LinkInterceptor {
     }
   }
 
-  linkClicked = ((event) => {
+  linkClicked = (event) => {
     if (this.clickEvent && this.respondsToEventTarget(event.target) && event.target instanceof Element) {
       if (this.delegate.shouldInterceptLinkClick(event.target, event.detail.url, event.detail.originalEvent)) {
         this.clickEvent.preventDefault()
@@ -34,11 +33,11 @@ export class LinkInterceptor {
       }
     }
     delete this.clickEvent
-  })
+  }
 
-  willVisit = ((_event) => {
+  willVisit = (_event) => {
     delete this.clickEvent
-  })
+  }
 
   respondsToEventTarget(target) {
     const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null

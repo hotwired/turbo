@@ -12,14 +12,14 @@ const defaultOptions = {
   willRender: true,
   updateHistory: true,
   shouldCacheSnapshot: true,
-  acceptsStreamResponse: false,
+  acceptsStreamResponse: false
 }
 
 export const TimingMetric = {
   visitStart: "visitStart",
   requestStart: "requestStart",
   requestEnd: "requestEnd",
-  visitEnd: "visitEnd",
+  visitEnd: "visitEnd"
 }
 
 export const VisitState = {
@@ -27,7 +27,7 @@ export const VisitState = {
   started: "started",
   canceled: "canceled",
   failed: "failed",
-  completed: "completed",
+  completed: "completed"
 }
 
 export const SystemStatusCode = {
@@ -49,12 +49,7 @@ export class Visit {
   state = VisitState.initialized
   viewTransitioner = new ViewTransitioner()
 
-  constructor(
-    delegate,
-    location,
-    restorationIdentifier,
-    options = {}
-  ) {
+  constructor(delegate, location, restorationIdentifier, options = {}) {
     this.delegate = delegate
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
@@ -70,10 +65,10 @@ export class Visit {
       willRender,
       updateHistory,
       shouldCacheSnapshot,
-      acceptsStreamResponse,
+      acceptsStreamResponse
     } = {
       ...defaultOptions,
-      ...options,
+      ...options
     }
     this.action = action
     this.historyChanged = historyChanged
@@ -268,7 +263,7 @@ export class Visit {
         action: "replace",
         response: this.response,
         shouldCacheSnapshot: false,
-        willRender: false,
+        willRender: false
       })
       this.followedRedirect = true
     }
@@ -305,7 +300,7 @@ export class Visit {
     if (responseHTML == undefined) {
       this.recordResponse({
         statusCode: SystemStatusCode.contentTypeMismatch,
-        redirected,
+        redirected
       })
     } else {
       this.redirectedToLocation = response.redirected ? response.location : undefined
@@ -319,7 +314,7 @@ export class Visit {
     if (responseHTML == undefined) {
       this.recordResponse({
         statusCode: SystemStatusCode.contentTypeMismatch,
-        redirected,
+        redirected
       })
     } else {
       this.recordResponse({ statusCode: statusCode, responseHTML, redirected })
@@ -329,7 +324,7 @@ export class Visit {
   requestErrored(_request, _error) {
     this.recordResponse({
       statusCode: SystemStatusCode.networkFailure,
-      redirected: false,
+      redirected: false
     })
   }
 

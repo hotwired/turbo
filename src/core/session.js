@@ -129,11 +129,11 @@ export class Session {
     if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, {
         action: "restore",
-        historyChanged: true,
+        historyChanged: true
       })
     } else {
       this.adapter.pageInvalidated({
-        reason: "turbo_disabled",
+        reason: "turbo_disabled"
       })
     }
   }
@@ -251,7 +251,7 @@ export class Session {
     const event = this.notifyApplicationBeforeRender(element, isPreview, options)
     const {
       defaultPrevented,
-      detail: { render },
+      detail: { render }
     } = event
 
     if (this.view.renderer && render) {
@@ -300,14 +300,14 @@ export class Session {
     return dispatch("turbo:click", {
       target: link,
       detail: { url: location.href, originalEvent: event },
-      cancelable: true,
+      cancelable: true
     })
   }
 
   notifyApplicationBeforeVisitingLocation(location) {
     return dispatch("turbo:before-visit", {
       detail: { url: location.href },
-      cancelable: true,
+      cancelable: true
     })
   }
 
@@ -322,7 +322,7 @@ export class Session {
   notifyApplicationBeforeRender(newBody, isPreview, options) {
     return dispatch("turbo:before-render", {
       detail: { newBody, isPreview, ...options },
-      cancelable: true,
+      cancelable: true
     })
   }
 
@@ -332,7 +332,7 @@ export class Session {
 
   notifyApplicationAfterPageLoad(timing = {}) {
     return dispatch("turbo:load", {
-      detail: { url: this.location.href, timing },
+      detail: { url: this.location.href, timing }
     })
   }
 
@@ -340,7 +340,7 @@ export class Session {
     dispatchEvent(
       new HashChangeEvent("hashchange", {
         oldURL: oldURL.toString(),
-        newURL: newURL.toString(),
+        newURL: newURL.toString()
       })
     )
   }
@@ -353,7 +353,7 @@ export class Session {
     return dispatch("turbo:frame-render", {
       detail: { fetchResponse },
       target: frame,
-      cancelable: true,
+      cancelable: true
     })
   }
 
@@ -425,6 +425,6 @@ const deprecatedLocationPropertyDescriptors = {
   absoluteURL: {
     get() {
       return this.toString()
-    },
-  },
+    }
+  }
 }

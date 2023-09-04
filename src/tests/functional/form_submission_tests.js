@@ -20,7 +20,7 @@ import {
   setLocalStorageFromEvent,
   visitAction,
   waitUntilSelector,
-  waitUntilNoSelector,
+  waitUntilNoSelector
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -291,7 +291,7 @@ test("test standard GET form submission events", async ({ page }) => {
 })
 
 test("test standard GET form submission does not incorporate the current page's URLSearchParams values into the submission", async ({
-  page,
+  page
 }) => {
   await page.click("#form-action-self-sort")
   await nextBody(page)
@@ -321,7 +321,7 @@ test("test standard GET form submission does not merge values into the [action] 
 })
 
 test("test standard GET form submission omits the [action] value's URLSearchParams from the submission", async ({
-  page,
+  page
 }) => {
   await page.click("#form-action-self-submit")
   await nextBody(page)
@@ -1033,7 +1033,7 @@ test("test link method form submission outside frame", async ({ page }) => {
 })
 
 test("test following a link with [data-turbo-method] set and a target set navigates the target frame", async ({
-  page,
+  page
 }) => {
   await page.click("#turbo-method-post-to-targeted-frame")
 
@@ -1041,7 +1041,7 @@ test("test following a link with [data-turbo-method] set and a target set naviga
 })
 
 test("test following a link with [data-turbo-method] and [data-turbo=true] set when html[data-turbo=false]", async ({
-  page,
+  page
 }) => {
   const html = await page.locator("html")
   await html.evaluate((html) => html.setAttribute("data-turbo", "false"))
@@ -1056,7 +1056,7 @@ test("test following a link with [data-turbo-method] and [data-turbo=true] set w
 })
 
 test("test following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
-  page,
+  page
 }) => {
   await page.evaluate(() => (window.Turbo.session.drive = false))
 

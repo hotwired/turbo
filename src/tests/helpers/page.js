@@ -1,4 +1,3 @@
-
 export function attributeForSelector(page, selector, attributeName) {
   return page.locator(selector).getAttribute(attributeName)
 }
@@ -112,11 +111,7 @@ export async function noNextBodyMutation(page) {
   return !records.some((record) => !!record)
 }
 
-export async function nextAttributeMutationNamed(
-  page,
-  elementId,
-  attributeName
-){
+export async function nextAttributeMutationNamed(page, elementId, attributeName) {
   let record
   while (!record) {
     const records = await readMutationLogs(page, 1)
@@ -126,11 +121,7 @@ export async function nextAttributeMutationNamed(
   return attributeValue
 }
 
-export async function noNextAttributeMutationNamed(
-  page,
-  elementId,
-  attributeName
-) {
+export async function noNextAttributeMutationNamed(page, elementId, attributeName) {
   const records = await readMutationLogs(page, 1)
   return !records.some(([name, _, target]) => name == attributeName && target == elementId)
 }
@@ -193,7 +184,7 @@ export function readEventLogs(page, length) {
   return readArray(page, "eventLogs", length)
 }
 
-export function readMutationLogs(page, length){
+export function readMutationLogs(page, length) {
   return readArray(page, "mutationLogs", length)
 }
 

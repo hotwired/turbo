@@ -41,8 +41,8 @@ export class BrowserAdapter {
         return this.reload({
           reason: "request_failed",
           context: {
-            statusCode,
-          },
+            statusCode
+          }
         })
       default:
         return visit.loadResponse()

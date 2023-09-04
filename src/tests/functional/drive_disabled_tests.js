@@ -7,7 +7,7 @@ import {
   pathname,
   searchParams,
   setLocalStorageFromEvent,
-  visitAction,
+  visitAction
 } from "../helpers/page"
 
 const path = "/src/tests/fixtures/drive_disabled.html"

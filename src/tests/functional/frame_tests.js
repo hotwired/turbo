@@ -16,7 +16,7 @@ import {
   readEventLogs,
   scrollPosition,
   scrollToSelector,
-  searchParams,
+  searchParams
 } from "../helpers/page"
 
 assert.equalIgnoringWhitespace = function (actual, expected, message) {
@@ -110,7 +110,7 @@ test("test following a link driving a frame toggles the [aria-busy=true] attribu
 })
 
 test("test following an a[data-turbo-frame=_top] does not toggle the frame's [aria-busy=true] attribute", async ({
-  page,
+  page
 }) => {
   await page.click("#frame #link-top")
 
@@ -122,7 +122,7 @@ test("test following an a[data-turbo-frame=_top] does not toggle the frame's [ar
 })
 
 test("test submitting a form[data-turbo-frame=_top] does not toggle the frame's [aria-busy=true] attribute", async ({
-  page,
+  page
 }) => {
   await page.click("#frame #form-submit-top")
 
@@ -134,7 +134,7 @@ test("test submitting a form[data-turbo-frame=_top] does not toggle the frame's 
 })
 
 test("successfully following a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
-  page,
+  page
 }) => {
   await page.click("#missing-frame-link")
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
@@ -143,7 +143,7 @@ test("successfully following a link to a page without a matching frame dispatche
 })
 
 test("successfully following a link to a page without a matching frame shows an error and throws an exception", async ({
-  page,
+  page
 }) => {
   let error = undefined
   page.once("pageerror", (e) => (error = e))
@@ -157,7 +157,7 @@ test("successfully following a link to a page without a matching frame shows an 
 })
 
 test("successfully following a link to a page with `turbo-visit-control` `reload` performs a full page reload", async ({
-  page,
+  page
 }) => {
   await page.click("#unvisitable-page-link")
   await page.getByText("Unvisitable page loaded").waitFor()
@@ -166,7 +166,7 @@ test("successfully following a link to a page with `turbo-visit-control` `reload
 })
 
 test("failing to follow a link to a page without a matching frame dispatches a turbo:frame-missing event", async ({
-  page,
+  page
 }) => {
   await page.click("#missing-page-link")
   const { response } = await nextEventOnTarget(page, "missing", "turbo:frame-missing")
@@ -175,7 +175,7 @@ test("failing to follow a link to a page without a matching frame dispatches a t
 })
 
 test("failing to follow a link to a page without a matching frame shows an error and throws an exception", async ({
-  page,
+  page
 }) => {
   let error = undefined
   page.once("pageerror", (e) => (error = e))
@@ -189,17 +189,17 @@ test("failing to follow a link to a page without a matching frame shows an error
 })
 
 test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({
-  page,
+  page
 }) => {
   await page.locator("#missing").evaluate((frame) => {
     frame.addEventListener(
       "turbo:frame-missing",
-      ((event) => {
+      (event) => {
         if (event.target instanceof Element) {
           event.preventDefault()
           event.target.textContent = "Overridden"
         }
-      }),
+      },
       { once: true }
     )
   })
@@ -210,17 +210,17 @@ test("test the turbo:frame-missing event following a link to a page without a ma
 })
 
 test("test the turbo:frame-missing event following a link to a page without a matching frame can drive a Visit", async ({
-  page,
+  page
 }) => {
   await page.locator("#missing").evaluate((frame) => {
     frame.addEventListener(
       "turbo:frame-missing",
-      ((event) => {
+      (event) => {
         event.preventDefault()
         const { response, visit } = event.detail
 
         visit(response)
-      }),
+      },
       { once: true }
     )
   })
@@ -239,7 +239,7 @@ test("test the turbo:frame-missing event following a link to a page without a ma
 })
 
 test("test following a link to a page with a matching frame does not dispatch a turbo:frame-missing event", async ({
-  page,
+  page
 }) => {
   await page.click("#link-frame")
 
@@ -272,7 +272,7 @@ test("test following a link in rapid succession cancels the previous request", a
 })
 
 test("test following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame", async ({
-  page,
+  page
 }) => {
   const selector = "#nested-root[target=frame] #nested-child a:not([data-turbo-frame])"
   const link = await page.locator(selector)
@@ -293,7 +293,7 @@ test("test following a link within a descendant frame whose ancestor declares a 
 })
 
 test("test following a link that declares data-turbo-frame within a frame whose ancestor respects the override", async ({
-  page,
+  page
 }) => {
   await page.click("#nested-root[target=frame] #nested-child a[data-turbo-frame]")
   await nextBeat()
@@ -341,7 +341,7 @@ test("test following a link within a frame with target=_top navigates the page",
 })
 
 test("test following a link that declares data-turbo-frame='_self' within a frame with target=_top navigates the frame itself", async ({
-  page,
+  page
 }) => {
   assert.equal(await attributeForSelector(page, "#navigate-top", "src"), null)
 
@@ -356,7 +356,7 @@ test("test following a link that declares data-turbo-frame='_self' within a fram
 })
 
 test("test following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
-  page,
+  page
 }) => {
   await page.click("#recursive summary")
 
@@ -370,7 +370,7 @@ test("test following a link to a page with a <turbo-frame recurse> which lazily 
 })
 
 test("test submitting a form that redirects to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
-  page,
+  page
 }) => {
   await page.click("#recursive summary")
 
@@ -505,7 +505,7 @@ test("test navigating a frame targeting _top from an outer link fires events", a
 test("test invoking .reload() re-fetches the frame's content", async ({ page }) => {
   await page.click("#link-frame")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
-  await page.evaluate(() => (document.getElementById("frame")).reload())
+  await page.evaluate(() => document.getElementById("frame").reload())
 
   const dispatchedEvents = await readEventLogs(page)
 
@@ -516,7 +516,7 @@ test("test invoking .reload() re-fetches the frame's content", async ({ page }) 
       ["frame", "turbo:before-fetch-response"],
       ["frame", "turbo:before-frame-render"],
       ["frame", "turbo:frame-render"],
-      ["frame", "turbo:frame-load"],
+      ["frame", "turbo:frame-load"]
     ]
   )
 })
@@ -608,7 +608,7 @@ test("test navigating pushing URL state from a frame navigation fires events", a
 })
 
 test("test navigating a frame with a form[method=get] that does not redirect still updates the [src]", async ({
-  page,
+  page
 }) => {
   await page.click("#frame-form-get-no-redirect")
   await nextEventNamed(page, "turbo:before-fetch-request")
@@ -640,7 +640,7 @@ test("test navigating turbo-frame[data-turbo-action=advance] from within pushes 
 })
 
 test("test navigating turbo-frame[data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state", async ({
-  page,
+  page
 }) => {
   await page.click("#link-outside-frame-action-advance")
   await nextEventNamed(page, "turbo:load")
@@ -737,7 +737,7 @@ test("test navigating frame with form[method=get][data-turbo-action=advance] pus
 })
 
 test("test navigating frame with form[method=get][data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state", async ({
-  page,
+  page
 }) => {
   await page.click("#form-get-frame-action-advance button")
   await nextEventNamed(page, "turbo:load")
@@ -767,7 +767,7 @@ test("test navigating frame with form[method=post][data-turbo-action=advance] pu
 })
 
 test("test navigating frame with form[method=post][data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state", async ({
-  page,
+  page
 }) => {
   await page.click("#form-post-frame-action-advance button")
   await nextEventNamed(page, "turbo:load")
@@ -798,7 +798,7 @@ test("test navigating frame with button[data-turbo-action=advance] pushes URL st
 })
 
 test("test navigating back after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames previous contents", async ({
-  page,
+  page
 }) => {
   await page.click("#add-turbo-action-to-frame")
   await page.click("#link-frame")
@@ -817,7 +817,7 @@ test("test navigating back after pushing URL state from a turbo-frame[data-turbo
 })
 
 test("test navigating back then forward after pushing URL state from a turbo-frame[data-turbo-action=advance] restores the frames next contents", async ({
-  page,
+  page
 }) => {
   await page.click("#add-turbo-action-to-frame")
   await page.click("#link-frame")
@@ -849,7 +849,7 @@ test("test turbo:before-fetch-response fires on the frame element", async ({ pag
 })
 
 test("test navigating a eager frame with a link[method=get] that does not fetch eager frame twice", async ({
-  page,
+  page
 }) => {
   await page.click("#link-to-eager-loaded-frame")
 
@@ -893,23 +893,15 @@ async function withoutChangingEventListenersCount(page, callback) {
       context[name] = 0
       context.originals = {
         addEventListener: document.addEventListener,
-        removeEventListener: document.removeEventListener,
+        removeEventListener: document.removeEventListener
       }
 
-      document.addEventListener = (
-        type,
-        listener,
-        options
-      ) => {
+      document.addEventListener = (type, listener, options) => {
         context.originals.addEventListener.call(document, type, listener, options)
         context[name] += 1
       }
 
-      document.removeEventListener = (
-        type,
-        listener,
-        options
-      ) => {
+      document.removeEventListener = (type, listener, options) => {
         context.originals.removeEventListener.call(document, type, listener, options)
         context[name] -= 1
       }

@@ -1,4 +1,3 @@
-
 export const StreamActions = {
   after() {
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
@@ -31,5 +30,5 @@ export const StreamActions = {
       targetElement.innerHTML = ""
       targetElement.append(this.templateContent)
     })
-  },
+  }
 }

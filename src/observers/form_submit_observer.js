@@ -25,7 +25,7 @@ export class FormSubmitObserver {
     this.eventTarget.addEventListener("submit", this.submitBubbled, false)
   }
 
-  submitBubbled = ((event) => {
+  submitBubbled = (event) => {
     if (!event.defaultPrevented) {
       const form = event.target instanceof HTMLFormElement ? event.target : undefined
       const submitter = event.submitter || undefined
@@ -41,7 +41,7 @@ export class FormSubmitObserver {
         this.delegate.formSubmitted(form, submitter)
       }
     }
-  })
+  }
 }
 
 function submissionDoesNotDismissDialog(form, submitter) {

@@ -23,7 +23,7 @@ export class Navigator {
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
-      ...options,
+      ...options
     })
     this.currentVisit.start()
   }
@@ -82,7 +82,7 @@ export class Navigator {
         const visitOptions = {
           action,
           shouldCacheSnapshot,
-          response: { statusCode, responseHTML, redirected },
+          response: { statusCode, responseHTML, redirected }
         }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }

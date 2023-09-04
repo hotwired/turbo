@@ -2,7 +2,7 @@ const submittersByForm = new WeakMap()
 
 function findSubmitterFromClickTarget(target) {
   const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
-  const candidate = element ? (element.closest("input, button")) : null
+  const candidate = element ? element.closest("input, button") : null
   return candidate?.type == "submit" ? candidate : null
 }
 
@@ -38,7 +38,7 @@ function clickCaptured(event) {
       if (this.type == "submit" && this.target instanceof HTMLFormElement) {
         return submittersByForm.get(this.target)
       }
-    },
+    }
   })
 })()
 

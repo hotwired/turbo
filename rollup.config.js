@@ -20,9 +20,7 @@ export default [
         banner
       }
     ],
-    plugins: [
-      resolve(),
-    ],
+    plugins: [resolve()],
     watch: {
       include: "src/**"
     }

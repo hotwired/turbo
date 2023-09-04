@@ -1,10 +1,5 @@
-
 export class Bardo {
-  static async preservingPermanentElements(
-    delegate,
-    permanentElementMap,
-    callback
-  ) {
+  static async preservingPermanentElements(delegate, permanentElementMap, callback) {
     const bardo = new this(delegate, permanentElementMap)
     bardo.enter()
     await callback()

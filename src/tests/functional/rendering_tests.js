@@ -17,7 +17,7 @@ import {
   sleep,
   strictElementEquals,
   textContent,
-  visitAction,
+  visitAction
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -396,7 +396,7 @@ test("test restores focus during page rendering when transposing the activeEleme
 })
 
 test("test restores focus during page rendering when transposing an ancestor of the activeElement", async ({
-  page,
+  page
 }) => {
   await page.press("#permanent-descendant-input", "Enter")
   await nextBody(page)
@@ -450,7 +450,7 @@ test("test restores focus during turbo-frame rendering when transposing the acti
 })
 
 test("test restores focus during turbo-frame rendering when transposing a descendant of the activeElement", async ({
-  page,
+  page
 }) => {
   await page.press("#permanent-descendant-input-in-frame", "Enter")
   await nextBeat()
@@ -591,11 +591,7 @@ test("test rendering a redirect response replaces the body once and only once", 
   assert.ok(await noNextBodyMutation(page), "replaces <body> element once")
 })
 
-function deepElementsEqual(
-  page,
-  left,
-  right
-) {
+function deepElementsEqual(page, left, right) {
   return page.evaluate(
     ([left, right]) => left.length == right.length && left.every((element) => right.includes(element)),
     [left, right]

@@ -32,20 +32,11 @@ function formEnctypeFromString(encoding) {
 export class FormSubmission {
   state = FormSubmissionState.initialized
 
-  static confirmMethod(
-    message,
-    _element,
-    _submitter
-  ) {
+  static confirmMethod(message, _element, _submitter) {
     return Promise.resolve(confirm(message))
   }
 
-  constructor(
-    delegate,
-    formElement,
-    submitter,
-    mustRedirect = false
-  ) {
+  constructor(delegate, formElement, submitter, mustRedirect = false) {
     this.delegate = delegate
     this.formElement = formElement
     this.submitter = submitter
@@ -144,7 +135,7 @@ export class FormSubmission {
     this.setSubmitsWith()
     dispatch("turbo:submit-start", {
       target: this.formElement,
-      detail: { formSubmission: this },
+      detail: { formSubmission: this }
     })
     this.delegate.formSubmissionStarted(this)
   }
@@ -182,7 +173,7 @@ export class FormSubmission {
     this.resetSubmitterText()
     dispatch("turbo:submit-end", {
       target: this.formElement,
-      detail: { formSubmission: this, ...this.result },
+      detail: { formSubmission: this, ...this.result }
     })
     this.delegate.formSubmissionFinished(this)
   }

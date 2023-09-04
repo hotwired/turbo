@@ -4,12 +4,12 @@ const config = {
   projects: [
     {
       name: "chrome",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"] }
     },
     {
       name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
+      use: { ...devices["Desktop Firefox"] }
+    }
   ],
   retries: 2,
   testDir: "./src/tests/",
@@ -19,11 +19,11 @@ const config = {
     url: "http://localhost:9000/src/tests/fixtures/test.js",
     timeout: 120 * 1000,
     // eslint-disable-next-line no-undef
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI
   },
   use: {
-    baseURL: "http://localhost:9000/",
-  },
+    baseURL: "http://localhost:9000/"
+  }
 }
 
 export default config

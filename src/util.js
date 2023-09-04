@@ -26,15 +26,12 @@ export function createDocumentFragment(html) {
   return template.content
 }
 
-export function dispatch(
-  eventName,
-  { target, cancelable, detail } = {}
-) {
+export function dispatch(eventName, { target, cancelable, detail } = {}) {
   const event = new CustomEvent(eventName, {
     cancelable,
     bubbles: true,
     composed: true,
-    detail,
+    detail
   })
 
   if (target && target.isConnected) {
@@ -184,8 +181,7 @@ export function setMetaContent(name, content) {
 export function findClosestRecursively(element, selector) {
   if (element instanceof Element) {
     return (
-      element.closest(selector) ||
-      findClosestRecursively(element.assignedSlot || (element.getRootNode())?.host, selector)
+      element.closest(selector) || findClosestRecursively(element.assignedSlot || element.getRootNode()?.host, selector)
     )
   }
 }

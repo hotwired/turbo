@@ -15,14 +15,7 @@ export class FrameRenderer extends Renderer {
     }
   }
 
-  constructor(
-    delegate,
-    currentSnapshot,
-    newSnapshot,
-    renderElement,
-    isPreview,
-    willRender = true
-  ) {
+  constructor(delegate, currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
     super(currentSnapshot, newSnapshot, renderElement, isPreview, willRender)
     this.delegate = delegate
   }

@@ -54,7 +54,7 @@ export class History {
     const restorationData = this.restorationData[restorationIdentifier]
     this.restorationData[restorationIdentifier] = {
       ...restorationData,
-      ...additionalData,
+      ...additionalData
     }
   }
 

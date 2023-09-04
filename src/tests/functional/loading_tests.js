@@ -9,7 +9,7 @@ import {
   nextEventNamed,
   nextEventOnTarget,
   noNextEventOnTarget,
-  readEventLogs,
+  readEventLogs
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -105,7 +105,7 @@ test("test reloading a frame reloads the content", async ({ page }) => {
   assert.ok(await hasSelector(page, frameContent))
   assert.equal(await nextAttributeMutationNamed(page, "frame", "complete"), "", "has [complete] attribute")
 
-  await page.evaluate(() => (document.querySelector("#loading-eager turbo-frame"))?.reload())
+  await page.evaluate(() => document.querySelector("#loading-eager turbo-frame")?.reload())
   assert.ok(await hasSelector(page, frameContent))
   assert.equal(await nextAttributeMutationNamed(page, "frame", "complete"), null, "clears [complete] attribute")
 })

@@ -78,7 +78,7 @@ test("test autofocus visible [autofocus] element on visit with inert elements", 
 })
 
 test("test navigating a frame with a link targeting the frame autofocuses [autofocus]:first-of-type", async ({
-  page,
+  page
 }) => {
   await page.click("#frame-outer-link")
   await nextBeat()
@@ -94,7 +94,7 @@ test("test navigating a frame with a link targeting the frame autofocuses [autof
 })
 
 test("test navigating a frame with a turbo-frame targeting the frame autofocuses [autofocus]:first-of-type", async ({
-  page,
+  page
 }) => {
   await page.click("#drives-frame-target-link")
   await nextBeat()

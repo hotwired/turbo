@@ -17,13 +17,13 @@ export class PageRenderer extends Renderer {
   get reloadReason() {
     if (!this.newSnapshot.isVisitable) {
       return {
-        reason: "turbo_visit_control_is_reload",
+        reason: "turbo_visit_control_is_reload"
       }
     }
 
     if (!this.trackedElementsAreIdentical) {
       return {
-        reason: "tracked_element_mismatch",
+        reason: "tracked_element_mismatch"
       }
     }
   }

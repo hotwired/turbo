@@ -1,7 +1,4 @@
-import {
-  FrameElement,
-  FrameLoadingStyle,
-} from "../../elements/frame_element"
+import { FrameElement, FrameLoadingStyle } from "../../elements/frame_element"
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
 import { AppearanceObserver } from "../../observers/appearance_observer"
@@ -13,7 +10,7 @@ import {
   markAsBusy,
   uuid,
   getHistoryMethodForAction,
-  getVisitAction,
+  getVisitAction
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
@@ -259,19 +256,15 @@ export class FrameController {
 
   // View delegate
 
-  allowsImmediateRender(
-    { element: newFrame },
-    _isPreview,
-    options
-  ) {
+  allowsImmediateRender({ element: newFrame }, _isPreview, options) {
     const event = dispatch("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
-      cancelable: true,
+      cancelable: true
     })
     const {
       defaultPrevented,
-      detail: { render },
+      detail: { render }
     } = event
 
     if (this.view.renderer && render) {
@@ -369,7 +362,7 @@ export class FrameController {
             willRender: false,
             updateHistory: false,
             restorationIdentifier: this.restorationIdentifier,
-            snapshot: pageSnapshot,
+            snapshot: pageSnapshot
           }
 
           if (this.action) options.action = this.action
@@ -410,7 +403,7 @@ export class FrameController {
     const event = dispatch("turbo:frame-missing", {
       target: this.element,
       detail: { response, visit },
-      cancelable: true,
+      cancelable: true
     })
 
     return !event.defaultPrevented

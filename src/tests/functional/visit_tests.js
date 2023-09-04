@@ -1,4 +1,4 @@
-import { Page, test } from "@playwright/test"
+import { test } from "@playwright/test"
 import { assert } from "chai"
 import { get } from "http"
 import {
@@ -13,7 +13,7 @@ import {
   readEventLogs,
   scrollToSelector,
   visitAction,
-  willChangeBody,
+  willChangeBody
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -120,9 +120,9 @@ test("test turbo:before-fetch-response open new site", async ({ page }) => {
       "turbo:before-fetch-response",
       async function eventListener(event) {
         removeEventListener("turbo:before-fetch-response", eventListener, false)
-        ;window.fetchResponseResult = {
+        window.fetchResponseResult = {
           responseText: await event.detail.fetchResponse.responseText,
-          responseHTML: await event.detail.fetchResponse.responseHTML,
+          responseHTML: await event.detail.fetchResponse.responseHTML
         }
       },
       false

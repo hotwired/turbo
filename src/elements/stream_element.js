@@ -155,7 +155,7 @@ export class StreamElement extends HTMLElement {
     return new CustomEvent("turbo:before-stream-render", {
       bubbles: true,
       cancelable: true,
-      detail: { newStream: this, render: StreamElement.renderElement },
+      detail: { newStream: this, render: StreamElement.renderElement }
     })
   }
 

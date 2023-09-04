@@ -19,7 +19,7 @@ import {
   visitAction,
   waitUntilSelector,
   waitUntilNoSelector,
-  willChangeBody,
+  willChangeBody
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -379,7 +379,7 @@ test("test same-page anchor visits do not trigger visit events", async ({ page }
     "turbo:before-cache",
     "turbo:before-render",
     "turbo:render",
-    "turbo:load",
+    "turbo:load"
   ]
 
   for (const eventName in events) {
@@ -465,7 +465,7 @@ test("test ignores forms with a [target] attribute that targets an iframe with a
 })
 
 test("test ignores forms with a button[formtarget] attribute that targets an iframe with [name='']", async ({
-  page,
+  page
 }) => {
   await page.click("#form-target-empty-name-iframe button")
   await nextBeat()
@@ -475,7 +475,7 @@ test("test ignores forms with a button[formtarget] attribute that targets an ifr
 })
 
 test("test ignores forms with a button[formtarget] attribute that targets an iframe with a matching [name]", async ({
-  page,
+  page
 }) => {
   await page.click("#button-formtarget-iframe")
   await nextBeat()

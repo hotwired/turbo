@@ -44,7 +44,7 @@ export class LinkClickObserver {
 
   clickEventIsSignificant(event) {
     return !(
-      (event.target && (event.target).isContentEditable) ||
+      (event.target && event.target.isContentEditable) ||
       event.defaultPrevented ||
       event.which > 1 ||
       event.altKey ||

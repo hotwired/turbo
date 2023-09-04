@@ -28,13 +28,7 @@ export class FetchRequest {
   abortController = new AbortController()
   #resolveRequestPromise = (_value) => {}
 
-  constructor(
-    delegate,
-    method,
-    location,
-    body = new URLSearchParams(),
-    target = null
-  ) {
+  constructor(delegate, method, location, body = new URLSearchParams(), target = null) {
     this.delegate = delegate
     this.method = method
     this.headers = this.defaultHeaders
@@ -84,7 +78,7 @@ export class FetchRequest {
     const event = dispatch("turbo:before-fetch-response", {
       cancelable: true,
       detail: { fetchResponse },
-      target: this.target,
+      target: this.target
     })
     if (event.defaultPrevented) {
       this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
@@ -104,13 +98,13 @@ export class FetchRequest {
       redirect: "follow",
       body: this.isSafe ? null : this.body,
       signal: this.abortSignal,
-      referrer: this.delegate.referrer?.href,
+      referrer: this.delegate.referrer?.href
     }
   }
 
   get defaultHeaders() {
     return {
-      Accept: "text/html, application/xhtml+xml",
+      Accept: "text/html, application/xhtml+xml"
     }
   }
 
@@ -133,9 +127,9 @@ export class FetchRequest {
       detail: {
         fetchOptions,
         url: this.url,
-        resume: this.#resolveRequestPromise,
+        resume: this.#resolveRequestPromise
       },
-      target: this.target,
+      target: this.target
     })
     if (event.defaultPrevented) await requestInterception
   }
@@ -144,7 +138,7 @@ export class FetchRequest {
     const event = dispatch("turbo:fetch-request-error", {
       target: this.target,
       cancelable: true,
-      detail: { request: this, error: error },
+      detail: { request: this, error: error }
     })
 
     return !event.defaultPrevented

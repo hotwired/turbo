@@ -41,13 +41,13 @@ export class StreamObserver {
     return this.sources.has(source)
   }
 
-  inspectFetchResponse = ((event) => {
+  inspectFetchResponse = (event) => {
     const response = fetchResponseFromEvent(event)
     if (response && fetchResponseIsStream(response)) {
       event.preventDefault()
       this.receiveMessageResponse(response)
     }
-  })
+  }
 
   receiveMessageEvent = (event) => {
     if (this.#started && typeof event.data == "string") {

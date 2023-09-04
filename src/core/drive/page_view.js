@@ -5,7 +5,6 @@ import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 
-
 export class PageView extends View {
   snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)

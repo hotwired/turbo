@@ -1,23 +1,23 @@
 module.exports = {
   env: {
     browser: true,
-    es2021: true,
+    es2021: true
   },
   extends: ["eslint:recommended"],
   overrides: [
     {
       env: {
-        node: true,
+        node: true
       },
       files: [".eslintrc.{js,cjs}"],
       parserOptions: {
-        sourceType: "script",
-      },
-    },
+        sourceType: "script"
+      }
+    }
   ],
   parserOptions: {
     ecmaVersion: "latest",
-    sourceType: "module",
+    sourceType: "module"
   },
   rules: {
     "comma-dangle": "error",
@@ -37,6 +37,6 @@ module.exports = {
   },
   globals: {
     test: true,
-    setup: true,
-  },
+    setup: true
+  }
 }
