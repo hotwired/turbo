@@ -1,14 +1,7 @@
-export interface AppearanceObserverDelegate<T extends Element> {
-  elementAppearedInViewport(element: T): void
-}
-
-export class AppearanceObserver<T extends Element> {
-  readonly delegate: AppearanceObserverDelegate<T>
-  readonly element: T
-  readonly intersectionObserver: IntersectionObserver
+export class AppearanceObserver {
   started = false
 
-  constructor(delegate: AppearanceObserverDelegate<T>, element: T) {
+  constructor(delegate, element) {
     this.delegate = delegate
     this.element = element
     this.intersectionObserver = new IntersectionObserver(this.intersect)
@@ -28,7 +21,7 @@ export class AppearanceObserver<T extends Element> {
     }
   }
 
-  intersect: IntersectionObserverCallback = (entries) => {
+  intersect = (entries) => {
     const lastEntry = entries.slice(-1)[0]
     if (lastEntry?.isIntersecting) {
       this.delegate.elementAppearedInViewport(this.element)

@@ -1,16 +1,8 @@
-import { LinkClickObserver, LinkClickObserverDelegate } from "./link_click_observer"
+import { LinkClickObserver } from "./link_click_observer"
 import { getVisitAction } from "../util"
 
-export type FormLinkClickObserverDelegate = {
-  willSubmitFormLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
-  submittedFormLinkToLocation(link: Element, location: URL, form: HTMLFormElement): void
-}
-
-export class FormLinkClickObserver implements LinkClickObserverDelegate {
-  readonly linkInterceptor: LinkClickObserver
-  readonly delegate: FormLinkClickObserverDelegate
-
-  constructor(delegate: FormLinkClickObserverDelegate, element: HTMLElement) {
+export class FormLinkClickObserver {
+  constructor(delegate, element) {
     this.delegate = delegate
     this.linkInterceptor = new LinkClickObserver(this, element)
   }
@@ -23,14 +15,14 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
     this.linkInterceptor.stop()
   }
 
-  willFollowLinkToLocation(link: Element, location: URL, originalEvent: MouseEvent): boolean {
+  willFollowLinkToLocation(link, location, originalEvent) {
     return (
       this.delegate.willSubmitFormLinkToLocation(link, location, originalEvent) &&
       link.hasAttribute("data-turbo-method")
     )
   }
 
-  followedLinkToLocation(link: Element, location: URL): void {
+  followedLinkToLocation(link, location) {
     const form = document.createElement("form")
 
     const type = "hidden"

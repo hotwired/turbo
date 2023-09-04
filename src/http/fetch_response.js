@@ -1,9 +1,7 @@
 import { expandURL } from "../core/url"
 
 export class FetchResponse {
-  readonly response: Response
-
-  constructor(response: Response) {
+  constructor(response) {
     this.response = response
   }
 
@@ -27,7 +25,7 @@ export class FetchResponse {
     return this.response.redirected
   }
 
-  get location(): URL {
+  get location() {
     return expandURL(this.response.url)
   }
 
@@ -43,11 +41,11 @@ export class FetchResponse {
     return this.header("Content-Type")
   }
 
-  get responseText(): Promise<string> {
+  get responseText() {
     return this.response.clone().text()
   }
 
-  get responseHTML(): Promise<string | undefined> {
+  get responseHTML() {
     if (this.isHTML) {
       return this.response.clone().text()
     } else {
@@ -55,7 +53,7 @@ export class FetchResponse {
     }
   }
 
-  header(name: string) {
+  header(name) {
     return this.response.headers.get(name)
   }
 }

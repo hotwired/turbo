@@ -1,9 +1,5 @@
-import { StreamElement } from "../../elements/stream_element"
 
-export type TurboStreamAction = (this: StreamElement) => void
-export type TurboStreamActions = { [action: string]: TurboStreamAction }
-
-export const StreamActions: TurboStreamActions = {
+export const StreamActions = {
   after() {
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
   },

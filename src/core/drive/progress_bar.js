@@ -21,11 +21,7 @@ export class ProgressBar {
     `
   }
 
-  readonly stylesheetElement: HTMLStyleElement
-  readonly progressElement: HTMLDivElement
-
   hiding = false
-  trickleInterval?: number
   value = 0
   visible = false
 
@@ -56,7 +52,7 @@ export class ProgressBar {
     }
   }
 
-  setValue(value: number) {
+  setValue(value) {
     this.value = value
     this.refresh()
   }
@@ -74,7 +70,7 @@ export class ProgressBar {
     this.refresh()
   }
 
-  fadeProgressElement(callback: () => void) {
+  fadeProgressElement(callback) {
     this.progressElement.style.opacity = "0"
     setTimeout(callback, ProgressBar.animationDuration * 1.5)
   }

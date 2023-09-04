@@ -1,43 +1,17 @@
-import { ReloadReason } from "./native/browser_adapter"
-import { Renderer, Render } from "./renderer"
-import { Snapshot } from "./snapshot"
-import { Position } from "./types"
 import { getAnchor } from "./url"
 
-export interface ViewRenderOptions<E> {
-  resume: (value?: any) => void
-  render: Render<E>
-}
+export class View {
+  #resolveRenderPromise = (_value) => {}
+  #resolveInterceptionPromise = (_value) => {}
 
-export interface ViewDelegate<E extends Element, S extends Snapshot<E>> {
-  allowsImmediateRender(snapshot: S, isPreview: boolean, options: ViewRenderOptions<E>): boolean
-  preloadOnLoadLinksForView(element: Element): void
-  viewRenderedSnapshot(snapshot: S, isPreview: boolean): void
-  viewInvalidated(reason: ReloadReason): void
-}
-
-export abstract class View<
-  E extends Element,
-  S extends Snapshot<E> = Snapshot<E>,
-  R extends Renderer<E, S> = Renderer<E, S>,
-  D extends ViewDelegate<E, S> = ViewDelegate<E, S>
-> {
-  readonly delegate: D
-  readonly element: E
-  renderer?: R
-  abstract readonly snapshot: S
-  renderPromise?: Promise<void>
-  private resolveRenderPromise = (_value: any) => {}
-  private resolveInterceptionPromise = (_value: any) => {}
-
-  constructor(delegate: D, element: E) {
+  constructor(delegate, element) {
     this.delegate = delegate
     this.element = element
   }
 
   // Scrolling
 
-  scrollToAnchor(anchor: string | undefined) {
+  scrollToAnchor(anchor) {
     const element = this.snapshot.getElementForAnchor(anchor)
     if (element) {
       this.scrollToElement(element)
@@ -47,15 +21,15 @@ export abstract class View<
     }
   }
 
-  scrollToAnchorFromLocation(location: URL) {
+  scrollToAnchorFromLocation(location) {
     this.scrollToAnchor(getAnchor(location))
   }
 
-  scrollToElement(element: Element) {
+  scrollToElement(element) {
     element.scrollIntoView()
   }
 
-  focusElement(element: Element) {
+  focusElement(element) {
     if (element instanceof HTMLElement) {
       if (element.hasAttribute("tabindex")) {
         element.focus()
@@ -67,7 +41,7 @@ export abstract class View<
     }
   }
 
-  scrollToPosition({ x, y }: Position) {
+  scrollToPosition({ x, y }) {
     this.scrollRoot.scrollTo(x, y)
   }
 
@@ -75,22 +49,22 @@ export abstract class View<
     this.scrollToPosition({ x: 0, y: 0 })
   }
 
-  get scrollRoot(): { scrollTo(x: number, y: number): void } {
+  get scrollRoot() {
     return window
   }
 
   // Rendering
 
-  async render(renderer: R) {
+  async render(renderer) {
     const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
     if (shouldRender) {
       try {
-        this.renderPromise = new Promise((resolve) => (this.resolveRenderPromise = resolve))
+        this.renderPromise = new Promise((resolve) => (this.#resolveRenderPromise = resolve))
         this.renderer = renderer
         await this.prepareToRenderSnapshot(renderer)
 
-        const renderInterception = new Promise((resolve) => (this.resolveInterceptionPromise = resolve))
-        const options = { resume: this.resolveInterceptionPromise, render: this.renderer.renderElement }
+        const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
+        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement }
         const immediateRender = this.delegate.allowsImmediateRender(snapshot, isPreview, options)
         if (!immediateRender) await renderInterception
 
@@ -100,7 +74,7 @@ export abstract class View<
         this.finishRenderingSnapshot(renderer)
       } finally {
         delete this.renderer
-        this.resolveRenderPromise(undefined)
+        this.#resolveRenderPromise(undefined)
         delete this.renderPromise
       }
     } else {
@@ -108,16 +82,16 @@ export abstract class View<
     }
   }
 
-  invalidate(reason: ReloadReason) {
+  invalidate(reason) {
     this.delegate.viewInvalidated(reason)
   }
 
-  async prepareToRenderSnapshot(renderer: R) {
+  async prepareToRenderSnapshot(renderer) {
     this.markAsPreview(renderer.isPreview)
     await renderer.prepareToRender()
   }
 
-  markAsPreview(isPreview: boolean) {
+  markAsPreview(isPreview) {
     if (isPreview) {
       this.element.setAttribute("data-turbo-preview", "")
     } else {
@@ -125,11 +99,11 @@ export abstract class View<
     }
   }
 
-  async renderSnapshot(renderer: R) {
+  async renderSnapshot(renderer) {
     await renderer.render()
   }
 
-  finishRenderingSnapshot(renderer: R) {
+  finishRenderingSnapshot(renderer) {
     renderer.finishRendering()
   }
 }

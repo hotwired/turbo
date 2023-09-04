@@ -1,8 +1,6 @@
-import { TurboBeforeCacheEvent } from "../core/session"
-
 export class CacheObserver {
-  readonly selector: string = "[data-turbo-temporary]"
-  readonly deprecatedSelector: string = "[data-turbo-cache=false]"
+  selector = "[data-turbo-temporary]"
+  deprecatedSelector = "[data-turbo-cache=false]"
 
   started = false
 
@@ -20,7 +18,7 @@ export class CacheObserver {
     }
   }
 
-  removeTemporaryElements = <EventListener>((_event: TurboBeforeCacheEvent) => {
+  removeTemporaryElements = ((_event) => {
     for (const element of this.temporaryElements) {
       element.remove()
     }

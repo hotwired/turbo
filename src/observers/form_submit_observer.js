@@ -1,14 +1,7 @@
-export interface FormSubmitObserverDelegate {
-  willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean
-  formSubmitted(form: HTMLFormElement, submitter?: HTMLElement): void
-}
-
 export class FormSubmitObserver {
-  readonly delegate: FormSubmitObserverDelegate
-  readonly eventTarget: EventTarget
   started = false
 
-  constructor(delegate: FormSubmitObserverDelegate, eventTarget: EventTarget) {
+  constructor(delegate, eventTarget) {
     this.delegate = delegate
     this.eventTarget = eventTarget
   }
@@ -32,7 +25,7 @@ export class FormSubmitObserver {
     this.eventTarget.addEventListener("submit", this.submitBubbled, false)
   }
 
-  submitBubbled = <EventListener>((event: SubmitEvent) => {
+  submitBubbled = ((event) => {
     if (!event.defaultPrevented) {
       const form = event.target instanceof HTMLFormElement ? event.target : undefined
       const submitter = event.submitter || undefined
@@ -51,13 +44,13 @@ export class FormSubmitObserver {
   })
 }
 
-function submissionDoesNotDismissDialog(form: HTMLFormElement, submitter?: HTMLElement): boolean {
+function submissionDoesNotDismissDialog(form, submitter) {
   const method = submitter?.getAttribute("formmethod") || form.getAttribute("method")
 
   return method != "dialog"
 }
 
-function submissionDoesNotTargetIFrame(form: HTMLFormElement, submitter?: HTMLElement): boolean {
+function submissionDoesNotTargetIFrame(form, submitter) {
   if (submitter?.hasAttribute("formtarget") || form.hasAttribute("target")) {
     const target = submitter?.getAttribute("formtarget") || form.target
 

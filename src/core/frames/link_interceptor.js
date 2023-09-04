@@ -1,16 +1,6 @@
-import { TurboClickEvent, TurboBeforeVisitEvent } from "../session"
-
-export interface LinkInterceptorDelegate {
-  shouldInterceptLinkClick(element: Element, url: string, originalEvent: MouseEvent): boolean
-  linkClickIntercepted(element: Element, url: string, originalEvent: MouseEvent): void
-}
 
 export class LinkInterceptor {
-  readonly delegate: LinkInterceptorDelegate
-  readonly element: Element
-  private clickEvent?: Event
-
-  constructor(delegate: LinkInterceptorDelegate, element: Element) {
+  constructor(delegate, element) {
     this.delegate = delegate
     this.element = element
   }
@@ -27,7 +17,7 @@ export class LinkInterceptor {
     document.removeEventListener("turbo:before-visit", this.willVisit)
   }
 
-  clickBubbled = (event: Event) => {
+  clickBubbled = (event) => {
     if (this.respondsToEventTarget(event.target)) {
       this.clickEvent = event
     } else {
@@ -35,7 +25,7 @@ export class LinkInterceptor {
     }
   }
 
-  linkClicked = <EventListener>((event: TurboClickEvent) => {
+  linkClicked = ((event) => {
     if (this.clickEvent && this.respondsToEventTarget(event.target) && event.target instanceof Element) {
       if (this.delegate.shouldInterceptLinkClick(event.target, event.detail.url, event.detail.originalEvent)) {
         this.clickEvent.preventDefault()
@@ -46,11 +36,11 @@ export class LinkInterceptor {
     delete this.clickEvent
   })
 
-  willVisit = <EventListener>((_event: TurboBeforeVisitEvent) => {
+  willVisit = ((_event) => {
     delete this.clickEvent
   })
 
-  respondsToEventTarget(target: EventTarget | null) {
+  respondsToEventTarget(target) {
     const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
     return element && element.closest("turbo-frame, html") == this.element
   }

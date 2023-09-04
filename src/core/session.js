@@ -1,75 +1,44 @@
-import { Adapter } from "./native/adapter"
-import { BrowserAdapter, ReloadReason } from "./native/browser_adapter"
+import { BrowserAdapter } from "./native/browser_adapter"
 import { CacheObserver } from "../observers/cache_observer"
-import { FormSubmitObserver, FormSubmitObserverDelegate } from "../observers/form_submit_observer"
+import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
-import { History, HistoryDelegate } from "./drive/history"
-import { LinkClickObserver, LinkClickObserverDelegate } from "../observers/link_click_observer"
-import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../observers/form_link_click_observer"
-import { getAction, expandURL, locationIsVisitable, Locatable } from "./url"
-import { Navigator, NavigatorDelegate } from "./drive/navigator"
-import { PageObserver, PageObserverDelegate } from "../observers/page_observer"
+import { History } from "./drive/history"
+import { LinkClickObserver } from "../observers/link_click_observer"
+import { FormLinkClickObserver } from "../observers/form_link_click_observer"
+import { getAction, expandURL, locationIsVisitable } from "./url"
+import { Navigator } from "./drive/navigator"
+import { PageObserver } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { Action, Position, StreamSource } from "./types"
 import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy } from "../util"
-import { PageView, PageViewDelegate, PageViewRenderOptions } from "./drive/page_view"
-import { Visit, VisitOptions } from "./drive/visit"
-import { PageSnapshot } from "./drive/page_snapshot"
+import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
-import { FrameViewRenderOptions } from "./frames/frame_view"
-import { FetchResponse } from "../http/fetch_response"
-import { Preloader, PreloaderDelegate } from "./drive/preloader"
+import { Preloader } from "./drive/preloader"
 
-export type FormMode = "on" | "off" | "optin"
-export type TimingData = unknown
-export type TurboBeforeCacheEvent = CustomEvent
-export type TurboBeforeRenderEvent = CustomEvent<
-  { newBody: HTMLBodyElement; isPreview: boolean } & PageViewRenderOptions
->
-export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
-export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
-export type TurboFrameLoadEvent = CustomEvent
-export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & FrameViewRenderOptions>
-export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
-export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingData }>
-export type TurboRenderEvent = CustomEvent<{ isPreview: boolean }>
-export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
+export class Session {
+  navigator = new Navigator(this)
+  history = new History(this)
+  preloader = new Preloader(this)
+  view = new PageView(this, document.documentElement)
+  adapter = new BrowserAdapter(this)
 
-export class Session
-  implements
-    FormSubmitObserverDelegate,
-    HistoryDelegate,
-    FormLinkClickObserverDelegate,
-    LinkClickObserverDelegate,
-    NavigatorDelegate,
-    PageObserverDelegate,
-    PageViewDelegate,
-    PreloaderDelegate
-{
-  readonly navigator = new Navigator(this)
-  readonly history = new History(this)
-  readonly preloader = new Preloader(this)
-  readonly view = new PageView(this, document.documentElement as HTMLBodyElement)
-  adapter: Adapter = new BrowserAdapter(this)
-
-  readonly pageObserver = new PageObserver(this)
-  readonly cacheObserver = new CacheObserver()
-  readonly linkClickObserver = new LinkClickObserver(this, window)
-  readonly formSubmitObserver = new FormSubmitObserver(this, document)
-  readonly scrollObserver = new ScrollObserver(this)
-  readonly streamObserver = new StreamObserver(this)
-  readonly formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
-  readonly frameRedirector = new FrameRedirector(this, document.documentElement)
-  readonly streamMessageRenderer = new StreamMessageRenderer()
+  pageObserver = new PageObserver(this)
+  cacheObserver = new CacheObserver()
+  linkClickObserver = new LinkClickObserver(this, window)
+  formSubmitObserver = new FormSubmitObserver(this, document)
+  scrollObserver = new ScrollObserver(this)
+  streamObserver = new StreamObserver(this)
+  formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
+  frameRedirector = new FrameRedirector(this, document.documentElement)
+  streamMessageRenderer = new StreamMessageRenderer()
 
   drive = true
   enabled = true
   progressBarDelay = 500
   started = false
-  formMode: FormMode = "on"
+  formMode = "on"
 
   start() {
     if (!this.started) {
@@ -107,11 +76,11 @@ export class Session
     }
   }
 
-  registerAdapter(adapter: Adapter) {
+  registerAdapter(adapter) {
     this.adapter = adapter
   }
 
-  visit(location: Locatable, options: Partial<VisitOptions> = {}) {
+  visit(location, options = {}) {
     const frameElement = options.frame ? document.getElementById(options.frame) : null
 
     if (frameElement instanceof FrameElement) {
@@ -122,15 +91,15 @@ export class Session
     }
   }
 
-  connectStreamSource(source: StreamSource) {
+  connectStreamSource(source) {
     this.streamObserver.connectStreamSource(source)
   }
 
-  disconnectStreamSource(source: StreamSource) {
+  disconnectStreamSource(source) {
     this.streamObserver.disconnectStreamSource(source)
   }
 
-  renderStreamMessage(message: StreamMessage | string) {
+  renderStreamMessage(message) {
     this.streamMessageRenderer.render(StreamMessage.wrap(message))
   }
 
@@ -138,11 +107,11 @@ export class Session
     this.view.clearSnapshotCache()
   }
 
-  setProgressBarDelay(delay: number) {
+  setProgressBarDelay(delay) {
     this.progressBarDelay = delay
   }
 
-  setFormMode(mode: FormMode) {
+  setFormMode(mode) {
     this.formMode = mode
   }
 
@@ -156,7 +125,7 @@ export class Session
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string) {
+  historyPoppedToLocationWithRestorationIdentifier(location, restorationIdentifier) {
     if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, {
         action: "restore",
@@ -171,13 +140,13 @@ export class Session
 
   // Scroll observer delegate
 
-  scrollPositionChanged(position: Position) {
+  scrollPositionChanged(position) {
     this.history.updateRestorationData({ scrollPosition: position })
   }
 
   // Form click observer delegate
 
-  willSubmitFormLinkToLocation(link: Element, location: URL): boolean {
+  willSubmitFormLinkToLocation(link, location) {
     return this.elementIsNavigatable(link) && locationIsVisitable(location, this.snapshot.rootLocation)
   }
 
@@ -185,7 +154,7 @@ export class Session
 
   // Link click observer delegate
 
-  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent) {
+  willFollowLinkToLocation(link, location, event) {
     return (
       this.elementIsNavigatable(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
@@ -193,7 +162,7 @@ export class Session
     )
   }
 
-  followedLinkToLocation(link: Element, location: URL) {
+  followedLinkToLocation(link, location) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
 
@@ -202,16 +171,16 @@ export class Session
 
   // Navigator delegate
 
-  allowsVisitingLocationWithAction(location: URL, action?: Action) {
+  allowsVisitingLocationWithAction(location, action) {
     return this.locationWithActionIsSamePage(location, action) || this.applicationAllowsVisitingLocation(location)
   }
 
-  visitProposedToLocation(location: URL, options: Partial<VisitOptions>) {
+  visitProposedToLocation(location, options) {
     extendURLWithDeprecatedProperties(location)
     this.adapter.visitProposedToLocation(location, options)
   }
 
-  visitStarted(visit: Visit) {
+  visitStarted(visit) {
     if (!visit.acceptsStreamResponse) {
       markAsBusy(document.documentElement)
     }
@@ -221,22 +190,22 @@ export class Session
     }
   }
 
-  visitCompleted(visit: Visit) {
+  visitCompleted(visit) {
     clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
 
-  locationWithActionIsSamePage(location: URL, action?: Action): boolean {
+  locationWithActionIsSamePage(location, action) {
     return this.navigator.locationWithActionIsSamePage(location, action)
   }
 
-  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL) {
+  visitScrolledToSamePageLocation(oldURL, newURL) {
     this.notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL)
   }
 
   // Form submit observer delegate
 
-  willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
+  willSubmitForm(form, submitter) {
     const action = getAction(form, submitter)
 
     return (
@@ -245,7 +214,7 @@ export class Session
     )
   }
 
-  formSubmitted(form: HTMLFormElement, submitter?: HTMLElement) {
+  formSubmitted(form, submitter) {
     this.navigator.submitForm(form, submitter)
   }
 
@@ -266,7 +235,7 @@ export class Session
 
   // Stream observer delegate
 
-  receivedMessageFromStream(message: StreamMessage) {
+  receivedMessageFromStream(message) {
     this.renderStreamMessage(message)
   }
 
@@ -278,7 +247,7 @@ export class Session
     }
   }
 
-  allowsImmediateRender({ element }: PageSnapshot, isPreview: boolean, options: PageViewRenderOptions) {
+  allowsImmediateRender({ element }, isPreview, options) {
     const event = this.notifyApplicationBeforeRender(element, isPreview, options)
     const {
       defaultPrevented,
@@ -292,82 +261,82 @@ export class Session
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot: PageSnapshot, isPreview: boolean) {
+  viewRenderedSnapshot(_snapshot, isPreview) {
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender(isPreview)
   }
 
-  preloadOnLoadLinksForView(element: Element) {
+  preloadOnLoadLinksForView(element) {
     this.preloader.preloadOnLoadLinksForView(element)
   }
 
-  viewInvalidated(reason: ReloadReason) {
+  viewInvalidated(reason) {
     this.adapter.pageInvalidated(reason)
   }
 
   // Frame element
 
-  frameLoaded(frame: FrameElement) {
+  frameLoaded(frame) {
     this.notifyApplicationAfterFrameLoad(frame)
   }
 
-  frameRendered(fetchResponse: FetchResponse, frame: FrameElement) {
+  frameRendered(fetchResponse, frame) {
     this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
   // Application events
 
-  applicationAllowsFollowingLinkToLocation(link: Element, location: URL, ev: MouseEvent) {
+  applicationAllowsFollowingLinkToLocation(link, location, ev) {
     const event = this.notifyApplicationAfterClickingLinkToLocation(link, location, ev)
     return !event.defaultPrevented
   }
 
-  applicationAllowsVisitingLocation(location: URL) {
+  applicationAllowsVisitingLocation(location) {
     const event = this.notifyApplicationBeforeVisitingLocation(location)
     return !event.defaultPrevented
   }
 
-  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL, event: MouseEvent) {
-    return dispatch<TurboClickEvent>("turbo:click", {
+  notifyApplicationAfterClickingLinkToLocation(link, location, event) {
+    return dispatch("turbo:click", {
       target: link,
       detail: { url: location.href, originalEvent: event },
       cancelable: true,
     })
   }
 
-  notifyApplicationBeforeVisitingLocation(location: URL) {
-    return dispatch<TurboBeforeVisitEvent>("turbo:before-visit", {
+  notifyApplicationBeforeVisitingLocation(location) {
+    return dispatch("turbo:before-visit", {
       detail: { url: location.href },
       cancelable: true,
     })
   }
 
-  notifyApplicationAfterVisitingLocation(location: URL, action: Action) {
-    return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
+  notifyApplicationAfterVisitingLocation(location, action) {
+    return dispatch("turbo:visit", { detail: { url: location.href, action } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
-    return dispatch<TurboBeforeCacheEvent>("turbo:before-cache")
+    return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody: HTMLBodyElement, isPreview: boolean, options: PageViewRenderOptions) {
-    return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
+  notifyApplicationBeforeRender(newBody, isPreview, options) {
+    return dispatch("turbo:before-render", {
       detail: { newBody, isPreview, ...options },
       cancelable: true,
     })
   }
 
-  notifyApplicationAfterRender(isPreview: boolean) {
-    return dispatch<TurboRenderEvent>("turbo:render", { detail: { isPreview } })
+  notifyApplicationAfterRender(isPreview) {
+    return dispatch("turbo:render", { detail: { isPreview } })
   }
 
-  notifyApplicationAfterPageLoad(timing: TimingData = {}) {
-    return dispatch<TurboLoadEvent>("turbo:load", {
+  notifyApplicationAfterPageLoad(timing = {}) {
+    return dispatch("turbo:load", {
       detail: { url: this.location.href, timing },
     })
   }
 
-  notifyApplicationAfterVisitingSamePageLocation(oldURL: URL, newURL: URL) {
+  notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL) {
     dispatchEvent(
       new HashChangeEvent("hashchange", {
         oldURL: oldURL.toString(),
@@ -376,12 +345,12 @@ export class Session
     )
   }
 
-  notifyApplicationAfterFrameLoad(frame: FrameElement) {
-    return dispatch<TurboFrameLoadEvent>("turbo:frame-load", { target: frame })
+  notifyApplicationAfterFrameLoad(frame) {
+    return dispatch("turbo:frame-load", { target: frame })
   }
 
-  notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement) {
-    return dispatch<TurboFrameRenderEvent>("turbo:frame-render", {
+  notifyApplicationAfterFrameRender(fetchResponse, frame) {
+    return dispatch("turbo:frame-render", {
       detail: { fetchResponse },
       target: frame,
       cancelable: true,
@@ -390,7 +359,7 @@ export class Session
 
   // Helpers
 
-  submissionIsNavigatable(form: HTMLFormElement, submitter?: HTMLElement): boolean {
+  submissionIsNavigatable(form, submitter) {
     if (this.formMode == "off") {
       return false
     } else {
@@ -404,7 +373,7 @@ export class Session
     }
   }
 
-  elementIsNavigatable(element: Element): boolean {
+  elementIsNavigatable(element) {
     const container = findClosestRecursively(element, "[data-turbo]")
     const withinFrame = findClosestRecursively(element, "turbo-frame")
 
@@ -428,7 +397,7 @@ export class Session
 
   // Private
 
-  getActionForLink(link: Element): Action {
+  getActionForLink(link) {
     return getVisitAction(link) || "advance"
   }
 
@@ -448,7 +417,7 @@ export class Session
 // older adapters which do not expect URL objects. We should
 // consider removing this support at some point in the future.
 
-function extendURLWithDeprecatedProperties(url: URL) {
+function extendURLWithDeprecatedProperties(url) {
   Object.defineProperties(url, deprecatedLocationPropertyDescriptors)
 }
 

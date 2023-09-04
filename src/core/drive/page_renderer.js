@@ -1,10 +1,8 @@
 import { Renderer } from "../renderer"
-import { PageSnapshot } from "./page_snapshot"
-import { ReloadReason } from "../native/browser_adapter"
 import { activateScriptElement, waitForLoad } from "../../util"
 
-export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
-  static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
+export class PageRenderer extends Renderer {
+  static renderElement(currentElement, newElement) {
     if (document.body && newElement instanceof HTMLBodyElement) {
       document.body.replaceWith(newElement)
     } else {
@@ -16,7 +14,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
 
-  get reloadReason(): ReloadReason {
+  get reloadReason() {
     if (!this.newSnapshot.isVisitable) {
       return {
         reason: "turbo_visit_control_is_reload",
@@ -82,7 +80,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     const loadingElements = []
 
     for (const element of this.newHeadStylesheetElements) {
-      loadingElements.push(waitForLoad(element as HTMLLinkElement))
+      loadingElements.push(waitForLoad(element))
 
       document.head.appendChild(element)
     }
@@ -110,7 +108,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  isCurrentElementInElementList(element: Element, elementList: Element[]) {
+  isCurrentElementInElementList(element, elementList) {
     for (const [index, newElement] of elementList.entries()) {
       // if title element...
       if (element.tagName == "TITLE") {

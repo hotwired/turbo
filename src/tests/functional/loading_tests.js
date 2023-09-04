@@ -12,12 +12,6 @@ import {
   readEventLogs,
 } from "../helpers/page"
 
-declare global {
-  interface Window {
-    savedElement: Element | null
-  }
-}
-
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/loading.html")
   await readEventLogs(page)
@@ -111,7 +105,7 @@ test("test reloading a frame reloads the content", async ({ page }) => {
   assert.ok(await hasSelector(page, frameContent))
   assert.equal(await nextAttributeMutationNamed(page, "frame", "complete"), "", "has [complete] attribute")
 
-  await page.evaluate(() => (document.querySelector("#loading-eager turbo-frame") as any)?.reload())
+  await page.evaluate(() => (document.querySelector("#loading-eager turbo-frame"))?.reload())
   assert.ok(await hasSelector(page, frameContent))
   assert.equal(await nextAttributeMutationNamed(page, "frame", "complete"), null, "clears [complete] attribute")
 })

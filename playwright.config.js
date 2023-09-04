@@ -1,6 +1,6 @@
-import { type PlaywrightTestConfig, devices } from "@playwright/test"
+import { devices } from "@playwright/test"
 
-const config: PlaywrightTestConfig = {
+const config = {
   projects: [
     {
       name: "chrome",
@@ -13,7 +13,7 @@ const config: PlaywrightTestConfig = {
   ],
   retries: 2,
   testDir: "./src/tests/",
-  testMatch: /(functional|integration)\/.*_tests\.ts/,
+  testMatch: /(functional|integration)\/.*_tests\.js/,
   webServer: {
     command: "yarn start",
     url: "http://localhost:9000/src/tests/fixtures/test.js",

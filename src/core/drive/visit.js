@@ -1,61 +1,11 @@
-import { Adapter } from "../native/adapter"
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
-import { FetchResponse } from "../../http/fetch_response"
-import { History } from "./history"
+import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { getAnchor } from "../url"
-import { Snapshot } from "../snapshot"
 import { PageSnapshot } from "./page_snapshot"
-import { Action } from "../types"
 import { getHistoryMethodForAction, uuid } from "../../util"
-import { PageView } from "./page_view"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
 
-export interface VisitDelegate {
-  readonly adapter: Adapter
-  readonly history: History
-  readonly view: PageView
-
-  visitStarted(visit: Visit): void
-  visitCompleted(visit: Visit): void
-  locationWithActionIsSamePage(location: URL, action: Action): boolean
-  visitScrolledToSamePageLocation(oldURL: URL, newURL: URL): void
-}
-
-export enum TimingMetric {
-  visitStart = "visitStart",
-  requestStart = "requestStart",
-  requestEnd = "requestEnd",
-  visitEnd = "visitEnd",
-}
-
-export type TimingMetrics = Partial<{ [metric in TimingMetric]: any }>
-
-export enum VisitState {
-  initialized = "initialized",
-  started = "started",
-  canceled = "canceled",
-  failed = "failed",
-  completed = "completed",
-}
-
-export type VisitOptions = {
-  action: Action
-  historyChanged: boolean
-  referrer?: URL
-  snapshot?: PageSnapshot
-  snapshotHTML?: string
-  response?: VisitResponse
-  visitCachedSnapshot(snapshot: Snapshot): void
-  willRender: boolean
-  updateHistory: boolean
-  restorationIdentifier?: string
-  shouldCacheSnapshot: boolean
-  frame?: string
-  acceptsStreamResponse: boolean
-}
-
-const defaultOptions: VisitOptions = {
+const defaultOptions = {
   action: "advance",
   historyChanged: false,
   visitCachedSnapshot: () => {},
@@ -65,51 +15,45 @@ const defaultOptions: VisitOptions = {
   acceptsStreamResponse: false,
 }
 
-export type VisitResponse = {
-  statusCode: number
-  redirected: boolean
-  responseHTML?: string
+export const TimingMetric = {
+  visitStart: "visitStart",
+  requestStart: "requestStart",
+  requestEnd: "requestEnd",
+  visitEnd: "visitEnd",
 }
 
-export enum SystemStatusCode {
-  networkFailure = 0,
-  timeoutFailure = -1,
-  contentTypeMismatch = -2,
+export const VisitState = {
+  initialized: "initialized",
+  started: "started",
+  canceled: "canceled",
+  failed: "failed",
+  completed: "completed",
 }
 
-export class Visit implements FetchRequestDelegate {
-  readonly delegate: VisitDelegate
-  readonly identifier = uuid() // Required by turbo-ios
-  readonly restorationIdentifier: string
-  readonly action: Action
-  readonly referrer?: URL
-  readonly timingMetrics: TimingMetrics = {}
-  readonly visitCachedSnapshot: (snapshot: Snapshot) => void
-  readonly willRender: boolean
-  readonly updateHistory: boolean
+export const SystemStatusCode = {
+  networkFailure: 0,
+  timeoutFailure: -1,
+  contentTypeMismatch: -2
+}
+
+export class Visit {
+  identifier = uuid() // Required by turbo-ios
+  timingMetrics = {}
 
   followedRedirect = false
-  frame?: number
   historyChanged = false
-  location: URL
-  isSamePage: boolean
-  redirectedToLocation?: URL
-  request?: FetchRequest
-  response?: VisitResponse
   scrolled = false
   shouldCacheSnapshot = true
   acceptsStreamResponse = false
-  snapshotHTML?: string
   snapshotCached = false
   state = VisitState.initialized
-  snapshot?: PageSnapshot
   viewTransitioner = new ViewTransitioner()
 
   constructor(
-    delegate: VisitDelegate,
-    location: URL,
-    restorationIdentifier: string | undefined,
-    options: Partial<VisitOptions> = {}
+    delegate,
+    location,
+    restorationIdentifier,
+    options = {}
   ) {
     this.delegate = delegate
     this.location = location
@@ -343,7 +287,7 @@ export class Visit implements FetchRequestDelegate {
 
   // Fetch request delegate
 
-  prepareRequest(request: FetchRequest) {
+  prepareRequest(request) {
     if (this.acceptsStreamResponse) {
       request.acceptResponseType(StreamMessage.contentType)
     }
@@ -353,9 +297,9 @@ export class Visit implements FetchRequestDelegate {
     this.startRequest()
   }
 
-  requestPreventedHandlingResponse(_request: FetchRequest, _response: FetchResponse) {}
+  requestPreventedHandlingResponse(_request, _response) {}
 
-  async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
+  async requestSucceededWithResponse(request, response) {
     const responseHTML = await response.responseHTML
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
@@ -369,7 +313,7 @@ export class Visit implements FetchRequestDelegate {
     }
   }
 
-  async requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
+  async requestFailedWithResponse(request, response) {
     const responseHTML = await response.responseHTML
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
@@ -382,7 +326,7 @@ export class Visit implements FetchRequestDelegate {
     }
   }
 
-  requestErrored(_request: FetchRequest, _error: Error) {
+  requestErrored(_request, _error) {
     this.recordResponse({
       statusCode: SystemStatusCode.networkFailure,
       redirected: false,
@@ -428,17 +372,17 @@ export class Visit implements FetchRequestDelegate {
 
   // Instrumentation
 
-  recordTimingMetric(metric: TimingMetric) {
+  recordTimingMetric(metric) {
     this.timingMetrics[metric] = new Date().getTime()
   }
 
-  getTimingMetrics(): TimingMetrics {
+  getTimingMetrics() {
     return { ...this.timingMetrics }
   }
 
   // Private
 
-  getHistoryMethodForAction(action: Action) {
+  getHistoryMethodForAction(action) {
     switch (action) {
       case "replace":
         return history.replaceState
@@ -469,16 +413,16 @@ export class Visit implements FetchRequestDelegate {
     }
   }
 
-  async render(callback: () => Promise<void>) {
+  async render(callback) {
     this.cancelRender()
-    await new Promise<void>((resolve) => {
+    await new Promise((resolve) => {
       this.frame = requestAnimationFrame(() => resolve())
     })
     await callback()
     delete this.frame
   }
 
-  async renderPageSnapshot(snapshot: PageSnapshot, isPreview: boolean) {
+  async renderPageSnapshot(snapshot, isPreview) {
     await this.viewTransitioner.renderChange(this.view.shouldTransitionTo(snapshot), async () => {
       await this.view.renderPage(snapshot, isPreview, this.willRender, this)
       this.performScroll()
@@ -493,6 +437,6 @@ export class Visit implements FetchRequestDelegate {
   }
 }
 
-function isSuccessful(statusCode: number) {
+function isSuccessful(statusCode) {
   return statusCode >= 200 && statusCode < 300
 }

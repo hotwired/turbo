@@ -1,10 +1,7 @@
-import { Session } from "./session"
 import { setMetaContent } from "../util"
 
 export class Cache {
-  readonly session: Session
-
-  constructor(session: Session) {
+  constructor(session) {
     this.session = session
   }
 
@@ -13,18 +10,18 @@ export class Cache {
   }
 
   resetCacheControl() {
-    this.setCacheControl("")
+    this.#setCacheControl("")
   }
 
   exemptPageFromCache() {
-    this.setCacheControl("no-cache")
+    this.#setCacheControl("no-cache")
   }
 
   exemptPageFromPreview() {
-    this.setCacheControl("no-preview")
+    this.#setCacheControl("no-preview")
   }
 
-  private setCacheControl(value: string) {
+  #setCacheControl(value) {
     setMetaContent("turbo-cache-control", value)
   }
 }

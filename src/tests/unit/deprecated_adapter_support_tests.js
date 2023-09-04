@@ -1,43 +1,40 @@
-import { VisitOptions, Visit } from "../../core/drive/visit"
-import { FormSubmission } from "../../core/drive/form_submission"
-import { Adapter } from "../../core/native/adapter"
 import * as Turbo from "../../index"
 import { assert } from "@open-wc/testing"
 
-class DeprecatedAdapterSupportTest implements Adapter {
-  locations: any[] = []
+class DeprecatedAdapterSupportTest {
+  locations = []
   // Adapter interface
-  visitProposedToLocation(location: URL, _options?: Partial<VisitOptions>): void {
+  visitProposedToLocation(location, _options) {
     this.locations.push(location)
   }
 
-  visitStarted(visit: Visit): void {
+  visitStarted(visit) {
     this.locations.push(visit.location)
     visit.cancel()
   }
 
-  visitCompleted(_visit: Visit): void {}
+  visitCompleted(_visit) {}
 
-  visitFailed(_visit: Visit): void {}
+  visitFailed(_visit) {}
 
-  visitRequestStarted(_visit: Visit): void {}
+  visitRequestStarted(_visit) {}
 
-  visitRequestCompleted(_visit: Visit): void {}
+  visitRequestCompleted(_visit) {}
 
-  visitRequestFailedWithStatusCode(_visit: Visit, _statusCode: number): void {}
+  visitRequestFailedWithStatusCode(_visit, _statusCode) {}
 
-  visitRequestFinished(_visit: Visit): void {}
+  visitRequestFinished(_visit) {}
 
-  visitRendered(_visit: Visit): void {}
+  visitRendered(_visit) {}
 
-  formSubmissionStarted(_formSubmission: FormSubmission): void {}
+  formSubmissionStarted(_formSubmission) {}
 
-  formSubmissionFinished(_formSubmission: FormSubmission): void {}
+  formSubmissionFinished(_formSubmission) {}
 
-  pageInvalidated(): void {}
+  pageInvalidated() {}
 }
 
-let adapter: DeprecatedAdapterSupportTest
+let adapter
 
 setup(() => {
   adapter = new DeprecatedAdapterSupportTest()

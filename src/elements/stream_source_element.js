@@ -1,8 +1,7 @@
-import { StreamSource } from "../core/types"
 import { connectStreamSource, disconnectStreamSource } from "../core/index"
 
 export class StreamSourceElement extends HTMLElement {
-  streamSource: StreamSource | null = null
+  streamSource = null
 
   connectedCallback() {
     this.streamSource = this.src.match(/^ws{1,2}:/) ? new WebSocket(this.src) : new EventSource(this.src)
@@ -16,7 +15,7 @@ export class StreamSourceElement extends HTMLElement {
     }
   }
 
-  get src(): string {
+  get src() {
     return this.getAttribute("src") || ""
   }
 }

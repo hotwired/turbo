@@ -1,16 +1,8 @@
-import { FrameElement } from "../../elements/frame_element"
 import { activateScriptElement, nextAnimationFrame } from "../../util"
-import { Render, Renderer } from "../renderer"
-import { Snapshot } from "../snapshot"
+import { Renderer } from "../renderer"
 
-export interface FrameRendererDelegate {
-  willRenderFrame(currentElement: FrameElement, newElement: FrameElement): void
-}
-
-export class FrameRenderer extends Renderer<FrameElement> {
-  private readonly delegate: FrameRendererDelegate
-
-  static renderElement(currentElement: FrameElement, newElement: FrameElement) {
+export class FrameRenderer extends Renderer {
+  static renderElement(currentElement, newElement) {
     const destinationRange = document.createRange()
     destinationRange.selectNodeContents(currentElement)
     destinationRange.deleteContents()
@@ -24,11 +16,11 @@ export class FrameRenderer extends Renderer<FrameElement> {
   }
 
   constructor(
-    delegate: FrameRendererDelegate,
-    currentSnapshot: Snapshot<FrameElement>,
-    newSnapshot: Snapshot<FrameElement>,
-    renderElement: Render<FrameElement>,
-    isPreview: boolean,
+    delegate,
+    currentSnapshot,
+    newSnapshot,
+    renderElement,
+    isPreview,
     willRender = true
   ) {
     super(currentSnapshot, newSnapshot, renderElement, isPreview, willRender)
@@ -82,7 +74,7 @@ export class FrameRenderer extends Renderer<FrameElement> {
   }
 }
 
-function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLogicalPosition): ScrollLogicalPosition {
+function readScrollLogicalPosition(value, defaultValue) {
   if (value == "end" || value == "start" || value == "center" || value == "nearest") {
     return value
   } else {
@@ -90,7 +82,7 @@ function readScrollLogicalPosition(value: string | null, defaultValue: ScrollLog
   }
 }
 
-function readScrollBehavior(value: string | null, defaultValue: ScrollBehavior): ScrollBehavior {
+function readScrollBehavior(value, defaultValue) {
   if (value == "auto" || value == "smooth") {
     return value
   } else {

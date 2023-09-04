@@ -1,4 +1,4 @@
-import { Page, test, expect } from "@playwright/test"
+import { test, expect } from "@playwright/test"
 import { assert, Assertion } from "chai"
 import {
   attributeForSelector,
@@ -19,15 +19,7 @@ import {
   searchParams,
 } from "../helpers/page"
 
-declare global {
-  namespace Chai {
-    interface AssertStatic {
-      equalIgnoringWhitespace(actual: string | null | undefined, expected: string, message?: string): void
-    }
-  }
-}
-
-assert.equalIgnoringWhitespace = function (actual: string | null | undefined, expected: string, message?: string) {
+assert.equalIgnoringWhitespace = function (actual, expected, message) {
   new Assertion(actual?.trim()).to.equal(expected.trim(), message)
 }
 
@@ -153,7 +145,7 @@ test("successfully following a link to a page without a matching frame dispatche
 test("successfully following a link to a page without a matching frame shows an error and throws an exception", async ({
   page,
 }) => {
-  let error: Error | undefined = undefined
+  let error = undefined
   page.once("pageerror", (e) => (error = e))
 
   await page.click("#missing-frame-link")
@@ -161,7 +153,7 @@ test("successfully following a link to a page without a matching frame shows an 
   assert.match(await page.innerText("#missing"), /Content missing/)
 
   assert.exists(error)
-  assert.include(error!.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
+  assert.include(error.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
 })
 
 test("successfully following a link to a page with `turbo-visit-control` `reload` performs a full page reload", async ({
@@ -185,7 +177,7 @@ test("failing to follow a link to a page without a matching frame dispatches a t
 test("failing to follow a link to a page without a matching frame shows an error and throws an exception", async ({
   page,
 }) => {
-  let error: Error | undefined = undefined
+  let error = undefined
   page.once("pageerror", (e) => (error = e))
 
   await page.click("#missing-page-link")
@@ -193,7 +185,7 @@ test("failing to follow a link to a page without a matching frame shows an error
   assert.match(await page.innerText("#missing"), /Content missing/)
 
   assert.exists(error)
-  assert.include(error!.message, `The response (404) did not contain the expected <turbo-frame id="missing">`)
+  assert.include(error.message, `The response (404) did not contain the expected <turbo-frame id="missing">`)
 })
 
 test("test the turbo:frame-missing event following a link to a page without a matching frame can be handled", async ({
@@ -207,7 +199,7 @@ test("test the turbo:frame-missing event following a link to a page without a ma
           event.preventDefault()
           event.target.textContent = "Overridden"
         }
-      }) as EventListener,
+      }),
       { once: true }
     )
   })
@@ -223,12 +215,12 @@ test("test the turbo:frame-missing event following a link to a page without a ma
   await page.locator("#missing").evaluate((frame) => {
     frame.addEventListener(
       "turbo:frame-missing",
-      ((event: CustomEvent) => {
+      ((event) => {
         event.preventDefault()
         const { response, visit } = event.detail
 
         visit(response)
-      }) as EventListener,
+      }),
       { once: true }
     )
   })
@@ -513,7 +505,7 @@ test("test navigating a frame targeting _top from an outer link fires events", a
 test("test invoking .reload() re-fetches the frame's content", async ({ page }) => {
   await page.click("#link-frame")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
-  await page.evaluate(() => (document.getElementById("frame") as any).reload())
+  await page.evaluate(() => (document.getElementById("frame")).reload())
 
   const dispatchedEvents = await readEventLogs(page)
 
@@ -879,7 +871,7 @@ test("test navigating a eager frame with a link[method=get] that does not fetch 
 
 test("form submissions from frames clear snapshot cache", async ({ page }) => {
   await page.evaluate(() => {
-    document.querySelector("h1")!.textContent = "Changed"
+    document.querySelector("h1").textContent = "Changed"
   })
 
   await expect(page.locator("h1")).toHaveText("Changed")
@@ -893,11 +885,11 @@ test("form submissions from frames clear snapshot cache", async ({ page }) => {
   await expect(page.locator("h1")).not.toHaveText("Changed")
 })
 
-async function withoutChangingEventListenersCount(page: Page, callback: () => Promise<void>) {
+async function withoutChangingEventListenersCount(page, callback) {
   const name = "eventListenersAttachedToDocument"
   const setup = () => {
     return page.evaluate((name) => {
-      const context = window as any
+      const context = window
       context[name] = 0
       context.originals = {
         addEventListener: document.addEventListener,
@@ -905,18 +897,18 @@ async function withoutChangingEventListenersCount(page: Page, callback: () => Pr
       }
 
       document.addEventListener = (
-        type: string,
-        listener: EventListenerOrEventListenerObject,
-        options?: boolean | AddEventListenerOptions
+        type,
+        listener,
+        options
       ) => {
         context.originals.addEventListener.call(document, type, listener, options)
         context[name] += 1
       }
 
       document.removeEventListener = (
-        type: string,
-        listener: EventListenerOrEventListenerObject,
-        options?: boolean | AddEventListenerOptions
+        type,
+        listener,
+        options
       ) => {
         context.originals.removeEventListener.call(document, type, listener, options)
         context[name] -= 1
@@ -928,7 +920,7 @@ async function withoutChangingEventListenersCount(page: Page, callback: () => Pr
 
   const teardown = () => {
     return page.evaluate((name) => {
-      const context = window as any
+      const context = window
       const { addEventListener, removeEventListener } = context.originals
 
       document.addEventListener = addEventListener
@@ -945,12 +937,6 @@ async function withoutChangingEventListenersCount(page: Page, callback: () => Pr
   assert.equal(finalCount, originalCount, "expected callback not to leak event listeners")
 }
 
-function frameScriptEvaluationCount(page: Page): Promise<number | undefined> {
+function frameScriptEvaluationCount(page) {
   return page.evaluate(() => window.frameScriptEvaluationCount)
-}
-
-declare global {
-  interface Window {
-    frameScriptEvaluationCount?: number
-  }
 }

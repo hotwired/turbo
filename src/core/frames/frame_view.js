@@ -1,10 +1,7 @@
-import { FrameElement } from "../../elements"
 import { Snapshot } from "../snapshot"
-import { View, ViewRenderOptions } from "../view"
+import { View } from "../view"
 
-export type FrameViewRenderOptions = ViewRenderOptions<FrameElement>
-
-export class FrameView extends View<FrameElement> {
+export class FrameView extends View {
   missing() {
     this.element.innerHTML = `<strong class="turbo-frame-error">Content missing</strong>`
   }

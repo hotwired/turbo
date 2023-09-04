@@ -9,7 +9,7 @@ export default {
     playwrightLauncher({ product: 'webkit' }),
   ],
   nodeResolve: true,
-  files: "./src/tests/unit/**/*_tests.ts",
+  files: "./src/tests/unit/**/*_tests.js",
   testFramework: {
     config: {
       ui: "tdd"

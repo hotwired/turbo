@@ -1,6 +1,6 @@
 import { unindent } from "./util"
 ;(() => {
-  let element: Element | null = document.currentScript
+  let element = document.currentScript
   if (!element) return
   if (element.hasAttribute("data-turbo-suppress-warning")) return
 

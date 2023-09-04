@@ -1,28 +1,13 @@
-import { Position } from "../types"
 import { nextMicrotask, uuid } from "../../util"
 
-export interface HistoryDelegate {
-  historyPoppedToLocationWithRestorationIdentifier(location: URL, restorationIdentifier: string): void
-}
-
-type HistoryMethod = (this: typeof history, state: any, title: string, url?: string | null | undefined) => void
-
-export type RestorationData = { scrollPosition?: Position }
-
-export type RestorationDataMap = {
-  [restorationIdentifier: string]: RestorationData
-}
-
 export class History {
-  readonly delegate: HistoryDelegate
-  location!: URL
+  location
   restorationIdentifier = uuid()
-  restorationData: RestorationDataMap = {}
+  restorationData = {}
   started = false
   pageLoaded = false
-  previousScrollRestoration?: ScrollRestoration
 
-  constructor(delegate: HistoryDelegate) {
+  constructor(delegate) {
     this.delegate = delegate
   }
 
@@ -43,15 +28,15 @@ export class History {
     }
   }
 
-  push(location: URL, restorationIdentifier?: string) {
+  push(location, restorationIdentifier) {
     this.update(history.pushState, location, restorationIdentifier)
   }
 
-  replace(location: URL, restorationIdentifier?: string) {
+  replace(location, restorationIdentifier) {
     this.update(history.replaceState, location, restorationIdentifier)
   }
 
-  update(method: HistoryMethod, location: URL, restorationIdentifier = uuid()) {
+  update(method, location, restorationIdentifier = uuid()) {
     const state = { turbo: { restorationIdentifier } }
     method.call(history, state, "", location.href)
     this.location = location
@@ -60,11 +45,11 @@ export class History {
 
   // Restoration data
 
-  getRestorationDataForIdentifier(restorationIdentifier: string): RestorationData {
+  getRestorationDataForIdentifier(restorationIdentifier) {
     return this.restorationData[restorationIdentifier] || {}
   }
 
-  updateRestorationData(additionalData: Partial<RestorationData>) {
+  updateRestorationData(additionalData) {
     const { restorationIdentifier } = this
     const restorationData = this.restorationData[restorationIdentifier]
     this.restorationData[restorationIdentifier] = {
@@ -91,7 +76,7 @@ export class History {
 
   // Event handlers
 
-  onPopState = (event: PopStateEvent) => {
+  onPopState = (event) => {
     if (this.shouldHandlePopState()) {
       const { turbo } = event.state || {}
       if (turbo) {
@@ -103,7 +88,7 @@ export class History {
     }
   }
 
-  onPageLoad = async (_event: Event) => {
+  onPageLoad = async (_event) => {
     await nextMicrotask()
     this.pageLoaded = true
   }

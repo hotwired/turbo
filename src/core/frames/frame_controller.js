@@ -1,12 +1,10 @@
 import {
   FrameElement,
-  FrameElementDelegate,
   FrameLoadingStyle,
-  FrameElementObservedAttribute,
 } from "../../elements/frame_element"
-import { FetchMethod, FetchRequest, FetchRequestDelegate } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
-import { AppearanceObserver, AppearanceObserverDelegate } from "../../observers/appearance_observer"
+import { AppearanceObserver } from "../../observers/appearance_observer"
 import {
   clearBusyState,
   dispatch,
@@ -17,56 +15,29 @@ import {
   getHistoryMethodForAction,
   getVisitAction,
 } from "../../util"
-import { FormSubmission, FormSubmissionDelegate } from "../drive/form_submission"
+import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { ViewDelegate, ViewRenderOptions } from "../view"
-import { Locatable, getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
-import { FormSubmitObserver, FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
+import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
-import { LinkInterceptor, LinkInterceptorDelegate } from "./link_interceptor"
-import { FormLinkClickObserver, FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
+import { LinkInterceptor } from "./link_interceptor"
+import { FormLinkClickObserver } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
 import { session } from "../index"
-import { Action } from "../types"
-import { VisitOptions } from "../drive/visit"
-import { TurboBeforeFrameRenderEvent } from "../session"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
 import { TurboFrameMissingError } from "../errors"
 
-type VisitFallback = (location: Response | Locatable, options: Partial<VisitOptions>) => Promise<void>
-export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: VisitFallback }>
+export class FrameController {
+  fetchResponseLoaded = (_fetchResponse) => {}
+  #currentFetchRequest = null
+  #resolveVisitPromise = () => {}
+  #connected = false
+  #hasBeenLoaded = false
+  #ignoredAttributes = new Set()
+  action = null
 
-export class FrameController
-  implements
-    AppearanceObserverDelegate<FrameElement>,
-    FetchRequestDelegate,
-    FormSubmitObserverDelegate,
-    FormSubmissionDelegate,
-    FrameElementDelegate,
-    FormLinkClickObserverDelegate,
-    LinkInterceptorDelegate,
-    ViewDelegate<FrameElement, Snapshot<FrameElement>>
-{
-  readonly element: FrameElement
-  readonly view: FrameView
-  readonly appearanceObserver: AppearanceObserver<FrameElement>
-  readonly formLinkClickObserver: FormLinkClickObserver
-  readonly linkInterceptor: LinkInterceptor
-  readonly formSubmitObserver: FormSubmitObserver
-  formSubmission?: FormSubmission
-  fetchResponseLoaded = (_fetchResponse: FetchResponse) => {}
-  private currentFetchRequest: FetchRequest | null = null
-  private resolveVisitPromise = () => {}
-  private connected = false
-  private hasBeenLoaded = false
-  private ignoredAttributes: Set<FrameElementObservedAttribute> = new Set()
-  private action: Action | null = null
-  readonly restorationIdentifier: string
-  private previousFrameElement?: FrameElement
-  private currentNavigationElement?: Element
-
-  constructor(element: FrameElement) {
+  constructor(element) {
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
@@ -77,12 +48,12 @@ export class FrameController
   }
 
   connect() {
-    if (!this.connected) {
-      this.connected = true
+    if (!this.#connected) {
+      this.#connected = true
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
         this.appearanceObserver.start()
       } else {
-        this.loadSourceURL()
+        this.#loadSourceURL()
       }
       this.formLinkClickObserver.start()
       this.linkInterceptor.start()
@@ -91,8 +62,8 @@ export class FrameController
   }
 
   disconnect() {
-    if (this.connected) {
-      this.connected = false
+    if (this.#connected) {
+      this.#connected = false
       this.appearanceObserver.stop()
       this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
@@ -102,25 +73,25 @@ export class FrameController
 
   disabledChanged() {
     if (this.loadingStyle == FrameLoadingStyle.eager) {
-      this.loadSourceURL()
+      this.#loadSourceURL()
     }
   }
 
   sourceURLChanged() {
-    if (this.isIgnoringChangesTo("src")) return
+    if (this.#isIgnoringChangesTo("src")) return
 
     if (this.element.isConnected) {
       this.complete = false
     }
 
-    if (this.loadingStyle == FrameLoadingStyle.eager || this.hasBeenLoaded) {
-      this.loadSourceURL()
+    if (this.loadingStyle == FrameLoadingStyle.eager || this.#hasBeenLoaded) {
+      this.#loadSourceURL()
     }
   }
 
   sourceURLReloaded() {
     const { src } = this.element
-    this.ignoringChangesToAttribute("complete", () => {
+    this.#ignoringChangesToAttribute("complete", () => {
       this.element.removeAttribute("complete")
     })
     this.element.src = null
@@ -129,9 +100,9 @@ export class FrameController
   }
 
   completeChanged() {
-    if (this.isIgnoringChangesTo("complete")) return
+    if (this.#isIgnoringChangesTo("complete")) return
 
-    this.loadSourceURL()
+    this.#loadSourceURL()
   }
 
   loadingStyleChanged() {
@@ -139,20 +110,20 @@ export class FrameController
       this.appearanceObserver.start()
     } else {
       this.appearanceObserver.stop()
-      this.loadSourceURL()
+      this.#loadSourceURL()
     }
   }
 
-  private async loadSourceURL() {
+  async #loadSourceURL() {
     if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
-      this.element.loaded = this.visit(expandURL(this.sourceURL))
+      this.element.loaded = this.#visit(expandURL(this.sourceURL))
       this.appearanceObserver.stop()
       await this.element.loaded
-      this.hasBeenLoaded = true
+      this.#hasBeenLoaded = true
     }
   }
 
-  async loadResponse(fetchResponse: FetchResponse) {
+  async loadResponse(fetchResponse) {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       this.sourceURL = fetchResponse.response.url
     }
@@ -164,9 +135,9 @@ export class FrameController
         const pageSnapshot = PageSnapshot.fromDocument(document)
 
         if (pageSnapshot.isVisitable) {
-          await this.loadFrameResponse(fetchResponse, document)
+          await this.#loadFrameResponse(fetchResponse, document)
         } else {
-          await this.handleUnvisitableFrameResponse(fetchResponse)
+          await this.#handleUnvisitableFrameResponse(fetchResponse)
         }
       }
     } finally {
@@ -176,39 +147,39 @@ export class FrameController
 
   // Appearance observer delegate
 
-  elementAppearedInViewport(element: FrameElement) {
+  elementAppearedInViewport(element) {
     this.proposeVisitIfNavigatedWithAction(element, element)
-    this.loadSourceURL()
+    this.#loadSourceURL()
   }
 
   // Form link click observer delegate
 
-  willSubmitFormLinkToLocation(link: Element): boolean {
-    return this.shouldInterceptNavigation(link)
+  willSubmitFormLinkToLocation(link) {
+    return this.#shouldInterceptNavigation(link)
   }
 
-  submittedFormLinkToLocation(link: Element, _location: URL, form: HTMLFormElement): void {
-    const frame = this.findFrameElement(link)
+  submittedFormLinkToLocation(link, _location, form) {
+    const frame = this.#findFrameElement(link)
     if (frame) form.setAttribute("data-turbo-frame", frame.id)
   }
 
   // Link interceptor delegate
 
-  shouldInterceptLinkClick(element: Element, _location: string, _event: MouseEvent) {
-    return this.shouldInterceptNavigation(element)
+  shouldInterceptLinkClick(element, _location, _event) {
+    return this.#shouldInterceptNavigation(element)
   }
 
-  linkClickIntercepted(element: Element, location: string) {
-    this.navigateFrame(element, location)
+  linkClickIntercepted(element, location) {
+    this.#navigateFrame(element, location)
   }
 
   // Form submit observer delegate
 
-  willSubmitForm(element: HTMLFormElement, submitter?: HTMLElement) {
-    return element.closest("turbo-frame") == this.element && this.shouldInterceptNavigation(element, submitter)
+  willSubmitForm(element, submitter) {
+    return element.closest("turbo-frame") == this.element && this.#shouldInterceptNavigation(element, submitter)
   }
 
-  formSubmitted(element: HTMLFormElement, submitter?: HTMLElement) {
+  formSubmitted(element, submitter) {
     if (this.formSubmission) {
       this.formSubmission.stop()
     }
@@ -221,7 +192,7 @@ export class FrameController
 
   // Fetch request delegate
 
-  prepareRequest(request: FetchRequest) {
+  prepareRequest(request) {
     request.headers["Turbo-Frame"] = this.id
 
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
@@ -229,41 +200,41 @@ export class FrameController
     }
   }
 
-  requestStarted(_request: FetchRequest) {
+  requestStarted(_request) {
     markAsBusy(this.element)
   }
 
-  requestPreventedHandlingResponse(_request: FetchRequest, _response: FetchResponse) {
-    this.resolveVisitPromise()
+  requestPreventedHandlingResponse(_request, _response) {
+    this.#resolveVisitPromise()
   }
 
-  async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
+  async requestSucceededWithResponse(request, response) {
     await this.loadResponse(response)
-    this.resolveVisitPromise()
+    this.#resolveVisitPromise()
   }
 
-  async requestFailedWithResponse(request: FetchRequest, response: FetchResponse) {
+  async requestFailedWithResponse(request, response) {
     await this.loadResponse(response)
-    this.resolveVisitPromise()
+    this.#resolveVisitPromise()
   }
 
-  requestErrored(request: FetchRequest, error: Error) {
+  requestErrored(request, error) {
     console.error(error)
-    this.resolveVisitPromise()
+    this.#resolveVisitPromise()
   }
 
-  requestFinished(_request: FetchRequest) {
+  requestFinished(_request) {
     clearBusyState(this.element)
   }
 
   // Form submission delegate
 
-  formSubmissionStarted({ formElement }: FormSubmission) {
-    markAsBusy(formElement, this.findFrameElement(formElement))
+  formSubmissionStarted({ formElement }) {
+    markAsBusy(formElement, this.#findFrameElement(formElement))
   }
 
-  formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse) {
-    const frame = this.findFrameElement(formSubmission.formElement, formSubmission.submitter)
+  formSubmissionSucceededWithResponse(formSubmission, response) {
+    const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
     frame.delegate.loadResponse(response)
@@ -273,27 +244,27 @@ export class FrameController
     }
   }
 
-  formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse) {
+  formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
     this.element.delegate.loadResponse(fetchResponse)
     session.clearCache()
   }
 
-  formSubmissionErrored(formSubmission: FormSubmission, error: Error) {
+  formSubmissionErrored(formSubmission, error) {
     console.error(error)
   }
 
-  formSubmissionFinished({ formElement }: FormSubmission) {
-    clearBusyState(formElement, this.findFrameElement(formElement))
+  formSubmissionFinished({ formElement }) {
+    clearBusyState(formElement, this.#findFrameElement(formElement))
   }
 
   // View delegate
 
   allowsImmediateRender(
-    { element: newFrame }: Snapshot<FrameElement>,
-    _isPreview: boolean,
-    options: ViewRenderOptions<FrameElement>
+    { element: newFrame },
+    _isPreview,
+    options
   ) {
-    const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
+    const event = dispatch("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
       cancelable: true,
@@ -310,20 +281,20 @@ export class FrameController
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot: Snapshot, _isPreview: boolean) {}
+  viewRenderedSnapshot(_snapshot, _isPreview) {}
 
-  preloadOnLoadLinksForView(element: Element) {
+  preloadOnLoadLinksForView(element) {
     session.preloadOnLoadLinksForView(element)
   }
 
   viewInvalidated() {}
 
   // Frame renderer delegate
-  willRenderFrame(currentElement: FrameElement, _newElement: FrameElement) {
+  willRenderFrame(currentElement, _newElement) {
     this.previousFrameElement = currentElement.cloneNode(true)
   }
 
-  visitCachedSnapshot = ({ element }: Snapshot) => {
+  visitCachedSnapshot = ({ element }) => {
     const frame = element.querySelector("#" + this.element.id)
 
     if (frame && this.previousFrameElement) {
@@ -335,7 +306,7 @@ export class FrameController
 
   // Private
 
-  private async loadFrameResponse(fetchResponse: FetchResponse, document: Document) {
+  async #loadFrameResponse(fetchResponse, document) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
 
     if (newFrameElement) {
@@ -349,50 +320,50 @@ export class FrameController
       session.frameRendered(fetchResponse, this.element)
       session.frameLoaded(this.element)
       this.fetchResponseLoaded(fetchResponse)
-    } else if (this.willHandleFrameMissingFromResponse(fetchResponse)) {
-      this.handleFrameMissingFromResponse(fetchResponse)
+    } else if (this.#willHandleFrameMissingFromResponse(fetchResponse)) {
+      this.#handleFrameMissingFromResponse(fetchResponse)
     }
   }
 
-  private async visit(url: URL) {
+  async #visit(url) {
     const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
 
-    this.currentFetchRequest?.cancel()
-    this.currentFetchRequest = request
+    this.#currentFetchRequest?.cancel()
+    this.#currentFetchRequest = request
 
-    return new Promise<void>((resolve) => {
-      this.resolveVisitPromise = () => {
-        this.resolveVisitPromise = () => {}
-        this.currentFetchRequest = null
+    return new Promise((resolve) => {
+      this.#resolveVisitPromise = () => {
+        this.#resolveVisitPromise = () => {}
+        this.#currentFetchRequest = null
         resolve()
       }
       request.perform()
     })
   }
 
-  private navigateFrame(element: Element, url: string, submitter?: HTMLElement) {
-    const frame = this.findFrameElement(element, submitter)
+  #navigateFrame(element, url, submitter) {
+    const frame = this.#findFrameElement(element, submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
 
-    this.withCurrentNavigationElement(element, () => {
+    this.#withCurrentNavigationElement(element, () => {
       frame.src = url
     })
   }
 
-  proposeVisitIfNavigatedWithAction(frame: FrameElement, element: Element, submitter?: HTMLElement) {
+  proposeVisitIfNavigatedWithAction(frame, element, submitter) {
     this.action = getVisitAction(submitter, element, frame)
 
     if (this.action) {
       const pageSnapshot = PageSnapshot.fromElement(frame).clone()
       const { visitCachedSnapshot } = frame.delegate
 
-      frame.delegate.fetchResponseLoaded = (fetchResponse: FetchResponse) => {
+      frame.delegate.fetchResponseLoaded = (fetchResponse) => {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
           const responseHTML = frame.ownerDocument.documentElement.outerHTML
           const response = { statusCode, redirected, responseHTML }
-          const options: Partial<VisitOptions> = {
+          const options = {
             response,
             visitCachedSnapshot,
             willRender: false,
@@ -416,27 +387,27 @@ export class FrameController
     }
   }
 
-  private async handleUnvisitableFrameResponse(fetchResponse: FetchResponse) {
+  async #handleUnvisitableFrameResponse(fetchResponse) {
     console.warn(
       `The response (${fetchResponse.statusCode}) from <turbo-frame id="${this.element.id}"> is performing a full page visit due to turbo-visit-control.`
     )
 
-    await this.visitResponse(fetchResponse.response)
+    await this.#visitResponse(fetchResponse.response)
   }
 
-  private willHandleFrameMissingFromResponse(fetchResponse: FetchResponse): boolean {
+  #willHandleFrameMissingFromResponse(fetchResponse) {
     this.element.setAttribute("complete", "")
 
     const response = fetchResponse.response
-    const visit = async (url: Locatable | Response, options: Partial<VisitOptions> = {}) => {
+    const visit = async (url, options) => {
       if (url instanceof Response) {
-        this.visitResponse(url)
+        this.#visitResponse(url)
       } else {
         session.visit(url, options)
       }
     }
 
-    const event = dispatch<TurboFrameMissingEvent>("turbo:frame-missing", {
+    const event = dispatch("turbo:frame-missing", {
       target: this.element,
       detail: { response, visit },
       cancelable: true,
@@ -445,17 +416,17 @@ export class FrameController
     return !event.defaultPrevented
   }
 
-  private handleFrameMissingFromResponse(fetchResponse: FetchResponse) {
+  #handleFrameMissingFromResponse(fetchResponse) {
     this.view.missing()
-    this.throwFrameMissingError(fetchResponse)
+    this.#throwFrameMissingError(fetchResponse)
   }
 
-  private throwFrameMissingError(fetchResponse: FetchResponse) {
+  #throwFrameMissingError(fetchResponse) {
     const message = `The response (${fetchResponse.statusCode}) did not contain the expected <turbo-frame id="${this.element.id}"> and will be ignored. To perform a full page visit instead, set turbo-visit-control to reload.`
     throw new TurboFrameMissingError(message)
   }
 
-  private async visitResponse(response: Response): Promise<void> {
+  async #visitResponse(response) {
     const wrapped = new FetchResponse(response)
     const responseHTML = await wrapped.responseHTML
     const { location, redirected, statusCode } = wrapped
@@ -463,12 +434,12 @@ export class FrameController
     return session.visit(location, { response: { redirected, statusCode, responseHTML } })
   }
 
-  private findFrameElement(element: Element, submitter?: HTMLElement) {
+  #findFrameElement(element, submitter) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
     return getFrameElementById(id) ?? this.element
   }
 
-  async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | null> {
+  async extractForeignFrameElement(container) {
     let element
     const id = CSS.escape(this.id)
 
@@ -491,16 +462,16 @@ export class FrameController
     return null
   }
 
-  private formActionIsVisitable(form: HTMLFormElement, submitter?: HTMLElement) {
+  #formActionIsVisitable(form, submitter) {
     const action = getAction(form, submitter)
 
     return locationIsVisitable(expandURL(action), this.rootLocation)
   }
 
-  private shouldInterceptNavigation(element: Element, submitter?: HTMLElement) {
+  #shouldInterceptNavigation(element, submitter) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
 
-    if (element instanceof HTMLFormElement && !this.formActionIsVisitable(element, submitter)) {
+    if (element instanceof HTMLFormElement && !this.#formActionIsVisitable(element, submitter)) {
       return false
     }
 
@@ -542,8 +513,8 @@ export class FrameController
     }
   }
 
-  set sourceURL(sourceURL: string | undefined) {
-    this.ignoringChangesToAttribute("src", () => {
+  set sourceURL(sourceURL) {
+    this.#ignoringChangesToAttribute("src", () => {
       this.element.src = sourceURL ?? null
     })
   }
@@ -553,15 +524,15 @@ export class FrameController
   }
 
   get isLoading() {
-    return this.formSubmission !== undefined || this.resolveVisitPromise() !== undefined
+    return this.formSubmission !== undefined || this.#resolveVisitPromise() !== undefined
   }
 
   get complete() {
     return this.element.hasAttribute("complete")
   }
 
-  set complete(value: boolean) {
-    this.ignoringChangesToAttribute("complete", () => {
+  set complete(value) {
+    this.#ignoringChangesToAttribute("complete", () => {
       if (value) {
         this.element.setAttribute("complete", "")
       } else {
@@ -571,33 +542,33 @@ export class FrameController
   }
 
   get isActive() {
-    return this.element.isActive && this.connected
+    return this.element.isActive && this.#connected
   }
 
   get rootLocation() {
-    const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
+    const meta = this.element.ownerDocument.querySelector(`meta[name="turbo-root"]`)
     const root = meta?.content ?? "/"
     return expandURL(root)
   }
 
-  private isIgnoringChangesTo(attributeName: FrameElementObservedAttribute): boolean {
-    return this.ignoredAttributes.has(attributeName)
+  #isIgnoringChangesTo(attributeName) {
+    return this.#ignoredAttributes.has(attributeName)
   }
 
-  private ignoringChangesToAttribute(attributeName: FrameElementObservedAttribute, callback: () => void) {
-    this.ignoredAttributes.add(attributeName)
+  #ignoringChangesToAttribute(attributeName, callback) {
+    this.#ignoredAttributes.add(attributeName)
     callback()
-    this.ignoredAttributes.delete(attributeName)
+    this.#ignoredAttributes.delete(attributeName)
   }
 
-  private withCurrentNavigationElement(element: Element, callback: () => void) {
+  #withCurrentNavigationElement(element, callback) {
     this.currentNavigationElement = element
     callback()
     delete this.currentNavigationElement
   }
 }
 
-function getFrameElementById(id: string | null) {
+function getFrameElementById(id) {
   if (id != null) {
     const element = document.getElementById(id)
     if (element instanceof FrameElement) {
@@ -606,7 +577,7 @@ function getFrameElementById(id: string | null) {
   }
 }
 
-function activateElement(element: Element | null, currentURL?: string | null) {
+function activateElement(element, currentURL) {
   if (element) {
     const src = element.getAttribute("src")
     if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {

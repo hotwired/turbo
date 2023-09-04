@@ -1,7 +1,5 @@
-export class Snapshot<E extends Element = Element> {
-  readonly element: E
-
-  constructor(element: E) {
+export class Snapshot {
+  constructor(element) {
     this.element = element
   }
 
@@ -13,11 +11,11 @@ export class Snapshot<E extends Element = Element> {
     return [...this.element.children]
   }
 
-  hasAnchor(anchor: string | undefined) {
+  hasAnchor(anchor) {
     return this.getElementForAnchor(anchor) != null
   }
 
-  getElementForAnchor(anchor: string | undefined) {
+  getElementForAnchor(anchor) {
     return anchor ? this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`) : null
   }
 
@@ -40,12 +38,12 @@ export class Snapshot<E extends Element = Element> {
     return queryPermanentElementsAll(this.element)
   }
 
-  getPermanentElementById(id: string) {
+  getPermanentElementById(id) {
     return getPermanentElementById(this.element, id)
   }
 
-  getPermanentElementMapForSnapshot(snapshot: Snapshot) {
-    const permanentElementMap: PermanentElementMap = {}
+  getPermanentElementMapForSnapshot(snapshot) {
+    const permanentElementMap = {}
 
     for (const currentPermanentElement of this.permanentElements) {
       const { id } = currentPermanentElement
@@ -59,12 +57,10 @@ export class Snapshot<E extends Element = Element> {
   }
 }
 
-export function getPermanentElementById(node: ParentNode, id: string) {
+export function getPermanentElementById(node, id) {
   return node.querySelector(`#${id}[data-turbo-permanent]`)
 }
 
-export function queryPermanentElementsAll(node: ParentNode) {
+export function queryPermanentElementsAll(node) {
   return node.querySelectorAll("[id][data-turbo-permanent]")
 }
-
-export type PermanentElementMap = Record<string, [Element, Element]>

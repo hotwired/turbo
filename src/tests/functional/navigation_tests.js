@@ -261,7 +261,7 @@ test("test following a same-origin [target] link", async ({ page }) => {
 })
 
 test("test following a same-origin [download] link", async ({ page }) => {
-  assert.notOk<boolean>(
+  assert.notOk(
     await willChangeBody(page, async () => {
       await page.click("#same-origin-download-link")
       await nextBeat()
@@ -310,7 +310,7 @@ test("test link targeting a disabled turbo-frame navigates the page", async ({ p
 })
 
 test("test skip link with hash-only path scrolls to the anchor without a visit", async ({ page }) => {
-  assert.notOk<boolean>(
+  assert.notOk(
     await willChangeBody(page, async () => {
       await page.click('a[href="#main"]')
       await nextBeat()

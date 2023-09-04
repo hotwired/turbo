@@ -3,7 +3,7 @@ import { nextAnimationFrame } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
 import { assert } from "@open-wc/testing"
 
-function createStreamElement(action: string | null, target: string | null, templateElement?: HTMLTemplateElement) {
+function createStreamElement(action, target, templateElement) {
   const element = new StreamElement()
   if (action) element.setAttribute("action", action)
   if (target) element.setAttribute("target", target)
@@ -11,7 +11,7 @@ function createStreamElement(action: string | null, target: string | null, templ
   return element
 }
 
-function createTemplateElement(html: string) {
+function createTemplateElement(html) {
   const element = document.createElement("template")
   element.innerHTML = html
   return element
@@ -19,7 +19,7 @@ function createTemplateElement(html: string) {
 
 export class StreamElementTests extends DOMTestCase {}
 
-let subject: StreamElementTests
+let subject
 
 setup(() => {
   subject = new StreamElementTests()

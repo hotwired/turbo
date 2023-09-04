@@ -1,10 +1,5 @@
-import { Adapter } from "./native/adapter"
-import { FormMode, Session } from "./session"
+import { Session } from "./session"
 import { Cache } from "./cache"
-import { Locatable } from "./url"
-import { StreamMessage } from "./streams/stream_message"
-import { StreamSource } from "./types"
-import { VisitOptions } from "./drive/visit"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
@@ -14,24 +9,8 @@ const session = new Session()
 const cache = new Cache(session)
 const { navigator } = session
 export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
-export type {
-  TurboBeforeCacheEvent,
-  TurboBeforeRenderEvent,
-  TurboBeforeVisitEvent,
-  TurboClickEvent,
-  TurboBeforeFrameRenderEvent,
-  TurboFrameLoadEvent,
-  TurboFrameRenderEvent,
-  TurboLoadEvent,
-  TurboRenderEvent,
-  TurboVisitEvent,
-} from "./session"
-
-export type { TurboSubmitStartEvent, TurboSubmitEndEvent } from "./drive/form_submission"
-export type { TurboFrameMissingEvent } from "./frames/frame_controller"
 
 export { StreamActions } from "./streams/stream_actions"
-export type { TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
 
 /**
  * Starts the main session.
@@ -47,7 +26,7 @@ export function start() {
  *
  * @param adapter Adapter to register
  */
-export function registerAdapter(adapter: Adapter) {
+export function registerAdapter(adapter) {
   session.registerAdapter(adapter)
 }
 
@@ -65,7 +44,7 @@ export function registerAdapter(adapter: Adapter) {
  * @param options.snapshotHTML Cached snapshot to render
  * @param options.response Response of the specified location
  */
-export function visit(location: Locatable, options?: Partial<VisitOptions>) {
+export function visit(location, options) {
   session.visit(location, options)
 }
 
@@ -74,7 +53,7 @@ export function visit(location: Locatable, options?: Partial<VisitOptions>) {
  *
  * @param source Stream source to connect
  */
-export function connectStreamSource(source: StreamSource) {
+export function connectStreamSource(source) {
   session.connectStreamSource(source)
 }
 
@@ -83,7 +62,7 @@ export function connectStreamSource(source: StreamSource) {
  *
  * @param source Stream source to disconnect
  */
-export function disconnectStreamSource(source: StreamSource) {
+export function disconnectStreamSource(source) {
   session.disconnectStreamSource(source)
 }
 
@@ -93,7 +72,7 @@ export function disconnectStreamSource(source: StreamSource) {
  *
  * @param message Message to render
  */
-export function renderStreamMessage(message: StreamMessage | string) {
+export function renderStreamMessage(message) {
   session.renderStreamMessage(message)
 }
 
@@ -120,16 +99,14 @@ export function clearCache() {
  *
  * @param delay Time to delay in milliseconds
  */
-export function setProgressBarDelay(delay: number) {
+export function setProgressBarDelay(delay) {
   session.setProgressBarDelay(delay)
 }
 
-export function setConfirmMethod(
-  confirmMethod: (message: string, element: HTMLFormElement, submitter: HTMLElement | undefined) => Promise<boolean>
-) {
+export function setConfirmMethod(confirmMethod) {
   FormSubmission.confirmMethod = confirmMethod
 }
 
-export function setFormMode(mode: FormMode) {
+export function setFormMode(mode) {
   session.setFormMode(mode)
 }

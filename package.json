@@ -62,16 +62,16 @@
   "scripts": {
     "clean": "rm -fr dist",
     "clean:win": "rmdir /s /q dist",
-    "build": "tsc --noEmit false --declaration true --emitDeclarationOnly true --outDir dist/types && rollup -c",
-    "build:win": "tsc --noEmit false --declaration true --emitDeclarationOnly true --outDir dist/types & rollup -c",
+    "build": "rollup -c",
+    "build:win": "rollup -c",
     "watch": "rollup -wc",
-    "start": "ts-node -O '{\"module\":\"commonjs\"}' src/tests/server.ts",
+    "start": "node src/tests/server.mjs",
     "test": "yarn test:unit && yarn test:browser",
     "test:browser": "playwright test",
     "test:unit": "NODE_OPTIONS=--inspect web-test-runner",
     "test:unit:win": "SET NODE_OPTIONS=--inspect & web-test-runner",
     "release": "yarn build && npm publish",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .js"
   },
   "engines": {
     "node": ">= 14"

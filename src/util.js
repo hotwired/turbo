@@ -1,12 +1,4 @@
-import { Action } from "./core/types"
-
-export type DispatchOptions<T extends CustomEvent> = {
-  target: EventTarget
-  cancelable: boolean
-  detail: T["detail"]
-}
-
-export function activateScriptElement(element: HTMLScriptElement) {
+export function activateScriptElement(element) {
   if (element.getAttribute("data-turbo-eval") == "false") {
     return element
   } else {
@@ -22,30 +14,30 @@ export function activateScriptElement(element: HTMLScriptElement) {
   }
 }
 
-function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
+function copyElementAttributes(destinationElement, sourceElement) {
   for (const { name, value } of sourceElement.attributes) {
     destinationElement.setAttribute(name, value)
   }
 }
 
-export function createDocumentFragment(html: string): DocumentFragment {
+export function createDocumentFragment(html) {
   const template = document.createElement("template")
   template.innerHTML = html
   return template.content
 }
 
-export function dispatch<T extends CustomEvent>(
-  eventName: string,
-  { target, cancelable, detail }: Partial<DispatchOptions<T>> = {}
+export function dispatch(
+  eventName,
+  { target, cancelable, detail } = {}
 ) {
-  const event = new CustomEvent<T["detail"]>(eventName, {
+  const event = new CustomEvent(eventName, {
     cancelable,
     bubbles: true,
     composed: true,
     detail,
   })
 
-  if (target && (target as Element).isConnected) {
+  if (target && target.isConnected) {
     target.dispatchEvent(event)
   } else {
     document.documentElement.dispatchEvent(event)
@@ -55,11 +47,11 @@ export function dispatch<T extends CustomEvent>(
 }
 
 export function nextAnimationFrame() {
-  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()))
 }
 
 export function nextEventLoopTick() {
-  return new Promise<void>((resolve) => setTimeout(() => resolve(), 0))
+  return new Promise((resolve) => setTimeout(() => resolve(), 0))
 }
 
 export function nextMicrotask() {
@@ -70,14 +62,14 @@ export function parseHTMLDocument(html = "") {
   return new DOMParser().parseFromString(html, "text/html")
 }
 
-export function unindent(strings: TemplateStringsArray, ...values: any[]): string {
+export function unindent(strings, ...values) {
   const lines = interpolate(strings, values).replace(/^\n/, "").split("\n")
   const match = lines[0].match(/^\s+/)
   const indent = match ? match[0].length : 0
   return lines.map((line) => line.slice(indent)).join("\n")
 }
 
-function interpolate(strings: TemplateStringsArray, values: any[]) {
+function interpolate(strings, values) {
   return strings.reduce((result, string, i) => {
     const value = values[i] == undefined ? "" : values[i]
     return result + string + value
@@ -100,7 +92,7 @@ export function uuid() {
     .join("")
 }
 
-export function getAttribute(attributeName: string, ...elements: (Element | undefined)[]): string | null {
+export function getAttribute(attributeName, ...elements) {
   for (const value of elements.map((element) => element?.getAttribute(attributeName))) {
     if (typeof value == "string") return value
   }
@@ -108,11 +100,11 @@ export function getAttribute(attributeName: string, ...elements: (Element | unde
   return null
 }
 
-export function hasAttribute(attributeName: string, ...elements: (Element | undefined)[]): boolean {
+export function hasAttribute(attributeName, ...elements) {
   return elements.some((element) => element && element.hasAttribute(attributeName))
 }
 
-export function markAsBusy(...elements: Element[]) {
+export function markAsBusy(...elements) {
   for (const element of elements) {
     if (element.localName == "turbo-frame") {
       element.setAttribute("busy", "")
@@ -121,7 +113,7 @@ export function markAsBusy(...elements: Element[]) {
   }
 }
 
-export function clearBusyState(...elements: Element[]) {
+export function clearBusyState(...elements) {
   for (const element of elements) {
     if (element.localName == "turbo-frame") {
       element.removeAttribute("busy")
@@ -131,7 +123,7 @@ export function clearBusyState(...elements: Element[]) {
   }
 }
 
-export function waitForLoad(element: HTMLLinkElement, timeoutInMilliseconds = 2000): Promise<void> {
+export function waitForLoad(element, timeoutInMilliseconds = 2000) {
   return new Promise((resolve) => {
     const onComplete = () => {
       element.removeEventListener("error", onComplete)
@@ -145,7 +137,7 @@ export function waitForLoad(element: HTMLLinkElement, timeoutInMilliseconds = 20
   })
 }
 
-export function getHistoryMethodForAction(action: Action) {
+export function getHistoryMethodForAction(action) {
   switch (action) {
     case "replace":
       return history.replaceState
@@ -155,26 +147,26 @@ export function getHistoryMethodForAction(action: Action) {
   }
 }
 
-export function isAction(action: any): action is Action {
+export function isAction(action) {
   return action == "advance" || action == "replace" || action == "restore"
 }
 
-export function getVisitAction(...elements: (Element | undefined)[]): Action | null {
+export function getVisitAction(...elements) {
   const action = getAttribute("data-turbo-action", ...elements)
 
   return isAction(action) ? action : null
 }
 
-export function getMetaElement(name: string): HTMLMetaElement | null {
+export function getMetaElement(name) {
   return document.querySelector(`meta[name="${name}"]`)
 }
 
-export function getMetaContent(name: string) {
+export function getMetaContent(name) {
   const element = getMetaElement(name)
   return element && element.content
 }
 
-export function setMetaContent(name: string, content: string) {
+export function setMetaContent(name, content) {
   let element = getMetaElement(name)
 
   if (!element) {
@@ -189,11 +181,11 @@ export function setMetaContent(name: string, content: string) {
   return element
 }
 
-export function findClosestRecursively<E extends Element>(element: Element | null, selector: string): E | undefined {
+export function findClosestRecursively(element, selector) {
   if (element instanceof Element) {
     return (
-      element.closest<E>(selector) ||
-      findClosestRecursively(element.assignedSlot || (element.getRootNode() as ShadowRoot)?.host, selector)
+      element.closest(selector) ||
+      findClosestRecursively(element.assignedSlot || (element.getRootNode())?.host, selector)
     )
   }
 }

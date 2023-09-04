@@ -1,22 +1,15 @@
-export interface PageObserverDelegate {
-  pageBecameInteractive(): void
-  pageLoaded(): void
-  pageWillUnload(): void
-}
-
-export enum PageStage {
-  initial,
-  loading,
-  interactive,
-  complete,
+export const PageStage = {
+  initial: 0,
+  loading: 1,
+  interactive: 2,
+  complete: 3
 }
 
 export class PageObserver {
-  readonly delegate: PageObserverDelegate
   stage = PageStage.initial
   started = false
 
-  constructor(delegate: PageObserverDelegate) {
+  constructor(delegate) {
     this.delegate = delegate
   }
 

@@ -1,10 +1,6 @@
 import { StreamActions } from "../core/streams/stream_actions"
 import { nextAnimationFrame } from "../util"
 
-type Render = (currentElement: StreamElement) => Promise<void>
-
-export type TurboBeforeStreamRenderEvent = CustomEvent<{ newStream: StreamElement; render: Render }>
-
 // <turbo-stream action=replace target=id><template>...
 
 /**
@@ -28,7 +24,7 @@ export type TurboBeforeStreamRenderEvent = CustomEvent<{ newStream: StreamElemen
  *   </turbo-stream>
  */
 export class StreamElement extends HTMLElement {
-  static async renderElement(newElement: StreamElement): Promise<void> {
+  static async renderElement(newElement) {
     await newElement.performAction()
   }
 
@@ -41,8 +37,6 @@ export class StreamElement extends HTMLElement {
       this.disconnect()
     }
   }
-
-  private renderPromise?: Promise<void>
 
   async render() {
     return (this.renderPromise ??= (async () => {
@@ -88,9 +82,9 @@ export class StreamElement extends HTMLElement {
       if (actionFunction) {
         return actionFunction
       }
-      this.raise("unknown action")
+      this.#raise("unknown action")
     }
-    this.raise("action attribute is missing")
+    this.#raise("action attribute is missing")
   }
 
   /**
@@ -102,7 +96,7 @@ export class StreamElement extends HTMLElement {
     } else if (this.targets) {
       return this.targetElementsByQuery
     } else {
-      this.raise("target or targets attribute is missing")
+      this.#raise("target or targets attribute is missing")
     }
   }
 
@@ -124,7 +118,7 @@ export class StreamElement extends HTMLElement {
     } else if (this.firstElementChild instanceof HTMLTemplateElement) {
       return this.firstElementChild
     }
-    this.raise("first child element must be a <template> element")
+    this.#raise("first child element must be a <template> element")
   }
 
   /**
@@ -149,15 +143,15 @@ export class StreamElement extends HTMLElement {
     return this.getAttribute("targets")
   }
 
-  private raise(message: string): never {
+  #raise(message) {
     throw new Error(`${this.description}: ${message}`)
   }
 
-  private get description() {
+  get description() {
     return (this.outerHTML.match(/<[^>]+>/) ?? [])[0] ?? "<turbo-stream>"
   }
 
-  private get beforeRenderEvent(): TurboBeforeStreamRenderEvent {
+  get beforeRenderEvent() {
     return new CustomEvent("turbo:before-stream-render", {
       bubbles: true,
       cancelable: true,
@@ -165,8 +159,8 @@ export class StreamElement extends HTMLElement {
     })
   }
 
-  private get targetElementsById() {
-    const element = this.ownerDocument?.getElementById(this.target!)
+  get targetElementsById() {
+    const element = this.ownerDocument?.getElementById(this.target)
 
     if (element !== null) {
       return [element]
@@ -175,8 +169,8 @@ export class StreamElement extends HTMLElement {
     }
   }
 
-  private get targetElementsByQuery() {
-    const elements = this.ownerDocument?.querySelectorAll(this.targets!)
+  get targetElementsByQuery() {
+    const elements = this.ownerDocument?.querySelectorAll(this.targets)
 
     if (elements.length !== 0) {
       return Array.prototype.slice.call(elements)

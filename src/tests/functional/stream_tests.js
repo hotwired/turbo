@@ -74,18 +74,18 @@ test("test overriding with custom StreamActions", async ({ page }) => {
   const html = "Rendered with Custom Action"
 
   await page.evaluate((html) => {
-    const CustomActions: Record<string, any> = {
-      customUpdate(newStream: { targetElements: HTMLElement[] }) {
+    const CustomActions = {
+      customUpdate(newStream) {
         for (const target of newStream.targetElements) target.innerHTML = html
       },
     }
 
-    addEventListener("turbo:before-stream-render", (({ target, detail }: CustomEvent) => {
-      const stream = target as unknown as { action: string }
+    addEventListener("turbo:before-stream-render", (({ target, detail }) => {
+      const stream = target
 
       const defaultRender = detail.render
       detail.render = CustomActions[stream.action] || defaultRender
-    }) as EventListener)
+    }))
 
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="customUpdate" target="messages">

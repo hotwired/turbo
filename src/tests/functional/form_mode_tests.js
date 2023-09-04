@@ -1,4 +1,4 @@
-import { Page, test } from "@playwright/test"
+import { test } from "@playwright/test"
 import { getFromLocalStorage, setLocalStorageFromEvent } from "../helpers/page"
 import { assert } from "chai"
 
@@ -65,11 +65,11 @@ test("test form submission with form mode optin and form enabled from submitter 
   assert.ok(await formSubmitStarted(page))
 })
 
-async function gotoPageWithFormMode(page: Page, formMode: "on" | "off" | "optin") {
+async function gotoPageWithFormMode(page, formMode) {
   await page.goto(`/src/tests/fixtures/form_mode.html?formMode=${formMode}`)
   await setLocalStorageFromEvent(page, "turbo:submit-start", "formSubmitStarted", "true")
 }
 
-function formSubmitStarted(page: Page) {
+function formSubmitStarted(page) {
   return getFromLocalStorage(page, "formSubmitStarted")
 }

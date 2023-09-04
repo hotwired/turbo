@@ -1,4 +1,4 @@
-import { JSHandle, Page, test } from "@playwright/test"
+import { test } from "@playwright/test"
 import { assert } from "chai"
 import {
   clearLocalStorage,
@@ -62,7 +62,7 @@ test("test reloads when tracked elements change", async ({ page }) => {
   await page.evaluate(() =>
     window.addEventListener(
       "turbo:reload",
-      (e: any) => {
+      (e) => {
         localStorage.setItem("reloadReason", e.detail.reason)
       },
       { once: true }
@@ -86,7 +86,7 @@ test("test reloads when tracked elements change due to failed form submission", 
   await page.evaluate(() => {
     window.addEventListener(
       "turbo:reload",
-      (e: any) => {
+      (e) => {
         localStorage.setItem("reason", e.detail.reason)
       },
       { once: true }
@@ -116,9 +116,9 @@ test("test reloads when tracked elements change due to failed form submission", 
 test("test before-render event supports custom render function", async ({ page }) => {
   await page.evaluate(() =>
     addEventListener("turbo:before-render", (event) => {
-      const { detail } = event as CustomEvent
+      const { detail } = event
       const { render } = detail
-      detail.render = (currentElement: HTMLBodyElement, newElement: HTMLBodyElement) => {
+      detail.render = (currentElement, newElement) => {
         newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered</span>`)
         render(currentElement, newElement)
       }
@@ -134,14 +134,14 @@ test("test before-render event supports custom render function", async ({ page }
 test("test before-render event supports async custom render function", async ({ page }) => {
   await page.evaluate(() => {
     const nextEventLoopTick = () =>
-      new Promise<void>((resolve) => {
+      new Promise((resolve) => {
         setTimeout(() => resolve(), 0)
       })
 
     addEventListener("turbo:before-render", (event) => {
-      const { detail } = event as CustomEvent
+      const { detail } = event
       const { render } = detail
-      detail.render = async (currentElement: HTMLBodyElement, newElement: HTMLBodyElement) => {
+      detail.render = async (currentElement, newElement) => {
         await nextEventLoopTick()
 
         newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered</span>`)
@@ -173,7 +173,7 @@ test("test reloads when turbo-visit-control setting is reload", async ({ page })
   await page.evaluate(() =>
     window.addEventListener(
       "turbo:reload",
-      (e: any) => {
+      (e) => {
         localStorage.setItem("reloadReason", e.detail.reason)
       },
       { once: true }
@@ -269,7 +269,7 @@ test("test does not evaluate head stylesheet elements inside noscript elements",
 })
 
 test("test waits for CSS to be loaded before rendering", async ({ page }) => {
-  let finishLoadingCSS = (_value?: unknown) => {}
+  let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
     finishLoadingCSS = resolve
   })
@@ -292,7 +292,7 @@ test("test waits for CSS to be loaded before rendering", async ({ page }) => {
 })
 
 test("test waits for CSS to fail before rendering", async ({ page }) => {
-  let finishLoadingCSS = (_value?: unknown) => {}
+  let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
     finishLoadingCSS = resolve
   })
@@ -315,7 +315,7 @@ test("test waits for CSS to fail before rendering", async ({ page }) => {
 })
 
 test("test waits for some time, but renders if CSS takes too much to load", async ({ page }) => {
-  let finishLoadingCSS = (_value?: unknown) => {}
+  let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
     finishLoadingCSS = resolve
   })
@@ -381,7 +381,7 @@ test("test preserves permanent elements", async ({ page }) => {
   await page.click("#permanent-element-link")
   await nextEventNamed(page, "turbo:render")
   assert.ok(await strictElementEquals(permanentElement, await page.locator("#permanent")))
-  assert.equal(await permanentElement!.textContent(), "Rendering")
+  assert.equal(await permanentElement.textContent(), "Rendering")
 
   await page.goBack()
   await nextEventNamed(page, "turbo:render")
@@ -408,9 +408,9 @@ test("test before-frame-render event supports custom render function within turb
   const frame = await page.locator("#frame")
   await frame.evaluate((frame) =>
     frame.addEventListener("turbo:before-frame-render", (event) => {
-      const { detail } = event as CustomEvent
+      const { detail } = event
       const { render } = detail
-      detail.render = (currentElement: Element, newElement: Element) => {
+      detail.render = (currentElement, newElement) => {
         newElement.insertAdjacentHTML("beforeend", `<span id="custom-rendered">Custom Rendered Frame</span>`)
         render(currentElement, newElement)
       }
@@ -463,13 +463,13 @@ test("test preserves permanent element video playback", async ({ page }) => {
   await page.click("#permanent-video-button")
   await sleep(500)
 
-  const timeBeforeRender = await videoElement.evaluate((video: HTMLVideoElement) => video.currentTime)
+  const timeBeforeRender = await videoElement.evaluate((video) => video.currentTime)
   assert.notEqual(timeBeforeRender, 0, "playback has started")
 
   await page.click("#permanent-element-link")
   await nextBody(page)
 
-  const timeAfterRender = await videoElement.evaluate((video: HTMLVideoElement) => video.currentTime)
+  const timeAfterRender = await videoElement.evaluate((video) => video.currentTime)
   assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
 })
 
@@ -569,7 +569,7 @@ test("test before-cache event", async ({ page }) => {
   assert.equal(await page.textContent("body"), "Modified")
 })
 
-test("test mutation record as before-cache notification", async ({ page }) => {
+test("test mutation record-cache notification", async ({ page }) => {
   await modifyBodyAfterRemoval(page)
   await page.click("#same-origin-link")
   await nextBody(page)
@@ -592,37 +592,37 @@ test("test rendering a redirect response replaces the body once and only once", 
 })
 
 function deepElementsEqual(
-  page: Page,
-  left: JSHandle<SVGElement | HTMLElement>[],
-  right: JSHandle<SVGElement | HTMLElement>[]
-): Promise<boolean> {
+  page,
+  left,
+  right
+) {
   return page.evaluate(
     ([left, right]) => left.length == right.length && left.every((element) => right.includes(element)),
     [left, right]
   )
 }
 
-function headScriptEvaluationCount(page: Page): Promise<number | undefined> {
+function headScriptEvaluationCount(page) {
   return page.evaluate(() => window.headScriptEvaluationCount)
 }
 
-function bodyScriptEvaluationCount(page: Page): Promise<number | undefined> {
+function bodyScriptEvaluationCount(page) {
   return page.evaluate(() => window.bodyScriptEvaluationCount)
 }
 
-function isStylesheetEvaluated(page: Page): Promise<boolean> {
+function isStylesheetEvaluated(page) {
   return page.evaluate(
     () => getComputedStyle(document.body).getPropertyValue("--black-if-evaluated").trim() === "black"
   )
 }
 
-function isNoscriptStylesheetEvaluated(page: Page): Promise<boolean> {
+function isNoscriptStylesheetEvaluated(page) {
   return page.evaluate(
     () => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black"
   )
 }
 
-function modifyBodyAfterRemoval(page: Page) {
+function modifyBodyAfterRemoval(page) {
   return page.evaluate(() => {
     const { documentElement, body } = document
     const observer = new MutationObserver((records) => {
@@ -636,11 +636,4 @@ function modifyBodyAfterRemoval(page: Page) {
     })
     observer.observe(documentElement, { childList: true })
   })
-}
-
-declare global {
-  interface Window {
-    headScriptEvaluationCount?: number
-    bodyScriptEvaluationCount?: number
-  }
 }

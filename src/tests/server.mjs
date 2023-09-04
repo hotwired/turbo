@@ -1,13 +1,19 @@
-import { Request, Response, Router } from "express"
+import { Router } from "express"
 import express from "express"
-import { json, urlencoded } from "body-parser"
+import bodyParser from "body-parser"
 import multer from "multer"
 import path from "path"
 import url from "url"
+import { fileURLToPath } from 'url'
 import fs from "fs"
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const { json, urlencoded } = bodyParser
+
 const router = Router()
-const streamResponses: Set<Response> = new Set()
+const streamResponses = new Set()
 
 router.use(multer().none())
 
@@ -36,7 +42,7 @@ router.post("/redirect", (request, response) => {
 })
 
 router.get("/redirect", (request, response) => {
-  const { path, ...query } = request.query as any
+  const { path, ...query } = request.query
   const pathname = path ?? "/src/tests/fixtures/one.html"
   const enctype = request.get("Content-Type")
   if (enctype) {
@@ -136,7 +142,7 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
-function receiveMessage(content: string, id: string | null, target?: string) {
+function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
     console.log("delivering message to stream", response.socket?.remotePort)
@@ -144,7 +150,7 @@ function receiveMessage(content: string, id: string | null, target?: string) {
   }
 }
 
-function renderMessage(content: string, id: string | null, target = "messages") {
+function renderMessage(content, id, target = "messages") {
   return `
     <turbo-stream id="${id}" action="append" target="${target}"><template>
       <div class="message">${escapeHTML(content)}</div>
@@ -152,7 +158,7 @@ function renderMessage(content: string, id: string | null, target = "messages") 
   `
 }
 
-function renderMessageForTargets(content: string, id: string | null, targets: string) {
+function renderMessageForTargets(content, id, targets) {
   return `
     <turbo-stream id="${id}" action="append" targets="${targets}"><template>
       <div class="message">${escapeHTML(content)}</div>
@@ -160,11 +166,11 @@ function renderMessageForTargets(content: string, id: string | null, targets: st
   `
 }
 
-function acceptsStreams(request: Request): boolean {
+function acceptsStreams(request) {
   return !!request.accepts("text/vnd.turbo-stream.html")
 }
 
-function renderSSEData(data: any) {
+function renderSSEData(data) {
   return (
     `${data}`
       .split("\n")
@@ -173,7 +179,7 @@ function renderSSEData(data: any) {
   )
 }
 
-function escapeHTML(html: string) {
+function escapeHTML(html) {
   return html.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 }
 const app = express()

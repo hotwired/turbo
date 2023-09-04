@@ -3,22 +3,20 @@ import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
 
-export class PageSnapshot extends Snapshot<HTMLBodyElement> {
+export class PageSnapshot extends Snapshot {
   static fromHTMLString(html = "") {
     return this.fromDocument(parseHTMLDocument(html))
   }
 
-  static fromElement(element: Element) {
+  static fromElement(element) {
     return this.fromDocument(element.ownerDocument)
   }
 
-  static fromDocument({ head, body }: Document) {
-    return new this(body as HTMLBodyElement, new HeadSnapshot(head))
+  static fromDocument({ head, body }) {
+    return new this(body, new HeadSnapshot(head))
   }
 
-  readonly headSnapshot: HeadSnapshot
-
-  constructor(element: HTMLBodyElement, headSnapshot: HeadSnapshot) {
+  constructor(element, headSnapshot) {
     super(element)
     this.headSnapshot = headSnapshot
   }
@@ -35,7 +33,7 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
       for (const option of source.selectedOptions) clone.options[option.index].selected = true
     }
 
-    for (const clonedPasswordInput of clonedElement.querySelectorAll<HTMLInputElement>('input[type="password"]')) {
+    for (const clonedPasswordInput of clonedElement.querySelectorAll('input[type="password"]')) {
       clonedPasswordInput.value = ""
     }
 
@@ -73,7 +71,7 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
 
   // Private
 
-  getSetting(name: string) {
+  getSetting(name) {
     return this.headSnapshot.getMetaValue(`turbo-${name}`)
   }
 }

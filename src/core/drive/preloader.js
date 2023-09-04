@@ -1,20 +1,13 @@
-import { Navigator } from "./navigator"
 import { PageSnapshot } from "./page_snapshot"
-import { SnapshotCache } from "./snapshot_cache"
-
-export interface PreloaderDelegate {
-  readonly navigator: Navigator
-}
 
 export class Preloader {
-  readonly delegate: PreloaderDelegate
-  readonly selector: string = "a[data-turbo-preload]"
+  selector = "a[data-turbo-preload]"
 
-  constructor(delegate: PreloaderDelegate) {
+  constructor(delegate) {
     this.delegate = delegate
   }
 
-  get snapshotCache(): SnapshotCache {
+  get snapshotCache() {
     return this.delegate.navigator.view.snapshotCache
   }
 
@@ -28,13 +21,13 @@ export class Preloader {
     }
   }
 
-  preloadOnLoadLinksForView(element: Element) {
-    for (const link of element.querySelectorAll<HTMLAnchorElement>(this.selector)) {
+  preloadOnLoadLinksForView(element) {
+    for (const link of element.querySelectorAll(this.selector)) {
       this.preloadURL(link)
     }
   }
 
-  async preloadURL(link: HTMLAnchorElement) {
+  async preloadURL(link) {
     const location = new URL(link.href)
 
     if (this.snapshotCache.has(location)) {

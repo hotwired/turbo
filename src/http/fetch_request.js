@@ -1,41 +1,7 @@
 import { FetchResponse } from "./fetch_response"
-import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
 
-export type TurboBeforeFetchRequestEvent = CustomEvent<{
-  fetchOptions: RequestInit
-  url: URL
-  resume: (value?: any) => void
-}>
-export type TurboBeforeFetchResponseEvent = CustomEvent<{
-  fetchResponse: FetchResponse
-}>
-export type TurboFetchRequestErrorEvent = CustomEvent<{
-  request: FetchRequest
-  error: Error
-}>
-
-export interface FetchRequestDelegate {
-  referrer?: URL
-
-  prepareRequest(request: FetchRequest): void
-  requestStarted(request: FetchRequest): void
-  requestPreventedHandlingResponse(request: FetchRequest, response: FetchResponse): void
-  requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): void
-  requestFailedWithResponse(request: FetchRequest, response: FetchResponse): void
-  requestErrored(request: FetchRequest, error: Error): void
-  requestFinished(request: FetchRequest): void
-}
-
-export enum FetchMethod {
-  get,
-  post,
-  put,
-  patch,
-  delete,
-}
-
-export function fetchMethodFromString(method: string) {
+export function fetchMethodFromString(method) {
   switch (method.toLowerCase()) {
     case "get":
       return FetchMethod.get
@@ -50,32 +16,24 @@ export function fetchMethodFromString(method: string) {
   }
 }
 
-export type FetchRequestBody = FormData | URLSearchParams
-
-export type FetchRequestHeaders = { [header: string]: string }
-
-export interface FetchRequestOptions {
-  headers: FetchRequestHeaders
-  body: FetchRequestBody
-  followRedirects: boolean
+export const FetchMethod = {
+  get: "get",
+  post: "post",
+  put: "put",
+  patch: "patch",
+  delete: "delete"
 }
 
 export class FetchRequest {
-  readonly delegate: FetchRequestDelegate
-  readonly method: FetchMethod
-  readonly headers: FetchRequestHeaders
-  readonly url: URL
-  readonly body?: FetchRequestBody
-  readonly target?: FrameElement | HTMLFormElement | null
-  readonly abortController = new AbortController()
-  private resolveRequestPromise = (_value: any) => {}
+  abortController = new AbortController()
+  #resolveRequestPromise = (_value) => {}
 
   constructor(
-    delegate: FetchRequestDelegate,
-    method: FetchMethod,
-    location: URL,
-    body: FetchRequestBody = new URLSearchParams(),
-    target: FrameElement | HTMLFormElement | null = null
+    delegate,
+    method,
+    location,
+    body = new URLSearchParams(),
+    target = null
   ) {
     this.delegate = delegate
     this.method = method
@@ -85,11 +43,11 @@ export class FetchRequest {
     this.target = target
   }
 
-  get location(): URL {
+  get location() {
     return this.url
   }
 
-  get params(): URLSearchParams {
+  get params() {
     return this.url.searchParams
   }
 
@@ -101,18 +59,18 @@ export class FetchRequest {
     this.abortController.abort()
   }
 
-  async perform(): Promise<FetchResponse | void> {
+  async perform() {
     const { fetchOptions } = this
     this.delegate.prepareRequest(this)
-    await this.allowRequestToBeIntercepted(fetchOptions)
+    await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
       const response = await fetch(this.url.href, fetchOptions)
       return await this.receive(response)
     } catch (error) {
-      if ((error as Error).name !== "AbortError") {
-        if (this.willDelegateErrorHandling(error as Error)) {
-          this.delegate.requestErrored(this, error as Error)
+      if (error.name !== "AbortError") {
+        if (this.#willDelegateErrorHandling(error)) {
+          this.delegate.requestErrored(this, error)
         }
         throw error
       }
@@ -121,12 +79,12 @@ export class FetchRequest {
     }
   }
 
-  async receive(response: Response): Promise<FetchResponse> {
+  async receive(response) {
     const fetchResponse = new FetchResponse(response)
-    const event = dispatch<TurboBeforeFetchResponseEvent>("turbo:before-fetch-response", {
+    const event = dispatch("turbo:before-fetch-response", {
       cancelable: true,
       detail: { fetchResponse },
-      target: this.target as EventTarget,
+      target: this.target,
     })
     if (event.defaultPrevented) {
       this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
@@ -138,7 +96,7 @@ export class FetchRequest {
     return fetchResponse
   }
 
-  get fetchOptions(): RequestInit {
+  get fetchOptions() {
     return {
       method: FetchMethod[this.method].toUpperCase(),
       credentials: "same-origin",
@@ -164,27 +122,27 @@ export class FetchRequest {
     return this.abortController.signal
   }
 
-  acceptResponseType(mimeType: string) {
+  acceptResponseType(mimeType) {
     this.headers["Accept"] = [mimeType, this.headers["Accept"]].join(", ")
   }
 
-  private async allowRequestToBeIntercepted(fetchOptions: RequestInit) {
-    const requestInterception = new Promise((resolve) => (this.resolveRequestPromise = resolve))
-    const event = dispatch<TurboBeforeFetchRequestEvent>("turbo:before-fetch-request", {
+  async #allowRequestToBeIntercepted(fetchOptions) {
+    const requestInterception = new Promise((resolve) => (this.#resolveRequestPromise = resolve))
+    const event = dispatch("turbo:before-fetch-request", {
       cancelable: true,
       detail: {
         fetchOptions,
         url: this.url,
-        resume: this.resolveRequestPromise,
+        resume: this.#resolveRequestPromise,
       },
-      target: this.target as EventTarget,
+      target: this.target,
     })
     if (event.defaultPrevented) await requestInterception
   }
 
-  private willDelegateErrorHandling(error: Error) {
-    const event = dispatch<TurboFetchRequestErrorEvent>("turbo:fetch-request-error", {
-      target: this.target as EventTarget,
+  #willDelegateErrorHandling(error) {
+    const event = dispatch("turbo:fetch-request-error", {
+      target: this.target,
       cancelable: true,
       detail: { request: this, error: error },
     })

@@ -1,4 +1,4 @@
-import { Page, test } from "@playwright/test"
+import { test } from "@playwright/test"
 import { assert } from "chai"
 import {
   getFromLocalStorage,
@@ -231,7 +231,7 @@ test("test standard GET form submission", async ({ page }) => {
 
 test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
   await page.evaluate(() => {
-    const formControl = document.querySelector<HTMLSelectElement>("#external-select")
+    const formControl = document.querySelector("#external-select")
 
     if (formControl && formControl.form) formControl.form.requestSubmit()
   })
@@ -1075,14 +1075,14 @@ test("test following a link with [data-turbo-method] set when html[data-turbo=fa
 
   await page.click("#turbo-method-post-to-targeted-frame")
 
-  assert.equal(await page.textContent("h1"), "Hello", "treats link as a full-page navigation")
+  assert.equal(await page.textContent("h1"), "Hello", "treats link full-page navigation")
 })
 
 test("test following a link with [data-turbo-method] set when Turbo.session.drive = false", async ({ page }) => {
   await page.evaluate(() => (window.Turbo.session.drive = false))
   await page.click("#turbo-method-post-to-targeted-frame")
 
-  assert.equal(await page.textContent("h1"), "Hello", "treats link as a full-page navigation")
+  assert.equal(await page.textContent("h1"), "Hello", "treats link full-page navigation")
 })
 
 test("test stream link method form submission outside frame", async ({ page }) => {
@@ -1164,10 +1164,10 @@ test("test form submission skipped with submitter button[formtarget]", async ({ 
   assert.notOk(await formSubmitEnded(page))
 })
 
-function formSubmitStarted(page: Page) {
+function formSubmitStarted(page) {
   return getFromLocalStorage(page, "formSubmitStarted")
 }
 
-function formSubmitEnded(page: Page) {
+function formSubmitEnded(page) {
   return getFromLocalStorage(page, "formSubmitEnded")
 }

@@ -1,68 +1,52 @@
-import { JSHandle, Locator, Page } from "@playwright/test"
 
-type Target = string | null
-
-type EventType = string
-type EventDetail = any
-type EventLog = [EventType, EventDetail, Target]
-
-type MutationAttributeName = string
-type MutationAttributeValue = string | null
-type MutationLog = [MutationAttributeName, Target, MutationAttributeValue]
-
-type BodyHTML = string
-type BodyMutationLog = [BodyHTML]
-
-export function attributeForSelector(page: Page, selector: string, attributeName: string): Promise<string | null> {
+export function attributeForSelector(page, selector, attributeName) {
   return page.locator(selector).getAttribute(attributeName)
 }
 
-type CancellableEvent = "turbo:click" | "turbo:before-visit"
-
-export function cancelNextEvent(page: Page, eventName: CancellableEvent): Promise<void> {
+export function cancelNextEvent(page, eventName) {
   return page.evaluate(
     (eventName) => addEventListener(eventName, (event) => event.preventDefault(), { once: true }),
     eventName
   )
 }
 
-export function clickWithoutScrolling(page: Page, selector: string, options = {}) {
+export function clickWithoutScrolling(page, selector, options = {}) {
   const element = page.locator(selector, options)
 
   return element.evaluate((element) => element instanceof HTMLElement && element.click())
 }
 
-export function clearLocalStorage(page: Page): Promise<void> {
+export function clearLocalStorage(page) {
   return page.evaluate(() => localStorage.clear())
 }
 
-export function disposeAll(...handles: JSHandle[]): Promise<void[]> {
+export function disposeAll(...handles) {
   return Promise.all(handles.map((handle) => handle.dispose()))
 }
 
-export function getFromLocalStorage(page: Page, key: string) {
-  return page.evaluate((storageKey: string) => localStorage.getItem(storageKey), key)
+export function getFromLocalStorage(page, key) {
+  return page.evaluate((storageKey) => localStorage.getItem(storageKey), key)
 }
 
-export function getSearchParam(url: string, key: string): string | null {
+export function getSearchParam(url, key) {
   return searchParams(url).get(key)
 }
 
-export function hash(url: string): string {
+export function hash(url) {
   const { hash } = new URL(url)
 
   return hash
 }
 
-export async function hasSelector(page: Page, selector: string): Promise<boolean> {
+export async function hasSelector(page, selector) {
   return !!(await page.locator(selector).count())
 }
 
-export function innerHTMLForSelector(page: Page, selector: string): Promise<string> {
+export function innerHTMLForSelector(page, selector) {
   return page.locator(selector).innerHTML()
 }
 
-export async function isScrolledToSelector(page: Page, selector: string): Promise<boolean> {
+export async function isScrolledToSelector(page, selector) {
   const boundingBox = await page
     .locator(selector)
     .evaluate((element) => (element instanceof HTMLElement ? { x: element.offsetLeft, y: element.offsetTop } : null))
@@ -81,12 +65,12 @@ export function nextBeat() {
   return sleep(100)
 }
 
-export function nextBody(_page: Page, timeout = 500) {
+export function nextBody(_page, timeout = 500) {
   return sleep(timeout)
 }
 
-export async function nextEventNamed(page: Page, eventName: string): Promise<any> {
-  let record: EventLog | undefined
+export async function nextEventNamed(page, eventName) {
+  let record
   while (!record) {
     const records = await readEventLogs(page, 1)
     record = records.find(([name]) => name == eventName)
@@ -94,8 +78,8 @@ export async function nextEventNamed(page: Page, eventName: string): Promise<any
   return record[1]
 }
 
-export async function nextEventOnTarget(page: Page, elementId: string, eventName: string): Promise<any> {
-  let record: EventLog | undefined
+export async function nextEventOnTarget(page, elementId, eventName) {
+  let record
   while (!record) {
     const records = await readEventLogs(page, 1)
     record = records.find(([name, _, id]) => name == eventName && id == elementId)
@@ -103,9 +87,9 @@ export async function nextEventOnTarget(page: Page, elementId: string, eventName
   return record[1]
 }
 
-export async function listenForEventOnTarget(page: Page, elementId: string, eventName: string): Promise<void> {
+export async function listenForEventOnTarget(page, elementId, eventName) {
   return page.locator("#" + elementId).evaluate((element, eventName) => {
-    const eventLogs = (window as any).eventLogs
+    const eventLogs = window.eventLogs
 
     element.addEventListener(eventName, ({ target, type }) => {
       if (target instanceof Element) {
@@ -115,25 +99,25 @@ export async function listenForEventOnTarget(page: Page, elementId: string, even
   }, eventName)
 }
 
-export async function nextBodyMutation(page: Page): Promise<string | null> {
-  let record: BodyMutationLog | undefined
+export async function nextBodyMutation(page) {
+  let record
   while (!record) {
-    ;[record] = await readBodyMutationLogs(page, 1)
+    [record] = await readBodyMutationLogs(page, 1)
   }
   return record[0]
 }
 
-export async function noNextBodyMutation(page: Page): Promise<boolean> {
+export async function noNextBodyMutation(page) {
   const records = await readBodyMutationLogs(page, 1)
   return !records.some((record) => !!record)
 }
 
 export async function nextAttributeMutationNamed(
-  page: Page,
-  elementId: string,
-  attributeName: string
-): Promise<string | null> {
-  let record: MutationLog | undefined
+  page,
+  elementId,
+  attributeName
+){
+  let record
   while (!record) {
     const records = await readMutationLogs(page, 1)
     record = records.find(([name, id]) => name == attributeName && id == elementId)
@@ -143,38 +127,38 @@ export async function nextAttributeMutationNamed(
 }
 
 export async function noNextAttributeMutationNamed(
-  page: Page,
-  elementId: string,
-  attributeName: string
-): Promise<boolean> {
+  page,
+  elementId,
+  attributeName
+) {
   const records = await readMutationLogs(page, 1)
   return !records.some(([name, _, target]) => name == attributeName && target == elementId)
 }
 
-export async function noNextEventNamed(page: Page, eventName: string): Promise<boolean> {
+export async function noNextEventNamed(page, eventName) {
   const records = await readEventLogs(page, 1)
   return !records.some(([name]) => name == eventName)
 }
 
-export async function noNextEventOnTarget(page: Page, elementId: string, eventName: string): Promise<boolean> {
+export async function noNextEventOnTarget(page, elementId, eventName) {
   const records = await readEventLogs(page, 1)
   return !records.some(([name, _, target]) => name == eventName && target == elementId)
 }
 
-export async function outerHTMLForSelector(page: Page, selector: string): Promise<string> {
+export async function outerHTMLForSelector(page, selector) {
   const element = await page.locator(selector)
   return element.evaluate((element) => element.outerHTML)
 }
 
-export function pathname(url: string): string {
+export function pathname(url) {
   const { pathname } = new URL(url)
 
   return pathname
 }
 
-export async function pathnameForIFrame(page: Page, name: string) {
+export async function pathnameForIFrame(page, name) {
   const locator = await page.locator(`[name="${name}"]`)
-  const location = await locator.evaluate((iframe: HTMLIFrameElement) => iframe.contentWindow?.location)
+  const location = await locator.evaluate((iframe) => iframe.contentWindow?.location)
 
   if (location) {
     return pathname(location.href)
@@ -183,14 +167,14 @@ export async function pathnameForIFrame(page: Page, name: string) {
   }
 }
 
-export function propertyForSelector(page: Page, selector: string, propertyName: string): Promise<any> {
-  return page.locator(selector).evaluate((element, propertyName) => (element as any)[propertyName], propertyName)
+export function propertyForSelector(page, selector, propertyName) {
+  return page.locator(selector).evaluate((element, propertyName) => element[propertyName], propertyName)
 }
 
-async function readArray<T>(page: Page, identifier: string, length?: number): Promise<T[]> {
+async function readArray(page, identifier, length) {
   return page.evaluate(
     ({ identifier, length }) => {
-      const records = (window as any)[identifier]
+      const records = window[identifier]
       if (records != null && typeof records.splice == "function") {
         return records.splice(0, typeof length === "undefined" ? records.length : length)
       } else {
@@ -201,35 +185,35 @@ async function readArray<T>(page: Page, identifier: string, length?: number): Pr
   )
 }
 
-export function readBodyMutationLogs(page: Page, length?: number): Promise<BodyMutationLog[]> {
-  return readArray<BodyMutationLog>(page, "bodyMutationLogs", length)
+export function readBodyMutationLogs(page, length) {
+  return readArray(page, "bodyMutationLogs", length)
 }
 
-export function readEventLogs(page: Page, length?: number): Promise<EventLog[]> {
-  return readArray<EventLog>(page, "eventLogs", length)
+export function readEventLogs(page, length) {
+  return readArray(page, "eventLogs", length)
 }
 
-export function readMutationLogs(page: Page, length?: number): Promise<MutationLog[]> {
-  return readArray<MutationLog>(page, "mutationLogs", length)
+export function readMutationLogs(page, length){
+  return readArray(page, "mutationLogs", length)
 }
 
-export function search(url: string): string {
+export function search(url) {
   const { search } = new URL(url)
 
   return search
 }
 
-export function searchParams(url: string): URLSearchParams {
+export function searchParams(url) {
   const { searchParams } = new URL(url)
 
   return searchParams
 }
 
-export function selectorHasFocus(page: Page, selector: string): Promise<boolean> {
+export function selectorHasFocus(page, selector) {
   return page.locator(selector).evaluate((element) => element === document.activeElement)
 }
 
-export function setLocalStorageFromEvent(page: Page, eventName: string, storageKey: string, storageValue: string) {
+export function setLocalStorageFromEvent(page, eventName, storageKey, storageValue) {
   return page.evaluate(
     ({ eventName, storageKey, storageValue }) => {
       addEventListener(eventName, () => localStorage.setItem(storageKey, storageValue))
@@ -238,28 +222,28 @@ export function setLocalStorageFromEvent(page: Page, eventName: string, storageK
   )
 }
 
-export function scrollPosition(page: Page): Promise<{ x: number; y: number }> {
+export function scrollPosition(page) {
   return page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
 }
 
-export async function isScrolledToTop(page: Page): Promise<boolean> {
+export async function isScrolledToTop(page) {
   const { y: pageY } = await scrollPosition(page)
   return pageY === 0
 }
 
-export function scrollToSelector(page: Page, selector: string): Promise<void> {
+export function scrollToSelector(page, selector) {
   return page.locator(selector).scrollIntoViewIfNeeded()
 }
 
-export function sleep(timeout = 0): Promise<void> {
+export function sleep(timeout = 0) {
   return new Promise((resolve) => setTimeout(() => resolve(undefined), timeout))
 }
 
-export async function strictElementEquals(left: Locator, right: Locator): Promise<boolean> {
+export async function strictElementEquals(left, right) {
   return left.evaluate((left, right) => left === right, await right.elementHandle())
 }
 
-export function textContent(page: Page, html: string): Promise<string | null> {
+export function textContent(page, html) {
   return page.evaluate((html) => {
     const parser = new DOMParser()
     const { documentElement } = parser.parseFromString(html, "text/html")
@@ -268,34 +252,34 @@ export function textContent(page: Page, html: string): Promise<string | null> {
   }, html)
 }
 
-export function visitAction(page: Page): Promise<string> {
+export function visitAction(page) {
   return page.evaluate(() => {
     try {
-      return window.Turbo.navigator.currentVisit!.action
+      return window.Turbo.navigator.currentVisit.action
     } catch (error) {
       return "load"
     }
   })
 }
 
-export function waitForPathname(page: Page, pathname: string): Promise<void> {
+export function waitForPathname(page, pathname) {
   return page.waitForURL((url) => url.pathname == pathname)
 }
 
-export function waitUntilText(page: Page, text: string, state: "visible" | "attached" = "visible") {
+export function waitUntilText(page, text, state = "visible") {
   return page.waitForSelector(`text='${text}'`, { state })
 }
 
-export function waitUntilSelector(page: Page, selector: string, state: "visible" | "attached" = "visible") {
+export function waitUntilSelector(page, selector, state = "visible") {
   return page.waitForSelector(selector, { state })
 }
 
-export function waitUntilNoSelector(page: Page, selector: string, state: "hidden" | "detached" = "hidden") {
+export function waitUntilNoSelector(page, selector, state = "hidden") {
   return page.waitForSelector(selector, { state })
 }
 
-export async function willChangeBody(page: Page, callback: () => Promise<void>): Promise<boolean> {
-  const handles: JSHandle[] = []
+export async function willChangeBody(page, callback) {
+  const handles = []
 
   try {
     const originalBody = await page.evaluateHandle(() => document.body)

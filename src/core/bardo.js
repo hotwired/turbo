@@ -1,18 +1,9 @@
-import { PermanentElementMap } from "./snapshot"
-
-export interface BardoDelegate {
-  enteringBardo(currentPermanentElement: Element, newPermanentElement: Element): void
-  leavingBardo(currentPermanentElement: Element): void
-}
 
 export class Bardo {
-  readonly permanentElementMap: PermanentElementMap
-  readonly delegate: BardoDelegate
-
   static async preservingPermanentElements(
-    delegate: BardoDelegate,
-    permanentElementMap: PermanentElementMap,
-    callback: () => void
+    delegate,
+    permanentElementMap,
+    callback
   ) {
     const bardo = new this(delegate, permanentElementMap)
     bardo.enter()
@@ -20,7 +11,7 @@ export class Bardo {
     bardo.leave()
   }
 
-  constructor(delegate: BardoDelegate, permanentElementMap: PermanentElementMap) {
+  constructor(delegate, permanentElementMap) {
     this.delegate = delegate
     this.permanentElementMap = permanentElementMap
   }
@@ -42,31 +33,31 @@ export class Bardo {
     }
   }
 
-  replaceNewPermanentElementWithPlaceholder(permanentElement: Element) {
+  replaceNewPermanentElementWithPlaceholder(permanentElement) {
     const placeholder = createPlaceholderForPermanentElement(permanentElement)
     permanentElement.replaceWith(placeholder)
   }
 
-  replaceCurrentPermanentElementWithClone(permanentElement: Element) {
+  replaceCurrentPermanentElementWithClone(permanentElement) {
     const clone = permanentElement.cloneNode(true)
     permanentElement.replaceWith(clone)
   }
 
-  replacePlaceholderWithPermanentElement(permanentElement: Element) {
+  replacePlaceholderWithPermanentElement(permanentElement) {
     const placeholder = this.getPlaceholderById(permanentElement.id)
     placeholder?.replaceWith(permanentElement)
   }
 
-  getPlaceholderById(id: string) {
+  getPlaceholderById(id) {
     return this.placeholders.find((element) => element.content == id)
   }
 
-  get placeholders(): HTMLMetaElement[] {
-    return [...document.querySelectorAll<HTMLMetaElement>("meta[name=turbo-permanent-placeholder][content]")]
+  get placeholders() {
+    return [...document.querySelectorAll("meta[name=turbo-permanent-placeholder][content]")]
   }
 }
 
-function createPlaceholderForPermanentElement(permanentElement: Element) {
+function createPlaceholderForPermanentElement(permanentElement) {
   const element = document.createElement("meta")
   element.setAttribute("name", "turbo-permanent-placeholder")
   element.setAttribute("content", permanentElement.id)

@@ -1,4 +1,4 @@
-import { Page, test } from "@playwright/test"
+import { test } from "@playwright/test"
 import { assert } from "chai"
 import { nextEventOnTarget, noNextEventOnTarget } from "../helpers/page"
 
@@ -28,7 +28,7 @@ test("handles [data-remote=true] forms within a turbo-frame", async ({ page }) =
   })
 })
 
-async function assertRequestLimit(page: Page, count: number, callback: () => Promise<void>) {
+async function assertRequestLimit(page, count, callback) {
   let requestsStarted = 0
   await page.on("request", () => requestsStarted++)
   await callback()

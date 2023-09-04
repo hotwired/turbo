@@ -1,29 +1,21 @@
 import { nextEventLoopTick } from "../../util"
-import { View, ViewDelegate, ViewRenderOptions } from "../view"
+import { View } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
-import { Visit } from "./visit"
 
-export type PageViewRenderOptions = ViewRenderOptions<HTMLBodyElement>
 
-export interface PageViewDelegate extends ViewDelegate<HTMLBodyElement, PageSnapshot> {
-  viewWillCacheSnapshot(): void
-}
-
-type PageViewRenderer = PageRenderer | ErrorRenderer
-
-export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRenderer, PageViewDelegate> {
-  readonly snapshotCache = new SnapshotCache(10)
+export class PageView extends View {
+  snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 
-  shouldTransitionTo(newSnapshot: PageSnapshot) {
+  shouldTransitionTo(newSnapshot) {
     return this.snapshot.prefersViewTransitions && newSnapshot.prefersViewTransitions
   }
 
-  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit) {
+  renderPage(snapshot, isPreview = false, willRender = true, visit) {
     const renderer = new PageRenderer(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
 
     if (!renderer.shouldRender) {
@@ -35,7 +27,7 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     return this.render(renderer)
   }
 
-  renderError(snapshot: PageSnapshot, visit?: Visit) {
+  renderError(snapshot, visit) {
     visit?.changeHistory()
     const renderer = new ErrorRenderer(this.snapshot, snapshot, ErrorRenderer.renderElement, false)
     return this.render(renderer)
@@ -45,7 +37,7 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     this.snapshotCache.clear()
   }
 
-  async cacheSnapshot(snapshot: PageSnapshot = this.snapshot) {
+  async cacheSnapshot(snapshot = this.snapshot) {
     if (snapshot.isCacheable) {
       this.delegate.viewWillCacheSnapshot()
       const { lastRenderedLocation: location } = this
@@ -56,7 +48,7 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     }
   }
 
-  getCachedSnapshotForLocation(location: URL) {
+  getCachedSnapshotForLocation(location) {
     return this.snapshotCache.get(location)
   }
 

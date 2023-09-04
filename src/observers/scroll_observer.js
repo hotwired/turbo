@@ -1,14 +1,7 @@
-import { Position } from "../core/types"
-
-export interface ScrollObserverDelegate {
-  scrollPositionChanged(position: Position): void
-}
-
 export class ScrollObserver {
-  readonly delegate: ScrollObserverDelegate
   started = false
 
-  constructor(delegate: ScrollObserverDelegate) {
+  constructor(delegate) {
     this.delegate = delegate
   }
 
@@ -33,7 +26,7 @@ export class ScrollObserver {
 
   // Private
 
-  updatePosition(position: Position) {
+  updatePosition(position) {
     this.delegate.scrollPositionChanged(position)
   }
 }

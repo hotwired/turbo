@@ -11,11 +11,11 @@ export class DOMTestCase {
     this.fixtureElement.remove()
   }
 
-  append(node: Node) {
+  append(node) {
     this.fixtureElement.appendChild(node)
   }
 
-  find(selector: string) {
+  find(selector) {
     return this.fixtureElement.querySelector(selector)
   }
 
@@ -23,7 +23,7 @@ export class DOMTestCase {
     return this.fixtureElement.innerHTML
   }
 
-  set fixtureHTML(html: string) {
+  set fixtureHTML(html) {
     this.fixtureElement.innerHTML = html
   }
 }

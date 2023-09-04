@@ -1,25 +1,9 @@
-import { Bardo, BardoDelegate } from "./bardo"
-import { Snapshot } from "./snapshot"
-import { ReloadReason } from "./native/browser_adapter"
+import { Bardo } from "./bardo"
 
-type ResolvingFunctions<T = unknown> = {
-  resolve(value: T | PromiseLike<T>): void
-  reject(reason?: any): void
-}
+export class Renderer {
+  #activeElement = null
 
-export type Render<E> = (currentElement: E, newElement: E) => void
-
-export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapshot<E>> implements BardoDelegate {
-  readonly currentSnapshot: S
-  readonly newSnapshot: S
-  readonly isPreview: boolean
-  readonly willRender: boolean
-  readonly promise: Promise<void>
-  renderElement: Render<E>
-  private resolvingFunctions?: ResolvingFunctions<void>
-  private activeElement: Element | null = null
-
-  constructor(currentSnapshot: S, newSnapshot: S, renderElement: Render<E>, isPreview: boolean, willRender = true) {
+  constructor(currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
     this.currentSnapshot = currentSnapshot
     this.newSnapshot = newSnapshot
     this.isPreview = isPreview
@@ -32,7 +16,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     return true
   }
 
-  get reloadReason(): ReloadReason {
+  get reloadReason() {
     return
   }
 
@@ -40,7 +24,9 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     return
   }
 
-  abstract render(): Promise<void>
+  render() {
+    // Abstract method
+  }
 
   finishRendering() {
     if (this.resolvingFunctions) {
@@ -49,7 +35,7 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
     }
   }
 
-  async preservingPermanentElements(callback: () => void) {
+  async preservingPermanentElements(callback) {
     await Bardo.preservingPermanentElements(this, this.permanentElementMap, callback)
   }
 
@@ -62,19 +48,19 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
 
   // Bardo delegate
 
-  enteringBardo(currentPermanentElement: Element) {
-    if (this.activeElement) return
+  enteringBardo(currentPermanentElement) {
+    if (this.#activeElement) return
 
     if (currentPermanentElement.contains(this.currentSnapshot.activeElement)) {
-      this.activeElement = this.currentSnapshot.activeElement
+      this.#activeElement = this.currentSnapshot.activeElement
     }
   }
 
-  leavingBardo(currentPermanentElement: Element) {
-    if (currentPermanentElement.contains(this.activeElement) && this.activeElement instanceof HTMLElement) {
-      this.activeElement.focus()
+  leavingBardo(currentPermanentElement) {
+    if (currentPermanentElement.contains(this.#activeElement) && this.#activeElement instanceof HTMLElement) {
+      this.#activeElement.focus()
 
-      this.activeElement = null
+      this.#activeElement = null
     }
   }
 
@@ -95,6 +81,6 @@ export abstract class Renderer<E extends Element, S extends Snapshot<E> = Snapsh
   }
 }
 
-function elementIsFocusable(element: any): element is { focus: () => void } {
+function elementIsFocusable(element) {
   return element && typeof element.focus == "function"
 }

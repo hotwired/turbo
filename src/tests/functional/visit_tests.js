@@ -75,7 +75,7 @@ test("test canceling a before-visit event prevents navigation", async ({ page })
   await cancelNextVisit(page)
   const urlBeforeVisit = page.url()
 
-  assert.notOk<boolean>(
+  assert.notOk(
     await willChangeBody(page, async () => {
       await page.click("#same-origin-link")
       await nextBeat()
@@ -118,9 +118,9 @@ test("test turbo:before-fetch-response open new site", async ({ page }) => {
   page.evaluate(() =>
     addEventListener(
       "turbo:before-fetch-response",
-      async function eventListener(event: any) {
+      async function eventListener(event) {
         removeEventListener("turbo:before-fetch-response", eventListener, false)
-        ;(window as any).fetchResponseResult = {
+        ;window.fetchResponseResult = {
           responseText: await event.detail.fetchResponse.responseText,
           responseHTML: await event.detail.fetchResponse.responseHTML,
         }
@@ -132,7 +132,7 @@ test("test turbo:before-fetch-response open new site", async ({ page }) => {
   await page.click("#sample-response")
   await nextEventNamed(page, "turbo:before-fetch-response")
 
-  const fetchResponseResult = await page.evaluate(() => (window as any).fetchResponseResult)
+  const fetchResponseResult = await page.evaluate(() => window.fetchResponseResult)
 
   assert.isTrue(fetchResponseResult.responseText.indexOf("An element with an ID") > -1)
   assert.isTrue(fetchResponseResult.responseHTML.indexOf("An element with an ID") > -1)
@@ -172,11 +172,11 @@ test("test cache does not override response after redirect", async ({ page }) =>
   assert.equal(await page.locator("some-cached-element").count(), 0)
 })
 
-function cancelNextVisit(page: Page): Promise<void> {
+function cancelNextVisit(page) {
   return cancelNextEvent(page, "turbo:before-visit")
 }
 
-function contentTypeOfURL(url: string): Promise<string | undefined> {
+function contentTypeOfURL(url) {
   return new Promise((resolve) => {
     get(url, ({ headers }) => resolve(headers["content-type"]))
   })
@@ -213,13 +213,13 @@ test("test can scroll to element after history-initiated turbo:visit", async ({ 
 
 test("test Visit with network error", async ({ page }) => {
   await page.evaluate(() => {
-    addEventListener("turbo:fetch-request-error", (event: Event) => event.preventDefault())
+    addEventListener("turbo:fetch-request-error", (event) => event.preventDefault())
   })
   await page.context().setOffline(true)
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:fetch-request-error")
 })
 
-async function visitLocation(page: Page, location: string) {
+async function visitLocation(page, location) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
 }

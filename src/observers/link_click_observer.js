@@ -1,17 +1,10 @@
 import { expandURL } from "../core/url"
 import { findClosestRecursively } from "../util"
 
-export interface LinkClickObserverDelegate {
-  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean
-  followedLinkToLocation(link: Element, location: URL): void
-}
-
 export class LinkClickObserver {
-  readonly delegate: LinkClickObserverDelegate
-  readonly eventTarget: EventTarget
   started = false
 
-  constructor(delegate: LinkClickObserverDelegate, eventTarget: EventTarget) {
+  constructor(delegate, eventTarget) {
     this.delegate = delegate
     this.eventTarget = eventTarget
   }
@@ -35,7 +28,7 @@ export class LinkClickObserver {
     this.eventTarget.addEventListener("click", this.clickBubbled, false)
   }
 
-  clickBubbled = (event: Event) => {
+  clickBubbled = (event) => {
     if (event instanceof MouseEvent && this.clickEventIsSignificant(event)) {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = this.findLinkFromClickTarget(target)
@@ -49,9 +42,9 @@ export class LinkClickObserver {
     }
   }
 
-  clickEventIsSignificant(event: MouseEvent) {
+  clickEventIsSignificant(event) {
     return !(
-      (event.target && (event.target as any).isContentEditable) ||
+      (event.target && (event.target).isContentEditable) ||
       event.defaultPrevented ||
       event.which > 1 ||
       event.altKey ||
@@ -61,16 +54,16 @@ export class LinkClickObserver {
     )
   }
 
-  findLinkFromClickTarget(target: EventTarget | null): HTMLAnchorElement | undefined {
-    return findClosestRecursively<HTMLAnchorElement>(target as Element, "a[href]:not([target^=_]):not([download])")
+  findLinkFromClickTarget(target) {
+    return findClosestRecursively(target, "a[href]:not([target^=_]):not([download])")
   }
 
-  getLocationForLink(link: Element): URL {
+  getLocationForLink(link) {
     return expandURL(link.getAttribute("href") || "")
   }
 }
 
-function doesNotTargetIFrame(anchor: HTMLAnchorElement): boolean {
+function doesNotTargetIFrame(anchor) {
   if (anchor.hasAttribute("target")) {
     for (const element of document.getElementsByName(anchor.target)) {
       if (element instanceof HTMLIFrameElement) return false

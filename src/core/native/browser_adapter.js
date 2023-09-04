@@ -1,40 +1,26 @@
-import { Adapter } from "./adapter"
 import { ProgressBar } from "../drive/progress_bar"
-import { SystemStatusCode, Visit, VisitOptions } from "../drive/visit"
-import { FormSubmission } from "../drive/form_submission"
-import { Session } from "../session"
+import { SystemStatusCode } from "../drive/visit"
 import { uuid, dispatch } from "../../util"
 
-export type ReloadReason = StructuredReason | undefined
-interface StructuredReason {
-  reason: string
-  context?: { [key: string]: any }
-}
+export class BrowserAdapter {
+  progressBar = new ProgressBar()
 
-export class BrowserAdapter implements Adapter {
-  readonly session: Session
-  readonly progressBar = new ProgressBar()
-
-  visitProgressBarTimeout?: number
-  formProgressBarTimeout?: number
-  location?: URL
-
-  constructor(session: Session) {
+  constructor(session) {
     this.session = session
   }
 
-  visitProposedToLocation(location: URL, options?: Partial<VisitOptions>) {
+  visitProposedToLocation(location, options) {
     this.navigator.startVisit(location, options?.restorationIdentifier || uuid(), options)
   }
 
-  visitStarted(visit: Visit) {
+  visitStarted(visit) {
     this.location = visit.location
     visit.loadCachedSnapshot()
     visit.issueRequest()
     visit.goToSamePageAnchor()
   }
 
-  visitRequestStarted(visit: Visit) {
+  visitRequestStarted(visit) {
     this.progressBar.setValue(0)
     if (visit.hasCachedSnapshot() || visit.action != "restore") {
       this.showVisitProgressBarAfterDelay()
@@ -43,11 +29,11 @@ export class BrowserAdapter implements Adapter {
     }
   }
 
-  visitRequestCompleted(visit: Visit) {
+  visitRequestCompleted(visit) {
     visit.loadResponse()
   }
 
-  visitRequestFailedWithStatusCode(visit: Visit, statusCode: number) {
+  visitRequestFailedWithStatusCode(visit, statusCode) {
     switch (statusCode) {
       case SystemStatusCode.networkFailure:
       case SystemStatusCode.timeoutFailure:
@@ -63,27 +49,27 @@ export class BrowserAdapter implements Adapter {
     }
   }
 
-  visitRequestFinished(_visit: Visit) {
+  visitRequestFinished(_visit) {
     this.progressBar.setValue(1)
     this.hideVisitProgressBar()
   }
 
-  visitCompleted(_visit: Visit) {}
+  visitCompleted(_visit) {}
 
-  pageInvalidated(reason: ReloadReason) {
+  pageInvalidated(reason) {
     this.reload(reason)
   }
 
-  visitFailed(_visit: Visit) {}
+  visitFailed(_visit) {}
 
-  visitRendered(_visit: Visit) {}
+  visitRendered(_visit) {}
 
-  formSubmissionStarted(_formSubmission: FormSubmission) {
+  formSubmissionStarted(_formSubmission) {
     this.progressBar.setValue(0)
     this.showFormProgressBarAfterDelay()
   }
 
-  formSubmissionFinished(_formSubmission: FormSubmission) {
+  formSubmissionFinished(_formSubmission) {
     this.progressBar.setValue(1)
     this.hideFormProgressBar()
   }
@@ -120,7 +106,7 @@ export class BrowserAdapter implements Adapter {
     this.progressBar.show()
   }
 
-  reload(reason: ReloadReason) {
+  reload(reason) {
     dispatch("turbo:reload", { detail: reason })
 
     window.location.href = this.location?.toString() || window.location.href

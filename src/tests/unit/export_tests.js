@@ -1,36 +1,6 @@
 import { assert } from "@open-wc/testing"
 import * as Turbo from "../../index"
 
-// ESBuild loader does not like these types.
-export type {
-  PageRenderer,
-  PageSnapshot,
-  FrameRenderer,
-  FrameElement,
-  StreamActions,
-  StreamElement,
-  StreamSourceElement,
-  TurboBeforeCacheEvent,
-  TurboBeforeFetchRequestEvent,
-  TurboBeforeFetchResponseEvent,
-  TurboBeforeFrameRenderEvent,
-  TurboBeforeRenderEvent,
-  TurboBeforeStreamRenderEvent,
-  TurboBeforeVisitEvent,
-  TurboClickEvent,
-  TurboFetchRequestErrorEvent,
-  TurboFrameLoadEvent,
-  TurboFrameMissingEvent,
-  TurboFrameRenderEvent,
-  TurboLoadEvent,
-  TurboRenderEvent,
-  TurboStreamAction,
-  TurboStreamActions,
-  TurboSubmitEndEvent,
-  TurboSubmitStartEvent,
-  TurboVisitEvent,
-} from "../../index"
-
 test("test Turbo interface", () => {
   assert.equal(typeof Turbo.start, "function")
   assert.equal(typeof Turbo.registerAdapter, "function")
