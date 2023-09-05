@@ -11,6 +11,8 @@ export class StreamSourceElement extends HTMLElement {
 
   disconnectedCallback() {
     if (this.streamSource) {
+      this.streamSource.close()
+
       disconnectStreamSource(this.streamSource)
     }
   }
