@@ -82,6 +82,19 @@ test("test following a link sets the frame element's [src]", async ({ page }) =>
   assert.equal(src.searchParams.get("key"), "value", "[src] attribute encodes query parameters")
 })
 
+test("test following a link doesn't set the frame element's [src] if the link has [data-turbo-stream]", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/form.html")
+
+  const originalSrc = await page.getAttribute("#frame", "src")
+
+  await page.click("#stream-link-get-method-inside-frame")
+  await nextBeat()
+
+  const newSrc = await page.getAttribute("#frame", "src")
+
+  assert.equal(originalSrc, newSrc, "the turbo-frame src should not change after clicking the link")
+})
+
 test("test a frame whose src references itself does not infinitely loop", async ({ page }) => {
   await page.click("#frame-self")
 

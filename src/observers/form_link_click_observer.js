@@ -20,7 +20,7 @@ export class FormLinkClickObserver {
   willFollowLinkToLocation(link, location, originalEvent) {
     return (
       this.delegate.willSubmitFormLinkToLocation(link, location, originalEvent) &&
-      link.hasAttribute("data-turbo-method")
+      (link.hasAttribute("data-turbo-method") || link.hasAttribute("data-turbo-stream"))
     )
   }
 
