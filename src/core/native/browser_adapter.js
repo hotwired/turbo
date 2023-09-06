@@ -64,6 +64,8 @@ export class BrowserAdapter {
 
   visitRendered(_visit) {}
 
+  // Form Submission Delegate
+
   formSubmissionStarted(_formSubmission) {
     this.progressBar.setValue(0)
     this.showFormProgressBarAfterDelay()

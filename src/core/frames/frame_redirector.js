@@ -21,6 +21,8 @@ export class FrameRedirector {
     this.formSubmitObserver.stop()
   }
 
+  // Link interceptor delegate
+
   shouldInterceptLinkClick(element, _location, _event) {
     return this.#shouldRedirect(element)
   }
@@ -31,6 +33,8 @@ export class FrameRedirector {
       frame.delegate.linkClickIntercepted(element, url, event)
     }
   }
+
+  // Form submit observer delegate
 
   willSubmitForm(element, submitter) {
     return (

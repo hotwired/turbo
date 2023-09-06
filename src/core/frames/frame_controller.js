@@ -44,6 +44,8 @@ export class FrameController {
     this.formSubmitObserver = new FormSubmitObserver(this, this.element)
   }
 
+  // Frame delegate
+
   connect() {
     if (!this.#connected) {
       this.#connected = true
@@ -283,6 +285,7 @@ export class FrameController {
   viewInvalidated() {}
 
   // Frame renderer delegate
+
   willRenderFrame(currentElement, _newElement) {
     this.previousFrameElement = currentElement.cloneNode(true)
   }

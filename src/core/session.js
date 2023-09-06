@@ -180,6 +180,8 @@ export class Session {
     this.adapter.visitProposedToLocation(location, options)
   }
 
+  // Visit delegate
+
   visitStarted(visit) {
     if (!visit.acceptsStreamResponse) {
       markAsBusy(document.documentElement)

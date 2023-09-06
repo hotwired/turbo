@@ -8,6 +8,8 @@ export class StreamMessageRenderer {
     )
   }
 
+  // Bardo delegate
+
   enteringBardo(currentPermanentElement, newPermanentElement) {
     newPermanentElement.replaceWith(currentPermanentElement.cloneNode(true))
   }

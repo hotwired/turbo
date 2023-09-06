@@ -15,6 +15,8 @@ export class FormLinkClickObserver {
     this.linkInterceptor.stop()
   }
 
+  // Link click observer delegate
+
   willFollowLinkToLocation(link, location, originalEvent) {
     return (
       this.delegate.willSubmitFormLinkToLocation(link, location, originalEvent) &&
