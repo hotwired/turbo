@@ -1,5 +1,4 @@
 import resolve from "@rollup/plugin-node-resolve"
-import typescript from "@rollup/plugin-typescript"
 
 import { version } from "./package.json"
 const year = new Date().getFullYear()
@@ -7,7 +6,7 @@ const banner = `/*!\nTurbo ${version}\nCopyright © ${year} 37signals LLC\n */`
 
 export default [
   {
-    input: "src/index.ts",
+    input: "src/index.js",
     output: [
       {
         name: "Turbo",
@@ -21,10 +20,7 @@ export default [
         banner
       }
     ],
-    plugins: [
-      resolve(),
-      typescript()
-    ],
+    plugins: [resolve()],
     watch: {
       include: "src/**"
     }
