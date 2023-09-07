@@ -17,6 +17,10 @@ import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 
+/**
+ * The Session class represents a user session, managing the various observers, navigators,
+ * and controllers to provide a seamless user experience in a Turbo Drive enabled application.
+ */
 export class Session {
   navigator = new Navigator(this)
   history = new History(this)
@@ -40,6 +44,9 @@ export class Session {
   started = false
   formMode = "on"
 
+  /**
+   * Starts all observers and services if not already started.
+   */
   start() {
     if (!this.started) {
       this.pageObserver.start()
@@ -57,10 +64,16 @@ export class Session {
     }
   }
 
+  /**
+   * Disables the session.
+   */
   disable() {
     this.enabled = false
   }
 
+  /**
+   * Stops all observers and services if they are running.
+   */
   stop() {
     if (this.started) {
       this.pageObserver.stop()
@@ -76,10 +89,22 @@ export class Session {
     }
   }
 
+  /**
+   * Registers a new browser adapter for the session.
+   *
+   * @param {BrowserAdapter} adapter - The new browser adapter to register.
+   */
   registerAdapter(adapter) {
     this.adapter = adapter
   }
 
+  /**
+   * Initiates a visit to a specified location, with optional parameters.
+   *
+   * @param {string} location - The location to visit.
+   * @param {Object} options - Optional parameters for the visit.
+   * @param {string} [options.frame] - The ID of the frame element to use for the visit.
+   */
   visit(location, options = {}) {
     const frameElement = options.frame ? document.getElementById(options.frame) : null
 
@@ -91,26 +116,54 @@ export class Session {
     }
   }
 
+  /**
+   * Connects a new stream source.
+   *
+   * @param {any} source - The new stream source to connect.
+   */
   connectStreamSource(source) {
     this.streamObserver.connectStreamSource(source)
   }
 
+  /**
+   * Disconnects an existing stream source.
+   *
+   * @param {any} source - The stream source to disconnect.
+   */
   disconnectStreamSource(source) {
     this.streamObserver.disconnectStreamSource(source)
   }
 
+  /**
+   * Renders a stream message.
+   *
+   * @param {Object} message - The stream message to render.
+   */
   renderStreamMessage(message) {
     this.streamMessageRenderer.render(StreamMessage.wrap(message))
   }
 
+  /**
+   * Clears the cache.
+   */
   clearCache() {
     this.view.clearSnapshotCache()
   }
 
+  /**
+   * Sets the delay for the progress bar.
+   *
+   * @param {number} delay - The delay in milliseconds.
+   */
   setProgressBarDelay(delay) {
     this.progressBarDelay = delay
   }
 
+  /**
+   * Sets the form mode.
+   *
+   * @param {string} mode - The form mode to set, either "on" or "off".
+   */
   setFormMode(mode) {
     this.formMode = mode
   }
@@ -361,6 +414,14 @@ export class Session {
 
   // Helpers
 
+  /**
+   * Helper function to check if a submission is navigatable based on the current form mode and element attributes.
+   *
+   * @private
+   * @param {HTMLFormElement} form - The form element being submitted.
+   * @param {HTMLElement} submitter - The element that triggered the form submission.
+   * @return {boolean} - True if the submission is navigatable, false otherwise.
+   */
   submissionIsNavigatable(form, submitter) {
     if (this.formMode == "off") {
       return false
@@ -375,6 +436,13 @@ export class Session {
     }
   }
 
+  /**
+   * Helper function to check if an element is navigatable based on data attributes and the current drive mode.
+   *
+   * @private
+   * @param {HTMLElement} element - The element to check.
+   * @return {boolean} - True if the element is navigatable, false otherwise.
+   */
   elementIsNavigatable(element) {
     const container = findClosestRecursively(element, "[data-turbo]")
     const withinFrame = findClosestRecursively(element, "turbo-frame")
@@ -399,10 +467,24 @@ export class Session {
 
   // Private
 
+  /**
+   * Helper function to get the appropriate action for a link click.
+   *
+   * @private
+   * @param {HTMLAnchorElement} link - The link being clicked.
+   * @return {string} - The action to perform for the link click.
+   */
   getActionForLink(link) {
     return getVisitAction(link) || "advance"
   }
 
+  /**
+   * Helper function to get the current page snapshot.
+   *
+   * @private
+   * @readonly
+   * @return {Snapshot} - The current page snapshot.
+   */
   get snapshot() {
     return this.view.snapshot
   }
@@ -419,6 +501,11 @@ export class Session {
 // older adapters which do not expect URL objects. We should
 // consider removing this support at some point in the future.
 
+/**
+ * Extends a URL with deprecated properties for compatibility with older Turbo Native adapters.
+ *
+ * @param {URL} url - The URL to extend.
+ */
 function extendURLWithDeprecatedProperties(url) {
   Object.defineProperties(url, deprecatedLocationPropertyDescriptors)
 }
