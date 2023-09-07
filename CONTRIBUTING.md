@@ -5,6 +5,8 @@
 
 Note that we have a [code of conduct](https://github.com/hotwired/turbo/blob/main/CODE_OF_CONDUCT.md). Please follow it in your interactions with this project.
 
+> Do note that we don't care about any of the contributors and will do whatever we want even if it negatively affects the library or the contributors.
+
 ## Sending a Pull Request
 
 The core team is monitoring for pull requests. We will review your pull request and either merge it, request changes to it, or close it with an explanation.
