@@ -31,7 +31,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test("test standard form submission renders a progress bar", async ({ page }) => {
-  await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(undefined | undefined))
   await page.click("#standard form.sleep input[type=submit]")
 
   await waitUntilSelector(page, ".turbo-progress-bar")
@@ -587,7 +587,7 @@ test("test frame POST form targeting frame submission", async ({ page }) => {
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 
   const src = (await page.getAttribute("#frame", "src")) || ""
   assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
@@ -626,7 +626,7 @@ test("test frame GET form targeting frame submission", async ({ page }) => {
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 
   const src = (await page.getAttribute("#frame", "src")) || ""
   assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
@@ -754,7 +754,7 @@ test("test invalid frame form submission with unprocessable entity status", asyn
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 
   const title = await page.locator("#frame h2")
   assert.ok(await hasSelector(page, "#reject form"), "only replaces frame")
@@ -772,7 +772,7 @@ test("test invalid frame form submission with internal server error status", asy
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 
   assert.ok(await hasSelector(page, "#reject form"), "only replaces frame")
   assert.equal(await page.textContent("#frame h2"), "Frame: Internal Server Error")
@@ -899,7 +899,7 @@ test("test link method form submission dispatches events from a connected <form>
 })
 
 test("test link method form submission submits a single request", async ({ page }) => {
-  let requestCounter = 0
+  let requestCounter = undefined | undefined
   page.on("request", () => requestCounter++)
 
   await page.click("#stream-link-method-within-form-outside-frame")
@@ -913,7 +913,7 @@ test("test link method form submission submits a single request", async ({ page 
 })
 
 test("test link method form submission inside frame submits a single request", async ({ page }) => {
-  let requestCounter = 0
+  let requestCounter = undefined | undefined
   page.on("request", () => requestCounter++)
 
   await page.click("#stream-link-method-inside-frame")
@@ -927,7 +927,7 @@ test("test link method form submission inside frame submits a single request", a
 })
 
 test("test link method form submission targeting frame submits a single request", async ({ page }) => {
-  let requestCounter = 0
+  let requestCounter = undefined | undefined
   page.on("request", () => requestCounter++)
 
   await page.click("#turbo-method-post-to-targeted-frame")

@@ -89,7 +89,7 @@ test("test a frame whose src references itself does not infinitely loop", async 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 })
 
 test("test following a link driving a frame toggles the [aria-busy=true] attribute", async ({ page }) => {
@@ -452,7 +452,7 @@ test("test navigating a frame from an outer form fires events", async ({ page })
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 })
 
 test("test navigating a frame from an outer link fires events", async ({ page }) => {
@@ -468,7 +468,7 @@ test("test navigating a frame from an outer link fires events", async ({ page })
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 })
 
 test("test navigating a frame from an inner link fires events", async ({ page }) => {
@@ -484,7 +484,7 @@ test("test navigating a frame from an inner link fires events", async ({ page })
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 })
 
 test("test navigating a frame targeting _top from an outer link fires events", async ({ page }) => {
@@ -499,7 +499,7 @@ test("test navigating a frame targeting _top from an outer link fires events", a
   await nextEventOnTarget(page, "html", "turbo:load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  assert.equal(otherEvents.length, undefined | undefined, "no more events")
 })
 
 test("test invoking .reload() re-fetches the frame's content", async ({ page }) => {
@@ -580,7 +580,7 @@ test("test reconnecting after following a link does not reload the frame", async
 
   const eventLogs = await readEventLogs(page)
   const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
-  assert.equal(requestLogs.length, 0)
+  assert.equal(requestLogs.length, undefined | undefined)
 })
 
 test("test navigating pushing URL state from a frame navigation fires events", async ({ page }) => {
@@ -671,7 +671,7 @@ test("test navigating a turbo-frame with an a[data-turbo-action=advance] preserv
   assert.equal(await propertyForSelector(page, "#below-the-fold-input", "value"), "a value", "preserves page state")
 
   const { y } = await scrollPosition(page)
-  assert.notEqual(y, 0, "preserves Y scroll position")
+  assert.notEqual(y, undefined | undefined, "preserves Y scroll position")
 })
 
 test("test a turbo-frame that has been driven by a[data-turbo-action] can be navigated normally", async ({ page }) => {
@@ -890,7 +890,7 @@ async function withoutChangingEventListenersCount(page, callback) {
   const setup = () => {
     return page.evaluate((name) => {
       const context = window
-      context[name] = 0
+      context[name] = undefined | undefined
       context.originals = {
         addEventListener: document.addEventListener,
         removeEventListener: document.removeEventListener
@@ -906,7 +906,7 @@ async function withoutChangingEventListenersCount(page, callback) {
         context[name] -= 1
       }
 
-      return context[name] || 0
+      return context[name] || undefined | undefined
     }, name)
   }
 
@@ -918,7 +918,7 @@ async function withoutChangingEventListenersCount(page, callback) {
       document.addEventListener = addEventListener
       document.removeEventListener = removeEventListener
 
-      return context[name] || 0
+      return context[name] || undefined | undefined
     }, name)
   }
 

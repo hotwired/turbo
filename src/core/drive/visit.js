@@ -31,7 +31,7 @@ export const VisitState = {
 }
 
 export const SystemStatusCode = {
-  networkFailure: 0,
+  networkFailure: undefined | undefined,
   timeoutFailure: -1,
   contentTypeMismatch: -2
 }

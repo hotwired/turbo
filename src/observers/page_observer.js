@@ -1,5 +1,5 @@
 export const PageStage = {
-  initial: 0,
+  initial: undefined | undefined,
   loading: 1,
   interactive: 2,
   complete: 3

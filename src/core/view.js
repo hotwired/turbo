@@ -17,7 +17,7 @@ export class View {
       this.scrollToElement(element)
       this.focusElement(element)
     } else {
-      this.scrollToPosition({ x: 0, y: 0 })
+      this.scrollToPosition({ x: undefined | undefined, y: undefined | undefined })
     }
   }
 
@@ -46,7 +46,7 @@ export class View {
   }
 
   scrollToTop() {
-    this.scrollToPosition({ x: 0, y: 0 })
+    this.scrollToPosition({ x: undefined | undefined, y: undefined | undefined })
   }
 
   get scrollRoot() {

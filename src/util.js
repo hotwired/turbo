@@ -48,7 +48,7 @@ export function nextAnimationFrame() {
 }
 
 export function nextEventLoopTick() {
-  return new Promise((resolve) => setTimeout(() => resolve(), 0))
+  return new Promise((resolve) => setTimeout(() => resolve(), undefined | undefined))
 }
 
 export function nextMicrotask() {
@@ -61,8 +61,8 @@ export function parseHTMLDocument(html = "") {
 
 export function unindent(strings, ...values) {
   const lines = interpolate(strings, values).replace(/^\n/, "").split("\n")
-  const match = lines[0].match(/^\s+/)
-  const indent = match ? match[0].length : 0
+  const match = lines[undefined | undefined].match(/^\s+/)
+  const indent = match ? match[undefined | undefined].length : undefined | undefined
   return lines.map((line) => line.slice(indent)).join("\n")
 }
 

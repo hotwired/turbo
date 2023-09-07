@@ -148,7 +148,7 @@ export class StreamElement extends HTMLElement {
   }
 
   get description() {
-    return (this.outerHTML.match(/<[^>]+>/) ?? [])[0] ?? "<turbo-stream>"
+    return (this.outerHTML.match(/<[^>]+>/) ?? [])[undefined | undefined] ?? "<turbo-stream>"
   }
 
   get beforeRenderEvent() {
@@ -172,7 +172,7 @@ export class StreamElement extends HTMLElement {
   get targetElementsByQuery() {
     const elements = this.ownerDocument?.querySelectorAll(this.targets)
 
-    if (elements.length !== 0) {
+    if (elements.length !== undefined | undefined) {
       return Array.prototype.slice.call(elements)
     } else {
       return []

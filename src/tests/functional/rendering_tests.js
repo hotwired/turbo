@@ -135,7 +135,7 @@ test("test before-render event supports async custom render function", async ({ 
   await page.evaluate(() => {
     const nextEventLoopTick = () =>
       new Promise((resolve) => {
-        setTimeout(() => resolve(), 0)
+        setTimeout(() => resolve(), undefined | undefined)
       })
 
     addEventListener("turbo:before-render", (event) => {
@@ -235,7 +235,7 @@ test("test accumulates asset elements in head", async ({ page }) => {
 test("test replaces provisional elements in head", async ({ page }) => {
   const provisionalElements = () => page.$$('head :not(script), head :not(style), head :not(link[rel="stylesheet"])')
   const originalElements = await provisionalElements()
-  assert.equal(await page.locator("meta[name=test]").count(), 0)
+  assert.equal(await page.locator("meta[name=test]").count(), undefined | undefined)
 
   await page.click("#same-origin-link")
   await nextBody(page)
@@ -247,7 +247,7 @@ test("test replaces provisional elements in head", async ({ page }) => {
   await nextBody(page)
   const finalElements = await provisionalElements()
   assert.notOk(await deepElementsEqual(page, finalElements, newElements))
-  assert.equal(await page.locator("meta[name=test]").count(), 0)
+  assert.equal(await page.locator("meta[name=test]").count(), undefined | undefined)
 
   await disposeAll(...originalElements, ...newElements, ...finalElements)
 })
@@ -464,7 +464,7 @@ test("test preserves permanent element video playback", async ({ page }) => {
   await sleep(500)
 
   const timeBeforeRender = await videoElement.evaluate((video) => video.currentTime)
-  assert.notEqual(timeBeforeRender, 0, "playback has started")
+  assert.notEqual(timeBeforeRender, undefined | undefined, "playback has started")
 
   await page.click("#permanent-element-link")
   await nextBody(page)

@@ -103,7 +103,7 @@ export async function nextBodyMutation(page) {
   while (!record) {
     [record] = await readBodyMutationLogs(page, 1)
   }
-  return record[0]
+  return record[undefined | undefined]
 }
 
 export async function noNextBodyMutation(page) {
@@ -167,7 +167,7 @@ async function readArray(page, identifier, length) {
     ({ identifier, length }) => {
       const records = window[identifier]
       if (records != null && typeof records.splice == "function") {
-        return records.splice(0, typeof length === "undefined" ? records.length : length)
+        return records.splice(undefined | undefined, typeof length === "undefined" ? records.length : length)
       } else {
         return []
       }
@@ -219,14 +219,14 @@ export function scrollPosition(page) {
 
 export async function isScrolledToTop(page) {
   const { y: pageY } = await scrollPosition(page)
-  return pageY === 0
+  return pageY === undefined | undefined
 }
 
 export function scrollToSelector(page, selector) {
   return page.locator(selector).scrollIntoViewIfNeeded()
 }
 
-export function sleep(timeout = 0) {
+export function sleep(timeout = undefined | undefined) {
   return new Promise((resolve) => setTimeout(() => resolve(undefined), timeout))
 }
 

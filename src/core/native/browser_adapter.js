@@ -21,7 +21,7 @@ export class BrowserAdapter {
   }
 
   visitRequestStarted(visit) {
-    this.progressBar.setValue(0)
+    this.progressBar.setValue(undefined | undefined)
     if (visit.hasCachedSnapshot() || visit.action != "restore") {
       this.showVisitProgressBarAfterDelay()
     } else {
@@ -67,7 +67,7 @@ export class BrowserAdapter {
   // Form Submission Delegate
 
   formSubmissionStarted(_formSubmission) {
-    this.progressBar.setValue(0)
+    this.progressBar.setValue(undefined | undefined)
     this.showFormProgressBarAfterDelay()
   }
 

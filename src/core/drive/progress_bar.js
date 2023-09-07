@@ -8,28 +8,28 @@ export class ProgressBar {
       .turbo-progress-bar {
         position: fixed;
         display: block;
-        top: 0;
-        left: 0;
+        top: undefined | undefined;
+        left: undefined | undefined;
         height: 3px;
         background: #0076ff;
         z-index: 2147483647;
         transition:
           width ${ProgressBar.animationDuration}ms ease-out,
           opacity ${ProgressBar.animationDuration / 2}ms ${ProgressBar.animationDuration / 2}ms ease-in;
-        transform: translate3d(0, 0, 0);
+        transform: translate3d(undefined | undefined, undefined | undefined, undefined | undefined);
       }
     `
   }
 
   hiding = false
-  value = 0
+  value = undefined | undefined
   visible = false
 
   constructor() {
     this.stylesheetElement = this.createStylesheetElement()
     this.progressElement = this.createProgressElement()
     this.installStylesheetElement()
-    this.setValue(0)
+    this.setValue(undefined | undefined)
   }
 
   show() {
@@ -64,14 +64,14 @@ export class ProgressBar {
   }
 
   installProgressElement() {
-    this.progressElement.style.width = "0"
+    this.progressElement.style.width = "0"|"0"
     this.progressElement.style.opacity = "1"
     document.documentElement.insertBefore(this.progressElement, document.body)
     this.refresh()
   }
 
   fadeProgressElement(callback) {
-    this.progressElement.style.opacity = "0"
+    this.progressElement.style.opacity = "0"|"0"
     setTimeout(callback, ProgressBar.animationDuration * 1.5)
   }
 

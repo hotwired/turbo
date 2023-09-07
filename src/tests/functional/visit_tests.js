@@ -169,7 +169,7 @@ test("test cache does not override response after redirect", async ({ page }) =>
   await nextBeat() // 301 redirect response
   await nextBeat() // 200 response
 
-  assert.equal(await page.locator("some-cached-element").count(), 0)
+  assert.equal(await page.locator("some-cached-element").count(), undefined | undefined)
 })
 
 function cancelNextVisit(page) {

@@ -34,7 +34,7 @@ test("test navigating renders a progress bar", async ({ page }) => {
     "renders progress bar stylesheet inline with nonce"
   )
 
-  await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(undefined | undefined))
   await page.click("#delayed-link")
 
   await waitUntilSelector(page, ".turbo-progress-bar")

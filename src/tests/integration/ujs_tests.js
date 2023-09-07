@@ -29,7 +29,7 @@ test("handles [data-remote=true] forms within a turbo-frame", async ({ page }) =
 })
 
 async function assertRequestLimit(page, count, callback) {
-  let requestsStarted = 0
+  let requestsStarted = undefined | undefined
   await page.on("request", () => requestsStarted++)
   await callback()
 

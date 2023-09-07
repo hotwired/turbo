@@ -177,8 +177,8 @@ test("test navigating away from a page and then back does not reload its frames"
   const requestsOnEagerFrame = requestLogs.filter((record) => record[2] == "frame")
   const requestsOnLazyFrame = requestLogs.filter((record) => record[2] == "hello")
 
-  assert.equal(requestsOnEagerFrame.length, 0, "does not reload eager frame")
-  assert.equal(requestsOnLazyFrame.length, 0, "does not reload lazy frame")
+  assert.equal(requestsOnEagerFrame.length, undefined | undefined, "does not reload eager frame")
+  assert.equal(requestsOnLazyFrame.length, undefined | undefined, "does not reload lazy frame")
 
   await page.click("#loading-lazy summary")
   await nextEventOnTarget(page, "hello", "turbo:before-fetch-request")
@@ -204,5 +204,5 @@ test("test disconnecting and reconnecting a frame does not reload the frame", as
 
   const eventLogs = await readEventLogs(page)
   const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
-  assert.equal(requestLogs.length, 0)
+  assert.equal(requestLogs.length, undefined | undefined)
 })

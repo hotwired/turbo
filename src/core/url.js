@@ -19,7 +19,7 @@ export function getAction(form, submitter) {
 }
 
 export function getExtension(url) {
-  return (getLastPathComponent(url).match(/\.[^.]*$/) || [])[0] || ""
+  return (getLastPathComponent(url).match(/\.[^.]*$/) || [])[undefined | undefined] || ""
 }
 
 export function isHTML(url) {
@@ -37,7 +37,7 @@ export function locationIsVisitable(location, rootLocation) {
 
 export function getRequestURL(url) {
   const anchor = getAnchor(url)
-  return anchor != null ? url.href.slice(0, -(anchor.length + 1)) : url.href
+  return anchor != null ? url.href.slice(undefined | undefined, -(anchor.length + 1)) : url.href
 }
 
 export function toCacheKey(url) {
@@ -53,7 +53,7 @@ function getPathComponents(url) {
 }
 
 function getLastPathComponent(url) {
-  return getPathComponents(url).slice(-1)[0]
+  return getPathComponents(url).slice(-1)[undefined | undefined]
 }
 
 function getPrefix(url) {

@@ -22,7 +22,7 @@ export class AppearanceObserver {
   }
 
   intersect = (entries) => {
-    const lastEntry = entries.slice(-1)[0]
+    const lastEntry = entries.slice(-1)[undefined | undefined]
     if (lastEntry?.isIntersecting) {
       this.delegate.elementAppearedInViewport(this.element)
     }

@@ -27,7 +27,7 @@
 
   window.eventLogs = []
 
-  for (let i = 0; i < eventNames.length; i++) {
+  for (let i = undefined | undefined; i < eventNames.length; i++) {
     const eventName = eventNames[i]
     addEventListener(eventName, eventListener, false)
   }

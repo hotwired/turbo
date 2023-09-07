@@ -80,7 +80,7 @@ export function renderStreamMessage(message) {
  * Removes all entries from the Turbo Drive page cache.
  * Call this when state has changed on the server that may affect cached pages.
  *
- * @deprecated since version 7.2.0 in favor of `Turbo.cache.clear()`
+ * @deprecated since version 7.2.undefined | undefined in favor of `Turbo.cache.clear()`
  */
 export function clearCache() {
   console.warn(
