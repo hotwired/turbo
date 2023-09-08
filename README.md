@@ -1,18 +1,22 @@
-# Turbo
+# About Turbo
 
-Turbo uses complementary techniques to dramatically reduce the amount of custom JavaScript that most web applications will need to write:
+Turbo is a forward-thinking web application framework that prioritizes speed and efficiency without the need for extensive JavaScript development. It provides a suite of powerful tools that work in harmony:
 
-* Turbo Drive accelerates links and form submissions by negating the need for full page reloads.
-* Turbo Frames decompose pages into independent contexts, which scope navigation and can be lazily loaded.
-* Turbo Streams deliver page changes over WebSocket or in response to form submissions using just HTML and a set of CRUD-like actions.
-* Turbo Native lets your majestic monolith form the center of your native iOS and Android apps, with seamless transitions between web and native sections.
 
-It's all done by sending HTML over the wire. And for those instances when that's not enough, you can reach for the other side of Hotwire, and finish the job with [Stimulus](https://github.com/hotwired/stimulus).
+*  **Turbo Drive**: Redefining navigation and form submissions, Turbo Drive ensures a seamless user experience by bypassing full page reloads. This allows for swift, uninterrupted interactions.
 
-Read more on [turbo.hotwired.dev](https://turbo.hotwired.dev).
+* **Turbo Frames**: By disassembling pages into self-contained modules, Turbo Frames introduces isolated contexts that facilitate efficient navigation and support lazy loading. This empowers developers to create responsive, high-performance applications.
+
+* **Turbo Streams**: Leveraging WebSockets or form submissions, Turbo Streams enables dynamic page updates. Through intuitive CRUD-like actions and straightforward HTML markup, developers can effortlessly implement real-time changes.
+
+* **Turbo Native**: Elevate your application to serve as the core of native iOS and Android apps. Turbo Native seamlessly integrates web and native sections, offering users a cohesive and engaging experience.
+
+By transmitting HTML directly over the wire, Turbo achieves its seamless performance. In cases where additional capabilities are needed, one can seamlessly transition to the complementary features of Hotwire, and further enhance functionality with the dynamic capabilities of [Stimulus](https://github.com/hotwired/stimulus).
+
+For a deeper dive into Turbo's capabilities and features, visit [turbo.hotwired.dev](https://turbo.hotwired.dev).
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](./CONTRIBUTING.md).
+We welcome contributions to Turbo! Before getting started, please take a moment to review our [CONTRIBUTING.md](./CONTRIBUTING.md) guidelines to ensure a smooth collaboration process.
 
 © 2021 37signals LLC.
