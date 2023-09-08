@@ -14,6 +14,3 @@ jobs:
 
       - run: yarn install
       - run: yarn build
-
-      - name: Publish dev build
-        run: .github/scripts/publish-dev-build '${{ secrets.DEV_BUILD_GITHUB_TOKEN }}'
