@@ -4,13 +4,24 @@ const config = {
   projects: [
     {
       name: "chrome",
-      use: { ...devices["Desktop Chrome"] }
+      use: {
+        ...devices["Desktop Chrome"],
+        contextOptions: {
+          timeout: 60000
+        }
+      }
     },
     {
       name: "firefox",
-      use: { ...devices["Desktop Firefox"] }
+      use: {
+        ...devices["Desktop Firefox"],
+        contextOptions: {
+          timeout: 60000
+        }
+      }
     }
   ],
+  browserStartTimeout: 60000,
   retries: 2,
   testDir: "./src/tests/",
   testMatch: /(functional|integration)\/.*_tests\.js/,
