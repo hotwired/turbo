@@ -1,11 +1,6 @@
 name: dev-builds
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - 'builds/**'
+on: [push, pull_request]
 
 jobs:
   build:
