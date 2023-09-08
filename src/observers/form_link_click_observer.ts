@@ -26,7 +26,7 @@ export class FormLinkClickObserver implements LinkClickObserverDelegate {
   willFollowLinkToLocation(link: Element, location: URL, originalEvent: MouseEvent): boolean {
     return (
       this.delegate.willSubmitFormLinkToLocation(link, location, originalEvent) &&
-      link.hasAttribute("data-turbo-method")
+      link.hasAttribute("data-turbo-method") && link.hasAttribute("data-turbo-stream")
     )
   }
 
