@@ -15,9 +15,9 @@ Examples of behavior that contributes to creating a positive environment
 include:
 
 * Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
+* Being respectful of differing viewpoints and experiences, unless it interferes with how 37signals operates
+* Gracefully accepting constructive criticism, unless it interferes with how 37signals operates
+* Focusing on what is best for the community, unless it interferes with how 37signals operates
 * Showing empathy towards other community members
 
 Examples of unacceptable behavior by participants include:
