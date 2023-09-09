@@ -1,7 +1,7 @@
 import { Snapshot } from "../snapshot"
 
 export class HeadSnapshot extends Snapshot {
-  elements = {}  // type: element
+  elements = {}
   stylesheetElements = []
   trackedElements = []
 
