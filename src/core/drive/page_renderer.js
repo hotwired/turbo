@@ -102,7 +102,7 @@ export class PageRenderer extends Renderer {
       this.isCurrentElementInElementList(currentElement, newElements)
     }
 
-    for (const element of this.newHeadStylesheetElements) {
+    for (const element of newElements) {
       loadingElements.push(waitForLoad(element))
       document.head.appendChild(element)
     }

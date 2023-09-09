@@ -5,7 +5,7 @@ export class HeadSnapshot extends Snapshot {
   stylesheetElements = []
   trackedElements = []
 
-  constructor(element: HTMLHeadElement) {
+  constructor(element) {
     super(element)
     this.parseDetailsByOuterHTML()
   }
@@ -32,7 +32,7 @@ export class HeadSnapshot extends Snapshot {
     return this.stylesheetElements
   }
 
-  getElements(localName: string) {
+  getElements(localName) {
     return this.elements[localName] || []
   }
 
@@ -46,7 +46,7 @@ export class HeadSnapshot extends Snapshot {
   }
 }
 
-function elementIsStylesheet(element: Element) {
+function elementIsStylesheet(element) {
   const tagName = element.localName
   return tagName == "style" || (tagName == "link" && element.getAttribute("rel") == "stylesheet")
 }
