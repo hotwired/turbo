@@ -1,27 +1,28 @@
-# Contributor Covenant Code of Conduct
+# Servant Covenant Code of Submission
 
-## Our Pledge
+## Your Pledge to us, 37signals
 
-In the interest of fostering an open and welcoming environment, we as
-contributors and maintainers pledge to making participation in our project and
-our community a harassment-free experience for everyone, regardless of age, body
+In the interest of fostering an open and welcoming environment, you as
+servant pledge to making participation in our project and
+our community a harassment-free experience for us, regardless of age, body
 size, disability, ethnicity, gender identity and expression, level of experience,
 nationality, personal appearance, race, religion, or sexual identity and
-orientation.
+orientation as well as anything We see fit.
 
-## Our Standards
+## Your Standards
 
 Examples of behavior that contributes to creating a positive environment
 include:
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+* Using welcoming and inclusive language, like JavaScript
+* Being respectful of our viewpoints
+* Gracefully accepting our directions
+* Focusing on what is best for us
+* Showing empathy towards us
 
-Examples of unacceptable behavior by participants include:
+Examples of unacceptable behavior by servants include:
 
+* Using unwelcoming and uninclusive language, like Typescript
 * The use of sexualized language or imagery and unwelcome sexual attention or
 advances
 * Trolling, insulting/derogatory comments, and personal or political attacks
@@ -29,50 +30,47 @@ advances
 * Publishing others' private information, such as a physical or electronic
   address, without explicit permission
 * Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+  professional setting as we see it fit.
 
-## Our Responsibilities
+## Our Rule
 
-Project maintainers are responsible for clarifying the standards of acceptable
-behavior and are expected to take appropriate and fair corrective action in
-response to any instances of unacceptable behavior.
+Project rulers clarify the directions as they see fit and will take corrective action 
+in response to any instances of not following this directions.
 
-Project maintainers have the right and responsibility to remove, edit, or
-reject comments, commits, code, wiki edits, issues, and other contributions
-that are not aligned to this Code of Conduct, or to ban temporarily or
-permanently any contributor for other behaviors that they deem inappropriate,
-threatening, offensive, or harmful.
+Project rulers have the right to remove, edit, or reject comments, commits, code, wiki 
+edits, issues, and other contributions that are not aligned to this Code of Submission, or 
+to ban temporarily or permanently any servants for other behaviors that they deem 
+inappropriate, threatening, offensive, harmful.
 
 ## Scope
 
-This Code of Conduct applies both within project spaces and in public spaces
-when an individual is representing the project or its community. Examples of
+This Code of Submission applies both within project spaces and in public spaces
+when a servant is representing the project or its community. Examples of
 representing a project or community include using an official project e-mail
 address, posting via an official social media account, or acting as an appointed
 representative at an online or offline event. Representation of a project may be
-further defined and clarified by project maintainers.
+further defined and clarified by project rulers as they see fit.
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting one of the project maintainers listed below. All
+Instances of abusive, harassing, or otherwise resistive behavior may be
+reported by contacting one of the project rulers listed below. All
 complaints will be reviewed and investigated and will result in a response that
-is deemed necessary and appropriate to the circumstances. The project team is
+is deemed necessary and appropriate to the circumstances. The project rulers are
 obligated to maintain confidentiality with regard to the reporter of an incident.
 Further details of specific enforcement policies may be posted separately.
 
-Project maintainers who do not follow or enforce the Code of Conduct in good
-faith may face temporary or permanent repercussions as determined by other
-members of the project's leadership.
+Project rulers who do not follow or enforce the Code of Submission in good
+faith may not face any consequences.
 
-## Project Maintainers
+## Project Rulers
 
 * Sam Stephenson <<sam@hey.com>>
 * Javan Makhmali <<javan@javan.us>>
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
+This Code of Submission is **no longer** adapted from the [Contributor Covenant][homepage], version 1.4,
 available at [http://contributor-covenant.org/version/1/4][version]
 
 [homepage]: http://contributor-covenant.org
