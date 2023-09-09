@@ -3,125 +3,96 @@
 
 # Contributing
 
-Please note we have a [code of conduct](https://github.com/hotwired/turbo/blob/main/CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+Note that we have a [code of conduct](https://github.com/hotwired/turbo/blob/main/CODE_OF_CONDUCT.md). Please follow it in your interactions with this project.
 
 ## Sending a Pull Request
 
 The core team is monitoring for pull requests. We will review your pull request and either merge it, request changes to it, or close it with an explanation.
 
-Before submitting a pull request, please make sure the following is done:
+Before submitting a pull request, please:
 
-1. Fork the repository and create your branch from main.
-2. Run `yarn` in the repository root.
-3. If you’ve fixed a bug or added code that should be tested, add tests!
-4. Ensure the test suite passes (`yarn build && yarn test`).
+1. Fork the repository and create your branch.
+2. Follow the setup instructions in this file.
+3. If you’re fixing a bug or adding code that should be tested, add tests!
+4. Ensure the test suite passes.
 
 ## Developing locally
 
-During the process of developing the library locally we first have to check out the repository and create a branch from main.
+First, clone the `hotwired/turbo` repository and install dependencies:
 
 ```bash
 git clone https://github.com/hotwired/turbo.git
-cd turbo
-yarn
 ```
 
 ```bash
-git checkout -b '<your_branch_name>'
+cd turbo
+yarn install
 ```
 
-Once you are done developing the feature or bug fix you have 2 options:
+Then create a branch for your changes:
 
-1. Run the test suite
-2. Run a local webserver and checkout your changes manually
+```bash
+git checkout -b <your_branch_name>
+```
 
 ### Testing
 
-The library is tested by running the test suite (found in: `src/tests/*`) against headless browsers. The browsers are setup in [intern.json](./intern.json) and [playwright.config.ts](./playwright.config.ts). Check them out to see the used browser environments.
+Tests are run through `yarn` using [Web Test Runner](https://modern-web.dev/docs/test-runner/overview/) with [Playwright](https://github.com/microsoft/playwright) for browser testing. Browser and runtime configuration can be found in [`web-test-runner.config.mjs`](./web-test-runner.config.mjs) and [`playwright.config.ts`](./playwright.config.ts).
 
-To override the ChromeDriver version, declare the `CHROMEVER` environment
-variable.
-
-First, install the drivers to test the suite in browsers:
+To begin testing, install the browser drivers:
 
 ```bash
-yarn playwright install  --with-deps
+yarn playwright install --with-deps
 ```
 
-The tests are using the compiled version of the library and they are themselves also compiled. To compile the tests and library and watch for changes:
+Then build the source. Because tests are run against the compiled source (and are themselves compiled) be sure to run `yarn build` prior to testing. Alternatively, you can run `yarn watch` to build and watch for changes.
 
 ```bash
-yarn watch
+yarn build
 ```
 
-To run the unit tests:
+### Running the test suite
+
+The test suite can be run with `yarn`, using the test commands defined in [`package.json`](./package.json). To run all tests in all configured browsers:
+
+```bash
+yarn test
+```
+
+To run just the unit or browser tests:
 
 ```bash
 yarn test:unit
-```
-
-To run the browser tests:
-
-```bash
 yarn test:browser
 ```
 
-To run the browser suite against a particular browser (one of
-`chrome|firefox`), pass the value as the `--project=$BROWSER` flag:
+By default, tests are run in "headless" mode against all configured browsers (currently `chrome` and `firefox`). Use the `--headed` flag to run in normal mode. Use the `--project` flag to run against a particular browser.
 
 ```bash
+yarn test:browser --project=firefox
 yarn test:browser --project=chrome
-```
-
-To run the browser tests in a "headed" browser, pass the `--headed` flag:
-
-```bash
 yarn test:browser --project=chrome --headed
 ```
 
-### Test files
+### Running a single test
 
-Please add your tests in the test files closely related to the feature itself. For example when touching the `src/core/drive/page_renderer.ts` your test will probably endup in the `src/tests/functional/rendering_tests.ts`.
-
-The html files needed for the tests are stored in: `src/tests/fixtures/`
-
-### Run single test
-
-To focus on single test, pass its file path:
-
-```bash
-yarn test:browser TEST_FILE
-```
-
-Where the `TEST_FILE` is the name of test you want to run. For example:
+To run a single test file, pass its path as an argument. To run a particular test case, append its starting line number after a colon.
 
 ```bash
 yarn test:browser src/tests/functional/drive_tests.ts
-```
-
-To execute a particular test, append `:LINE` where `LINE` is the line number of
-the call to `test("...")`:
-
-```bash
 yarn test:browser src/tests/functional/drive_tests.ts:11
+yarn test:browser src/tests/functional/drive_tests.ts:11 --project=chrome
 ```
 
-### Local webserver
+### Running the local web server
 
-Since the tests are running in headless browsers it's not easy to debug them easily without using the debugger. Sometimes it's easier to run the supplied webserver and manually click through the test fixtures.
+Because tests are running headless in browsers, debugging can be difficult. Sometimes the simplest thing to do is load the test fixtures into the browser and navigate manually. To make this easier, a local web server is included.
 
-To run the webserver:
+To run the web server, ensure the source is built and start the server with `yarn`:
 
 ```bash
+yarn build
 yarn start
 ```
 
-This requires a build (via `yarn build`), or a separate process running `yarn watch`.
-
-The webserver is available on port 9000. Since the webserver is run from the root of the project the fixtures can be found using the same path as they have in the project itself, so `src/tests/fixtures/rendering.html` makes: http://localhost:9000/src/tests/fixtures/rendering.html
-
-Depending on your operating system you are able to open the page using:
-
-```bash
-open http://localhost:9000/src/tests/fixtures/rendering.html
-```
+The web server is available on port 9000, serving from the project root. Fixture files are accessible by path. For example, the file at `src/tests/fixtures/rendering.html` will be accessible at <http://localhost:9000/src/tests/fixtures/rendering.html>.

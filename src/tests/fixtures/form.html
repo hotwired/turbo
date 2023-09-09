@@ -34,6 +34,17 @@
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <button id="standard-get-form-with-stream-opt-in-submitter" data-turbo-stream>form[method=get] button[data-turbo-stream]</button>
       </form>
+      <form action="/__turbo/redirect" method="post" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <input id="submits-with-form-input" type="submit" value="Save" data-turbo-submits-with="Saving...">
+      </form>
+      <form action="/__turbo/redirect" method="post" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="sleep" value="200">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <button id="submits-with-form-button" type="submit" data-turbo-submits-with="Saving...">Save</button>
+      </form>
       <hr>
       <form>
         <button id="form-action-none-q-a" name="q" value="a">Submit ?q=a to form:not([action])</button>
@@ -301,6 +312,11 @@
       <select id="external-select" form="form-with-external-inputs" name="greeting">
         <option selected>Hello from a replace Visit</option>
       </select>
+      <form id="form-with-buttons-triggered-by-js" action="/__turbo/redirect" data-turbo-frame="_top" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <button type="submit" formaction="/src/tests/fixtures/frames/hello.html" formmethod="get" id="button-triggered-by-js" data-turbo-action="replace" data-turbo-frame="hello">Navigate other Frame with GET</button>
+        <button type="button" onclick="this.form.requestSubmit(document.getElementById('button-triggered-by-js'))" id="request-submit-trigger">Trigger Navigate other Frame with GET</button>
+      </form>
     </turbo-frame>
     <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>
