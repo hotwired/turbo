@@ -10,7 +10,7 @@ let subject
 setup(() => {
   subject = new HeadSnapshotTests()
   subject.setup()
-  subject.fixtureHTML =  `
+  subject.fixtureHTML = `
   <head>
     <title>Title 1</title>
     <link rel="stylesheet" href="#base.css" type="text/css">
