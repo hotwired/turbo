@@ -59,7 +59,7 @@ test("test after loading the page", async ({ page }) => {
 })
 
 test("test following a same-origin unannotated link", async ({ page }) => {
-  page.click("#same-origin-unannotated-link")
+  await page.click("#same-origin-unannotated-link")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
@@ -89,42 +89,42 @@ test("test following a same-origin unannotated custom element link", async ({ pa
 })
 
 test("test drive enabled; click an element in the shadow DOM wrapped by a link in the light DOM", async ({ page }) => {
-  page.click("#shadow-dom-drive-enabled span")
+  await page.click("#shadow-dom-drive-enabled span")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
 })
 
 test("test drive disabled; click an element in the shadow DOM within data-turbo='false'", async ({ page }) => {
-  page.click("#shadow-dom-drive-disabled span")
+  await page.click("#shadow-dom-drive-disabled span")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "load")
 })
 
 test("test drive enabled; click an element in the slot", async ({ page }) => {
-  page.click("#element-in-slot")
+  await page.click("#element-in-slot")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
 })
 
 test("test drive disabled; click an element in the slot within data-turbo='false'", async ({ page }) => {
-  page.click("#element-in-slot-disabled")
+  await page.click("#element-in-slot-disabled")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "load")
 })
 
 test("test drive disabled; click an element in the nested slot within data-turbo='false'", async ({ page }) => {
-  page.click("#element-in-nested-slot-disabled")
+  await page.click("#element-in-nested-slot-disabled")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "load")
 })
 
 test("test following a same-origin unannotated link with search params", async ({ page }) => {
-  page.click("#same-origin-unannotated-link-search-params")
+  await page.click("#same-origin-unannotated-link-search-params")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(search(page.url()), "?key=value")
@@ -132,7 +132,7 @@ test("test following a same-origin unannotated link with search params", async (
 })
 
 test("test following a same-origin unannotated form[method=GET]", async ({ page }) => {
-  page.click("#same-origin-unannotated-form button")
+  await page.click("#same-origin-unannotated-form button")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
@@ -150,28 +150,28 @@ test("test following a same-origin data-turbo-method=get link", async ({ page })
 })
 
 test("test following a same-origin data-turbo-action=replace link", async ({ page }) => {
-  page.click("#same-origin-replace-link")
+  await page.click("#same-origin-replace-link")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
 })
 
 test("test following a same-origin GET form[data-turbo-action=replace]", async ({ page }) => {
-  page.click("#same-origin-replace-form-get button")
+  await page.click("#same-origin-replace-form-get button")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
 })
 
 test("test following a same-origin GET form button[data-turbo-action=replace]", async ({ page }) => {
-  page.click("#same-origin-replace-form-submitter-get button")
+  await page.click("#same-origin-replace-form-submitter-get button")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
 })
 
 test("test following a same-origin POST form[data-turbo-action=replace]", async ({ page }) => {
-  page.click("#same-origin-replace-form-post button")
+  await page.click("#same-origin-replace-form-post button")
   await nextBody(page)
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
@@ -200,7 +200,7 @@ test("test following a POST form clears cache", async ({ page }) => {
 })
 
 test("test following a same-origin POST link with data-turbo-action=replace", async ({ page }) => {
-  page.click("#same-origin-replace-post-link")
+  await page.click("#same-origin-replace-post-link")
   await nextBody(page)
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
@@ -222,7 +222,7 @@ test("test following a same-origin unannotated link inside a data-turbo=false co
 })
 
 test("test following a same-origin data-turbo=true link inside a data-turbo=false container", async ({ page }) => {
-  page.click("#same-origin-true-link-inside-false-container")
+  await page.click("#same-origin-true-link-inside-false-container")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
