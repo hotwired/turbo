@@ -29,7 +29,7 @@ test("test drive to external link", async ({ page }) => {
 
 test("test drive enabled by default; click link inside data-turbo='false'", async ({ page }) => {
   await page.waitForSelector("#drive_disabled")
-  await page.click("#drive_disabled")
+  await nextBody(page)
 
   assert.equal(pathname(page.url()), path)
   assert.equal(await visitAction(page), "load")
