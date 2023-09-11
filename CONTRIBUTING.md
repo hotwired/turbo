@@ -37,7 +37,7 @@ git checkout -b <your_branch_name>
 
 ### Testing
 
-Tests are run through `yarn` using [Web Test Runner](https://modern-web.dev/docs/test-runner/overview/) with [Playwright](https://github.com/microsoft/playwright) for browser testing. Browser and runtime configuration can be found in [`web-test-runner.config.mjs`](./web-test-runner.config.mjs) and [`playwright.config.ts`](./playwright.config.ts).
+Tests are run through `yarn` using [Web Test Runner](https://modern-web.dev/docs/test-runner/overview/) with [Playwright](https://github.com/microsoft/playwright) for browser testing. Browser and runtime configuration can be found in [`web-test-runner.config.mjs`](./web-test-runner.config.mjs) and [`playwright.config.js`](./playwright.config.js).
 
 To begin testing, install the browser drivers:
 
@@ -79,9 +79,9 @@ yarn test:browser --project=chrome --headed
 To run a single test file, pass its path as an argument. To run a particular test case, append its starting line number after a colon.
 
 ```bash
-yarn test:browser src/tests/functional/drive_tests.ts
-yarn test:browser src/tests/functional/drive_tests.ts:11
-yarn test:browser src/tests/functional/drive_tests.ts:11 --project=chrome
+yarn test:browser src/tests/functional/drive_tests.js
+yarn test:browser src/tests/functional/drive_tests.js:11
+yarn test:browser src/tests/functional/drive_tests.js:11 --project=chrome
 ```
 
 ### Running the local web server
