@@ -1,4 +1,5 @@
 import { FetchResponse } from "./fetch_response"
+import { expandURL } from "../core/url"
 import { dispatch } from "../util"
 
 export function fetchMethodFromString(method) {
@@ -24,17 +25,80 @@ export const FetchMethod = {
   delete: "delete"
 }
 
+export function fetchEnctypeFromString(encoding) {
+  switch (encoding.toLowerCase()) {
+    case FetchEnctype.multipart:
+      return FetchEnctype.multipart
+    case FetchEnctype.plain:
+      return FetchEnctype.plain
+    default:
+      return FetchEnctype.urlEncoded
+  }
+}
+
+export const FetchEnctype = {
+  urlEncoded: "application/x-www-form-urlencoded",
+  multipart: "multipart/form-data",
+  plain: "text/plain"
+}
+
 export class FetchRequest {
   abortController = new AbortController()
   #resolveRequestPromise = (_value) => {}
 
-  constructor(delegate, method, location, body = new URLSearchParams(), target = null) {
+  constructor(delegate, method, location, requestBody = new URLSearchParams(), target = null, enctype = FetchEnctype.urlEncoded) {
+    const [url, body] = buildResourceAndBody(expandURL(location), method, requestBody, enctype)
+
     this.delegate = delegate
-    this.method = method
-    this.headers = this.defaultHeaders
-    this.body = body
-    this.url = location
+    this.url = url
     this.target = target
+    this.fetchOptions = {
+      credentials: "same-origin",
+      redirect: "follow",
+      method: method,
+      headers: { ...this.defaultHeaders },
+      body: body,
+      signal: this.abortSignal,
+      referrer: this.delegate.referrer?.href
+    }
+    this.enctype = enctype
+  }
+
+  get method() {
+    return this.fetchOptions.method
+  }
+
+  set method(value) {
+    const fetchBody = this.isSafe ? this.url.searchParams : this.fetchOptions.body || new FormData()
+    const fetchMethod = fetchMethodFromString(value) || FetchMethod.get
+
+    this.url.search = ""
+
+    const [url, body] = buildResourceAndBody(this.url, fetchMethod, fetchBody, this.enctype)
+
+    this.url = url
+    this.fetchOptions.body = body
+    this.fetchOptions.method = fetchMethod
+  }
+
+  get headers() {
+    return this.fetchOptions.headers
+  }
+
+  set headers(value) {
+    this.fetchOptions.headers = value
+  }
+
+  get body() {
+    if (this.isSafe) {
+      return this.url.searchParams
+    } else {
+      return this.fetchOptions.body
+    }
+  }
+
+  set body(value) {
+    this.fetchOptions.body = value
   }
 
   get location() {
@@ -90,18 +154,6 @@ export class FetchRequest {
     return fetchResponse
   }
 
-  get fetchOptions() {
-    return {
-      method: FetchMethod[this.method].toUpperCase(),
-      credentials: "same-origin",
-      headers: this.headers,
-      redirect: "follow",
-      body: this.isSafe ? null : this.body,
-      signal: this.abortSignal,
-      referrer: this.delegate.referrer?.href
-    }
-  }
-
   get defaultHeaders() {
     return {
       Accept: "text/html, application/xhtml+xml"
@@ -109,7 +161,7 @@ export class FetchRequest {
   }
 
   get isSafe() {
-    return this.method === FetchMethod.get
+    return isSafe(this.method)
   }
 
   get abortSignal() {
@@ -131,6 +183,7 @@ export class FetchRequest {
       },
       target: this.target
     })
+    this.url = event.detail.url
     if (event.defaultPrevented) await requestInterception
   }
 
@@ -143,4 +196,40 @@ export class FetchRequest {
 
     return !event.defaultPrevented
   }
+}
+
+export function isSafe(fetchMethod) {
+  return fetchMethodFromString(fetchMethod) == FetchMethod.get
+}
+
+function buildResourceAndBody(resource, method, requestBody, enctype) {
+  const searchParams =
+    Array.from(requestBody).length > 0 ? new URLSearchParams(entriesExcludingFiles(requestBody)) : resource.searchParams
+
+  if (isSafe(method)) {
+    return [mergeIntoURLSearchParams(resource, searchParams), null]
+  } else if (enctype == FetchEnctype.urlEncoded) {
+    return [resource, searchParams]
+  } else {
+    return [resource, requestBody]
+  }
+}
+
+function entriesExcludingFiles(requestBody) {
+  const entries = []
+
+  for (const [name, value] of requestBody) {
+    if (value instanceof File) continue
+    else entries.push([name, value])
+  }
+
+  return entries
+}
+
+function mergeIntoURLSearchParams(url, requestBody) {
+  const searchParams = new URLSearchParams(entriesExcludingFiles(requestBody))
+
+  url.search = searchParams.toString()
+
+  return url
 }

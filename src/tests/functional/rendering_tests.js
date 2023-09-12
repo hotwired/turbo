@@ -554,8 +554,9 @@ test("test before-cache event", async ({ page }) => {
     addEventListener("turbo:before-cache", () => (document.body.innerHTML = "Modified"), { once: true })
   })
   await page.click("#same-origin-link")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
   await page.goBack()
+  await nextEventNamed(page, "turbo:load")
 
   assert.equal(await page.textContent("body"), "Modified")
 })

@@ -151,6 +151,52 @@ test("test standard POST form submission events", async ({ page }) => {
   await nextEventNamed(page, "turbo:load")
 })
 
+test("test supports transforming a POST submission to a GET in a turbo:submit-start listener", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:submit-start", (({ detail }) => {
+      detail.formSubmission.method = "get"
+      detail.formSubmission.action = "/src/tests/fixtures/one.html"
+      detail.formSubmission.body.set("greeting", "Hello, from an event listener")
+    }))
+  )
+  await page.click("#standard form[method=post] [type=submit]")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
+  assert.equal(getSearchParam(page.url(), "greeting"), "Hello, from an event listener")
+})
+
+test("test supports transforming a GET submission to a POST in a turbo:submit-start listener", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:submit-start", (({ detail }) => {
+      detail.formSubmission.method = "post"
+      detail.formSubmission.body.set("path", "/src/tests/fixtures/one.html")
+      detail.formSubmission.body.set("greeting", "Hello, from an event listener")
+    }))
+  )
+  await page.click("#standard form[method=get] [type=submit]")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
+  assert.equal(getSearchParam(page.url(), "greeting"), "Hello, from an event listener")
+})
+
+test("test supports modifying the submission in a turbo:before-fetch-request listener", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:before-fetch-request", (({ detail }) => {
+      detail.url = new URL("/src/tests/fixtures/one.html", document.baseURI)
+      detail.url.search = new URLSearchParams(detail.fetchOptions.body).toString()
+      detail.fetchOptions.body = null
+      detail.fetchOptions.method = "get"
+    }))
+  )
+  await page.click("#standard form[method=post] [type=submit]")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
+  assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a redirect")
+})
+
 test("test standard POST form submission merges values from both searchParams and body", async ({ page }) => {
   await page.click("#form-action-post-redirect-self-q-b")
   await nextBody(page)
@@ -908,7 +954,7 @@ test("test link method form submission submits a single request", async ({ page 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 1, "submits a single HTTP request")
 })
 
@@ -922,7 +968,7 @@ test("test link method form submission inside frame submits a single request", a
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 1, "submits a single HTTP request")
 })
 
@@ -936,7 +982,7 @@ test("test link method form submission targeting frame submits a single request"
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 2, "submits a single HTTP request then follows a redirect")
 })
 
