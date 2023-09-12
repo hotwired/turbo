@@ -5,7 +5,7 @@ import { FrameRedirector } from "./frames/frame_redirector"
 import { History } from "./drive/history"
 import { LinkClickObserver } from "../observers/link_click_observer"
 import { FormLinkClickObserver } from "../observers/form_link_click_observer"
-import { getAction, expandURL, locationIsVisitable } from "./url"
+import { expandURL, locationIsVisitable } from "./url"
 import { Navigator } from "./drive/navigator"
 import { PageObserver } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -207,17 +207,15 @@ export class Session {
 
   // Form submit observer delegate
 
-  willSubmitForm(form, submitter) {
-    const action = getAction(form, submitter)
-
+  willSubmitForm(htmlFormSubmission) {
     return (
-      this.submissionIsNavigatable(form, submitter) &&
-      locationIsVisitable(expandURL(action), this.snapshot.rootLocation)
+      this.submissionIsNavigatable(htmlFormSubmission) &&
+      locationIsVisitable(htmlFormSubmission.location, this.snapshot.rootLocation)
     )
   }
 
-  formSubmitted(form, submitter) {
-    this.navigator.submitForm(form, submitter)
+  formSubmitted(htmlFormSubmission) {
+    this.navigator.submitForm(htmlFormSubmission)
   }
 
   // Page observer delegate
@@ -361,7 +359,9 @@ export class Session {
 
   // Helpers
 
-  submissionIsNavigatable(form, submitter) {
+  submissionIsNavigatable(htmlFormSubmission) {
+    const { form, submitter } = htmlFormSubmission
+
     if (this.formMode == "off") {
       return false
     } else {

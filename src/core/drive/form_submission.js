@@ -1,5 +1,4 @@
-import { FetchRequest, FetchMethod, fetchMethodFromString } from "../../http/fetch_request"
-import { expandURL } from "../url"
+import { FetchRequest } from "../../http/fetch_request"
 import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 
@@ -12,23 +11,6 @@ export const FormSubmissionState = {
   stopped: "stopped"
 }
 
-export const FormEnctype = {
-  urlEncoded: "application/x-www-form-urlencoded",
-  multipart: "multipart/form-data",
-  plain: "text/plain"
-}
-
-function formEnctypeFromString(encoding) {
-  switch (encoding.toLowerCase()) {
-    case FormEnctype.multipart:
-      return FormEnctype.multipart
-    case FormEnctype.plain:
-      return FormEnctype.plain
-    default:
-      return FormEnctype.urlEncoded
-  }
-}
-
 export class FormSubmission {
   state = FormSubmissionState.initialized
 
@@ -36,54 +18,25 @@ export class FormSubmission {
     return Promise.resolve(confirm(message))
   }
 
-  constructor(delegate, formElement, submitter, mustRedirect = false) {
+  constructor(delegate, submission, mustRedirect = false) {
     this.delegate = delegate
-    this.formElement = formElement
-    this.submitter = submitter
-    this.formData = buildFormData(formElement, submitter)
-    this.location = expandURL(this.action)
-    if (this.method == FetchMethod.get) {
-      mergeFormDataEntries(this.location, [...this.body.entries()])
-    }
+    this.submission = submission
+    this.formElement = submission.form
+    this.submitter = submission.submitter
+    this.formData = submission.formData
+    this.location = submission.location
+    this.method = submission.fetchMethod
+    this.action = submission.action
+    this.body = submission.body
+    this.enctype = submission.enctype
+    this.visitAction = submission.visitAction
+    this.frame = submission.frame
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body, this.formElement)
     this.mustRedirect = mustRedirect
   }
 
-  get method() {
-    const method = this.submitter?.getAttribute("formmethod") || this.formElement.getAttribute("method") || ""
-    return fetchMethodFromString(method.toLowerCase()) || FetchMethod.get
-  }
-
-  get action() {
-    const formElementAction = typeof this.formElement.action === "string" ? this.formElement.action : null
-
-    if (this.submitter?.hasAttribute("formaction")) {
-      return this.submitter.getAttribute("formaction") || ""
-    } else {
-      return this.formElement.getAttribute("action") || formElementAction || ""
-    }
-  }
-
-  get body() {
-    if (this.enctype == FormEnctype.urlEncoded || this.method == FetchMethod.get) {
-      return new URLSearchParams(this.stringFormData)
-    } else {
-      return this.formData
-    }
-  }
-
-  get enctype() {
-    return formEnctypeFromString(this.submitter?.getAttribute("formenctype") || this.formElement.enctype)
-  }
-
   get isSafe() {
     return this.fetchRequest.isSafe
-  }
-
-  get stringFormData() {
-    return [...this.formData].reduce((entries, [name, value]) => {
-      return entries.concat(typeof value == "string" ? [[name, value]] : [])
-    }, [])
   }
 
   // The submission process
@@ -217,18 +170,6 @@ export class FormSubmission {
   }
 }
 
-function buildFormData(formElement, submitter) {
-  const formData = new FormData(formElement)
-  const name = submitter?.getAttribute("name")
-  const value = submitter?.getAttribute("value")
-
-  if (name) {
-    formData.append(name, value || "")
-  }
-
-  return formData
-}
-
 function getCookieValue(cookieName) {
   if (cookieName != null) {
     const cookies = document.cookie ? document.cookie.split("; ") : []
@@ -242,18 +183,4 @@ function getCookieValue(cookieName) {
 
 function responseSucceededWithoutRedirect(response) {
   return response.statusCode == 200 && !response.redirected
-}
-
-function mergeFormDataEntries(url, entries) {
-  const searchParams = new URLSearchParams()
-
-  for (const [name, value] of entries) {
-    if (value instanceof File) continue
-
-    searchParams.append(name, value)
-  }
-
-  url.search = searchParams.toString()
-
-  return url
 }

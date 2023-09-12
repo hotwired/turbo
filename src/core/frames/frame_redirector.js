@@ -1,7 +1,7 @@
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameElement } from "../../elements/frame_element"
 import { LinkInterceptor } from "./link_interceptor"
-import { expandURL, getAction, locationIsVisitable } from "../url"
+import { expandURL, locationIsVisitable } from "../url"
 
 export class FrameRedirector {
   constructor(session, element) {
@@ -36,45 +36,48 @@ export class FrameRedirector {
 
   // Form submit observer delegate
 
-  willSubmitForm(element, submitter) {
+  willSubmitForm(htmlFormSubmission) {
     return (
-      element.closest("turbo-frame") == null &&
-      this.#shouldSubmit(element, submitter) &&
-      this.#shouldRedirect(element, submitter)
+      htmlFormSubmission.closest("turbo-frame") == null &&
+      this.#shouldSubmit(htmlFormSubmission) &&
+      this.#shouldRedirect(htmlFormSubmission)
     )
   }
 
-  formSubmitted(element, submitter) {
-    const frame = this.#findFrameElement(element, submitter)
+  formSubmitted(htmlFormSubmission) {
+    const frame = this.#findFrameElement(htmlFormSubmission)
     if (frame) {
-      frame.delegate.formSubmitted(element, submitter)
+      frame.delegate.formSubmitted(htmlFormSubmission)
     }
   }
 
-  #shouldSubmit(form, submitter) {
-    const action = getAction(form, submitter)
+  #shouldSubmit(htmlFormSubmission) {
     const meta = this.element.ownerDocument.querySelector(`meta[name="turbo-root"]`)
     const rootLocation = expandURL(meta?.content ?? "/")
 
-    return this.#shouldRedirect(form, submitter) && locationIsVisitable(action, rootLocation)
+    return this.#shouldRedirect(htmlFormSubmission) && locationIsVisitable(htmlFormSubmission.location, rootLocation)
   }
 
-  #shouldRedirect(element, submitter) {
+  #shouldRedirect(elementOrSubmission) {
     const isNavigatable =
-      element instanceof HTMLFormElement
-        ? this.session.submissionIsNavigatable(element, submitter)
-        : this.session.elementIsNavigatable(element)
+      elementOrSubmission instanceof Element
+        ? this.session.elementIsNavigatable(elementOrSubmission)
+        : this.session.submissionIsNavigatable(elementOrSubmission)
 
     if (isNavigatable) {
-      const frame = this.#findFrameElement(element, submitter)
-      return frame ? frame != element.closest("turbo-frame") : false
+      const frame = this.#findFrameElement(elementOrSubmission)
+      return frame ? frame != elementOrSubmission.closest("turbo-frame") : false
     } else {
       return false
     }
   }
 
-  #findFrameElement(element, submitter) {
-    const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame")
+  #findFrameElement(elementOrSubmission) {
+    const id =
+      elementOrSubmission instanceof Element
+        ? elementOrSubmission.getAttribute("data-turbo-frame")
+        : elementOrSubmission.frame
+
     if (id && id != "_top") {
       const frame = this.element.querySelector(`#${id}:not([disabled])`)
       if (frame instanceof FrameElement) {
