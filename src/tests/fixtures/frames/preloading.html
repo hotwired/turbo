@@ -1,4 +1,15 @@
-<turbo-frame id="menu">
-  <a href="/src/tests/fixtures/preloaded.html" id="frame_preload_anchor" data-turbo-preload="true">Visit preloaded
-    page</a>
-</turbo-frame>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Frames: Preloading</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <turbo-frame id="menu">
+      <a href="/src/tests/fixtures/preloaded.html" id="frame_preload_anchor" data-turbo-preload="true">Visit preloaded
+        page</a>
+    </turbo-frame>
+  </body>
+</html>
