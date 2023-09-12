@@ -110,7 +110,7 @@ export class FormSubmission {
     if (!fetchRequest.isSafe) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
-        fetchRequest.headers["X-CSRF-Token"] = token
+        fetchRequest.headers.set("X-CSRF-Token", token)
       }
     }
 
@@ -126,7 +126,17 @@ export class FormSubmission {
     markAsBusy(this.formElement)
     dispatch("turbo:submit-start", {
       target: this.formElement,
-      detail: { formSubmission: this }
+      detail: {
+        formSubmission: {
+          get: () => {
+            console.warn("`event.detail.formSubmission` is deprecated. Use `event.target`, `event.detail.submitter`, and `event.detail.request` instead")
+
+            return this
+          }
+        },
+        request: fetchRequest.request,
+        submitter: this.submitter
+      }
     })
     this.delegate.formSubmissionStarted(this)
   }
@@ -150,13 +160,31 @@ export class FormSubmission {
       this.delegate.formSubmissionErrored(this, error)
     } else {
       this.state = FormSubmissionState.receiving
-      this.result = { success: true, fetchResponse: fetchResponse }
+      this.result = {
+        success: true,
+        response: fetchResponse.response,
+
+        get fetchResponse() {
+          console.warn("`event.detail.fetchResponse` is deprecated. Use `event.detail.response` instead")
+
+          return fetchResponse
+        }
+      }
       this.delegate.formSubmissionSucceededWithResponse(this, fetchResponse)
     }
   }
 
   requestFailedWithResponse(fetchRequest, fetchResponse) {
-    this.result = { success: false, fetchResponse: fetchResponse }
+    this.result = {
+      success: false,
+      response: fetchResponse.response,
+
+      get fetchResponse() {
+        console.warn("`event.detail.fetchResponse` is deprecated. Use `event.detail.response` instead")
+
+        return fetchResponse
+      }
+    }
     this.delegate.formSubmissionFailedWithResponse(this, fetchResponse)
   }
 
@@ -165,14 +193,28 @@ export class FormSubmission {
     this.delegate.formSubmissionErrored(this, error)
   }
 
-  requestFinished(_fetchRequest) {
+  requestFinished(fetchRequest) {
+    const { formSubmission } = this
+
     this.state = FormSubmissionState.stopped
     if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
     this.resetSubmitterText()
     clearBusyState(this.formElement)
+
     dispatch("turbo:submit-end", {
       target: this.formElement,
-      detail: { formSubmission: this, ...this.result }
+      detail: {
+        request: fetchRequest.request,
+        submitter: this.submitter,
+
+        get formSubmission() {
+          console.warn("`event.detail.formSubmission` is deprecated. Use `event.target`, `event.detail.submitter`, and `event.detail.request` instead")
+
+          return formSubmission
+        },
+
+        ...this.result
+      }
     })
     this.delegate.formSubmissionFinished(this)
   }

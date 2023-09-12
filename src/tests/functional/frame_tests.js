@@ -507,9 +507,9 @@ test("'turbo:frame-render' is triggered after frame has finished rendering", asy
   await page.click("#frame-part")
 
   await nextEventNamed(page, "turbo:frame-render") // recursive
-  const { fetchResponse } = await nextEventNamed(page, "turbo:frame-render")
+  const { response } = await nextEventNamed(page, "turbo:frame-render")
 
-  assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
+  assert.include(response.url, "/src/tests/fixtures/frames/part.html")
 })
 
 test("navigating a frame from an outer link with a turbo-frame child fires events", async ({ page }) => {
@@ -530,8 +530,8 @@ test("navigating a frame from an outer form fires events", async ({ page }) => {
 
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
-  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
-  assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/form.html")
+  const { response } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  assert.include(response.url, "/src/tests/fixtures/frames/form.html")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
@@ -546,8 +546,8 @@ test("navigating a frame from an outer link fires events", async ({ page }) => {
   await nextEventOnTarget(page, "outside-frame-form", "turbo:click")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
-  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
-  assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/form.html")
+  const { response } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  assert.include(response.url, "/src/tests/fixtures/frames/form.html")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
@@ -562,8 +562,8 @@ test("navigating a frame from an inner link fires events", async ({ page }) => {
   await nextEventOnTarget(page, "link-frame", "turbo:click")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
-  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
-  assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/frame.html")
+  const { response } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  assert.include(response.url, "/src/tests/fixtures/frames/frame.html")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 

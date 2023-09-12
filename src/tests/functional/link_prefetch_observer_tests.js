@@ -22,11 +22,13 @@ test("it prefetches the page", async ({ page }) => {
 
   await link.hover()
   await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-prefetch")
-  const { url, fetchOptions } = await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
+  const { url, fetchRequest, request } = await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
 
   expect(url).toEqual(await link.evaluate(a => a.href))
-  expect(fetchOptions.headers["X-Sec-Purpose"]).toEqual("prefetch")
-  expect(fetchOptions.priority).toEqual("low")
+  expect(fetchRequest.headers["X-Sec-Purpose"]).toEqual("prefetch")
+  expect(fetchRequest.priority).toEqual("low")
+  expect(request.headers["X-Sec-Purpose"]).toEqual("prefetch")
+  expect(request.priority).toEqual("low")
 
   await link.hover()
   await noNextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
