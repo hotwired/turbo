@@ -101,20 +101,20 @@ export class FormSubmission {
 
   // Fetch request delegate
 
-  prepareRequest(request) {
-    if (!request.isSafe) {
+  prepareRequest(fetchRequest) {
+    if (!fetchRequest.isSafe) {
       const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
-        request.headers["X-CSRF-Token"] = token
+        fetchRequest.headers["X-CSRF-Token"] = token
       }
     }
 
-    if (this.requestAcceptsTurboStreamResponse(request)) {
-      request.acceptResponseType(StreamMessage.contentType)
+    if (this.requestAcceptsTurboStreamResponse(fetchRequest)) {
+      fetchRequest.acceptResponseType(StreamMessage.contentType)
     }
   }
 
-  requestStarted(_request) {
+  requestStarted(fetchRequest) {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
     this.setSubmitsWith()
@@ -126,41 +126,41 @@ export class FormSubmission {
     this.delegate.formSubmissionStarted(this)
   }
 
-  requestPreventedHandlingResponse(request, response) {
+  requestPreventedHandlingResponse(fetchRequest, fetchResponse) {
     prefetchCache.clear()
 
-    this.result = { success: response.succeeded, fetchResponse: response }
+    this.result = { success: fetchResponse.succeeded, fetchResponse: fetchResponse }
   }
 
-  requestSucceededWithResponse(request, response) {
-    if (response.clientError || response.serverError) {
-      this.delegate.formSubmissionFailedWithResponse(this, response)
+  requestSucceededWithResponse(fetchRequest, fetchResponse) {
+    if (fetchResponse.clientError || fetchResponse.serverError) {
+      this.delegate.formSubmissionFailedWithResponse(this, fetchResponse)
       return
     }
 
     prefetchCache.clear()
 
-    if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response)) {
+    if (this.requestMustRedirect(fetchRequest) && responseSucceededWithoutRedirect(fetchResponse)) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
     } else {
       this.state = FormSubmissionState.receiving
-      this.result = { success: true, fetchResponse: response }
-      this.delegate.formSubmissionSucceededWithResponse(this, response)
+      this.result = { success: true, fetchResponse: fetchResponse }
+      this.delegate.formSubmissionSucceededWithResponse(this, fetchResponse)
     }
   }
 
-  requestFailedWithResponse(request, response) {
-    this.result = { success: false, fetchResponse: response }
-    this.delegate.formSubmissionFailedWithResponse(this, response)
+  requestFailedWithResponse(fetchRequest, fetchResponse) {
+    this.result = { success: false, fetchResponse: fetchResponse }
+    this.delegate.formSubmissionFailedWithResponse(this, fetchResponse)
   }
 
-  requestErrored(request, error) {
+  requestErrored(fetchRequest, error) {
     this.result = { success: false, error }
     this.delegate.formSubmissionErrored(this, error)
   }
 
-  requestFinished(_request) {
+  requestFinished(_fetchRequest) {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
     this.resetSubmitterText()
@@ -198,12 +198,12 @@ export class FormSubmission {
     }
   }
 
-  requestMustRedirect(request) {
-    return !request.isSafe && this.mustRedirect
+  requestMustRedirect(fetchRequest) {
+    return !fetchRequest.isSafe && this.mustRedirect
   }
 
-  requestAcceptsTurboStreamResponse(request) {
-    return !request.isSafe || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
+  requestAcceptsTurboStreamResponse(fetchRequest) {
+    return !fetchRequest.isSafe || hasAttribute("data-turbo-stream", this.submitter, this.formElement)
   }
 
   get submitsWith() {
@@ -234,8 +234,8 @@ function getCookieValue(cookieName) {
   }
 }
 
-function responseSucceededWithoutRedirect(response) {
-  return response.statusCode == 200 && !response.redirected
+function responseSucceededWithoutRedirect(fetchResponse) {
+  return fetchResponse.statusCode == 200 && !fetchResponse.redirected
 }
 
 function getFormAction(formElement, submitter) {
