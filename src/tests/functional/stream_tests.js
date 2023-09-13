@@ -1,6 +1,13 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
-import { nextBeat, nextEventNamed, readEventLogs, waitUntilNoSelector, waitUntilText } from "../helpers/page"
+import {
+  hasSelector,
+  nextBeat,
+  nextEventNamed,
+  readEventLogs,
+  waitUntilNoSelector,
+  waitUntilText
+} from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/stream.html")
@@ -133,6 +140,46 @@ test("test receiving a stream message over SSE", async ({ page }) => {
   await nextBeat()
 
   assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
+})
+
+test("test receiving an update stream message preserves focus if the activeElement has an [id]", async ({ page }) => {
+  await page.locator("input#container-element").focus()
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" target="container">
+        <template><textarea id="container-element"></textarea></template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.ok(await hasSelector(page, "textarea#container-element:focus"))
+})
+
+test("test receiving a replace stream message preserves focus if the activeElement has an [id]", async ({ page }) => {
+  await page.locator("input#container-element").focus()
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" target="container-element">
+        <template><textarea id="container-element"></textarea></template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.ok(await hasSelector(page, "textarea#container-element:focus"))
+})
+
+test("test receiving a remove stream message preserves focus blurs the activeElement", async ({ page }) => {
+  await page.locator("#container-element").focus()
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="remove" target="container-element"></turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.notOk(await hasSelector(page, ":focus"))
 })
 
 async function getReadyState(page, id) {

@@ -41,7 +41,7 @@ export class Renderer {
 
   focusFirstAutofocusableElement() {
     const element = this.connectedSnapshot.firstAutofocusableElement
-    if (elementIsFocusable(element)) {
+    if (element) {
       element.focus()
     }
   }
@@ -79,8 +79,4 @@ export class Renderer {
   get permanentElementMap() {
     return this.currentSnapshot.getPermanentElementMapForSnapshot(this.newSnapshot)
   }
-}
-
-function elementIsFocusable(element) {
-  return element && typeof element.focus == "function"
 }

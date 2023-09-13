@@ -108,3 +108,57 @@ test("test navigating a frame with a turbo-frame targeting the frame autofocuses
     "focuses the first [autofocus] element in frame"
   )
 })
+
+test("test receiving a Turbo Stream message with an [autofocus] element when the activeElement is the document", async ({ page }) => {
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="append" targets="body">
+        <template><input id="autofocus-from-stream" autofocus></template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.ok(
+    await hasSelector(page, "#autofocus-from-stream:focus"),
+    "focuses the [autofocus] element in from the turbo-stream"
+  )
+})
+
+test("test autofocus from a Turbo Stream message does not leak a placeholder [id]", async ({ page }) => {
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="append" targets="body">
+        <template><div id="container-from-stream"><input autofocus></div></template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.ok(
+    await hasSelector(page, "#container-from-stream input:focus"),
+    "focuses the [autofocus] element in from the turbo-stream"
+  )
+})
+
+test("test receiving a Turbo Stream message with an [autofocus] element when an element within the document has focus", async ({ page }) => {
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="append" targets="body">
+        <template><input id="autofocus-from-stream" autofocus></template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.ok(
+    await hasSelector(page, "#first-autofocus-element:focus"),
+    "focuses the first [autofocus] element on the page"
+  )
+})
