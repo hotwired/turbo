@@ -125,11 +125,12 @@ export class Session {
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location, restorationIdentifier) {
+  historyPoppedToLocationWithRestorationIdentifierAndDirection(location, restorationIdentifier, direction) {
     if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, {
         action: "restore",
-        historyChanged: true
+        historyChanged: true,
+        direction
       })
     } else {
       this.adapter.pageInvalidated({
@@ -188,7 +189,7 @@ export class Session {
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
-      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action, visit.direction)
     }
   }
 
@@ -313,8 +314,8 @@ export class Session {
     })
   }
 
-  notifyApplicationAfterVisitingLocation(location, action) {
-    return dispatch("turbo:visit", { detail: { url: location.href, action } })
+  notifyApplicationAfterVisitingLocation(location, action, direction) {
+    return dispatch("turbo:visit", { detail: { url: location.href, action, direction } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {

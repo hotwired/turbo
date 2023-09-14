@@ -220,6 +220,29 @@ test("test Visit with network error", async ({ page }) => {
   await nextEventNamed(page, "turbo:fetch-request-error")
 })
 
+test("test turbo:visit direction details", async ({ page }) => {
+  await page.click("#same-origin-link")
+  let details = await nextEventNamed(page, "turbo:visit")
+  assert.equal(details.direction, "forward")
+
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  details = await nextEventNamed(page, "turbo:visit")
+  assert.equal(details.direction, "back")
+
+  await nextEventNamed(page, "turbo:load")
+  await page.goForward()
+  details = await nextEventNamed(page, "turbo:visit")
+  assert.equal(details.direction, "forward")
+
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+  await page.click("#same-origin-replace-link")
+  details = await nextEventNamed(page, "turbo:visit")
+  assert.equal(details.direction, "none")
+})
+
 async function visitLocation(page, location) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
 }
