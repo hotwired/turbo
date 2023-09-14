@@ -624,7 +624,7 @@ test("navigating a frame targeting _top from an outer link fires events", async 
   expect(otherEvents.length, "no more events").toEqual(0)
 })
 
-test("invoking .reload() re-fetches the frame's content", async ({ page }) => {
+test("invoking .reload() re-fetches the content of a <turbo-frame> element with a [src] attribute", async ({ page }) => {
   await page.click("#link-frame")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
   await page.evaluate(() => document.getElementById("frame").reload())
@@ -633,6 +633,35 @@ test("invoking .reload() re-fetches the frame's content", async ({ page }) => {
 
   expect(
     dispatchedEvents.map(([name, _, id]) => [id, name])
+  ).toEqual(
+    [
+      ["frame", "turbo:before-fetch-request"],
+      ["frame", "turbo:before-fetch-response"],
+      ["frame", "turbo:before-frame-render"],
+      ["frame", "turbo:frame-render"],
+      ["frame", "turbo:frame-load"]
+    ]
+  )
+})
+
+test("invoking .reload() re-fetches the content of a <turbo-frame> element without a [src] attribute", async ({ page }) => {
+  const frame = await page.locator("turbo-frame#frame")
+  const heading = await frame.locator("h2")
+
+  await expect(heading).toHaveText("Frames: #frame")
+
+  await heading.evaluate((h2) => h2.textContent = "Not yet refreshed")
+  await expect(heading).toHaveText("Not yet refreshed")
+
+  await frame.evaluate((element) => element.reload())
+  await expect(heading).toHaveText("Frames: #frame")
+
+  const dispatchedEvents = await readEventLogs(page)
+
+  expect(
+    dispatchedEvents
+      .map(([name, _, id]) => [id, name])
+      .filter(([id]) => id === "frame")
   ).toEqual(
     [
       ["frame", "turbo:before-fetch-request"],
