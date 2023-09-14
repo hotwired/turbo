@@ -8,11 +8,11 @@ test("test preloads snapshot on initial load", async ({ page }) => {
   await nextBeat()
 
   assert.ok(
-    await page.evaluate(() => {
-      const preloadedUrl = "http://localhost:9000/src/tests/fixtures/preloaded.html"
-      const cache = window.Turbo.session.preloader.snapshotCache.snapshots
+    await page.evaluate(async () => {
+      const preloadedUrl = new URL("http://localhost:9000/src/tests/fixtures/preloaded.html")
+      const cache = window.Turbo.session.preloader.snapshotCache
 
-      return preloadedUrl in cache
+      return await cache.has(preloadedUrl)
     })
   )
 })
@@ -27,11 +27,11 @@ test("test preloads snapshot on page visit", async ({ page }) => {
   await nextBeat()
 
   assert.ok(
-    await page.evaluate(() => {
-      const preloadedUrl = "http://localhost:9000/src/tests/fixtures/preloaded.html"
-      const cache = window.Turbo.session.preloader.snapshotCache.snapshots
+    await page.evaluate(async () => {
+      const preloadedUrl = new URL("http://localhost:9000/src/tests/fixtures/preloaded.html")
+      const cache = window.Turbo.session.preloader.snapshotCache
 
-      return preloadedUrl in cache
+      return await cache.has(preloadedUrl)
     })
   )
 })
@@ -43,11 +43,11 @@ test("test navigates to preloaded snapshot from frame", async ({ page }) => {
   await nextBeat()
 
   assert.ok(
-    await page.evaluate(() => {
-      const preloadedUrl = "http://localhost:9000/src/tests/fixtures/preloaded.html"
-      const cache = window.Turbo.session.preloader.snapshotCache.snapshots
+    await page.evaluate(async () => {
+      const preloadedUrl = new URL("http://localhost:9000/src/tests/fixtures/preloaded.html")
+      const cache = window.Turbo.session.preloader.snapshotCache
 
-      return preloadedUrl in cache
+      return await cache.has(preloadedUrl)
     })
   )
 })
