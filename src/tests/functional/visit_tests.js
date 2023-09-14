@@ -243,6 +243,17 @@ test("test turbo:visit direction details", async ({ page }) => {
   assert.equal(details.direction, "none")
 })
 
+test("test turbo:visit direction details after a reload", async ({ page }) => {
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await page.reload()
+  assert.equal(
+    await page.evaluate(() => window.history.state.turbo.restorationIndex),
+    1,
+    "restorationIndex is persisted between reloads"
+  )
+})
+
 async function visitLocation(page, location) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
 }
