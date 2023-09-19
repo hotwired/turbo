@@ -35,3 +35,38 @@ test("test following a redirect renders [data-turbo-temporary] elements before t
 
   assert.equal(await page.textContent("#temporary"), "data-turbo-temporary")
 })
+
+test("test before cache content should reflect page content prior to navigation for links outside advance turbo frames", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/before_cache.html?start=y")
+  await page.evaluate(() => {
+    document.addEventListener("turbo:before-cache", () => {
+      console.log(`before-cache ${JSON.stringify(window.location.search)} ${document.querySelector('#origin')?.innerText}`)
+    })
+  })
+
+  page.addListener("console", (message) => {
+    assert.equal(message.text(), `before-cache "?start=y" undefined`)
+  })
+
+  await page.click("#advance-home")
+  await nextBody(page)
+})
+
+test("test before cache content should reflect page content prior to navigation for links inside advance turbo frames", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/before_cache.html?")
+  await page.click("#advance-home")
+  await nextBody(page)
+
+  await page.evaluate(() => {
+    document.addEventListener("turbo:before-cache", () => {
+      console.log(`before-cache ${JSON.stringify(window.location.search)} ${document.querySelector('#origin')?.innerText}`)
+    })
+  })
+
+  page.addListener("console", (message) => {
+    assert.equal(message.text(), `before-cache "?in_frame=n" home`)
+  })
+
+  await page.click("#advance-in")
+  await nextBody(page)
+})
