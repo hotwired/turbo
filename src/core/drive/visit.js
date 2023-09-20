@@ -66,7 +66,7 @@ export class Visit {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
-      initiator,
+      initiator
     } = {
       ...defaultOptions,
       ...options

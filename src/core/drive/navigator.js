@@ -26,7 +26,7 @@ export class Navigator {
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
       ...this.currentVisitOptions,
-      ...options,
+      ...options
     })
     this.currentVisit.start()
   }
