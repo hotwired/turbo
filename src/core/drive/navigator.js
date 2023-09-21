@@ -162,8 +162,6 @@ export class Navigator {
     this.proposedVisitOptions = options
     try {
       callback.call(this, this.#sanitizeVisitOptionsForTransfer(options))
-    } catch (error) {
-      throw error
     } finally {
       this.proposedVisitOptions = {}
     }
@@ -171,6 +169,6 @@ export class Navigator {
 
   #sanitizeVisitOptionsForTransfer(options) {
     const { initiator, referrer, visitCachedSnapshot, ...rest } = options
-    return structuredClone(rest)
+    return window.structuredClone(rest)
   }
 }
