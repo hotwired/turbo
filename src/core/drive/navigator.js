@@ -171,6 +171,6 @@ export class Navigator {
 
   #sanitizeVisitOptionsForTransfer(options) {
     const { initiator, referrer, visitCachedSnapshot, ...rest } = options
-    return rest
+    return structuredClone(rest)
   }
 }
