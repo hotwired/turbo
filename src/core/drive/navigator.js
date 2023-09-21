@@ -168,7 +168,13 @@ export class Navigator {
   }
 
   #sanitizeVisitOptionsForTransfer(options) {
-    const { initiator, referrer, visitCachedSnapshot, ...rest } = options
-    return window.structuredClone(rest)
+    return Object.entries(options).reduce((sanitized, [key, value]) => {
+      try {
+        sanitized[key] = window.structuredClone(value)
+      } catch (_) {
+        // Ignore non-transferable values
+      }
+      return sanitized
+    }, {})
   }
 }
