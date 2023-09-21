@@ -29,7 +29,7 @@ module.exports = {
     "no-multiple-empty-lines": ["error", { "max": 2 }],
     "no-self-assign": ["error", { "props": false }],
     "no-trailing-spaces": ["error"],
-    "no-unused-vars": ["error", { argsIgnorePattern: "_*" , "ignoreRestSiblings": true}],
+    "no-unused-vars": ["error", { argsIgnorePattern: "_*" }],
     "no-useless-escape": "off",
     "no-var": ["error"],
     "prefer-const": ["error"],
