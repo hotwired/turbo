@@ -162,8 +162,13 @@ export class Navigator {
 
   withTransferableVisitOptions(options, callback) {
     this.currentVisitOptions = options
-    callback.call(this, this.sanitizeVisitOptionsForTransfer(options))
-    this.currentVisitOptions = {}
+    try {
+      callback.call(this, this.#sanitizeVisitOptionsForTransfer(options))
+    } catch (error) {
+      throw error
+    } finally {
+      this.currentVisitOptions = {}
+    }
   }
 
   sanitizeVisitOptionsForTransfer(options) {
