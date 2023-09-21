@@ -12,7 +12,7 @@ export class Navigator {
   proposeVisit(location, options = {}) {
     if (this.delegate.allowsVisitingLocation(location, options)) {
       if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.withTransferableVisitOptions(options, (transferableOptions) => {
+        this.#withTransferableVisitOptions(options, (transferableOptions) => {
           this.delegate.visitProposedToLocation(location, transferableOptions)
         })
       } else {
@@ -158,9 +158,7 @@ export class Navigator {
     return getVisitAction(submitter, formElement) || "advance"
   }
 
-  // Private
-
-  withTransferableVisitOptions(options, callback) {
+  #withTransferableVisitOptions(options, callback) {
     this.currentVisitOptions = options
     try {
       callback.call(this, this.#sanitizeVisitOptionsForTransfer(options))
@@ -171,7 +169,7 @@ export class Navigator {
     }
   }
 
-  sanitizeVisitOptionsForTransfer(options) {
+  #sanitizeVisitOptionsForTransfer(options) {
     const { initiator, referrer, visitCachedSnapshot, ...rest } = options
     return rest
   }
