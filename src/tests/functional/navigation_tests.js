@@ -494,14 +494,26 @@ test("test ignores forms with a [target] attribute that target an iframe with [n
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
 })
 
-test("test visit events are dispatched on the initiator", async ({ page }) => {
+test("test visit events are dispatched on links", async ({ page }) => {
   await page.click("#same-origin-unannotated-link")
   await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-visit")
   await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:visit")
 })
 
-test("test fetch events are dispatched on the initiator", async ({ page }) => {
+test("test visit events are dispatched on forms", async ({ page }) => {
+  await page.click("#same-origin-unannotated-form button")
+  await nextEventOnTarget(page, "same-origin-unannotated-form", "turbo:before-visit")
+  await nextEventOnTarget(page, "same-origin-unannotated-form", "turbo:visit")
+})
+
+test("test fetch events are dispatched on links", async ({ page }) => {
   await page.click("#same-origin-unannotated-link")
   await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-fetch-request")
   await nextEventOnTarget(page, "same-origin-unannotated-link", "turbo:before-fetch-response")
+})
+
+test("test fetch events are dispatched on forms", async ({ page }) => {
+  await page.click("#same-origin-unannotated-form button")
+  await nextEventOnTarget(page, "same-origin-unannotated-form", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "same-origin-unannotated-form", "turbo:before-fetch-response")
 })

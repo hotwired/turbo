@@ -85,6 +85,7 @@ export class Navigator {
         const { statusCode, redirected } = fetchResponse
         const action = this.getActionForFormSubmission(formSubmission)
         const visitOptions = {
+          initiator: formSubmission.formElement,
           action,
           shouldCacheSnapshot,
           response: { statusCode, responseHTML, redirected }
