@@ -5,6 +5,8 @@ import { Visit } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
 export class Navigator {
+  proposedVisitOptions = {}
+
   constructor(delegate) {
     this.delegate = delegate
   }
