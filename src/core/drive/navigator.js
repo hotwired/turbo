@@ -25,7 +25,7 @@ export class Navigator {
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
-      ...this.currentVisitOptions,
+      ...this.proposedVisitOptions,
       ...options
     })
     this.currentVisit.start()
@@ -159,13 +159,13 @@ export class Navigator {
   }
 
   #withTransferableVisitOptions(options, callback) {
-    this.currentVisitOptions = options
+    this.proposedVisitOptions = options
     try {
       callback.call(this, this.#sanitizeVisitOptionsForTransfer(options))
     } catch (error) {
       throw error
     } finally {
-      this.currentVisitOptions = {}
+      this.proposedVisitOptions = {}
     }
   }
 
