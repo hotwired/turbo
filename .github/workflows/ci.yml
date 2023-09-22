@@ -13,8 +13,7 @@ jobs:
       with:
         node-version: '16'
         cache: 'yarn'
-
-    - run: yarn install
+    - run: yarn install --frozen-lockfile
     - run: yarn run playwright install --with-deps
     - run: yarn build
 
