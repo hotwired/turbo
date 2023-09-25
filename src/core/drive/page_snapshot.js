@@ -40,6 +40,10 @@ export class PageSnapshot extends Snapshot {
     return new PageSnapshot(clonedElement, this.headSnapshot)
   }
 
+  get html() {
+    return `${this.headElement.outerHTML}\n\n${this.element.outerHTML}`
+  }
+
   get headElement() {
     return this.headSnapshot.element
   }
