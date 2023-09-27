@@ -5,14 +5,18 @@ import { Visit } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
 export class Navigator {
+  proposedVisitOptions = {}
+
   constructor(delegate) {
     this.delegate = delegate
   }
 
   proposeVisit(location, options = {}) {
-    if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
+    if (this.delegate.allowsVisitingLocation(location, options)) {
       if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.delegate.visitProposedToLocation(location, options)
+        this.#withTransferableVisitOptions(options, (transferableOptions) => {
+          this.delegate.visitProposedToLocation(location, transferableOptions)
+        })
       } else {
         window.location.href = location.toString()
       }
@@ -23,6 +27,7 @@ export class Navigator {
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
+      ...this.proposedVisitOptions,
       ...options
     })
     this.currentVisit.start()
@@ -80,6 +85,7 @@ export class Navigator {
         const { statusCode, redirected } = fetchResponse
         const action = this.getActionForFormSubmission(formSubmission)
         const visitOptions = {
+          initiator: formSubmission.formElement,
           action,
           shouldCacheSnapshot,
           response: { statusCode, responseHTML, redirected }
@@ -153,5 +159,25 @@ export class Navigator {
 
   getActionForFormSubmission({ submitter, formElement }) {
     return getVisitAction(submitter, formElement) || "advance"
+  }
+
+  #withTransferableVisitOptions(options, callback) {
+    this.proposedVisitOptions = options
+    try {
+      callback.call(this, this.#sanitizeVisitOptionsForTransfer(options))
+    } finally {
+      this.proposedVisitOptions = {}
+    }
+  }
+
+  #sanitizeVisitOptionsForTransfer(options) {
+    return Object.entries(options).reduce((sanitized, [key, value]) => {
+      try {
+        sanitized[key] = window.structuredClone(value)
+      } catch (_) {
+        // Ignore non-transferable values
+      }
+      return sanitized
+    }, {})
   }
 }
