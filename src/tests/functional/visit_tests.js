@@ -13,6 +13,7 @@ import {
   readEventLogs,
   scrollToSelector,
   visitAction,
+  waitUntilSelector,
   willChangeBody
 } from "../helpers/page"
 
@@ -221,7 +222,8 @@ test("test Visit with network error", async ({ page }) => {
 })
 
 test("test turbo:visit direction details", async ({ page }) => {
-  await page.click("#same-origin-link")
+  page.click("#same-origin-link")
+  await waitUntilSelector(page, "[data-turbo-visit-direction='forward']")
   let details = await nextEventNamed(page, "turbo:visit")
   assert.equal(details.direction, "forward")
 

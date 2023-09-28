@@ -186,6 +186,7 @@ export class Session {
   visitStarted(visit) {
     if (!visit.acceptsStreamResponse) {
       markAsBusy(document.documentElement)
+      this.view.markVisitDirection(visit.direction)
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
@@ -194,6 +195,7 @@ export class Session {
   }
 
   visitCompleted(visit) {
+    this.view.unmarkVisitDirection()
     clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }
