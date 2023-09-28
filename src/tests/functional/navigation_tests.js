@@ -195,7 +195,13 @@ test("test following a POST form clears cache", async ({ page }) => {
   await page.click("#form-post-submit")
   await nextBeat() // 301 redirect response
   await nextBeat() // 200 response
+
+  assert.equal(await page.textContent("h1"), "One")
+
   await page.goBack()
+  await nextBeat()
+
+  assert.equal(await page.textContent("h1"), "Navigation")
   assert.notOk(await hasSelector(page, "some-cached-element"))
 })
 
