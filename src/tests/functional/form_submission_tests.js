@@ -535,7 +535,7 @@ test("test invalid form submission with unprocessable entity status", async ({ p
 })
 
 test("test invalid form submission returning 4xx exception page with no head script", async ({ page }) => {
-  await page.click("#reject form.unprocessable_entity_exceptional input[type=submit]")
+  await page.click("#reject form.unprocessable_entity_exceptional button[type=submit]")
   await nextBody(page)
 
   const title = await page.locator("h1")

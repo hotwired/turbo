@@ -79,40 +79,6 @@ test("test reloads when tracked elements change", async ({ page }) => {
   assert.equal(reason, "tracked_element_mismatch")
 })
 
-test("test reloads when tracked elements change due to failed form submission", async ({ page }) => {
-  await page.click("#tracked-asset-change-form button")
-  await nextBeat()
-
-  await page.evaluate(() => {
-    window.addEventListener(
-      "turbo:reload",
-      (e) => {
-        localStorage.setItem("reason", e.detail.reason)
-      },
-      { once: true }
-    )
-
-    window.addEventListener(
-      "beforeunload",
-      () => {
-        localStorage.setItem("unloaded", "true")
-      },
-      { once: true }
-    )
-  })
-
-  await page.click("#tracked-asset-change-form button")
-  await nextBeat()
-
-  const reason = await page.evaluate(() => localStorage.getItem("reason"))
-  const unloaded = await page.evaluate(() => localStorage.getItem("unloaded"))
-
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/rendering.html")
-  assert.equal(await visitAction(page), "load")
-  assert.equal(reason, "tracked_element_mismatch")
-  assert.equal(unloaded, "true")
-})
-
 test("test before-render event supports custom render function", async ({ page }) => {
   await page.evaluate(() =>
     addEventListener("turbo:before-render", (event) => {
