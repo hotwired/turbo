@@ -534,6 +534,14 @@ test("test invalid form submission with unprocessable entity status", async ({ p
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
+test("test invalid form submission returning 4xx exception page with no head script", async ({ page }) => {
+  await page.click("#reject form.unprocessable_entity_exceptional button[type=submit]")
+  await nextBody(page)
+
+  const title = await page.locator("h1")
+  assert.equal(await title.textContent(), "Exception page with no head script", "renders the response HTML")
+})
+
 test("test invalid form submission with long form", async ({ page }) => {
   await scrollToSelector(page, "#reject form.unprocessable_entity_with_tall_form input[type=submit]")
   await page.click("#reject form.unprocessable_entity_with_tall_form input[type=submit]")

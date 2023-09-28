@@ -58,6 +58,13 @@ router.post("/reject/tall", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.post("/reject/422_exceptional", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_exceptional.html`)
+
+  response.status(422).sendFile(fixture)
+})
+
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
