@@ -221,31 +221,45 @@ test("test Visit with network error", async ({ page }) => {
   await nextEventNamed(page, "turbo:fetch-request-error")
 })
 
-test("test turbo:visit direction details", async ({ page }) => {
-  page.click("#same-origin-link")
-  await waitUntilSelector(page, "[data-turbo-visit-direction='forward']")
-  let details = await nextEventNamed(page, "turbo:visit")
-  assert.equal(details.direction, "forward")
-
-  await nextEventNamed(page, "turbo:load")
-  await page.goBack()
-  details = await nextEventNamed(page, "turbo:visit")
-  assert.equal(details.direction, "back")
-
-  await nextEventNamed(page, "turbo:load")
-  await page.goForward()
-  details = await nextEventNamed(page, "turbo:visit")
-  assert.equal(details.direction, "forward")
-
-  await nextEventNamed(page, "turbo:load")
-  await page.goBack()
-  await nextEventNamed(page, "turbo:load")
-  await page.click("#same-origin-replace-link")
-  details = await nextEventNamed(page, "turbo:visit")
-  assert.equal(details.direction, "none")
+test("test Visit direction data attribute when clicking a link", async ({ page }) => {
+  await Promise.all([
+    waitUntilSelector(page, "[data-turbo-visit-direction='forward']")
+      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
+    page.click("#same-origin-link")
+  ])
 })
 
-test("test turbo:visit direction details after a reload", async ({ page }) => {
+test("test Visit direction detdata attribute when navigating back", async ({ page }) => {
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await Promise.all([
+    waitUntilSelector(page, "[data-turbo-visit-direction='back']")
+      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
+    page.goBack()
+  ])
+})
+
+test("test Visit direction attribute when navigating forward", async ({ page }) => {
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+  await Promise.all([
+    waitUntilSelector(page, "[data-turbo-visit-direction='forward']")
+      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
+    page.goForward()
+  ])
+})
+
+test("test Visit direction attribute on a replace visit", async ({ page }) => {
+  await Promise.all([
+    waitUntilSelector(page, "[data-turbo-visit-direction='none']")
+      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
+    page.click("#same-origin-replace-link")
+  ])
+})
+
+test("test Turbo history state after a reload", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
   await page.reload()

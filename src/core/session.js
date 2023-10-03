@@ -190,7 +190,7 @@ export class Session {
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
-      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action, visit.direction)
+      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
     }
   }
 
@@ -316,8 +316,8 @@ export class Session {
     })
   }
 
-  notifyApplicationAfterVisitingLocation(location, action, direction) {
-    return dispatch("turbo:visit", { detail: { url: location.href, action, direction } })
+  notifyApplicationAfterVisitingLocation(location, action) {
+    return dispatch("turbo:visit", { detail: { url: location.href, action } })
   }
 
   notifyApplicationBeforeCachingSnapshot() {
