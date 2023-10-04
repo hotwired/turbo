@@ -2,6 +2,8 @@ import { StreamElement } from "../../elements"
 import { nextAnimationFrame } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
 import { assert } from "@open-wc/testing"
+import { nextBeat } from "../helpers/page"
+import * as Turbo from "../../index"
 
 function createStreamElement(action, target, templateElement) {
   const element = new StreamElement()
@@ -166,4 +168,31 @@ test("action=before", async () => {
   assert.ok(subject.find("div#hello"))
   assert.ok(subject.find("h1#before"))
   assert.isNull(element.parentElement)
+})
+
+test("test action=refresh", async () => {
+  document.body.setAttribute("data-modified", "")
+  assert.ok(document.body.hasAttribute("data-modified"))
+
+  const element = createStreamElement("refresh")
+  subject.append(element)
+
+  await nextBeat()
+
+  assert.notOk(document.body.hasAttribute("data-modified"))
+})
+
+test("test action=refresh discarded when matching request id", async () => {
+  Turbo.recentRequests.add("123")
+
+  document.body.setAttribute("data-modified", "")
+  assert.ok(document.body.hasAttribute("data-modified"))
+
+  const element = createStreamElement("refresh")
+  element.setAttribute("request-id", "123")
+  subject.append(element)
+
+  await nextBeat()
+
+  assert.ok(document.body.hasAttribute("data-modified"))
 })

@@ -335,7 +335,7 @@ export class Visit {
   // Scrolling
 
   performScroll() {
-    if (!this.scrolled && !this.view.forceReloaded) {
+    if (!this.scrolled && !this.view.forceReloaded && !this.view.snapshot.shouldPreserveScrollPosition) {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
       } else {

@@ -4,7 +4,7 @@ import bodyParser from "body-parser"
 import multer from "multer"
 import path from "path"
 import url from "url"
-import { fileURLToPath } from 'url'
+import { fileURLToPath } from "url"
 import fs from "fs"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -51,6 +51,11 @@ router.get("/redirect", (request, response) => {
   response.redirect(301, url.format({ pathname, query }))
 })
 
+router.post("/refresh", (request, response) => {
+  const { sleep } = request.body
+  setTimeout(() => response.redirect("back"), parseInt(sleep || "0", 10))
+})
+
 router.post("/reject/tall", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/422_tall.html`)
@@ -91,6 +96,28 @@ router.post("/messages", (request, response) => {
     }
   } else {
     response.sendStatus(422)
+  }
+})
+
+router.post("/refreshes", (request, response) => {
+  const params = { ...request.body, ...request.query }
+  const { requestId } = params
+
+  if(acceptsStreams(request)){
+    response.type("text/vnd.turbo-stream.html; charset=utf-8")
+    response.send(renderPageRefresh(requestId))
+  } else {
+    response.sendStatus(201)
+  }
+})
+
+router.get("/request_id_header", (request, response) => {
+  const turboRequestHeader = request.get("X-Turbo-Request-Id")
+
+  if (turboRequestHeader) {
+    response.send(turboRequestHeader);
+  } else {
+    response.status(404).send("X-Turbo-Request header not found")
   }
 })
 
@@ -163,6 +190,12 @@ function renderMessageForTargets(content, id, targets) {
     <turbo-stream id="${id}" action="append" targets="${targets}"><template>
       <div class="message">${escapeHTML(content)}</div>
     </template></turbo-stream>
+  `
+}
+
+function renderPageRefresh(requestId) {
+  return `
+    <turbo-stream action="refresh" request-id="${requestId}"></turbo-stream>
   `
 }
 

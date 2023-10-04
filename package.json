@@ -32,6 +32,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "idiomorph": "https://github.com/basecamp/idiomorph#rollout-build"
+  },
   "devDependencies": {
     "@open-wc/testing": "^3.1.7",
     "@playwright/test": "^1.28.0",
