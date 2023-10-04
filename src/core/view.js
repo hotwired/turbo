@@ -69,7 +69,7 @@ export class View {
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
-        this.delegate.viewRenderedSnapshot(snapshot, isPreview)
+        this.delegate.viewRenderedSnapshot(snapshot, isPreview, this.renderer.renderMethod)
         this.delegate.preloadOnLoadLinksForView(this.element)
         this.finishRenderingSnapshot(renderer)
       } finally {

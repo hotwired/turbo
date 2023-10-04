@@ -276,7 +276,7 @@ export class FrameController {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, _isPreview) {}
+  viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
 
   preloadOnLoadLinksForView(element) {
     session.preloadOnLoadLinksForView(element)

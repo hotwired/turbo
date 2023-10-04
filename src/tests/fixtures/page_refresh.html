@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html id="html" data-skip-event-details="turbo:submit-start turbo:submit-end turbo:fetch-request-error">
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-refresh-method" content="morph">
+    <meta name="turbo-refresh-scroll" content="preserve">
+
+    <title>Turbo</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+
+            /* Ensure the page is large enough to scroll */
+            width: 150vw;
+            height: 150vh;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>Page to be refreshed</h1>
+
+    <turbo-frame id="refresh-morph" src="/src/tests/fixtures/frame_refresh_morph.html" refresh="morph">
+      <h2>Frame to be morphed</h2>
+    </turbo-frame>
+
+    <turbo-frame id="refresh-reload" src="/src/tests/fixtures/frame_refresh_reload.html" refresh="reload">
+      <h2>Frame to be reloaded</h2>
+    </turbo-frame>
+
+    <div id="preserve-me" data-turbo-permanent>
+      Preserve me!
+    </div>
+
+    <div id="stimulus-controller" data-controller="test">
+      <h3>Element with Stimulus controller</h3>
+    </div>
+
+    <p><a id="link" href="/src/tests/fixtures/one.html">Link to another page</a></p>
+
+    <form id="form" action="/__turbo/refresh" method="post" class="redirect">
+      <input type="text" name="text" value="">
+      <input type="hidden" name="path" value="/src/tests/fixtures/page_refresh.html">
+      <input type="hidden" name="sleep" value="50">
+      <input id="form-submit" type="submit" value="form[method=post]">
+    </form>
+  </body>
+</html>
