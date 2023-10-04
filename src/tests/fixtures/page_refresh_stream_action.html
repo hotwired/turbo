@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html data-skip-event-details="turbo:submit-start turbo:submit-end">
+<head>
+  <meta charset="utf-8">
+  <title>Turbo Streams</title>
+  <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+  <script src="/src/tests/fixtures/test.js"></script>
+</head>
+<body>
+  <form id="refresh" method="post" action="/__turbo/refreshes">
+    <button>Refresh</button>
+    <input id="request-id" type="hidden" name="requestId" value="">
+  </form>
+
+  <div id="content">
+    <span>Hello</span>
+  </div>
+</body>
+</html>

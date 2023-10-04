@@ -30,5 +30,14 @@ export const StreamActions = {
       targetElement.innerHTML = ""
       targetElement.append(this.templateContent)
     })
+  },
+
+  refresh() {
+    const requestId = this.getAttribute("request-id")
+    const isRecentRequest = requestId && window.Turbo.recentRequests.has(requestId)
+    if (!isRecentRequest) {
+      window.Turbo.cache.exemptPageFromPreview()
+      window.Turbo.visit(window.location.href, { action: "replace" })
+    }
   }
 }

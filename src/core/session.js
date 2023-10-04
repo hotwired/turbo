@@ -263,9 +263,9 @@ export class Session {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, isPreview) {
+  viewRenderedSnapshot(_snapshot, isPreview, renderMethod) {
     this.view.lastRenderedLocation = this.history.location
-    this.notifyApplicationAfterRender(isPreview)
+    this.notifyApplicationAfterRender(isPreview, renderMethod)
   }
 
   preloadOnLoadLinksForView(element) {
@@ -328,8 +328,8 @@ export class Session {
     })
   }
 
-  notifyApplicationAfterRender(isPreview) {
-    return dispatch("turbo:render", { detail: { isPreview } })
+  notifyApplicationAfterRender(isPreview, renderMethod) {
+    return dispatch("turbo:render", { detail: { isPreview, renderMethod } })
   }
 
   notifyApplicationAfterPageLoad(timing = {}) {
