@@ -32,6 +32,14 @@ export class PageView extends View {
     return this.render(renderer)
   }
 
+  renderFormClientError(snapshot, visit) {
+    if(this.snapshot.headSnapshot.trackedElementSignature == snapshot.headSnapshot.trackedElementSignature) {
+      return this.renderPage(snapshot, false, true, visit)
+    } else {
+      return this.renderError(snapshot, visit)
+    }
+  }
+
   clearSnapshotCache() {
     this.snapshotCache.clear()
   }
