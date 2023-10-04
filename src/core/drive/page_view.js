@@ -60,7 +60,11 @@ export class PageView extends View {
   }
 
   shouldPreserveScrollPosition(visit) {
-    return this.isPageRefresh(visit) && (visit?.refresh?.scroll || this.snapshot.refreshScroll) === "preserve"
+    if (this.isPageRefresh(visit)) {
+      return (visit?.refresh?.scroll || this.snapshot.refreshScroll) === "preserve"
+    } else {
+      return this.snapshot.visitScroll === "preserve"
+    }
   }
 
   get snapshot() {
