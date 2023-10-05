@@ -51,3 +51,22 @@ test("test navigates to preloaded snapshot from frame", async ({ page }) => {
     })
   )
 })
+
+test("test preloads snapshot after adding data-turbo-preload attribute at runtime", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/dynamic_preloading.html")
+  await nextBeat()
+
+  await page.evaluate(async () => {
+    document.querySelector("#preload_anchor").setAttribute("data-turbo-preload", "true")
+  })
+  await nextBeat()
+
+  assert.ok(
+    await page.evaluate(async () => {
+      const preloadedUrl = new URL("http://localhost:9000/src/tests/fixtures/preloaded.html")
+      const cache = window.Turbo.session.preloader.snapshotCache
+
+      return await cache.has(preloadedUrl)
+    })
+  )
+})
