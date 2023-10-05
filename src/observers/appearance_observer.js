@@ -4,7 +4,7 @@ export class AppearanceObserver {
   constructor(delegate, element) {
     this.delegate = delegate
     this.element = element
-    this.intersectionObserver = new IntersectionObserver(this.intersect)
+    this.intersectionObserver = new IntersectionObserver(this.intersect, readIntersectionObserverOptions(element))
   }
 
   start() {
@@ -27,4 +27,23 @@ export class AppearanceObserver {
       this.delegate.elementAppearedInViewport(this.element)
     }
   }
+}
+
+function readIntersectionObserverOptions(element) {
+  let options = {}
+
+  if (element.hasAttribute("data-intersection-root-selector"))
+    options["root"] = document.querySelector(element.getAttribute("data-intersection-root-selector"))
+
+  if (element.hasAttribute("data-intersection-root-margin"))
+    options["rootMargin"] = element.getAttribute("data-intersection-root-margin")
+
+  if (element.hasAttribute("data-intersection-threshold")) {
+    const threshold = JSON.parse(element.getAttribute("data-intersection-threshold"))
+
+    // only a single threshold value is allowed
+    if (typeof threshold === "number") options["threshold"] = threshold
+  }
+
+  return options
 }
