@@ -5,6 +5,13 @@ export class Preloader {
 
   constructor(delegate) {
     this.delegate = delegate
+    this.preloadLinkObserver = new MutationObserver((mutationList, observer) => {
+      mutationList.forEach((mutation) => {
+        if (mutation.attributeName !== "data-turbo-preload" || mutation.target.tagName !== "A") return
+
+        this.preloadURL(mutation.target)
+      })
+    })
   }
 
   get snapshotCache() {
@@ -15,9 +22,11 @@ export class Preloader {
     if (document.readyState === "loading") {
       return document.addEventListener("DOMContentLoaded", () => {
         this.preloadOnLoadLinksForView(document.body)
+        this.observeLinksForView(document.body)
       })
     } else {
       this.preloadOnLoadLinksForView(document.body)
+      this.observeLinksForView(document.body)
     }
   }
 
@@ -25,6 +34,13 @@ export class Preloader {
     for (const link of element.querySelectorAll(this.selector)) {
       this.preloadURL(link)
     }
+  }
+
+  observeLinksForView(element) {
+    this.preloadLinkObserver.observe(element, {
+      attributes: true,
+      subtree: true
+    })
   }
 
   async preloadURL(link) {
