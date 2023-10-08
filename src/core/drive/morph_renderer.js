@@ -3,6 +3,9 @@ import { dispatch, nextAnimationFrame } from "../../util"
 import { Renderer } from "../renderer"
 
 export class MorphRenderer extends Renderer {
+  static renderElement(currentElement, newElement) {
+  }
+
   async render() {
     if (this.willRender) await this.#morphBody()
   }
