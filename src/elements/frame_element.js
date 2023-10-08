@@ -76,6 +76,24 @@ export class FrameElement extends HTMLElement {
   }
 
   /**
+   * Gets the refresh mode for the frame.
+   */
+  get refresh() {
+    return this.getAttribute("refresh")
+  }
+
+  /**
+   * Sets the refresh mode for the frame.
+   */
+  set refresh(value) {
+    if (value) {
+      this.setAttribute("refresh", value)
+    } else {
+      this.removeAttribute("refresh")
+    }
+  }
+
+  /**
    * Determines if the element is loading
    */
   get loading() {

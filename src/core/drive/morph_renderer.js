@@ -73,7 +73,7 @@ export class MorphRenderer extends Renderer {
   }
 
   #isFrameReloadedWithMorph(element) {
-    return element.getAttribute("src") && element.getAttribute("refresh") === "morph"
+    return element.src && element.refresh === "morph"
   }
 
   #remoteFrames() {
