@@ -3,17 +3,28 @@ import { dispatch } from "../../util"
 import { PageRenderer } from "./page_renderer"
 
 export class MorphRenderer extends PageRenderer {
-  async render() {
-    if (this.willRender) await this.#morphBody()
+  static renderElement(currentElement, newElement) {
+    const morph = new Morph(currentElement, newElement)
+
+    morph.morphBody()
+  }
+
+  async preservingPermanentElements(callback) {
+    return await callback()
   }
 
   get renderMethod() {
     return "morph"
   }
+}
 
-  // Private
+class Morph {
+  constructor(currentElement, newElement) {
+    this.currentElement = currentElement
+    this.newElement = newElement
+  }
 
-  async #morphBody() {
+  async morphBody() {
     this.#morphElements(this.currentElement, this.newElement)
     this.#reloadRemoteFrames()
 
@@ -24,6 +35,8 @@ export class MorphRenderer extends PageRenderer {
       }
     })
   }
+
+  // Private
 
   #morphElements(currentElement, newElement, morphStyle = "outerHTML") {
     this.isMorphingTurboFrame = this.#isFrameReloadedWithMorph(currentElement)
