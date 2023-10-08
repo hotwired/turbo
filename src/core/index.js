@@ -1,16 +1,12 @@
 import { Session } from "./session"
-import { Cache } from "./cache"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
-import { LimitedSet } from "./drive/limited_set"
 
 const session = new Session()
-const cache = new Cache(session)
-const recentRequests = new LimitedSet(20)
-const { navigator } = session
-export { navigator, session, cache, recentRequests, PageRenderer, PageSnapshot, FrameRenderer }
+const { cache, navigator } = session
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
 
 export { StreamActions } from "./streams/stream_actions"
 

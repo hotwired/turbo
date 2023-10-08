@@ -183,7 +183,7 @@ test("test action=refresh", async () => {
 })
 
 test("test action=refresh discarded when matching request id", async () => {
-  Turbo.recentRequests.add("123")
+  Turbo.session.recentRequests.add("123")
 
   document.body.setAttribute("data-modified", "")
   assert.ok(document.body.hasAttribute("data-modified"))
