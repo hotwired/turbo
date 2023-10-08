@@ -306,6 +306,18 @@ test("calling reload on a frame[refresh=morph] morphs the contents", async ({ pa
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
 })
 
+test("calling reload on a frame[refresh=morph] preserves [data-turbo-permanent] elements", async ({ page }) => {
+  await page.click("#add-src-to-frame")
+  await page.click("#add-refresh-morph-to-frame")
+  const input = await page.locator("#permanent-input")
+
+  await input.fill("Preserve me")
+  await page.evaluate(() => document.getElementById("frame").reload())
+
+  await expect(input).toBeFocused()
+  await expect(input).toHaveValue("Preserve me")
+})
+
 test("following a link in rapid succession cancels the previous request", async ({ page }) => {
   await page.click("#outside-frame-form")
   await page.click("#outer-frame-link")

@@ -33,6 +33,7 @@ export class FrameController {
   #connected = false
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
+  #shouldMorphFrame = false
   action = null
 
   constructor(element) {
@@ -90,13 +91,10 @@ export class FrameController {
   }
 
   sourceURLReloaded() {
-    if (this.element.shouldReloadWithMorph) {
-      this.element.addEventListener("turbo:before-frame-render", ({ detail }) => {
-        detail.render = MorphingFrameRenderer.renderElement
-      }, { once: true })
-    }
+    const { refresh, src } = this.element
 
-    const { src } = this.element
+    this.#shouldMorphFrame = src && refresh === "morph"
+
     this.element.removeAttribute("complete")
     this.element.src = null
     this.element.src = src
@@ -139,6 +137,7 @@ export class FrameController {
         }
       }
     } finally {
+      this.#shouldMorphFrame = false
       this.fetchResponseLoaded = () => Promise.resolve()
     }
   }
@@ -304,11 +303,11 @@ export class FrameController {
 
   async #loadFrameResponse(fetchResponse, document) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
+    const rendererClass = this.#shouldMorphFrame ? MorphingFrameRenderer : FrameRenderer
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
-      const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
-
+      const renderer = new rendererClass(this, this.view.snapshot, snapshot, false, false)
       if (this.view.renderPromise) await this.view.renderPromise
       this.changeHistory()
 
