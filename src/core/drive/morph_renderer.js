@@ -1,5 +1,5 @@
 import Idiomorph from "idiomorph"
-import { nextAnimationFrame } from "../../util"
+import { dispatch, nextAnimationFrame } from "../../util"
 import { Renderer } from "../renderer"
 
 export class MorphRenderer extends Renderer {
@@ -17,7 +17,12 @@ export class MorphRenderer extends Renderer {
     this.#morphElements(this.currentElement, this.newElement)
     this.#reloadRemoteFrames()
 
-    this.#dispatchEvent("turbo:morph", { currentElement: this.currentElement, newElement: this.newElement })
+    dispatch("turbo:morph", {
+      detail: {
+        currentElement: this.currentElement,
+        newElement: this.newElement
+      }
+    })
   }
 
   #morphElements(currentElement, newElement, morphStyle = "outerHTML") {
@@ -47,7 +52,10 @@ export class MorphRenderer extends Renderer {
   }
 
   #morphFrameUpdate = (currentElement, newElement) => {
-    this.#dispatchEvent("turbo:before-frame-morph", { currentElement, newElement }, currentElement)
+    dispatch("turbo:before-frame-morph", {
+      target: currentElement,
+      detail: { currentElement, newElement }
+    })
     this.#morphElements(currentElement, newElement, "innerHTML")
   }
 
@@ -78,11 +86,5 @@ export class MorphRenderer extends Renderer {
 
   #remoteFrames() {
     return document.querySelectorAll("turbo-frame[src]")
-  }
-
-  #dispatchEvent(name, detail, target = document.documentElement) {
-    const event = new CustomEvent(name, { bubbles: true, cancelable: true, detail })
-    target.dispatchEvent(event)
-    return event
   }
 }
