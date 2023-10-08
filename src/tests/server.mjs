@@ -117,7 +117,7 @@ router.get("/request_id_header", (request, response) => {
   if (turboRequestHeader) {
     response.send(turboRequestHeader);
   } else {
-    response.status(404).send("X-Turbo-Request header not found")
+    response.status(404).send("X-Turbo-Request-Id header not found")
   }
 })
 

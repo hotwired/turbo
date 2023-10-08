@@ -1,6 +1,6 @@
 import { FetchResponse } from "./fetch_response"
 import { expandURL } from "../core/url"
-import { dispatch } from "../util"
+import { dispatch, uuid } from "../util"
 
 export function fetchMethodFromString(method) {
   switch (method.toLowerCase()) {
@@ -50,6 +50,7 @@ export class FetchRequest {
     const [url, body] = buildResourceAndBody(expandURL(location), method, requestBody, enctype)
 
     this.delegate = delegate
+    this.id = uuid()
     this.url = url
     this.target = target
     this.fetchOptions = {
@@ -156,7 +157,8 @@ export class FetchRequest {
 
   get defaultHeaders() {
     return {
-      Accept: "text/html, application/xhtml+xml"
+      Accept: "text/html, application/xhtml+xml",
+      "X-Turbo-Request-Id": this.id
     }
   }
 

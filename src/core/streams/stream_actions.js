@@ -34,7 +34,7 @@ export const StreamActions = {
 
   refresh() {
     const requestId = this.getAttribute("request-id")
-    const isRecentRequest = requestId && window.Turbo.recentRequests.has(requestId)
+    const isRecentRequest = requestId && window.Turbo.session.recentRequests.has(requestId)
     if (!isRecentRequest) {
       window.Turbo.cache.exemptPageFromPreview()
       window.Turbo.visit(window.location.href, { action: "replace" })

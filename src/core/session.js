@@ -1,5 +1,6 @@
 import { BrowserAdapter } from "./native/browser_adapter"
 import { CacheObserver } from "../observers/cache_observer"
+import { FetchRequestObserver } from "../observers/fetch_request_observer"
 import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History } from "./drive/history"
@@ -16,6 +17,8 @@ import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markA
 import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
+import { LimitedSet } from "./drive/limited_set"
+import { Cache } from "./cache"
 
 export class Session {
   navigator = new Navigator(this)
@@ -26,6 +29,7 @@ export class Session {
 
   pageObserver = new PageObserver(this)
   cacheObserver = new CacheObserver()
+  fetchRequestObserver = new FetchRequestObserver(this, document.documentElement)
   linkClickObserver = new LinkClickObserver(this, window)
   formSubmitObserver = new FormSubmitObserver(this, document)
   scrollObserver = new ScrollObserver(this)
@@ -33,6 +37,8 @@ export class Session {
   formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
   frameRedirector = new FrameRedirector(this, document.documentElement)
   streamMessageRenderer = new StreamMessageRenderer()
+  cache = new Cache(this)
+  recentRequests = new LimitedSet(20)
 
   drive = true
   enabled = true
@@ -44,6 +50,7 @@ export class Session {
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
+      this.fetchRequestObserver.start()
       this.formLinkClickObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
@@ -65,6 +72,7 @@ export class Session {
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
+      this.fetchRequestObserver.stop()
       this.formLinkClickObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
@@ -142,6 +150,16 @@ export class Session {
 
   scrollPositionChanged(position) {
     this.history.updateRestorationData({ scrollPosition: position })
+  }
+
+  // Fetch request observer delegate
+
+  willFetch(_url, fetchOptions) {
+    const requestId = fetchOptions.headers["X-Turbo-Request-Id"]
+
+    if (requestId) {
+      this.recentRequests.add(requestId)
+    }
   }
 
   // Form click observer delegate
