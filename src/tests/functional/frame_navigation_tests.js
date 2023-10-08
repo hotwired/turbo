@@ -30,6 +30,13 @@ test("test frame navigation with exterior link in Shadow DOM", async ({ page }) 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
+test("test frame navigation with a data-turbo-frame in the Shadow DOM", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#data-turbo-frame-in-shadow-dom")
+
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+})
+
 test("test frame navigation emits fetch-request-error event when offline", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
   await page.context().setOffline(true)
