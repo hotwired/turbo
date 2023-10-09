@@ -4,6 +4,7 @@ import {
   attributeForSelector,
   hasSelector,
   listenForEventOnTarget,
+  locatorHasFocus,
   nextAttributeMutationNamed,
   noNextAttributeMutationNamed,
   nextBeat,
@@ -880,6 +881,52 @@ test("test navigating a eager frame with a link[method=get] that does not fetch 
   assert.equal(await page.textContent("h1"), "Eager-loaded frame")
   assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Loaded")
   assert.equal(pathname(page.url()), "/src/tests/fixtures/page_with_eager_frame.html")
+})
+
+test("test driving a morph frame with link preserves focus", async ({ page }) => {
+  const frame = await page.locator("turbo-frame#refresh-morph")
+  const link = await frame.locator("a:first-of-type")
+
+  assert.include(await frame.textContent("h2"), "Source: #refresh-morph")
+
+  await link.focus()
+  await link.press("Enter")
+  await nextEventOnTarget(page, "refresh-morph", "turbo:frame-render")
+
+  assert.ok(await locatorHasFocus(link), "restores focus after page loads")
+  assert.include(await frame.textContent("h2"), "Destination: #refresh-morph")
+  assert.equal(await frame.count("#input-in-morph"), 1)
+
+  await link.press("Enter")
+  await nextEventOnTarget(page, "refresh-morph", "turbo:frame-render")
+
+  assert.ok(await locatorHasFocus(link), "restores focus after page loads")
+  assert.include(await frame.textContent("h2"), "Source: #refresh-morph")
+  assert.equal(await frame.count("#input-in-morph"), 1)
+})
+
+test("test driving a morph frame with form preserves focus", async ({ page }) => {
+  const frame = await page.locator("turbo-frame#refresh-morph")
+  const input = await frame.locator("#input-in-refresh-morph")
+
+  assert.include(await frame.textContent("h2"), "Source: #refresh-morph")
+
+  await input.type("hello")
+  await input.press("Enter")
+  await nextEventOnTarget(page, "refresh-morph", "turbo:frame-render")
+
+  assert.ok(await locatorHasFocus(input), "restores focus after page loads")
+  assert.include(await frame.textContent("h2"), "Destination: #refresh-morph")
+  await expect(input).toHaveValue("hello")
+  assert.equal(await frame.count("#input-in-morph"), 1)
+
+  await input.press("Enter")
+  await nextEventOnTarget(page, "refresh-morph", "turbo:frame-render")
+
+  assert.ok(await locatorHasFocus(input), "restores focus after page loads")
+  assert.include(await frame.textContent("h2"), "Source: #refresh-morph")
+  await expect(input).toHaveValue("hello")
+  assert.equal(await frame.count("#input-in-morph"), 1)
 })
 
 test("form submissions from frames clear snapshot cache", async ({ page }) => {

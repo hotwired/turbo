@@ -3,6 +3,10 @@ import { Renderer } from "../renderer"
 
 export class ErrorRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
+    ErrorRenderer.replace(currentElement, newElement)
+  }
+
+  static replace(currentElement, newElement) {
     const { documentElement, body } = document
 
     documentElement.replaceChild(newElement, body)

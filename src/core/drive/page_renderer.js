@@ -3,6 +3,10 @@ import { activateScriptElement, waitForLoad } from "../../util"
 
 export class PageRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
+    PageRenderer.replace(currentElement, newElement)
+  }
+
+  static replace(currentElement, newElement) {
     if (document.body && newElement instanceof HTMLBodyElement) {
       document.body.replaceWith(newElement)
     } else {

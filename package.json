@@ -33,7 +33,7 @@
     "access": "public"
   },
   "dependencies": {
-    "idiomorph": "https://github.com/basecamp/idiomorph#rollout-build"
+    "idiomorph": "^0.0.9"
   },
   "devDependencies": {
     "@open-wc/testing": "^3.1.7",

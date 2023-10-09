@@ -1,8 +1,17 @@
-import { activateScriptElement, nextAnimationFrame } from "../../util"
+import { activateScriptElement, nextAnimationFrame, dispatch } from "../../util"
 import { Renderer } from "../renderer"
+import { Morph } from "../morph"
 
 export class FrameRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
+    if (currentElement.src && currentElement.refresh === "morph") {
+      FrameRenderer.morph(currentElement, newElement)
+    } else {
+      FrameRenderer.replace(currentElement, newElement)
+    }
+  }
+
+  static replace(currentElement, newElement) {
     const destinationRange = document.createRange()
     destinationRange.selectNodeContents(currentElement)
     destinationRange.deleteContents()
@@ -15,6 +24,15 @@ export class FrameRenderer extends Renderer {
     }
   }
 
+  static morph(currentElement, newElement) {
+    dispatch("turbo:before-frame-morph", {
+      target: currentElement,
+      detail: { currentElement, newElement }
+    })
+
+    Morph.render(currentElement, newElement.children, "innerHTML")
+  }
+
   constructor(delegate, currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
     super(currentSnapshot, newSnapshot, renderElement, isPreview, willRender)
     this.delegate = delegate
@@ -22,6 +40,14 @@ export class FrameRenderer extends Renderer {
 
   get shouldRender() {
     return true
+  }
+
+  get renderMethod() {
+    if (this.currentElement.refresh === "morph") {
+      return "morph"
+    } else {
+      return super.renderMethod
+    }
   }
 
   async render() {

@@ -205,7 +205,11 @@ export function searchParams(url) {
 }
 
 export function selectorHasFocus(page, selector) {
-  return page.locator(selector).evaluate((element) => element === document.activeElement)
+  return locatorHasFocus(page.locator(selector))
+}
+
+export function locatorHasFocus(locator) {
+  return locator.evaluate((element) => element === document.activeElement)
 }
 
 export function setLocalStorageFromEvent(page, eventName, storageKey, storageValue) {
