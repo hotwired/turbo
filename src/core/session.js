@@ -261,8 +261,8 @@ export class Session {
     }
   }
 
-  allowsImmediateRender({ element }, isPreview, options) {
-    const event = this.notifyApplicationBeforeRender(element, isPreview, options)
+  allowsImmediateRender({ element }, renderer, options) {
+    const event = this.notifyApplicationBeforeRender(element, renderer, options)
     const {
       defaultPrevented,
       detail: { render }
@@ -275,9 +275,9 @@ export class Session {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, isPreview, renderMethod) {
+  viewRenderedSnapshot(renderer) {
     this.view.lastRenderedLocation = this.history.location
-    this.notifyApplicationAfterRender(isPreview, renderMethod)
+    this.notifyApplicationAfterRender(renderer)
   }
 
   preloadOnLoadLinksForView(element) {
@@ -292,10 +292,6 @@ export class Session {
 
   frameLoaded(frame) {
     this.notifyApplicationAfterFrameLoad(frame)
-  }
-
-  frameRendered(fetchResponse, frame) {
-    this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
   // Application events
@@ -333,14 +329,14 @@ export class Session {
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody, isPreview, options) {
+  notifyApplicationBeforeRender(newBody, { isPreview }, options) {
     return dispatch("turbo:before-render", {
       detail: { newBody, isPreview, ...options },
       cancelable: true
     })
   }
 
-  notifyApplicationAfterRender(isPreview, renderMethod) {
+  notifyApplicationAfterRender({ isPreview, renderMethod }) {
     return dispatch("turbo:render", { detail: { isPreview, renderMethod } })
   }
 
@@ -361,14 +357,6 @@ export class Session {
 
   notifyApplicationAfterFrameLoad(frame) {
     return dispatch("turbo:frame-load", { target: frame })
-  }
-
-  notifyApplicationAfterFrameRender(fetchResponse, frame) {
-    return dispatch("turbo:frame-render", {
-      detail: { fetchResponse },
-      target: frame,
-      cancelable: true
-    })
   }
 
   // Helpers
