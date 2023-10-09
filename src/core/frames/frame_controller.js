@@ -250,10 +250,10 @@ export class FrameController {
 
   // View delegate
 
-  allowsImmediateRender({ element: newFrame }, options) {
+  allowsImmediateRender({ element: newFrame }, renderer, options) {
     const event = dispatch("turbo:before-frame-render", {
       target: this.element,
-      detail: { newFrame, ...options },
+      detail: { newFrame, renderMethod: renderer.renderMethod, ...options },
       cancelable: true
     })
     const {
@@ -261,14 +261,20 @@ export class FrameController {
       detail: { render }
     } = event
 
-    if (this.view.renderer && render) {
-      this.view.renderer.renderElement = render
+    if (renderer && render) {
+      renderer.renderElement = render
     }
 
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
+  viewRenderedSnapshot({ currentSnapshot: { element: frame }, renderMethod }) {
+    return dispatch("turbo:frame-render", {
+      detail: { renderMethod },
+      target: frame,
+      cancelable: true
+    })
+  }
 
   preloadOnLoadLinksForView(element) {
     session.preloadOnLoadLinksForView(element)
@@ -303,9 +309,11 @@ export class FrameController {
       if (this.view.renderPromise) await this.view.renderPromise
       this.changeHistory()
 
-      await this.view.render(renderer)
+      await mergeIntoNext("turbo:frame-render", { on: this.element, detail: { fetchResponse } }, async () => {
+        await this.view.render(renderer)
+      })
+
       this.complete = true
-      session.frameRendered(fetchResponse, this.element)
       session.frameLoaded(this.element)
       await this.fetchResponseLoaded(fetchResponse)
     } else if (this.#willHandleFrameMissingFromResponse(fetchResponse)) {
@@ -578,5 +586,17 @@ function activateElement(element, currentURL) {
       element.disconnectedCallback()
       return element
     }
+  }
+}
+
+async function mergeIntoNext(eventName, { on: target, detail }, callback) {
+  const listener = (event) => Object.assign(event.detail, detail)
+  const listenerOptions = { once: true, capture: true }
+  target.addEventListener(eventName, listener, listenerOptions)
+
+  try {
+    await callback()
+  } finally {
+    target.removeEventListener(eventName, listener, listenerOptions)
   }
 }

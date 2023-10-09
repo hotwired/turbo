@@ -56,7 +56,7 @@ export class View {
   // Rendering
 
   async render(renderer) {
-    const { isPreview, shouldRender, willRender, newSnapshot: snapshot } = renderer
+    const { shouldRender, willRender, newSnapshot: snapshot } = renderer
 
     // A workaround to ignore tracked element mismatch reloads when performing
     // a promoted Visit from a frame navigation
@@ -69,12 +69,12 @@ export class View {
         await this.prepareToRenderSnapshot(renderer)
 
         const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
-        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement, renderMethod: this.renderer.renderMethod }
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
+        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement }
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, renderer, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
-        this.delegate.viewRenderedSnapshot(snapshot, isPreview, this.renderer.renderMethod)
+        this.delegate.viewRenderedSnapshot(renderer)
         this.delegate.preloadOnLoadLinksForView(this.element)
         this.finishRenderingSnapshot(renderer)
       } finally {
