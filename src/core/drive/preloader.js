@@ -4,27 +4,28 @@ import { fetch } from "../../http/fetch"
 export class Preloader {
   selector = "a[data-turbo-preload]"
 
-  constructor(delegate) {
+  constructor(delegate, snapshotCache) {
     this.delegate = delegate
-  }
-
-  get snapshotCache() {
-    return this.delegate.navigator.view.snapshotCache
+    this.snapshotCache = snapshotCache
   }
 
   start() {
     if (document.readyState === "loading") {
-      return document.addEventListener("DOMContentLoaded", () => {
-        this.preloadOnLoadLinksForView(document.body)
-      })
+      document.addEventListener("DOMContentLoaded", this.#preloadAll)
     } else {
       this.preloadOnLoadLinksForView(document.body)
     }
   }
 
+  stop() {
+    document.removeEventListener("DOMContentLoaded", this.#preloadAll)
+  }
+
   preloadOnLoadLinksForView(element) {
     for (const link of element.querySelectorAll(this.selector)) {
-      this.preloadURL(link)
+      if (this.delegate.shouldPreloadLink(link)) {
+        this.preloadURL(link)
+      }
     }
   }
 
@@ -44,5 +45,9 @@ export class Preloader {
     } catch (_) {
       // If we cannot preload that is ok!
     }
+  }
+
+  #preloadAll = () => {
+    this.preloadOnLoadLinksForView(document.body)
   }
 }
