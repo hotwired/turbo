@@ -182,6 +182,92 @@ test("test receiving a remove stream message preserves focus blurs the activeEle
   assert.notOk(await hasSelector(page, ":focus"))
 })
 
+test("test receiving an [action=after] targeting a form", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="after" target="form_with_action_names">
+        <template><p id="after_form_with_action_names">After</p></template>
+      </turbo-stream>
+    `)
+  )
+
+  assert.equal(await page.textContent("#after_form_with_action_names"), "After")
+})
+
+test("test receiving an [action=append] targeting a form", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="append" target="form_with_action_names">
+        <template>Append</template>
+      </turbo-stream>
+    `)
+  )
+  await nextBeat()
+
+  assert.include(await page.textContent("#form_with_action_names"), "Append")
+})
+
+test("test receiving an [action=before] targeting a form", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="before" target="form_with_action_names">
+        <template><p id="before_form_with_action_names">Before</p></template>
+      </turbo-stream>
+    `)
+  )
+
+  assert.equal(await page.textContent("#before_form_with_action_names"), "Before")
+})
+
+test("test receiving an [action=prepend] targeting a form", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="prepend" target="form_with_action_names">
+        <template>Prepend</template>
+      </turbo-stream>
+    `)
+  )
+  await nextBeat()
+
+  assert.include(await page.textContent("#form_with_action_names"), "Prepend")
+})
+
+test("test receiving an [action=remove] targeting a form", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="remove" target="form_with_action_names"></turbo-stream>
+    `)
+  )
+
+  assert.notOk(await waitUntilNoSelector(page, "#form_with_action_names"), "removes target element")
+})
+
+test("test receiving an [action=replace] targeting a form", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" target="form_with_action_names">
+        <template><div id="form_with_action_names"></div></template>
+      </turbo-stream>
+    `)
+  )
+
+  assert.notOk(await hasSelector(page, "form#form_with_action_names"))
+  assert.ok(await hasSelector(page, "div#form_with_action_names"))
+})
+
+test("test receiving an [action=update] targeting a form", async ({ page }) => {
+  await page.evaluate(() =>
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" target="form_with_action_names">
+        <template><input name="updated_field"></template>
+      </turbo-stream>
+    `)
+  )
+  await nextBeat()
+
+  assert.ok(await hasSelector(page, "#form_with_action_names [name=updated_field]"))
+})
+
 async function getReadyState(page, id) {
   return page.evaluate((id) => {
     const element = document.getElementById(id)
