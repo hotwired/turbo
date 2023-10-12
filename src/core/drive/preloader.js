@@ -1,5 +1,5 @@
 import { PageSnapshot } from "./page_snapshot"
-import { fetch } from "../../http/fetch"
+import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 
 export class Preloader {
   selector = "a[data-turbo-preload]"
@@ -36,16 +36,36 @@ export class Preloader {
       return
     }
 
-    try {
-      const response = await fetch(location.toString(), { headers: { "Sec-Purpose": "prefetch", Accept: "text/html" } })
-      const responseText = await response.text()
-      const snapshot = PageSnapshot.fromHTMLString(responseText)
+    const fetchRequest = new FetchRequest(this, FetchMethod.get, location, new URLSearchParams(), link)
+    await fetchRequest.perform()
+  }
 
-      this.snapshotCache.put(location, snapshot)
+  // Fetch request delegate
+
+  prepareRequest(fetchRequest) {
+    fetchRequest.headers["Sec-Purpose"] = "prefetch"
+  }
+
+  async requestSucceededWithResponse(fetchRequest, fetchResponse) {
+    try {
+      const responseHTML = await fetchResponse.responseHTML
+      const snapshot = PageSnapshot.fromHTMLString(responseHTML)
+
+      this.snapshotCache.put(fetchRequest.url, snapshot)
     } catch (_) {
       // If we cannot preload that is ok!
     }
   }
+
+  requestStarted(fetchRequest) {}
+
+  requestErrored(fetchRequest) {}
+
+  requestFinished(fetchRequest) {}
+
+  requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
+
+  requestFailedWithResponse(fetchRequest, fetchResponse) {}
 
   #preloadAll = () => {
     this.preloadOnLoadLinksForView(document.body)
