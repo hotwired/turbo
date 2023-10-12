@@ -27,17 +27,14 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
-test("navigating renders a progress bar", async ({ page }) => {
-  assert.equal(
-    await page.locator("style").evaluate((style) => style.nonce),
-    "123",
-    "renders progress bar stylesheet inline with nonce"
-  )
-
+test("navigating renders a progress bar until the next turbo:load", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
   await page.click("#delayed-link")
 
   await waitUntilSelector(page, ".turbo-progress-bar")
+  assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+
+  await nextEventNamed(page, "turbo:render")
   assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
 
   await nextEventNamed(page, "turbo:load")
@@ -51,6 +48,14 @@ test("navigating does not render a progress bar before expiring the delay", asyn
   await page.click("#same-origin-unannotated-link")
 
   assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar before delay")
+})
+
+test("navigating hides the progress bar on failure", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
+  await page.click("#delayed-failure-link")
+
+  await waitUntilSelector(page, ".turbo-progress-bar")
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
 })
 
 test("after loading the page", async ({ page }) => {

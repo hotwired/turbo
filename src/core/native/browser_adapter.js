@@ -54,18 +54,21 @@ export class BrowserAdapter {
     }
   }
 
-  visitRequestFinished(_visit) {
+  visitRequestFinished(_visit) {}
+
+  visitCompleted(_visit) {
     this.progressBar.setValue(1)
     this.hideVisitProgressBar()
   }
-
-  visitCompleted(_visit) {}
 
   pageInvalidated(reason) {
     this.reload(reason)
   }
 
-  visitFailed(_visit) {}
+  visitFailed(_visit) {
+    this.progressBar.setValue(1)
+    this.hideVisitProgressBar()
+  }
 
   visitRendered(_visit) {}
 
