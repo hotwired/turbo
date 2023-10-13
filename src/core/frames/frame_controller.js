@@ -321,7 +321,7 @@ export class FrameController {
     }
   }
 
-  async #visit(url) {
+  #visit(url) {
     const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
 
     this.#currentFetchRequest?.cancel()
@@ -333,7 +333,7 @@ export class FrameController {
         this.#currentFetchRequest = null
         resolve()
       }
-      request.perform()
+      return request.perform()
     })
   }
 
