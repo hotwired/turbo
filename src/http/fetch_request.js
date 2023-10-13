@@ -155,7 +155,7 @@ export class FetchRequest {
     if (event.defaultPrevented) {
       this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
     } else if (fetchResponse.succeeded) {
-      this.delegate.requestSucceededWithResponse(this, fetchResponse)
+      await this.delegate.requestSucceededWithResponse(this, fetchResponse)
     } else {
       this.delegate.requestFailedWithResponse(this, fetchResponse)
     }

@@ -647,10 +647,9 @@ test("frame POST form targeting frame submission", async ({ page }) => {
 
   await nextEventNamed(page, "turbo:before-fetch-response")
 
-  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
-
   await nextEventNamed(page, "turbo:frame-render")
   await nextEventNamed(page, "turbo:frame-load")
+  await nextEventNamed(page, "turbo:submit-end")
 
   const otherEvents = await readEventLogs(page)
   expect(otherEvents.length, "no more events").toEqual(0)
@@ -698,10 +697,9 @@ test("frame GET form targeting frame submission", async ({ page }) => {
 
   await nextEventNamed(page, "turbo:before-fetch-response")
 
-  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
-
   await nextEventNamed(page, "turbo:frame-render")
   await nextEventNamed(page, "turbo:frame-load")
+  await nextEventNamed(page, "turbo:submit-end")
 
   const otherEvents = await readEventLogs(page)
   expect(otherEvents.length, "no more events").toEqual(0)
@@ -1026,7 +1024,7 @@ test("link method form submission targeting frame submits a single request", asy
 
   await noNextEventNamed(page, "turbo:before-fetch-request")
   expect(fetchOptions.method, "[data-turbo-method] overrides the GET method").toEqual("POST")
-  expect(requestCounter, "submits a single HTTP request then follows a redirect").toEqual(2)
+  expect.poll(() => requestCounter, "submits a single HTTP request then follows a redirect").toEqual(2)
 })
 
 test("link method form submission inside frame", async ({ page }) => {

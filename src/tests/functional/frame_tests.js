@@ -719,16 +719,16 @@ test("navigating pushing URL state from a frame navigation fires events", async 
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
   await nextEventOnTarget(page, "frame", "turbo:frame-render")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
-  expect(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "removes aria-busy from the <turbo-frame>").not.toBeTruthy()
-
   expect(await nextAttributeMutationNamed(page, "html", "aria-busy"), "sets aria-busy on the <html>").toEqual("true")
+
+  expect(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "removes aria-busy from the <turbo-frame>").toEqual(null)
   await nextEventOnTarget(page, "html", "turbo:before-visit")
   await nextEventOnTarget(page, "html", "turbo:visit")
   await nextEventOnTarget(page, "html", "turbo:before-cache")
   await nextEventOnTarget(page, "html", "turbo:before-render")
   await nextEventOnTarget(page, "html", "turbo:render")
   await nextEventOnTarget(page, "html", "turbo:load")
-  expect(await nextAttributeMutationNamed(page, "html", "aria-busy"), "removes aria-busy from the <html>").not.toBeTruthy()
+  expect(await nextAttributeMutationNamed(page, "html", "aria-busy"), "removes aria-busy from the <html>").toEqual(null)
 })
 
 test("navigating a frame with a form[method=get] that does not redirect still updates the [src]", async ({
@@ -932,6 +932,14 @@ test("navigating frame with form[method=post][data-turbo-action=advance] to the 
   await nextEventNamed(page, "turbo:load")
   await page.click("#form-post-frame-action-advance button")
   await nextEventNamed(page, "turbo:load")
+
+  expect(await nextAttributeMutationNamed(page, "form-post-frame-action-advance", "aria-busy"), "sets aria-busy on the <form>").toEqual("true")
+  expect(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "sets aria-busy on the <turbo-frame>").toEqual("true")
+  expect(await nextAttributeMutationNamed(page, "html", "aria-busy"), "sets aria-busy on the <html>").toEqual("true")
+
+  expect(await nextAttributeMutationNamed(page, "form-post-frame-action-advance", "aria-busy"), "removes aria-busy from the <form>").toEqual(null)
+  expect(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "removes aria-busy from the <turbo-frame>").toEqual(null)
+  expect(await nextAttributeMutationNamed(page, "html", "aria-busy"), "removes aria-busy from the <html>").toEqual(null)
 
   await expect(page.locator("#frame"), "clears turbo-frame[aria-busy]").not.toHaveAttribute("aria-busy")
   await expect(page.locator("#html"), "clears html[aria-busy]").not.toHaveAttribute("aria-busy")
