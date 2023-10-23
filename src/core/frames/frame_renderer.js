@@ -1,4 +1,4 @@
-import { activateScriptElement, nextAnimationFrame, nextMicrotask } from "../../util"
+import { activateScriptElement, nextMicrotask } from "../../util"
 import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer {

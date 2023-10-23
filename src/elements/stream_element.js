@@ -1,5 +1,5 @@
 import { StreamActions } from "../core/streams/stream_actions"
-import { nextAnimationFrame, nextMicrotask } from "../util"
+import { nextMicrotask } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
