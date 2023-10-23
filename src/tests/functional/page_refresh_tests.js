@@ -41,6 +41,23 @@ test("uses morphing to update remote frames marked with refresh='morph'", async 
   // Only the frame marked with refresh="morph" uses morphing
   expect(await nextEventOnTarget(page, "refresh-morph", "turbo:before-frame-morph")).toBeTruthy()
   expect(await noNextEventOnTarget(page, "refresh-reload", "turbo:before-frame-morph")).toBeTruthy()
+
+  await expect(page.locator("#refresh-morph")).toHaveText("Loaded morphed frame")
+  // Regular turbo-frames also gets reloaded since their complete attribute is removed
+  await expect(page.locator("#refresh-reload")).toHaveText("Loaded reloadable frame")
+})
+
+test("frames marked with refresh='morph' are excluded from full page morphing", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => document.getElementById("refresh-morph").setAttribute("data-modified", "true"))
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBeat()
+
+  await expect(page.locator("#refresh-morph")).toHaveAttribute("data-modified", "true")
+  await expect(page.locator("#refresh-morph")).toHaveText("Loaded morphed frame")
 })
 
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {
