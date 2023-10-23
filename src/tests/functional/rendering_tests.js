@@ -215,6 +215,13 @@ test("test maintains scroll position before visit when turbo-visit-control setti
   assert.equal(await visitAction(page), "load")
 })
 
+test("test changes the html[lang] attribute", async ({ page }) => {
+  await page.click("#es_locale_link")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.getAttribute("html", "lang"), "es")
+})
+
 test("test accumulates asset elements in head", async ({ page }) => {
   const assetElements = () => page.$$('script, style, link[rel="stylesheet"]')
   const originalElements = await assetElements()
