@@ -1,3 +1,5 @@
+import { session } from "../"
+
 export const StreamActions = {
   after() {
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
@@ -33,11 +35,6 @@ export const StreamActions = {
   },
 
   refresh() {
-    const requestId = this.getAttribute("request-id")
-    const isRecentRequest = requestId && window.Turbo.recentRequests.has(requestId)
-    if (!isRecentRequest) {
-      window.Turbo.cache.exemptPageFromPreview()
-      window.Turbo.visit(window.location.href, { action: "replace" })
-    }
+    session.refresh(this.baseURI, this.requestId)
   }
 }

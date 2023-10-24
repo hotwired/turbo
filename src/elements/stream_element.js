@@ -143,6 +143,13 @@ export class StreamElement extends HTMLElement {
     return this.getAttribute("targets")
   }
 
+  /**
+   * Reads the request-id attribute
+   */
+  get requestId() {
+    return this.getAttribute("request-id")
+  }
+
   #raise(message) {
     throw new Error(`${this.description}: ${message}`)
   }
