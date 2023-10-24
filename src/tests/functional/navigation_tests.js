@@ -361,7 +361,7 @@ test("test following a redirection", async ({ page }) => {
   await page.click("#redirection-link")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
-  assert.equal(await visitAction(page), "replace")
+  assert.equal(await visitAction(page), "advance")
 })
 
 test("test clicking the back button after redirection", async ({ page }) => {

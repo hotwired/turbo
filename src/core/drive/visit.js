@@ -128,12 +128,9 @@ export class Visit {
     if (this.state == VisitState.started) {
       this.recordTimingMetric(TimingMetric.visitEnd)
       this.state = VisitState.completed
-      this.followRedirect()
 
-      if (!this.followedRedirect) {
-        this.adapter.visitCompleted(this)
-        this.delegate.visitCompleted(this)
-      }
+      this.adapter.visitCompleted(this)
+      this.delegate.visitCompleted(this)
     }
   }
 
@@ -147,6 +144,7 @@ export class Visit {
 
   changeHistory() {
     if (!this.historyChanged && this.updateHistory) {
+      this.followRedirect()
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
       const method = getHistoryMethodForAction(actionForHistory)
       this.history.update(method, this.location, this.restorationIdentifier)
@@ -259,12 +257,7 @@ export class Visit {
 
   followRedirect() {
     if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
-      this.adapter.visitProposedToLocation(this.redirectedToLocation, {
-        action: "replace",
-        response: this.response,
-        shouldCacheSnapshot: false,
-        willRender: false
-      })
+      this.location = this.redirectedToLocation
       this.followedRedirect = true
     }
   }
