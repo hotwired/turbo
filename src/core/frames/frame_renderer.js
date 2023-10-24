@@ -1,4 +1,4 @@
-import { activateScriptElement, nextMicrotask } from "../../util"
+import { activateScriptElement, nextEventLoopTick } from "../../util"
 import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer {
@@ -25,14 +25,14 @@ export class FrameRenderer extends Renderer {
   }
 
   async render() {
-    await nextMicrotask()
+    await nextEventLoopTick()
     this.preservingPermanentElements(() => {
       this.loadFrameElement()
     })
     this.scrollFrameIntoView()
-    await nextMicrotask()
+    await nextEventLoopTick()
     this.focusFirstAutofocusableElement()
-    await nextMicrotask()
+    await nextEventLoopTick()
     this.activateScriptElements()
   }
 
