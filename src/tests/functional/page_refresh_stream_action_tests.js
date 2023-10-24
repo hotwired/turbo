@@ -22,7 +22,7 @@ test("don't refresh the page on self-originated request ids", async ({ page }) =
   assert.match(await textContent(page), /Hello/)
 
   await page.locator("#content").evaluate((content)=>content.innerHTML = "")
-  page.evaluate(()=> { window.Turbo.recentRequests.add("123") })
+  page.evaluate(()=> { window.Turbo.session.recentRequests.add("123") })
 
   await page.locator("#request-id").evaluate((input)=>input.value = "123")
   await page.click("#refresh button")
