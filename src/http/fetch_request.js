@@ -47,12 +47,13 @@ export class FetchRequest {
   #resolveRequestPromise = (_value) => {}
 
   constructor(delegate, method, location, requestBody = new URLSearchParams(), target = null, enctype = FetchEnctype.urlEncoded) {
+    method = fetchMethodFromString(method)
+
     const [url, body] = buildResourceAndBody(expandURL(location), method, requestBody, enctype)
 
     this.delegate = delegate
-    this.url = url
     this.target = target
-    this.fetchOptions = {
+    this.request = new Request(url.href, {
       credentials: "same-origin",
       redirect: "follow",
       method: method,
@@ -60,45 +61,24 @@ export class FetchRequest {
       body: body,
       signal: this.abortSignal,
       referrer: this.delegate.referrer?.href
-    }
+    })
     this.enctype = enctype
   }
 
   get method() {
-    return this.fetchOptions.method
-  }
-
-  set method(value) {
-    const fetchBody = this.isSafe ? this.url.searchParams : this.fetchOptions.body || new FormData()
-    const fetchMethod = fetchMethodFromString(value) || FetchMethod.get
-
-    this.url.search = ""
-
-    const [url, body] = buildResourceAndBody(this.url, fetchMethod, fetchBody, this.enctype)
-
-    this.url = url
-    this.fetchOptions.body = body
-    this.fetchOptions.method = fetchMethod
+    return this.request.method
   }
 
   get headers() {
-    return this.fetchOptions.headers
-  }
-
-  set headers(value) {
-    this.fetchOptions.headers = value
+    return this.request.headers
   }
 
   get body() {
-    if (this.isSafe) {
-      return this.url.searchParams
-    } else {
-      return this.fetchOptions.body
-    }
+    return this.request.body
   }
 
-  set body(value) {
-    this.fetchOptions.body = value
+  get url() {
+    return this.request.url
   }
 
   get location() {
@@ -123,7 +103,7 @@ export class FetchRequest {
     await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
-      const response = await fetch(this.url.href, fetchOptions)
+      const response = await fetch(this.request)
       return await this.receive(response)
     } catch (error) {
       if (error.name !== "AbortError") {
@@ -138,10 +118,20 @@ export class FetchRequest {
   }
 
   async receive(response) {
+    const { request } = this
     const fetchResponse = new FetchResponse(response)
     const event = dispatch("turbo:before-fetch-response", {
       cancelable: true,
-      detail: { fetchResponse },
+      detail: {
+        request,
+        response,
+
+        get fetchResponse() {
+          console.warn("`event.detail.fetchResponse` is deprecated. Use `event.detail.response` instead")
+
+          return fetchResponse
+        }
+      },
       target: this.target
     })
     if (event.defaultPrevented) {
@@ -169,21 +159,32 @@ export class FetchRequest {
   }
 
   acceptResponseType(mimeType) {
-    this.headers["Accept"] = [mimeType, this.headers["Accept"]].join(", ")
+    this.headers.set("Accept", [mimeType, this.headers.get("Accept")].join(", "))
   }
 
   async #allowRequestToBeIntercepted(fetchOptions) {
+    const { url } = this.request
     const requestInterception = new Promise((resolve) => (this.#resolveRequestPromise = resolve))
     const event = dispatch("turbo:before-fetch-request", {
       cancelable: true,
       detail: {
-        fetchOptions,
-        url: this.url,
+        get fetchOptions() {
+          console.warn("`event.detail.fetchOptions` is deprecated. Use `event.detail.request` instead")
+
+          return fetchOptions
+        },
+
+        get url() {
+          console.warn("`event.detail.url` is deprecated. Use `event.detail.request.url` instead")
+
+          return url
+        },
+
+        request: this.request,
         resume: this.#resolveRequestPromise
       },
       target: this.target
     })
-    this.url = event.detail.url
     if (event.defaultPrevented) await requestInterception
   }
 
@@ -191,7 +192,7 @@ export class FetchRequest {
     const event = dispatch("turbo:fetch-request-error", {
       target: this.target,
       cancelable: true,
-      detail: { request: this, error: error }
+      detail: { request: this.request, error: error }
     })
 
     return !event.defaultPrevented
