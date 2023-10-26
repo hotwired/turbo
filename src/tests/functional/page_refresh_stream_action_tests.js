@@ -49,7 +49,7 @@ async function textContent(page) {
 
 async function fetchRequestId(page) {
   return await page.evaluate(async () => {
-    const response = await window.fetch("/__turbo/request_id_header")
+    const response = await window.Turbo.fetch("/__turbo/request_id_header")
     return response.text()
   })
 }
