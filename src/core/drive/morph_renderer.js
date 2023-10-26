@@ -58,7 +58,7 @@ export class MorphRenderer extends Renderer {
       target: currentElement,
       detail: { currentElement, newElement }
     })
-    this.#morphElements(currentElement, newElement)
+    this.#morphElements(currentElement, newElement.children, "innerHTML")
   }
 
   #shouldRemoveElement = (node) => {
