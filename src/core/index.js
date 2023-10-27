@@ -9,8 +9,6 @@ const session = new Session()
 const { cache, navigator } = session
 export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch }
 
-export { StreamActions } from "./streams/stream_actions"
-
 /**
  * Starts the main session.
  * This initialises any necessary observers such as those to monitor
