@@ -87,6 +87,8 @@ export class MorphRenderer extends Renderer {
   }
 
   #remoteFrames() {
-    return document.querySelectorAll("turbo-frame[src]")
+    return Array.from(document.querySelectorAll('turbo-frame[src]')).filter(frame => {
+      return !frame.closest('[data-turbo-permanent]')
+    })
   }
 }

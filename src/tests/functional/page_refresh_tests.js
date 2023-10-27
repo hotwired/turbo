@@ -4,6 +4,7 @@ import {
   nextBeat,
   nextEventNamed,
   nextEventOnTarget,
+  noNextEventOnTarget,
   noNextEventNamed
 } from "../helpers/page"
 
@@ -30,7 +31,7 @@ test("doesn't morph when the navigation doesn't go to the same URL", async ({ pa
   expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
-test("uses morphing to update remote frames marked", async ({ page }) => {
+test("uses morphing to update remote frames", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   await page.click("#form-submit")
@@ -40,6 +41,17 @@ test("uses morphing to update remote frames marked", async ({ page }) => {
   // Only the frame marked with refresh="morph" uses morphing
   expect(await nextEventOnTarget(page, "remote-frame", "turbo:before-frame-morph")).toBeTruthy()
   await expect(page.locator("#remote-frame")).toHaveText("Loaded morphed frame")
+})
+
+test("don't refresh frames contained in [data-turbo-permanent] elements", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBeat()
+
+  // Only the frame marked with refresh="morph" uses morphing
+  expect(await noNextEventOnTarget(page, "refresh-reload", "turbo:before-frame-morph")).toBeTruthy()
 })
 
 test("frames marked with refresh='morph' are excluded from full page morphing", async ({ page }) => {
