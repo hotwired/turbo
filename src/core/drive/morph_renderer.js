@@ -26,7 +26,7 @@ export class MorphRenderer extends Renderer {
   }
 
   #morphElements(currentElement, newElement, morphStyle = "outerHTML") {
-    this.isMorphingTurboFrame = this.#isFrameReloadedWithMorph(currentElement)
+    this.isMorphingTurboFrame = this.#isRemoteFrame(currentElement)
 
     Idiomorph.morph(currentElement, newElement, {
       morphStyle: morphStyle,
@@ -40,7 +40,7 @@ export class MorphRenderer extends Renderer {
 
   #reloadRemoteFrames() {
     this.#remoteFrames().forEach((frame) => {
-      if (this.#isFrameReloadedWithMorph(frame)) {
+      if (this.#isRemoteFrame(frame)) {
         this.#renderFrameWithMorph(frame)
         frame.reload()
       }
@@ -67,7 +67,7 @@ export class MorphRenderer extends Renderer {
 
   #shouldMorphElement = (node) => {
     if (node instanceof HTMLElement) {
-      return !node.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isFrameReloadedWithMorph(node))
+      return !node.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isRemoteFrame(node))
     } else {
       return true
     }
@@ -82,8 +82,8 @@ export class MorphRenderer extends Renderer {
     }
   }
 
-  #isFrameReloadedWithMorph(element) {
-    return element.src && element.refresh === "morph"
+  #isRemoteFrame(element) {
+    return element.nodeName.toLowerCase() === "turbo-frame" && element.src
   }
 
   #remoteFrames() {
