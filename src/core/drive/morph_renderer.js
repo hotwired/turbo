@@ -31,11 +31,28 @@ export class MorphRenderer extends Renderer {
     Idiomorph.morph(currentElement, newElement, {
       morphStyle: morphStyle,
       callbacks: {
+        beforeNodeAdded: this.#shouldAddElement,
         beforeNodeMorphed: this.#shouldMorphElement,
         beforeNodeRemoved: this.#shouldRemoveElement,
         afterNodeMorphed: this.#reloadStimulusControllers
       }
     })
+  }
+
+  #shouldAddElement = (node) => {
+    return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
+  }
+
+  #shouldMorphElement = (node) => {
+    if (node instanceof HTMLElement) {
+      return !node.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isRemoteFrame(node))
+    } else {
+      return true
+    }
+  }
+
+  #shouldRemoveElement = (node) => {
+    return this.#shouldMorphElement(node)
   }
 
   #reloadRemoteFrames() {
@@ -59,18 +76,6 @@ export class MorphRenderer extends Renderer {
       detail: { currentElement, newElement }
     })
     this.#morphElements(currentElement, newElement.children, "innerHTML")
-  }
-
-  #shouldRemoveElement = (node) => {
-    return this.#shouldMorphElement(node)
-  }
-
-  #shouldMorphElement = (node) => {
-    if (node instanceof HTMLElement) {
-      return !node.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isRemoteFrame(node))
-    } else {
-      return true
-    }
   }
 
   #reloadStimulusControllers = async (node) => {

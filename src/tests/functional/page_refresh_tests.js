@@ -109,6 +109,24 @@ test("it preserves data-turbo-permanent elements", async ({ page }) => {
   await expect(page.locator("#preserve-me")).toHaveText("Preserve me, I have a family!")
 })
 
+test("it preserves data-turbo-permanent elements that don't match when their ids do", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => {
+    const element = document.getElementById("preserve-me")
+
+    element.textContent = "Preserve me, I have a family!"
+    document.getElementById("container").append(element)
+  })
+
+  await expect(page.locator("#preserve-me")).toHaveText("Preserve me, I have a family!")
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await expect(page.locator("#preserve-me")).toHaveText("Preserve me, I have a family!")
+})
+
 test("it reloads data-controller attributes after a morph", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
