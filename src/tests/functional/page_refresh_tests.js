@@ -4,8 +4,7 @@ import {
   nextBeat,
   nextEventNamed,
   nextEventOnTarget,
-  noNextEventNamed,
-  noNextEventOnTarget
+  noNextEventNamed
 } from "../helpers/page"
 
 test("renders a page refresh with morphing", async ({ page }) => {
@@ -31,7 +30,7 @@ test("doesn't morph when the navigation doesn't go to the same URL", async ({ pa
   expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
-test("uses morphing to update remote frames marked with refresh='morph'", async ({ page }) => {
+test("uses morphing to update remote frames marked", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   await page.click("#form-submit")
@@ -39,25 +38,21 @@ test("uses morphing to update remote frames marked with refresh='morph'", async 
   await nextBeat()
 
   // Only the frame marked with refresh="morph" uses morphing
-  expect(await nextEventOnTarget(page, "refresh-morph", "turbo:before-frame-morph")).toBeTruthy()
-  expect(await noNextEventOnTarget(page, "refresh-reload", "turbo:before-frame-morph")).toBeTruthy()
-
-  await expect(page.locator("#refresh-morph")).toHaveText("Loaded morphed frame")
-  // Regular turbo-frames also gets reloaded since their complete attribute is removed
-  await expect(page.locator("#refresh-reload")).toHaveText("Loaded reloadable frame")
+  expect(await nextEventOnTarget(page, "remote-frame", "turbo:before-frame-morph")).toBeTruthy()
+  await expect(page.locator("#remote-frame")).toHaveText("Loaded morphed frame")
 })
 
 test("frames marked with refresh='morph' are excluded from full page morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
-  await page.evaluate(() => document.getElementById("refresh-morph").setAttribute("data-modified", "true"))
+  await page.evaluate(() => document.getElementById("remote-frame").setAttribute("data-modified", "true"))
 
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextBeat()
 
-  await expect(page.locator("#refresh-morph")).toHaveAttribute("data-modified", "true")
-  await expect(page.locator("#refresh-morph")).toHaveText("Loaded morphed frame")
+  await expect(page.locator("#remote-frame")).toHaveAttribute("data-modified", "true")
+  await expect(page.locator("#remote-frame")).toHaveText("Loaded morphed frame")
 })
 
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {
