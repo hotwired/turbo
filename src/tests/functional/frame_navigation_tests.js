@@ -2,42 +2,42 @@ import { test } from "@playwright/test"
 import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
 import { assert } from "chai"
 
-test("test frame navigation with descendant link", async ({ page }) => {
+test("frame navigation with descendant link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#inside")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation with self link", async ({ page }) => {
+test("frame navigation with self link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#self")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation with exterior link", async ({ page }) => {
+test("frame navigation with exterior link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#outside")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation with exterior link in Shadow DOM", async ({ page }) => {
+test("frame navigation with exterior link in Shadow DOM", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#outside-in-shadow-dom")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation emits fetch-request-error event when offline", async ({ page }) => {
+test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
   await page.context().setOffline(true)
   await page.click("#tab-2")
   await nextEventOnTarget(page, "tab-frame", "turbo:fetch-request-error")
 })
 
-test("test lazy-loaded frame promotes navigation", async ({ page }) => {
+test("lazy-loaded frame promotes navigation", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
 
   assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Not Loaded")
@@ -49,7 +49,7 @@ test("test lazy-loaded frame promotes navigation", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame_for_eager.html")
 })
 
-test("test promoted frame navigation updates the URL before rendering", async ({ page }) => {
+test("promoted frame navigation updates the URL before rendering", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
 
   page.evaluate(() => {
@@ -71,7 +71,7 @@ test("test promoted frame navigation updates the URL before rendering", async ({
   assert.equal(await page.textContent("#tab-content"), "Two")
 })
 
-test("test promoted frame navigations are cached", async ({ page }) => {
+test("promoted frame navigations are cached", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
 
   await page.click("#tab-2")
