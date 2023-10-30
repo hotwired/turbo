@@ -2,10 +2,6 @@ import { setMetaContent } from "../util"
 import { SnapshotCache } from "./drive/snapshot_cache"
 
 export class Cache {
-  constructor(session) {
-    this.session = session
-  }
-
   clear() {
     this.store.clear()
   }
