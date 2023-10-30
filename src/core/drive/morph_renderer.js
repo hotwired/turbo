@@ -1,5 +1,5 @@
 import Idiomorph from "idiomorph"
-import { dispatch, nextAnimationFrame } from "../../util"
+import { dispatch } from "../../util"
 import { Renderer } from "../renderer"
 
 export class MorphRenderer extends Renderer {
@@ -33,8 +33,7 @@ export class MorphRenderer extends Renderer {
       callbacks: {
         beforeNodeAdded: this.#shouldAddElement,
         beforeNodeMorphed: this.#shouldMorphElement,
-        beforeNodeRemoved: this.#shouldRemoveElement,
-        afterNodeMorphed: this.#reloadStimulusControllers
+        beforeNodeRemoved: this.#shouldRemoveElement
       }
     })
   }
@@ -76,15 +75,6 @@ export class MorphRenderer extends Renderer {
       detail: { currentElement, newElement }
     })
     this.#morphElements(currentElement, newElement.children, "innerHTML")
-  }
-
-  #reloadStimulusControllers = async (node) => {
-    if (node instanceof HTMLElement && node.hasAttribute("data-controller")) {
-      const originalAttribute = node.getAttribute("data-controller")
-      node.removeAttribute("data-controller")
-      await nextAnimationFrame()
-      node.setAttribute("data-controller", originalAttribute)
-    }
   }
 
   #isRemoteFrame(element) {
