@@ -1,6 +1,7 @@
 import { ProgressBar } from "../drive/progress_bar"
 import { SystemStatusCode } from "../drive/visit"
 import { uuid, dispatch } from "../../util"
+import { locationIsVisitable } from "../url"
 
 export class BrowserAdapter {
   progressBar = new ProgressBar()
@@ -10,7 +11,11 @@ export class BrowserAdapter {
   }
 
   visitProposedToLocation(location, options) {
-    this.navigator.startVisit(location, options?.restorationIdentifier || uuid(), options)
+    if (locationIsVisitable(location, this.navigator.rootLocation)) {
+      this.navigator.startVisit(location, options?.restorationIdentifier || uuid(), options)
+    } else {
+      window.location.href = location.toString()
+    }
   }
 
   visitStarted(visit) {
