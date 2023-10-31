@@ -1,6 +1,6 @@
 import { Bardo } from "../bardo"
 import { getPermanentElementById, queryPermanentElementsAll } from "../snapshot"
-import { around, elementIsFocusable, queryAutofocusableElement, uuid, nextAnimationFrame } from "../../util"
+import { around, elementIsFocusable, queryAutofocusableElement, uuid, nextAnimationFrame, nextEventLoopTick } from "../../util"
 
 export class StreamMessageRenderer {
   render({ fragment }) {
@@ -57,7 +57,7 @@ async function withAutofocusFromFragment(fragment, callback) {
   }
 
   callback()
-  await nextAnimationFrame()
+  await (window.Turbo.session.useNextAnimationFrame ? nextAnimationFrame() : nextEventLoopTick())
 
   const hasNoActiveElement = document.activeElement == null || document.activeElement == document.body
 
