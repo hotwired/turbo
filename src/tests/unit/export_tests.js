@@ -2,7 +2,7 @@ import { assert } from "@open-wc/testing"
 import * as Turbo from "../../"
 import { StreamActions } from "../../"
 
-test("test Turbo interface", () => {
+test("Turbo interface", () => {
   assert.equal(typeof Turbo.StreamActions, "object")
   assert.equal(typeof Turbo.start, "function")
   assert.equal(typeof Turbo.registerAdapter, "function")
@@ -19,6 +19,6 @@ test("test Turbo interface", () => {
   assert.equal(typeof Turbo.session, "object")
 })
 
-test("test StreamActions interface", () => {
+test("StreamActions interface", () => {
   assert.equal(typeof StreamActions, "object")
 })
