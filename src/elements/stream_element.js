@@ -1,5 +1,5 @@
 import { StreamActions } from "../core/streams/stream_actions"
-import { nextEventLoopTick } from "../util"
+import { nextEventLoopTick, nextAnimationFrame } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
@@ -43,7 +43,7 @@ export class StreamElement extends HTMLElement {
       const event = this.beforeRenderEvent
 
       if (this.dispatchEvent(event)) {
-        await nextEventLoopTick()
+        await window.Turbo.session.useNextAnimationFrame ? nextAnimationFrame() : nextEventLoopTick()
         await event.detail.render(this)
       }
     })())

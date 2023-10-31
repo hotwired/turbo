@@ -1,4 +1,4 @@
-import { activateScriptElement, nextEventLoopTick } from "../../util"
+import { activateScriptElement, nextEventLoopTick, nextAnimationFrame } from "../../util"
 import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer {
@@ -25,14 +25,14 @@ export class FrameRenderer extends Renderer {
   }
 
   async render() {
-    await nextEventLoopTick()
+    await window.Turbo.session.useNextAnimationFrame ? nextAnimationFrame() : nextEventLoopTick()
     this.preservingPermanentElements(() => {
       this.loadFrameElement()
     })
     this.scrollFrameIntoView()
-    await nextEventLoopTick()
+    await window.Turbo.session.useNextAnimationFrame ? nextAnimationFrame() : nextEventLoopTick()
     this.focusFirstAutofocusableElement()
-    await nextEventLoopTick()
+    await window.Turbo.session.useNextAnimationFrame ? nextAnimationFrame() : nextEventLoopTick()
     this.activateScriptElements()
   }
 

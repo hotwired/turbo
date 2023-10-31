@@ -37,6 +37,7 @@ export class Session {
   drive = true
   enabled = true
   progressBarDelay = 500
+  useNextAnimationFrame = true
   started = false
   formMode = "on"
 
