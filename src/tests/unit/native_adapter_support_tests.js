@@ -161,8 +161,6 @@ test("test visit request finished notifies adapter", async () => {
 })
 
 test("test form submission started notifies adapter", async () => {
-  const url = new URL(window.location.toString())
-
   Turbo.navigator.formSubmissionStarted("formSubmissionStub")
   assert.equal(adapter.startedFormSubmissions.length, 1)
 
@@ -171,8 +169,6 @@ test("test form submission started notifies adapter", async () => {
 })
 
 test("test form submission finished notifies adapter", async () => {
-  const url = new URL(window.location.toString())
-
   Turbo.navigator.formSubmissionFinished("formSubmissionStub")
   assert.equal(adapter.finishedFormSubmissions.length, 1)
 
