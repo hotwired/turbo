@@ -50,7 +50,7 @@ test("test visit proposal location includes deprecated absoluteURL property", as
 })
 
 test("test visit start location includes deprecated absoluteURL property", async () => {
-  Turbo.navigator.startVisit(window.location.toString(), "123")
+  await Turbo.navigator.startVisit(window.location.toString(), "123")
   assert.equal(adapter.locations.length, 1)
 
   const [location] = adapter.locations

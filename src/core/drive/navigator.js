@@ -21,7 +21,7 @@ export class Navigator {
       referrer: this.location,
       ...options
     })
-    this.currentVisit.start()
+    return this.currentVisit.start()
   }
 
   submitForm(form, submitter) {
