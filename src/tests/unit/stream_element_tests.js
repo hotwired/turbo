@@ -1,5 +1,5 @@
 import { StreamElement } from "../../elements"
-import { nextAnimationFrame } from "../../util"
+import { nextAnimationFrame, nextEventLoopTick } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
 import { assert } from "@open-wc/testing"
 
@@ -34,13 +34,13 @@ test("test action=append", async () => {
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo Streams")
   assert.isNull(element.parentElement)
 
   subject.append(element2)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo Streams and more")
   assert.isNull(element2.parentElement)
@@ -73,13 +73,13 @@ test("test action=prepend", async () => {
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "Streams Hello Turbo")
   assert.isNull(element.parentElement)
 
   subject.append(element2)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "and more Streams Hello Turbo")
   assert.isNull(element.parentElement)

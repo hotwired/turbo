@@ -16,7 +16,6 @@ import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markA
 import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
-import { Cache } from "./cache"
 
 export class Session {
   navigator = new Navigator(this)
@@ -34,12 +33,10 @@ export class Session {
   formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
   frameRedirector = new FrameRedirector(this, document.documentElement)
   streamMessageRenderer = new StreamMessageRenderer()
-  cache = new Cache()
 
   drive = true
   enabled = true
   progressBarDelay = 500
-  useNextAnimationFrame = true
   started = false
   formMode = "on"
 
