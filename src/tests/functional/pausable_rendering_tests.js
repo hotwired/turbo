@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/pausable_rendering.html")
 })
 
-test("test pauses and resumes rendering", async ({ page }) => {
+test("pauses and resumes rendering", async ({ page }) => {
   page.on("dialog", (dialog) => {
     assert.strictEqual(dialog.message(), "Continue rendering?")
     dialog.accept()
@@ -18,7 +18,7 @@ test("test pauses and resumes rendering", async ({ page }) => {
   assert.equal(await page.textContent("h1"), "One")
 })
 
-test("test aborts rendering", async ({ page }) => {
+test("aborts rendering", async ({ page }) => {
   const [firstDialog] = await Promise.all([page.waitForEvent("dialog"), page.click("#link")])
 
   assert.strictEqual(firstDialog.message(), "Continue rendering?")
@@ -28,7 +28,7 @@ test("test aborts rendering", async ({ page }) => {
   assert.equal(await page.textContent("h1"), "Pausable Rendering")
 })
 
-test("test pauses and resumes rendering a Frame", async ({ page }) => {
+test("pauses and resumes rendering a Frame", async ({ page }) => {
   page.on("dialog", (dialog) => {
     assert.strictEqual(dialog.message(), "Continue rendering?")
     dialog.accept()
@@ -40,7 +40,7 @@ test("test pauses and resumes rendering a Frame", async ({ page }) => {
   assert.equal(await page.textContent("#hello h2"), "Hello from a frame")
 })
 
-test("test aborts rendering a Frame", async ({ page }) => {
+test("aborts rendering a Frame", async ({ page }) => {
   page.on("dialog", (dialog) => {
     assert.strictEqual(dialog.message(), "Continue rendering?")
     dialog.dismiss()
