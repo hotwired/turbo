@@ -1,5 +1,5 @@
 import { StreamElement } from "../../elements"
-import { nextAnimationFrame, nextEventLoopTick } from "../../util"
+import { nextEventLoopTick } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
 import { assert } from "@open-wc/testing"
 
@@ -56,13 +56,13 @@ test("test action=append with children ID already present in target", async () =
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo First tail1 ")
   assert.isNull(element.parentElement)
 
   subject.append(element2)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo  tail1 New First Second tail2 ")
 })
@@ -95,13 +95,13 @@ test("test action=prepend with children ID already present in target", async () 
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "First tail1 Hello Turbo")
   assert.isNull(element.parentElement)
 
   subject.append(element2)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "New First Second tail2  tail1 Hello Turbo")
 })
@@ -111,7 +111,7 @@ test("test action=remove", async () => {
   assert.ok(subject.find("#hello"))
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.notOk(subject.find("#hello"))
   assert.isNull(element.parentElement)
@@ -123,7 +123,7 @@ test("test action=replace", async () => {
   assert.ok(subject.find("div#hello"))
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
   assert.notOk(subject.find("div#hello"))
@@ -136,7 +136,7 @@ test("test action=update", async () => {
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.textContent, "Goodbye Turbo")
   assert.isNull(element.parentElement)
@@ -147,7 +147,7 @@ test("test action=after", async () => {
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.nextSibling?.textContent, "After Turbo")
   assert.ok(subject.find("div#hello"))
@@ -160,7 +160,7 @@ test("test action=before", async () => {
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
-  await nextAnimationFrame()
+  await nextEventLoopTick()
 
   assert.equal(subject.find("#hello")?.previousSibling?.textContent, "Before Turbo")
   assert.ok(subject.find("div#hello"))
