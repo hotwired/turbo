@@ -599,6 +599,25 @@ test("test submitter POST submission from submitter with data-turbo-frame", asyn
   assert.equal(await message.textContent(), "Frame redirected")
 })
 
+test("test form[data-turbo-frame=_top] submission", async ({ page }) => {
+  const form = await page.locator("#standard form.redirect[data-turbo-frame=_top]")
+
+  await form.locator("button").click()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One")
+})
+
+test("test form[data-turbo-frame=_top] submission within frame", async ({ page }) => {
+  const frame = await page.locator("turbo-frame#frame")
+  const form = await frame.locator("form.redirect[data-turbo-frame=_top]")
+
+  await form.locator("button").click()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "Frames: Form")
+})
+
 test("test frame form GET submission from submitter with data-turbo-frame=_top", async ({ page }) => {
   await page.click("#frame form[method=get] [type=submit][data-turbo-frame=_top]")
   await nextBody(page)
