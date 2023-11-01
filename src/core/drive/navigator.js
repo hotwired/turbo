@@ -1,6 +1,6 @@
 import { getVisitAction } from "../../util"
 import { FormSubmission } from "./form_submission"
-import { expandURL, getAnchor, getRequestURL, locationIsVisitable } from "../url"
+import { expandURL, getAnchor, getRequestURL } from "../url"
 import { Visit } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -11,11 +11,7 @@ export class Navigator {
 
   proposeVisit(location, options = {}) {
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
-      if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.delegate.visitProposedToLocation(location, options)
-      } else {
-        window.location.href = location.toString()
-      }
+      this.delegate.visitProposedToLocation(location, options)
     }
   }
 
@@ -53,6 +49,10 @@ export class Navigator {
 
   get view() {
     return this.delegate.view
+  }
+
+  get rootLocation() {
+    return this.view.snapshot.rootLocation
   }
 
   get history() {

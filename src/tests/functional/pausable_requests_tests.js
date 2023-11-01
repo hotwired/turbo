@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/pausable_requests.html")
 })
 
-test("test pauses and resumes request", async ({ page }) => {
+test("pauses and resumes request", async ({ page }) => {
   page.once("dialog", (dialog) => {
     assert.strictEqual(dialog.message(), "Continue request?")
     dialog.accept()
@@ -18,7 +18,7 @@ test("test pauses and resumes request", async ({ page }) => {
   assert.equal(await page.textContent("h1"), "One")
 })
 
-test("test aborts request", async ({ page }) => {
+test("aborts request", async ({ page }) => {
   page.once("dialog", (dialog) => {
     assert.strictEqual(dialog.message(), "Continue request?")
     dialog.dismiss()

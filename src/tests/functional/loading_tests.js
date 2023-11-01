@@ -17,13 +17,13 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
-test("test eager loading within a details element", async ({ page }) => {
+test("eager loading within a details element", async ({ page }) => {
   await nextBeat()
   assert.ok(await hasSelector(page, "#loading-eager turbo-frame#frame h2"))
   assert.ok(await hasSelector(page, "#loading-eager turbo-frame[complete]"), "has [complete] attribute")
 })
 
-test("test lazy loading within a details element", async ({ page }) => {
+test("lazy loading within a details element", async ({ page }) => {
   await nextBeat()
 
   const frameContents = "#loading-lazy turbo-frame h2"
@@ -38,7 +38,7 @@ test("test lazy loading within a details element", async ({ page }) => {
   assert.ok(await hasSelector(page, "#loading-lazy turbo-frame[complete]"), "has [complete] attribute")
 })
 
-test("test changing loading attribute from lazy to eager loads frame", async ({ page }) => {
+test("changing loading attribute from lazy to eager loads frame", async ({ page }) => {
   const frameContents = "#loading-lazy turbo-frame h2"
   await nextBeat()
 
@@ -52,7 +52,7 @@ test("test changing loading attribute from lazy to eager loads frame", async ({ 
   assert.equal(await contents.textContent(), "Hello from a frame")
 })
 
-test("test navigating a visible frame with loading=lazy navigates", async ({ page }) => {
+test("navigating a visible frame with loading=lazy navigates", async ({ page }) => {
   await page.click("#loading-lazy summary")
   await nextBeat()
 
@@ -66,7 +66,7 @@ test("test navigating a visible frame with loading=lazy navigates", async ({ pag
   assert.equal(await navigatedContents.textContent(), "Frames: #hello")
 })
 
-test("test changing src attribute on a frame with loading=lazy defers navigation", async ({ page }) => {
+test("changing src attribute on a frame with loading=lazy defers navigation", async ({ page }) => {
   const frameContents = "#loading-lazy turbo-frame h2"
   await nextBeat()
 
@@ -82,7 +82,7 @@ test("test changing src attribute on a frame with loading=lazy defers navigation
   assert.equal(await contents.textContent(), "Frames: #hello")
 })
 
-test("test changing src attribute on a frame with loading=eager navigates", async ({ page }) => {
+test("changing src attribute on a frame with loading=eager navigates", async ({ page }) => {
   const frameContents = "#loading-eager turbo-frame h2"
   await nextBeat()
 
@@ -97,7 +97,7 @@ test("test changing src attribute on a frame with loading=eager navigates", asyn
   assert.equal(await contents.textContent(), "Frames: #frame")
 })
 
-test("test reloading a frame reloads the content", async ({ page }) => {
+test("reloading a frame reloads the content", async ({ page }) => {
   await page.click("#loading-eager summary")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
@@ -110,7 +110,7 @@ test("test reloading a frame reloads the content", async ({ page }) => {
   assert.equal(await nextAttributeMutationNamed(page, "frame", "complete"), null, "clears [complete] attribute")
 })
 
-test("test navigating away from a page does not reload its frames", async ({ page }) => {
+test("navigating away from a page does not reload its frames", async ({ page }) => {
   await page.click("#one")
   await nextBody(page)
 
@@ -119,7 +119,7 @@ test("test navigating away from a page does not reload its frames", async ({ pag
   assert.equal(requestLogs.length, 1)
 })
 
-test("test removing the [complete] attribute of an eager frame reloads the content", async ({ page }) => {
+test("removing the [complete] attribute of an eager frame reloads the content", async ({ page }) => {
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
   await page.evaluate(() => document.querySelector("#loading-eager turbo-frame")?.removeAttribute("complete"))
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
@@ -130,7 +130,7 @@ test("test removing the [complete] attribute of an eager frame reloads the conte
   )
 })
 
-test("test changing [src] attribute on a [complete] frame with loading=lazy defers navigation", async ({ page }) => {
+test("changing [src] attribute on a [complete] frame with loading=lazy defers navigation", async ({ page }) => {
   await page.click("#loading-lazy summary")
   await nextEventOnTarget(page, "hello", "turbo:frame-load")
 
@@ -165,7 +165,7 @@ test("test changing [src] attribute on a [complete] frame with loading=lazy defe
   assert.equal(src.pathname, "/src/tests/fixtures/frames.html", "lazy frame navigates")
 })
 
-test("test navigating away from a page and then back does not reload its frames", async ({ page }) => {
+test("navigating away from a page and then back does not reload its frames", async ({ page }) => {
   await page.click("#one")
   await nextBody(page)
   await readEventLogs(page)
@@ -186,7 +186,7 @@ test("test navigating away from a page and then back does not reload its frames"
   await nextEventOnTarget(page, "hello", "turbo:frame-load")
 })
 
-test("test disconnecting and reconnecting a frame does not reload the frame", async ({ page }) => {
+test("disconnecting and reconnecting a frame does not reload the frame", async ({ page }) => {
   await nextBeat()
 
   await page.evaluate(() => {
