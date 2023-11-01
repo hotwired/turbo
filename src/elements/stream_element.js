@@ -43,7 +43,7 @@ export class StreamElement extends HTMLElement {
       const event = this.beforeRenderEvent
 
       if (this.dispatchEvent(event)) {
-        nextRepaint()
+        await nextRepaint()
         await event.detail.render(this)
       }
     })())
