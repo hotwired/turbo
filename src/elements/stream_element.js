@@ -129,13 +129,6 @@ export class StreamElement extends HTMLElement {
   }
 
   /**
-   * Gets the current action.
-   */
-  get usesNextAnimationFrame() {
-    return this.getAttribute("waits_for_next_frame") !== "false"
-  }
-
-  /**
    * Gets the current target (an element ID) to which the result will
    * be rendered.
    */

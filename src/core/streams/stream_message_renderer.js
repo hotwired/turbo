@@ -1,6 +1,6 @@
 import { Bardo } from "../bardo"
 import { getPermanentElementById, queryPermanentElementsAll } from "../snapshot"
-import { around, elementIsFocusable, queryAutofocusableElement, uuid, nextAnimationFrame } from "../../util"
+import { around, elementIsFocusable, nextAnimationFrame, queryAutofocusableElement, uuid } from "../../util"
 
 export class StreamMessageRenderer {
   render({ fragment }) {
