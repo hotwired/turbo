@@ -43,11 +43,11 @@ export function dispatch(eventName, { target, cancelable, detail } = {}) {
   return event
 }
 
-export async function nextRepaint() {
+export function nextRepaint() {
   if (document.visibilityState === "hidden") {
-    await nextEventLoopTick()
+    return nextEventLoopTick()
   } else {
-    await nextAnimationFrame()
+    return nextAnimationFrame()
   }
 }
 
