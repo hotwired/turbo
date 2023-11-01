@@ -1,5 +1,5 @@
 import { StreamActions } from "../core/streams/stream_actions"
-import { nextAnimationFrame } from "../util"
+import { nextRepaint } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
@@ -43,7 +43,7 @@ export class StreamElement extends HTMLElement {
       const event = this.beforeRenderEvent
 
       if (this.dispatchEvent(event)) {
-        await nextAnimationFrame()
+        await nextRepaint()
         await event.detail.render(this)
       }
     })())

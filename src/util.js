@@ -43,6 +43,14 @@ export function dispatch(eventName, { target, cancelable, detail } = {}) {
   return event
 }
 
+export function nextRepaint() {
+  if (document.visibilityState === "hidden") {
+    return nextEventLoopTick()
+  } else {
+    return nextAnimationFrame()
+  }
+}
+
 export function nextAnimationFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()))
 }
