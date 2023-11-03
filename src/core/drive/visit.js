@@ -105,10 +105,11 @@ export class Visit {
     return this.isSamePage
   }
 
-  start() {
+  async start() {
     if (this.state == VisitState.initialized) {
       this.recordTimingMetric(TimingMetric.visitStart)
       this.state = VisitState.started
+      this.cachedSnapshot = await this.getCachedSnapshot()
       this.adapter.visitStarted(this)
       this.delegate.visitStarted(this)
     }
@@ -231,13 +232,12 @@ export class Visit {
     }
   }
 
-  async hasCachedSnapshot() {
-    return (await this.getCachedSnapshot()) != null
+  hasCachedSnapshot() {
+    return this.cachedSnapshot != null
   }
 
   async loadCachedSnapshot() {
-    const snapshot = await this.getCachedSnapshot()
-    if (snapshot) {
+    if (this.cachedSnapshot) {
       const isPreview = await this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
@@ -246,7 +246,7 @@ export class Visit {
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
 
-          await this.renderPageSnapshot(snapshot, isPreview)
+          await this.renderPageSnapshot(this.cachedSnapshot, isPreview)
 
           this.adapter.visitRendered(this)
           if (!isPreview) {
@@ -395,7 +395,7 @@ export class Visit {
     if (this.isSamePage) {
       return false
     } else if (this.action === "restore") {
-      return !(await this.hasCachedSnapshot())
+      return !this.hasCachedSnapshot()
     } else {
       return this.willRender
     }
