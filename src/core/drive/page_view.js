@@ -60,7 +60,7 @@ export class PageView extends View {
   }
 
   isPageRefresh(visit) {
-    return visit && this.lastRenderedLocation.href === visit.location.href
+    return !visit || this.lastRenderedLocation.href === visit.location.href
   }
 
   get snapshot() {

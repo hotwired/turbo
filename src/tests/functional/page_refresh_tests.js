@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test"
+import { assert } from "chai"
 import {
+  hasSelector,
   nextBeat,
+  nextBody,
   nextEventNamed,
   nextEventOnTarget,
   noNextEventOnTarget,
@@ -53,7 +56,7 @@ test("don't refresh frames contained in [data-turbo-permanent] elements", async 
   expect(await noNextEventOnTarget(page, "refresh-reload", "turbo:before-frame-morph")).toBeTruthy()
 })
 
-test("frames marked with refresh='morph' are excluded from full page morphing", async ({ page }) => {
+test("remote frames excluded from full page morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   await page.evaluate(() => document.getElementById("remote-frame").setAttribute("data-modified", "true"))
@@ -124,6 +127,18 @@ test("it preserves data-turbo-permanent elements that don't match when their ids
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await expect(page.locator("#preserve-me")).toHaveText("Preserve me, I have a family!")
+})
+
+test("renders unprocessable entity responses with morphing", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#reject form.unprocessable_entity input[type=submit]")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBody(page)
+
+  const title = await page.locator("h1")
+  assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
+  assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
 async function assertPageScroll(page, top, left) {
