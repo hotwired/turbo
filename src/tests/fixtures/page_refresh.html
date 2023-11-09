@@ -49,6 +49,13 @@
       <input id="form-submit" type="submit" value="form[method=post]">
     </form>
 
+    <div id="reject">
+      <form class="unprocessable_entity" action="/__turbo/reject" method="post" style="margin-top:100vh">
+        <input type="hidden" name="status" value="422">
+        <input type="submit">
+      </form>
+    </div>
+
     <div id="container">
     </div>
   </body>
