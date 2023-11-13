@@ -56,7 +56,7 @@ test("don't refresh frames contained in [data-turbo-permanent] elements", async 
   expect(await noNextEventOnTarget(page, "refresh-reload", "turbo:before-frame-morph")).toBeTruthy()
 })
 
-test("remote frames excluded from full page morphing", async ({ page }) => {
+test("remote frames are excluded from full page morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   await page.evaluate(() => document.getElementById("remote-frame").setAttribute("data-modified", "true"))

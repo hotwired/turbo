@@ -1,5 +1,6 @@
 import Idiomorph from "idiomorph"
 import { dispatch } from "../../util"
+import { urlsAreEqual } from "../url"
 import { Renderer } from "../renderer"
 
 export class MorphRenderer extends Renderer {
@@ -26,7 +27,7 @@ export class MorphRenderer extends Renderer {
   }
 
   #morphElements(currentElement, newElement, morphStyle = "outerHTML") {
-    this.isMorphingTurboFrame = this.#isRemoteFrame(currentElement)
+    this.isMorphingTurboFrame = this.#remoteFrameReplacement(currentElement, newElement)
 
     Idiomorph.morph(currentElement, newElement, {
       morphStyle: morphStyle,
@@ -42,12 +43,19 @@ export class MorphRenderer extends Renderer {
     return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
   }
 
-  #shouldMorphElement = (node) => {
-    if (node instanceof HTMLElement) {
-      return !node.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isRemoteFrame(node))
-    } else {
+  #shouldMorphElement = (oldNode, newNode) => {
+    if (!(oldNode instanceof HTMLElement) || this.isMorphingTurboFrame) {
       return true
     }
+    else if (oldNode.hasAttribute("data-turbo-permanent")) {
+      return false
+    } else {
+      return !this.#remoteFrameReplacement(oldNode, newNode)
+    }
+  }
+
+  #remoteFrameReplacement = (oldNode, newNode) => {
+    return this.#isRemoteFrame(oldNode) && this.#isRemoteFrame(newNode) && urlsAreEqual(oldNode.getAttribute("src"), newNode.getAttribute("src"))
   }
 
   #shouldRemoveElement = (node) => {
@@ -77,8 +85,8 @@ export class MorphRenderer extends Renderer {
     this.#morphElements(currentElement, newElement.children, "innerHTML")
   }
 
-  #isRemoteFrame(element) {
-    return element.nodeName.toLowerCase() === "turbo-frame" && element.src
+  #isRemoteFrame(node) {
+    return node instanceof HTMLElement && node.nodeName.toLowerCase() === "turbo-frame" && node.getAttribute("src")
   }
 
   #remoteFrames() {
