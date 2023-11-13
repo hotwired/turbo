@@ -7,7 +7,7 @@ import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 
 export class PageView extends View {
-  snapshotCache = new SnapshotCache()
+  snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 
@@ -34,10 +34,6 @@ export class PageView extends View {
     visit?.changeHistory()
     const renderer = new ErrorRenderer(this.snapshot, snapshot, ErrorRenderer.renderElement, false)
     return this.render(renderer)
-  }
-
-  setCacheStore(cacheName) {
-    SnapshotCache.setStore(cacheName)
   }
 
   clearSnapshotCache() {

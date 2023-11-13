@@ -89,14 +89,14 @@ test("visit proposal external location is proposed to adapter", async () => {
 test("visit started notifies adapter", async () => {
   const locatable = window.location.toString()
 
-  await Turbo.navigator.startVisit(locatable)
+  Turbo.navigator.startVisit(locatable)
   assert.equal(adapter.startedVisits.length, 1)
 
   const [visit] = adapter.startedVisits
   assert.equal(visit.location, locatable)
 })
 
-test("visit has cached snapshot returns boolean", async () => {
+test("test visit has cached snapshot returns boolean", async () => {
   const locatable = window.location.toString()
 
   await Turbo.navigator.startVisit(locatable)
@@ -108,7 +108,7 @@ test("visit has cached snapshot returns boolean", async () => {
 test("visit completed notifies adapter", async () => {
   const locatable = window.location.toString()
 
-  await Turbo.navigator.startVisit(locatable)
+  Turbo.navigator.startVisit(locatable)
 
   const [startedVisit] = adapter.startedVisits
   startedVisit.complete()
@@ -120,7 +120,7 @@ test("visit completed notifies adapter", async () => {
 test("visit request started notifies adapter", async () => {
   const locatable = window.location.toString()
 
-  await Turbo.navigator.startVisit(locatable)
+  Turbo.navigator.startVisit(locatable)
 
   const [startedVisit] = adapter.startedVisits
   startedVisit.startRequest()
@@ -133,7 +133,7 @@ test("visit request started notifies adapter", async () => {
 test("visit request completed notifies adapter", async () => {
   const locatable = window.location.toString()
 
-  await Turbo.navigator.startVisit(locatable)
+  Turbo.navigator.startVisit(locatable)
 
   const [startedVisit] = adapter.startedVisits
   startedVisit.recordResponse({ statusCode: 200, responseHTML: "responseHtml", redirected: false })
@@ -146,7 +146,7 @@ test("visit request completed notifies adapter", async () => {
 test("visit request failed notifies adapter", async () => {
   const locatable = window.location.toString()
 
-  await Turbo.navigator.startVisit(locatable)
+  Turbo.navigator.startVisit(locatable)
 
   const [startedVisit] = adapter.startedVisits
   startedVisit.recordResponse({ statusCode: 404, responseHTML: "responseHtml", redirected: false })
@@ -159,7 +159,7 @@ test("visit request failed notifies adapter", async () => {
 test("visit request finished notifies adapter", async () => {
   const locatable = window.location.toString()
 
-  await Turbo.navigator.startVisit(locatable)
+  Turbo.navigator.startVisit(locatable)
 
   const [startedVisit] = adapter.startedVisits
   startedVisit.finishRequest()
@@ -190,7 +190,7 @@ test("visit follows redirect and proposes replace visit to adapter", async () =>
   const locatable = window.location.toString()
   const redirectedLocation = "https://example.com"
 
-  await Turbo.navigator.startVisit(locatable)
+  Turbo.navigator.startVisit(locatable)
 
   const [startedVisit] = adapter.startedVisits
   startedVisit.redirectedToLocation = redirectedLocation

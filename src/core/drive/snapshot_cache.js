@@ -1,35 +1,56 @@
-import { DiskStore } from "./cache_stores/disk_store"
-import { MemoryStore } from "./cache_stores/memory_store"
+import { toCacheKey } from "../url"
 
 export class SnapshotCache {
-  static currentStore = new MemoryStore(10)
+  keys = []
+  snapshots = {}
 
-  static setStore(storeName) {
-    switch (storeName) {
-      case "memory":
-        SnapshotCache.currentStore = new MemoryStore(10)
-        break
-      case "disk":
-        SnapshotCache.currentStore = new DiskStore()
-        break
-      default:
-        throw new Error(`Invalid store name: ${storeName}`)
-    }
+  constructor(size) {
+    this.size = size
   }
 
   has(location) {
-    return SnapshotCache.currentStore.has(location)
+    return toCacheKey(location) in this.snapshots
   }
 
   get(location) {
-    return SnapshotCache.currentStore.get(location)
+    if (this.has(location)) {
+      const snapshot = this.read(location)
+      this.touch(location)
+      return snapshot
+    }
   }
 
   put(location, snapshot) {
-    return SnapshotCache.currentStore.put(location, snapshot)
+    this.write(location, snapshot)
+    this.touch(location)
+    return snapshot
   }
 
   clear() {
-    return SnapshotCache.currentStore.clear()
+    this.snapshots = {}
+  }
+
+  // Private
+
+  read(location) {
+    return this.snapshots[toCacheKey(location)]
+  }
+
+  write(location, snapshot) {
+    this.snapshots[toCacheKey(location)] = snapshot
+  }
+
+  touch(location) {
+    const key = toCacheKey(location)
+    const index = this.keys.indexOf(key)
+    if (index > -1) this.keys.splice(index, 1)
+    this.keys.unshift(key)
+    this.trim()
+  }
+
+  trim() {
+    for (const key of this.keys.splice(this.size)) {
+      delete this.snapshots[key]
+    }
   }
 }
