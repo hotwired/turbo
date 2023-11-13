@@ -96,6 +96,15 @@ test("visit started notifies adapter", async () => {
   assert.equal(visit.location, locatable)
 })
 
+test("test visit has cached snapshot returns boolean", async () => {
+  const locatable = window.location.toString()
+
+  await Turbo.navigator.startVisit(locatable)
+
+  const [visit] = adapter.startedVisits
+  assert.equal(visit.hasCachedSnapshot(), false)
+})
+
 test("visit completed notifies adapter", async () => {
   const locatable = window.location.toString()
 
