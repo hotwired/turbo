@@ -105,11 +105,10 @@ export class Visit {
     return this.isSamePage
   }
 
-  async start() {
+  start() {
     if (this.state == VisitState.initialized) {
       this.recordTimingMetric(TimingMetric.visitStart)
       this.state = VisitState.started
-      this.cachedSnapshot = await this.getCachedSnapshot()
       this.adapter.visitStarted(this)
       this.delegate.visitStarted(this)
     }
@@ -155,10 +154,10 @@ export class Visit {
     }
   }
 
-  async issueRequest() {
+  issueRequest() {
     if (this.hasPreloadedResponse()) {
       this.simulateRequest()
-    } else if (!this.request && await this.shouldIssueRequest()) {
+    } else if (this.shouldIssueRequest() && !this.request) {
       this.request = new FetchRequest(this, FetchMethod.get, this.location)
       this.request.perform()
     }
@@ -216,8 +215,8 @@ export class Visit {
     }
   }
 
-  async getCachedSnapshot() {
-    const snapshot = (await this.view.getCachedSnapshotForLocation(this.location)) || this.getPreloadedSnapshot()
+  getCachedSnapshot() {
+    const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
 
     if (snapshot && (!getAnchor(this.location) || snapshot.hasAnchor(getAnchor(this.location)))) {
       if (this.action == "restore" || snapshot.isPreviewable) {
@@ -233,12 +232,13 @@ export class Visit {
   }
 
   hasCachedSnapshot() {
-    return this.cachedSnapshot != null
+    return this.getCachedSnapshot() != null
   }
 
-  async loadCachedSnapshot() {
-    if (this.cachedSnapshot) {
-      const isPreview = await this.shouldIssueRequest()
+  loadCachedSnapshot() {
+    const snapshot = this.getCachedSnapshot()
+    if (snapshot) {
+      const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
         if (this.isSamePage) {
@@ -246,7 +246,7 @@ export class Visit {
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
 
-          await this.renderPageSnapshot(this.cachedSnapshot, isPreview)
+          await this.renderPageSnapshot(snapshot, isPreview)
 
           this.adapter.visitRendered(this)
           if (!isPreview) {
@@ -391,10 +391,10 @@ export class Visit {
     return typeof this.response == "object"
   }
 
-  async shouldIssueRequest() {
+  shouldIssueRequest() {
     if (this.isSamePage) {
       return false
-    } else if (this.action === "restore") {
+    } else if (this.action == "restore") {
       return !this.hasCachedSnapshot()
     } else {
       return this.willRender

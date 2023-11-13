@@ -30,7 +30,9 @@ export class Preloader {
   async preloadURL(link) {
     const location = new URL(link.href)
 
-    if (await this.snapshotCache.has(location)) return
+    if (this.snapshotCache.has(location)) {
+      return
+    }
 
     try {
       const response = await fetch(location.toString(), { headers: { "Sec-Purpose": "prefetch", Accept: "text/html" } })
