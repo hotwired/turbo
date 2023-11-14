@@ -34,7 +34,7 @@ export class Session {
   formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
   frameRedirector = new FrameRedirector(this, document.documentElement)
   streamMessageRenderer = new StreamMessageRenderer()
-  cache = new Cache()
+  cache = new Cache(this)
 
   drive = true
   enabled = true
