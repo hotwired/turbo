@@ -95,6 +95,33 @@ test("it resets the scroll position when the turbo-refresh-scroll meta tag is 'r
   await assertPageScroll(page, 0, 0)
 })
 
+test("it preserves focus across morphs", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  const input = await page.locator("#form input[type=text]")
+
+  await input.fill("Discard me")
+  await input.press("Enter")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await expect(input).toBeFocused()
+  await expect(input).toHaveValue("")
+})
+
+test("it preserves focus and the [data-turbo-permanent] element's value across morphs", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  const input = await page.locator("#form input[type=text]")
+
+  await input.evaluate((element) => element.setAttribute("data-turbo-permanent", ""))
+  await input.fill("Preserve me")
+  await input.press("Enter")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await expect(input).toBeFocused()
+  await expect(input).toHaveValue("Preserve me")
+})
+
 test("it preserves data-turbo-permanent elements", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
