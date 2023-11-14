@@ -74,6 +74,10 @@ export class PageSnapshot extends Snapshot {
     return this.headSnapshot.getMetaValue("view-transition") === "same-origin"
   }
 
+  get shouldPreserveScrollPosition() {
+    return this.getSetting("scroll") === "preserve"
+  }
+
   // Private
 
   getSetting(name) {
