@@ -79,4 +79,8 @@ export class Renderer {
   get permanentElementMap() {
     return this.currentSnapshot.getPermanentElementMapForSnapshot(this.newSnapshot)
   }
+
+  get renderMethod() {
+    return "replace"
+  }
 }

@@ -99,7 +99,9 @@ export class Navigator {
       } else {
         await this.view.renderPage(snapshot, false, true, this.currentVisit)
       }
-      this.view.scrollToTop()
+      if(!snapshot.shouldPreserveScrollPosition) {
+        this.view.scrollToTop()
+      }
       this.view.clearSnapshotCache()
     }
   }

@@ -1,6 +1,7 @@
 import { FetchResponse } from "./fetch_response"
 import { expandURL } from "../core/url"
 import { dispatch } from "../util"
+import { fetch } from "./fetch"
 
 export function fetchMethodFromString(method) {
   switch (method.toLowerCase()) {
