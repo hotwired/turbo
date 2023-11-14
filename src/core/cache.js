@@ -1,6 +1,10 @@
 import { setMetaContent } from "../util"
 
 export class Cache {
+  constructor(session) {
+    this.session = session
+  }
+
   clear() {
     this.session.clearCache()
   }
