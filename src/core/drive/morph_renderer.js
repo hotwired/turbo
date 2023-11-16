@@ -44,10 +44,9 @@ export class MorphRenderer extends Renderer {
   }
 
   #shouldMorphElement = (oldNode, newNode) => {
-    if (!(oldNode instanceof HTMLElement) || this.isMorphingTurboFrame) {
+    if (this.isMorphingTurboFrame) {
       return true
-    }
-    else if (oldNode.hasAttribute("data-turbo-permanent")) {
+    } else if (!this.#morphableNode(oldNode)) {
       return false
     } else {
       return !this.#remoteFrameReplacement(oldNode, newNode)
@@ -59,7 +58,11 @@ export class MorphRenderer extends Renderer {
   }
 
   #shouldRemoveElement = (node) => {
-    return this.#shouldMorphElement(node)
+    return this.#morphableNode(node) && !this.#isRemoteFrame(node)
+  }
+
+  #morphableNode(node) {
+    return !(node instanceof HTMLElement) || !node.hasAttribute("data-turbo-permanent")
   }
 
   #reloadRemoteFrames() {

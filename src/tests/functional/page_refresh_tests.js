@@ -69,6 +69,51 @@ test("remote frames are excluded from full page morphing", async ({ page }) => {
   await expect(page.locator("#remote-frame")).toHaveText("Loaded morphed frame")
 })
 
+test("remote frames are reloaded if their src changes", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => {
+    const frame = document.getElementById("frame")
+    frame.setAttribute("src", "/src/tests/fixtures/frames.html")
+  })
+  await expect(page.locator("#frame")).toHaveText(/Frames: #frame/)
+
+  await page.evaluate(() => {
+    document.getElementById("frame").innerHTML = `Modified frame!`
+  })
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBeat()
+
+  await expect(page.locator("#frame")).not.toHaveText(/Frames: #frame/)
+  await expect(page.locator("#frame")).toHaveText(/Frame: Loaded/)
+})
+
+test("dynamically created remote frames are kept and reloaded", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => {
+    const container = document.getElementById("container")
+    container.innerHTML = `<turbo-frame id="hello" src="/src/tests/fixtures/frames/hello.html"></turbo-frame>`
+  })
+  await expect(page.locator("#hello")).toHaveText(/Hello from a frame/)
+
+  await page.evaluate(() => {
+    document.getElementById("hello").innerHTML = `Modified frame!`
+  })
+
+  await expect(page.locator("#hello")).not.toHaveText(/Hello from a frame/)
+  await expect(page.locator("#hello")).toHaveText(/Modified frame!/)
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBeat()
+
+  await expect(page.locator("#hello")).not.toHaveText(/Modified frame!/)
+  await expect(page.locator("#hello")).toHaveText(/Hello from a frame/)
+})
+
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
