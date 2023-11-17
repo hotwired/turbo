@@ -229,7 +229,7 @@ test("Visit direction data attribute when clicking a link", async ({ page }) => 
   ])
 })
 
-test("test Visit direction detdata attribute when navigating back", async ({ page }) => {
+test("Visit direction data attribute when navigating back", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
   await Promise.all([
