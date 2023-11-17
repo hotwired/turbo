@@ -79,8 +79,9 @@ router.get("/headers", (request, response) => {
 })
 
 router.get("/delayed_response", (request, response) => {
+  const { status } = request.query
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
-  setTimeout(() => response.status(200).sendFile(fixture), 1000)
+  setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
 })
 
 router.post("/messages", (request, response) => {
