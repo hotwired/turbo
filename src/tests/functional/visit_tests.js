@@ -221,7 +221,7 @@ test("test Visit with network error", async ({ page }) => {
   await nextEventNamed(page, "turbo:fetch-request-error")
 })
 
-test("test Visit direction data attribute when clicking a link", async ({ page }) => {
+test("Visit direction data attribute when clicking a link", async ({ page }) => {
   await Promise.all([
     waitUntilSelector(page, "[data-turbo-visit-direction='forward']")
       .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
