@@ -1,6 +1,5 @@
 import Idiomorph from "idiomorph"
 import { dispatch } from "../../util"
-import { urlsAreEqual } from "../url"
 import { Renderer } from "../renderer"
 
 export class MorphRenderer extends Renderer {
@@ -27,7 +26,7 @@ export class MorphRenderer extends Renderer {
   }
 
   #morphElements(currentElement, newElement, morphStyle = "outerHTML") {
-    this.isMorphingTurboFrame = this.#remoteFrameReplacement(currentElement, newElement)
+    this.isMorphingTurboFrame = this.#isFrameReloadedWithMorph(currentElement)
 
     Idiomorph.morph(currentElement, newElement, {
       morphStyle: morphStyle,
@@ -44,18 +43,11 @@ export class MorphRenderer extends Renderer {
   }
 
   #shouldMorphElement = (oldNode, newNode) => {
-    if (!(oldNode instanceof HTMLElement) || this.isMorphingTurboFrame) {
+    if (oldNode instanceof HTMLElement) {
+      return !oldNode.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isFrameReloadedWithMorph(oldNode))
+    } else {
       return true
     }
-    else if (oldNode.hasAttribute("data-turbo-permanent")) {
-      return false
-    } else {
-      return !this.#remoteFrameReplacement(oldNode, newNode)
-    }
-  }
-
-  #remoteFrameReplacement = (oldNode, newNode) => {
-    return this.#isRemoteFrame(oldNode) && this.#isRemoteFrame(newNode) && urlsAreEqual(oldNode.getAttribute("src"), newNode.getAttribute("src"))
   }
 
   #shouldRemoveElement = (node) => {
@@ -64,7 +56,7 @@ export class MorphRenderer extends Renderer {
 
   #reloadRemoteFrames() {
     this.#remoteFrames().forEach((frame) => {
-      if (this.#isRemoteFrame(frame)) {
+      if (this.#isFrameReloadedWithMorph(frame)) {
         this.#renderFrameWithMorph(frame)
         frame.reload()
       }
@@ -85,8 +77,8 @@ export class MorphRenderer extends Renderer {
     this.#morphElements(currentElement, newElement.children, "innerHTML")
   }
 
-  #isRemoteFrame(node) {
-    return node instanceof HTMLElement && node.nodeName.toLowerCase() === "turbo-frame" && node.getAttribute("src")
+  #isFrameReloadedWithMorph(element) {
+    return element.src && element.refresh === "morph"
   }
 
   #remoteFrames() {
