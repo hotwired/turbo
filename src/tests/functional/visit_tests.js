@@ -13,6 +13,7 @@ import {
   readEventLogs,
   scrollToSelector,
   visitAction,
+  waitUntilNoSelector,
   waitUntilSelector,
   willChangeBody
 } from "../helpers/page"
@@ -222,21 +223,18 @@ test("test Visit with network error", async ({ page }) => {
 })
 
 test("Visit direction data attribute when clicking a link", async ({ page }) => {
-  await Promise.all([
-    waitUntilSelector(page, "[data-turbo-visit-direction='forward']")
-      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
-    page.click("#same-origin-link")
-  ])
+  page.click("#same-origin-link")
+
+  await assertVisitDirectionAttribute(page, "forward")
 })
 
 test("Visit direction data attribute when navigating back", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
-  await Promise.all([
-    waitUntilSelector(page, "[data-turbo-visit-direction='back']")
-      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
-    page.goBack()
-  ])
+
+  page.goBack()
+
+  await assertVisitDirectionAttribute(page, "back")
 })
 
 test("Visit direction attribute when navigating forward", async ({ page }) => {
@@ -244,19 +242,16 @@ test("Visit direction attribute when navigating forward", async ({ page }) => {
   await nextEventNamed(page, "turbo:load")
   await page.goBack()
   await nextEventNamed(page, "turbo:load")
-  await Promise.all([
-    waitUntilSelector(page, "[data-turbo-visit-direction='forward']")
-      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
-    page.goForward()
-  ])
+
+  page.goForward()
+
+  await assertVisitDirectionAttribute(page, "forward")
 })
 
 test("Visit direction attribute on a replace visit", async ({ page }) => {
-  await Promise.all([
-    waitUntilSelector(page, "[data-turbo-visit-direction='none']")
-      .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
-    page.click("#same-origin-replace-link")
-  ])
+  page.click("#same-origin-replace-link")
+
+  await assertVisitDirectionAttribute(page, "none")
 })
 
 test("Turbo history state after a reload", async ({ page }) => {
@@ -272,4 +267,9 @@ test("Turbo history state after a reload", async ({ page }) => {
 
 async function visitLocation(page, location) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
+}
+
+async function assertVisitDirectionAttribute(page, direction) {
+  await waitUntilSelector(page, `[data-turbo-visit-direction='${direction}']`)
+  await waitUntilNoSelector(page, "[data-turbo-visit-direction]")
 }
