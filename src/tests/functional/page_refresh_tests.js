@@ -40,7 +40,6 @@ test("uses morphing to update remote frames", async ({ page }) => {
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextBeat()
 
-  // Only the frame marked with refresh="morph" uses morphing
   expect(await nextEventOnTarget(page, "remote-frame", "turbo:before-frame-morph")).toBeTruthy()
   await expect(page.locator("#remote-frame")).toHaveText("Loaded morphed frame")
 })
@@ -52,8 +51,7 @@ test("don't refresh frames contained in [data-turbo-permanent] elements", async 
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextBeat()
 
-  // Only the frame marked with refresh="morph" uses morphing
-  expect(await noNextEventOnTarget(page, "refresh-reload", "turbo:before-frame-morph")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "remote-permanent-frame", "turbo:before-frame-morph")).toBeTruthy()
 })
 
 test("remote frames are excluded from full page morphing", async ({ page }) => {
