@@ -239,7 +239,7 @@ test("Visit direction data attribute when navigating back", async ({ page }) => 
   ])
 })
 
-test("test Visit direction attribute when navigating forward", async ({ page }) => {
+test("Visit direction attribute when navigating forward", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
   await page.goBack()
@@ -251,7 +251,7 @@ test("test Visit direction attribute when navigating forward", async ({ page }) 
   ])
 })
 
-test("test Visit direction attribute on a replace visit", async ({ page }) => {
+test("Visit direction attribute on a replace visit", async ({ page }) => {
   await Promise.all([
     waitUntilSelector(page, "[data-turbo-visit-direction='none']")
       .then(() => waitUntilSelector(page, "html:not([data-turbo-visit-direction])")),
@@ -259,7 +259,7 @@ test("test Visit direction attribute on a replace visit", async ({ page }) => {
   ])
 })
 
-test("test Turbo history state after a reload", async ({ page }) => {
+test("Turbo history state after a reload", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
   await page.reload()
