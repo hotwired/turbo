@@ -162,6 +162,12 @@ export function propertyForSelector(page, selector, propertyName) {
   return page.locator(selector).evaluate((element, propertyName) => element[propertyName], propertyName)
 }
 
+export function resetMutationLogs(page) {
+  return page.evaluate(() => {
+    window.mutationLogs = []
+  })
+}
+
 async function readArray(page, identifier, length) {
   return page.evaluate(
     ({ identifier, length }) => {

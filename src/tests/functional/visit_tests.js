@@ -6,15 +6,16 @@ import {
   getSearchParam,
   isScrolledToSelector,
   isScrolledToTop,
+  nextAttributeMutationNamed,
   nextBeat,
   nextEventNamed,
   noNextAttributeMutationNamed,
   pathname,
   readEventLogs,
+  resetMutationLogs,
   scrollToSelector,
   visitAction,
   waitUntilNoSelector,
-  waitUntilSelector,
   willChangeBody
 } from "../helpers/page"
 
@@ -224,13 +225,14 @@ test("test Visit with network error", async ({ page }) => {
 
 test("Visit direction data attribute when clicking a link", async ({ page }) => {
   page.click("#same-origin-link")
-
   await assertVisitDirectionAttribute(page, "forward")
 })
 
 test("Visit direction data attribute when navigating back", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
+
+  await resetMutationLogs(page)
 
   page.goBack()
 
@@ -270,6 +272,6 @@ async function visitLocation(page, location) {
 }
 
 async function assertVisitDirectionAttribute(page, direction) {
-  await waitUntilSelector(page, `[data-turbo-visit-direction='${direction}']`)
+  assert.equal(await nextAttributeMutationNamed(page, "html", "data-turbo-visit-direction"), direction)
   await waitUntilNoSelector(page, "[data-turbo-visit-direction]")
 }
