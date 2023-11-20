@@ -307,6 +307,18 @@ test("clicking the forward button", async ({ page }) => {
   assert.equal(await visitAction(page), "restore")
 })
 
+test("form submissions that redirect to a different location have a default advance action", async ({ page }) => {
+  await page.click("#redirect-submit")
+  await nextBody(page)
+  assert.equal(await visitAction(page), "advance")
+})
+
+test("form submissions that redirect to the current location have a default replace action", async ({ page }) => {
+  await page.click("#refresh-submit")
+  await nextBody(page)
+  assert.equal(await visitAction(page), "replace")
+})
+
 test("link targeting a disabled turbo-frame navigates the page", async ({ page }) => {
   await page.click("#link-to-disabled-frame")
   await nextBody(page)
