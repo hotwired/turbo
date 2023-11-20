@@ -78,7 +78,7 @@ export class Navigator {
         }
 
         const { statusCode, redirected } = fetchResponse
-        const action = this.getActionForFormSubmission(formSubmission)
+        const action = this.#getActionForFormSubmission(formSubmission, fetchResponse)
         const visitOptions = {
           action,
           shouldCacheSnapshot,
@@ -153,7 +153,13 @@ export class Navigator {
     return this.history.restorationIdentifier
   }
 
-  getActionForFormSubmission({ submitter, formElement }) {
-    return getVisitAction(submitter, formElement) || "advance"
+  #getActionForFormSubmission(formSubmission, fetchResponse) {
+    const { submitter, formElement } = formSubmission
+    return getVisitAction(submitter, formElement) || this.#getDefaultAction(fetchResponse)
+  }
+
+  #getDefaultAction(fetchResponse) {
+    const sameLocationRedirect = fetchResponse.redirected && fetchResponse.location.href === this.location?.href
+    return sameLocationRedirect ? "replace" : "advance"
   }
 }
