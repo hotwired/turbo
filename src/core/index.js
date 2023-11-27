@@ -3,11 +3,12 @@ import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
+import { StreamActions } from "./streams/stream_actions"
 import { fetch } from "../http/fetch"
 
 const session = new Session()
 const { cache, navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch }
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, StreamActions, fetch }
 
 /**
  * Starts the main session.
