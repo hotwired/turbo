@@ -17,13 +17,13 @@ export class PageRenderer extends Renderer {
   get reloadReason() {
     if (!this.newSnapshot.isVisitable) {
       return {
-        reason: "turbo_visit_control_is_reload"
+        reason: "turbo_visit_control_is_reload",
       }
     }
 
     if (!this.trackedElementsAreIdentical) {
       return {
-        reason: "tracked_element_mismatch"
+        reason: "tracked_element_mismatch",
       }
     }
   }
@@ -44,6 +44,9 @@ export class PageRenderer extends Renderer {
     if (!this.isPreview) {
       this.focusFirstAutofocusableElement()
     }
+
+    this.removeOldStylesheets()
+    this.removeOldScripts()
   }
 
   get currentHeadSnapshot() {
@@ -81,6 +84,28 @@ export class PageRenderer extends Renderer {
     await this.preservingPermanentElements(async () => {
       this.activateNewBody()
       await this.assignNewBody()
+    })
+  }
+
+  removeOldStylesheets() {
+    const currentSheets = this.currentHeadSnapshot.getElementsMatchingType("stylesheet")
+    const newSheets = this.newHeadSnapshot.getElementsMatchingType("stylesheet")
+
+    currentSheets.forEach((element) => {
+      if (element.id !== "turbo-progress-bar-stylesheet" && !this.isCurrentElementInElementList(element, newSheets)) {
+        document.head.removeChild(element)
+      }
+    })
+  }
+
+  removeOldScripts() {
+    const currentScripts = this.currentHeadSnapshot.getElementsMatchingType("script")
+    const newScripts = this.newHeadSnapshot.getElementsMatchingType("script")
+
+    currentScripts.forEach((element) => {
+      if (!this.isCurrentElementInElementList(element, newScripts)) {
+        document.head.removeChild(element)
+      }
     })
   }
 
