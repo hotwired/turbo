@@ -18,6 +18,7 @@ test("Turbo interface", () => {
   assert.equal(typeof Turbo.cache.clear, "function")
   assert.equal(typeof Turbo.navigator, "object")
   assert.equal(typeof Turbo.session, "object")
+  assert.equal(typeof Turbo.fetch, "function")
 })
 
 test("StreamActions interface", () => {
