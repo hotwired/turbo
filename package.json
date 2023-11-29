@@ -4,11 +4,7 @@
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
   "main": "dist/turbo.es2017-umd.js",
-  "exports": {
-    "proscenium": "./src/index.js"
-  },
   "files": [
-    "src/**",
     "dist/*.js",
     "dist/*.js.map"
   ],

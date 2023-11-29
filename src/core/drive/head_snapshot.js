@@ -12,14 +12,14 @@ export class HeadSnapshot extends Snapshot {
           : {
               type: elementType(element),
               tracked: elementIsTracked(element),
-              elements: [],
+              elements: []
             }
       return {
         ...result,
         [outerHTML]: {
           ...details,
-          elements: [...details.elements, element],
-        },
+          elements: [...details.elements, element]
+        }
       }
     }, {})
 
@@ -73,7 +73,7 @@ export class HeadSnapshot extends Snapshot {
   findMetaElementByName(name) {
     return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
       const {
-        elements: [element],
+        elements: [element]
       } = this.detailsByOuterHTML[outerHTML]
       return elementIsMetaElementWithName(element, name) ? element : result
     }, undefined | undefined)
