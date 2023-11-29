@@ -1,5 +1,3 @@
-import { session } from "../"
-
 export const StreamActions = {
   after() {
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
@@ -35,6 +33,6 @@ export const StreamActions = {
   },
 
   refresh() {
-    session.refresh(this.baseURI, this.requestId)
+    window.Turbo.session.refresh(this.baseURI, this.requestId)
   }
 }

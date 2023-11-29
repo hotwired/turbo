@@ -16,7 +16,6 @@ import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markA
 import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
-import { LimitedSet } from "./drive/limited_set"
 import { Cache } from "./cache"
 
 export class Session {
@@ -36,13 +35,16 @@ export class Session {
   frameRedirector = new FrameRedirector(this, document.documentElement)
   streamMessageRenderer = new StreamMessageRenderer()
   cache = new Cache(this)
-  recentRequests = new LimitedSet(20)
 
   drive = true
   enabled = true
   progressBarDelay = 500
   started = false
   formMode = "on"
+
+  constructor(recentRequests) {
+    this.recentRequests = recentRequests
+  }
 
   start() {
     if (!this.started) {
