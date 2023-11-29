@@ -1,6 +1,6 @@
 import { getVisitAction } from "../../util"
 import { FormSubmission } from "./form_submission"
-import { expandURL, getAnchor, getRequestURL, locationIsVisitable } from "../url"
+import { expandURL, getAnchor, getRequestURL } from "../url"
 import { Visit } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 
@@ -11,11 +11,7 @@ export class Navigator {
 
   proposeVisit(location, options = {}) {
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
-      if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.delegate.visitProposedToLocation(location, options)
-      } else {
-        window.location.href = location.toString()
-      }
+      this.delegate.visitProposedToLocation(location, options)
     }
   }
 
@@ -55,6 +51,10 @@ export class Navigator {
     return this.delegate.view
   }
 
+  get rootLocation() {
+    return this.view.snapshot.rootLocation
+  }
+
   get history() {
     return this.delegate.history
   }
@@ -78,7 +78,7 @@ export class Navigator {
         }
 
         const { statusCode, redirected } = fetchResponse
-        const action = this.getActionForFormSubmission(formSubmission)
+        const action = this.#getActionForFormSubmission(formSubmission, fetchResponse)
         const visitOptions = {
           action,
           shouldCacheSnapshot,
@@ -99,7 +99,9 @@ export class Navigator {
       } else {
         await this.view.renderPage(snapshot, false, true, this.currentVisit)
       }
-      this.view.scrollToTop()
+      if(!snapshot.shouldPreserveScrollPosition) {
+        this.view.scrollToTop()
+      }
       this.view.clearSnapshotCache()
     }
   }
@@ -151,7 +153,13 @@ export class Navigator {
     return this.history.restorationIdentifier
   }
 
-  getActionForFormSubmission({ submitter, formElement }) {
-    return getVisitAction(submitter, formElement) || "advance"
+  #getActionForFormSubmission(formSubmission, fetchResponse) {
+    const { submitter, formElement } = formSubmission
+    return getVisitAction(submitter, formElement) || this.#getDefaultAction(fetchResponse)
+  }
+
+  #getDefaultAction(fetchResponse) {
+    const sameLocationRedirect = fetchResponse.redirected && fetchResponse.location.href === this.location?.href
+    return sameLocationRedirect ? "replace" : "advance"
   }
 }

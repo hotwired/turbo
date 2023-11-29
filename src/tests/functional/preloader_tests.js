@@ -2,7 +2,7 @@ import { test } from "@playwright/test"
 import { assert } from "chai"
 import { nextBeat } from "../helpers/page"
 
-test("test preloads snapshot on initial load", async ({ page }) => {
+test("preloads snapshot on initial load", async ({ page }) => {
   // contains `a[rel="preload"][href="http://localhost:9000/src/tests/fixtures/preloaded.html"]`
   await page.goto("/src/tests/fixtures/preloading.html")
   await nextBeat()
@@ -17,7 +17,7 @@ test("test preloads snapshot on initial load", async ({ page }) => {
   )
 })
 
-test("test preloads snapshot on page visit", async ({ page }) => {
+test("preloads snapshot on page visit", async ({ page }) => {
   // contains `a[rel="preload"][href="http://localhost:9000/src/tests/fixtures/preloading.html"]`
   await page.goto("/src/tests/fixtures/hot_preloading.html")
 
@@ -36,7 +36,7 @@ test("test preloads snapshot on page visit", async ({ page }) => {
   )
 })
 
-test("test navigates to preloaded snapshot from frame", async ({ page }) => {
+test("navigates to preloaded snapshot from frame", async ({ page }) => {
   // contains `a[rel="preload"][href="http://localhost:9000/src/tests/fixtures/preloaded.html"]`
   await page.goto("/src/tests/fixtures/frame_preloading.html")
   await page.waitForSelector("#frame_preload_anchor")

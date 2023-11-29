@@ -1,3 +1,5 @@
+import { queryAutofocusableElement } from "../util"
+
 export class Snapshot {
   constructor(element) {
     this.element = element
@@ -24,14 +26,7 @@ export class Snapshot {
   }
 
   get firstAutofocusableElement() {
-    const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
-
-    for (const element of this.element.querySelectorAll("[autofocus]")) {
-      if (element.closest(inertDisabledOrHidden) == null) return element
-      else continue
-    }
-
-    return null
+    return queryAutofocusableElement(this.element)
   }
 
   get permanentElements() {

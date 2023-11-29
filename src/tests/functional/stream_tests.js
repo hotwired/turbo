@@ -1,13 +1,20 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
-import { nextBeat, nextEventNamed, readEventLogs, waitUntilNoSelector, waitUntilText } from "../helpers/page"
+import {
+  hasSelector,
+  nextBeat,
+  nextEventNamed,
+  readEventLogs,
+  waitUntilNoSelector,
+  waitUntilText
+} from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/stream.html")
   await readEventLogs(page)
 })
 
-test("test receiving a stream message", async ({ page }) => {
+test("receiving a stream message", async ({ page }) => {
   const messages = await page.locator("#messages .message")
 
   assert.deepEqual(await messages.allTextContents(), ["First"])
@@ -18,7 +25,7 @@ test("test receiving a stream message", async ({ page }) => {
   assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
 })
 
-test("test dispatches a turbo:before-stream-render event", async ({ page }) => {
+test("dispatches a turbo:before-stream-render event", async ({ page }) => {
   await page.click("#append-target button")
   await nextEventNamed(page, "turbo:submit-end")
   const [[type, { newStream }, target]] = await readEventLogs(page, 1)
@@ -29,7 +36,7 @@ test("test dispatches a turbo:before-stream-render event", async ({ page }) => {
   assert.ok(newStream.includes(`target="messages"`))
 })
 
-test("test receiving a stream message with css selector target", async ({ page }) => {
+test("receiving a stream message with css selector target", async ({ page }) => {
   const messages2 = await page.locator("#messages_2 .message")
   const messages3 = await page.locator("#messages_3 .message")
 
@@ -43,7 +50,7 @@ test("test receiving a stream message with css selector target", async ({ page }
   assert.deepEqual(await messages3.allTextContents(), ["Third", "Hello CSS!"])
 })
 
-test("test receiving a message without a template", async ({ page }) => {
+test("receiving a message without a template", async ({ page }) => {
   await page.evaluate(() =>
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="remove" target="messages"></turbo-stream>
@@ -53,7 +60,7 @@ test("test receiving a message without a template", async ({ page }) => {
   assert.notOk(await waitUntilNoSelector(page, "#messages"), "removes target element")
 })
 
-test("test receiving a message with a <script> element", async ({ page }) => {
+test("receiving a message with a <script> element", async ({ page }) => {
   await page.evaluate(() =>
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="append" target="messages">
@@ -70,7 +77,7 @@ test("test receiving a message with a <script> element", async ({ page }) => {
   assert.ok(await waitUntilText(page, "Hello from script"))
 })
 
-test("test overriding with custom StreamActions", async ({ page }) => {
+test("overriding with custom StreamActions", async ({ page }) => {
   const html = "Rendered with Custom Action"
 
   await page.evaluate((html) => {
@@ -97,13 +104,16 @@ test("test overriding with custom StreamActions", async ({ page }) => {
   assert.ok(await waitUntilText(page, "Rendered with Custom Action"), "evaluates custom StreamAction")
 })
 
-test("test receiving a stream message over SSE", async ({ page }) => {
+test("receiving a stream message over SSE", async ({ page }) => {
   await page.evaluate(() => {
     document.body.insertAdjacentHTML(
       "afterbegin",
       `<turbo-stream-source id="stream-source" src="/__turbo/messages"></turbo-stream-source>`
     )
   })
+  await nextBeat()
+  assert.equal(await getReadyState(page, "stream-source"), await page.evaluate(() => EventSource.OPEN))
+
   const messages = await page.locator("#messages .message")
 
   assert.deepEqual(await messages.allTextContents(), ["First"])
@@ -113,11 +123,73 @@ test("test receiving a stream message over SSE", async ({ page }) => {
   await waitUntilText(page, "Hello world!")
   assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
 
-  await page.evaluate(() => document.getElementById("stream-source")?.remove())
-  await nextBeat()
+  const readyState = await page.evaluate((id) => {
+    const element = document.getElementById(id)
+
+    if (element && element.streamSource) {
+      element.remove()
+
+      return element.streamSource.readyState
+    } else {
+      return -1
+    }
+  }, "stream-source")
+  assert.equal(readyState, await page.evaluate(() => EventSource.CLOSED))
 
   await page.click("#async button")
   await nextBeat()
 
   assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
 })
+
+test("receiving an update stream message preserves focus if the activeElement has an [id]", async ({ page }) => {
+  await page.locator("input#container-element").focus()
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" target="container">
+        <template><textarea id="container-element"></textarea></template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.ok(await hasSelector(page, "textarea#container-element:focus"))
+})
+
+test("receiving a replace stream message preserves focus if the activeElement has an [id]", async ({ page }) => {
+  await page.locator("input#container-element").focus()
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" target="container-element">
+        <template><textarea id="container-element"></textarea></template>
+      </turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.ok(await hasSelector(page, "textarea#container-element:focus"))
+})
+
+test("receiving a remove stream message preserves focus blurs the activeElement", async ({ page }) => {
+  await page.locator("#container-element").focus()
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="remove" target="container-element"></turbo-stream>
+    `)
+  })
+  await nextBeat()
+
+  assert.notOk(await hasSelector(page, ":focus"))
+})
+
+async function getReadyState(page, id) {
+  return page.evaluate((id) => {
+    const element = document.getElementById(id)
+
+    if (element?.streamSource) {
+      return element.streamSource.readyState
+    } else {
+      return -1
+    }
+  }, id)
+}

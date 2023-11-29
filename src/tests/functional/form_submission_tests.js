@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
-test("test standard form submission renders a progress bar", async ({ page }) => {
+test("standard form submission renders a progress bar", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
   await page.click("#standard form.sleep input[type=submit]")
 
@@ -43,7 +43,7 @@ test("test standard form submission renders a progress bar", async ({ page }) =>
   assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
 })
 
-test("test form submission with confirmation confirmed", async ({ page }) => {
+test("form submission with confirmation confirmed", async ({ page }) => {
   page.on("dialog", (alert) => {
     assert.equal(alert.message(), "Are you sure?")
     alert.accept()
@@ -56,7 +56,7 @@ test("test form submission with confirmation confirmed", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
 })
 
-test("test form submission with confirmation cancelled", async ({ page }) => {
+test("form submission with confirmation cancelled", async ({ page }) => {
   page.on("dialog", (alert) => {
     assert.equal(alert.message(), "Are you sure?")
     alert.dismiss()
@@ -66,7 +66,7 @@ test("test form submission with confirmation cancelled", async ({ page }) => {
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test form submission with secondary submitter click - confirmation confirmed", async ({ page }) => {
+test("form submission with secondary submitter click - confirmation confirmed", async ({ page }) => {
   page.on("dialog", (alert) => {
     assert.equal(alert.message(), "Are you really sure?")
     alert.accept()
@@ -81,7 +81,7 @@ test("test form submission with secondary submitter click - confirmation confirm
   assert.equal(getSearchParam(page.url(), "greeting"), "secondary_submitter")
 })
 
-test("test form submission with secondary submitter click - confirmation cancelled", async ({ page }) => {
+test("form submission with secondary submitter click - confirmation cancelled", async ({ page }) => {
   page.on("dialog", (alert) => {
     assert.equal(alert.message(), "Are you really sure?")
     alert.dismiss()
@@ -92,7 +92,7 @@ test("test form submission with secondary submitter click - confirmation cancell
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test from submission with confirmation overridden", async ({ page }) => {
+test("from submission with confirmation overridden", async ({ page }) => {
   page.on("dialog", (alert) => {
     assert.equal(alert.message(), "Overridden message")
     alert.accept()
@@ -104,14 +104,14 @@ test("test from submission with confirmation overridden", async ({ page }) => {
   assert.ok(await formSubmitStarted(page))
 })
 
-test("test standard form submission does not render a progress bar before expiring the delay", async ({ page }) => {
+test("standard form submission does not render a progress bar before expiring the delay", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(500))
   await page.click("#standard form.redirect input[type=submit]")
 
   assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar before delay")
 })
 
-test("test standard POST form submission with redirect response", async ({ page }) => {
+test("standard POST form submission with redirect response", async ({ page }) => {
   await page.click("#standard form.redirect input[type=submit]")
   await nextBody(page)
 
@@ -131,7 +131,7 @@ test("test standard POST form submission with redirect response", async ({ page 
   )
 })
 
-test("test standard POST form submission events", async ({ page }) => {
+test("standard POST form submission events", async ({ page }) => {
   await page.click("#standard-post-form-submit")
 
   assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
@@ -151,7 +151,53 @@ test("test standard POST form submission events", async ({ page }) => {
   await nextEventNamed(page, "turbo:load")
 })
 
-test("test standard POST form submission merges values from both searchParams and body", async ({ page }) => {
+test("supports transforming a POST submission to a GET in a turbo:submit-start listener", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:submit-start", (({ detail }) => {
+      detail.formSubmission.method = "get"
+      detail.formSubmission.action = "/src/tests/fixtures/one.html"
+      detail.formSubmission.body.set("greeting", "Hello, from an event listener")
+    }))
+  )
+  await page.click("#standard form[method=post] [type=submit]")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
+  assert.equal(getSearchParam(page.url(), "greeting"), "Hello, from an event listener")
+})
+
+test("supports transforming a GET submission to a POST in a turbo:submit-start listener", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:submit-start", (({ detail }) => {
+      detail.formSubmission.method = "post"
+      detail.formSubmission.body.set("path", "/src/tests/fixtures/one.html")
+      detail.formSubmission.body.set("greeting", "Hello, from an event listener")
+    }))
+  )
+  await page.click("#standard form[method=get] [type=submit]")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
+  assert.equal(getSearchParam(page.url(), "greeting"), "Hello, from an event listener")
+})
+
+test("supports modifying the submission in a turbo:before-fetch-request listener", async ({ page }) => {
+  await page.evaluate(() =>
+    addEventListener("turbo:before-fetch-request", (({ detail }) => {
+      detail.url = new URL("/src/tests/fixtures/one.html", document.baseURI)
+      detail.url.search = new URLSearchParams(detail.fetchOptions.body).toString()
+      detail.fetchOptions.body = null
+      detail.fetchOptions.method = "get"
+    }))
+  )
+  await page.click("#standard form[method=post] [type=submit]")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
+  assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a redirect")
+})
+
+test("standard POST form submission merges values from both searchParams and body", async ({ page }) => {
   await page.click("#form-action-post-redirect-self-q-b")
   await nextBody(page)
 
@@ -160,7 +206,7 @@ test("test standard POST form submission merges values from both searchParams an
   assert.equal(getSearchParam(page.url(), "sort"), "asc")
 })
 
-test("test standard POST form submission toggles submitter [disabled] attribute", async ({ page }) => {
+test("standard POST form submission toggles submitter [disabled] attribute", async ({ page }) => {
   await page.click("#standard-post-form-submit")
 
   assert.equal(
@@ -209,7 +255,7 @@ test("replaces button innerHTML with data-turbo-submits-with on form submission"
   )
 })
 
-test("test standard GET form submission", async ({ page }) => {
+test("standard GET form submission", async ({ page }) => {
   await page.click("#standard form.greeting input[type=submit]")
   await nextBody(page)
 
@@ -229,7 +275,7 @@ test("test standard GET form submission", async ({ page }) => {
   )
 })
 
-test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
+test("standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
   await page.evaluate(() => {
     const formControl = document.querySelector("#external-select")
 
@@ -244,7 +290,7 @@ test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", asyn
   assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a replace Visit", "encodes <form> into request")
 })
 
-test("test GET HTMLFormElement.requestSubmit() triggered by javascript", async ({ page }) => {
+test("GET HTMLFormElement.requestSubmit() triggered by javascript", async ({ page }) => {
   await page.click("#request-submit-trigger")
 
   await nextEventNamed(page, "turbo:load")
@@ -253,7 +299,7 @@ test("test GET HTMLFormElement.requestSubmit() triggered by javascript", async (
   assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "navigates #hello turbo frame")
 })
 
-test("test standard GET form submission with [data-turbo-stream] declared on the form", async ({ page }) => {
+test("standard GET form submission with [data-turbo-stream] declared on the form", async ({ page }) => {
   await page.click("#standard-get-form-with-stream-opt-in-submit")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
@@ -261,7 +307,7 @@ test("test standard GET form submission with [data-turbo-stream] declared on the
   assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
 })
 
-test("test standard GET form submission with [data-turbo-stream] declared on submitter", async ({ page }) => {
+test("standard GET form submission with [data-turbo-stream] declared on submitter", async ({ page }) => {
   await page.click("#standard-get-form-with-stream-opt-in-submitter")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
@@ -269,7 +315,7 @@ test("test standard GET form submission with [data-turbo-stream] declared on sub
   assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
 })
 
-test("test standard GET form submission events", async ({ page }) => {
+test("standard GET form submission events", async ({ page }) => {
   await page.click("#standard-get-form-submit")
 
   assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
@@ -290,7 +336,7 @@ test("test standard GET form submission events", async ({ page }) => {
   await nextEventNamed(page, "turbo:load")
 })
 
-test("test standard GET form submission does not incorporate the current page's URLSearchParams values into the submission", async ({
+test("standard GET form submission does not incorporate the current page's URLSearchParams values into the submission", async ({
   page
 }) => {
   await page.click("#form-action-self-sort")
@@ -306,7 +352,7 @@ test("test standard GET form submission does not incorporate the current page's 
   assert.equal(search(page.url()), "?q=a", "navigates without omitted keys")
 })
 
-test("test standard GET form submission does not merge values into the [action] attribute", async ({ page }) => {
+test("standard GET form submission does not merge values into the [action] attribute", async ({ page }) => {
   await page.click("#form-action-self-sort")
   await nextBody(page)
 
@@ -320,7 +366,7 @@ test("test standard GET form submission does not merge values into the [action] 
   assert.equal(await search(page.url()), "?q=b", "navigates without omitted keys")
 })
 
-test("test standard GET form submission omits the [action] value's URLSearchParams from the submission", async ({
+test("standard GET form submission omits the [action] value's URLSearchParams from the submission", async ({
   page
 }) => {
   await page.click("#form-action-self-submit")
@@ -330,7 +376,7 @@ test("test standard GET form submission omits the [action] value's URLSearchPara
   assert.equal(search(page.url()), "")
 })
 
-test("test standard GET form submission toggles submitter [disabled] attribute", async ({ page }) => {
+test("standard GET form submission toggles submitter [disabled] attribute", async ({ page }) => {
   await page.click("#standard-get-form-submit")
 
   assert.equal(
@@ -345,7 +391,7 @@ test("test standard GET form submission toggles submitter [disabled] attribute",
   )
 })
 
-test("test standard GET form submission appending keys", async ({ page }) => {
+test("standard GET form submission appending keys", async ({ page }) => {
   await page.goto("/src/tests/fixtures/form.html?query=1")
   await page.click("#standard form.conflicting-values input[type=submit]")
   await nextBody(page)
@@ -354,7 +400,7 @@ test("test standard GET form submission appending keys", async ({ page }) => {
   assert.equal(getSearchParam(page.url(), "query"), "2")
 })
 
-test("test standard form submission with empty created response", async ({ page }) => {
+test("standard form submission with empty created response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "body")
   const button = await page.locator("#standard form.created input[type=submit]")
   await button.click()
@@ -364,7 +410,7 @@ test("test standard form submission with empty created response", async ({ page 
   assert.equal(htmlAfter, htmlBefore)
 })
 
-test("test standard form submission with empty no-content response", async ({ page }) => {
+test("standard form submission with empty no-content response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "body")
   const button = await page.locator("#standard form.no-content input[type=submit]")
   await button.click()
@@ -374,7 +420,7 @@ test("test standard form submission with empty no-content response", async ({ pa
   assert.equal(htmlAfter, htmlBefore)
 })
 
-test("test standard POST form submission with multipart/form-data enctype", async ({ page }) => {
+test("standard POST form submission with multipart/form-data enctype", async ({ page }) => {
   await page.click("#standard form[method=post][enctype] input[type=submit]")
   await nextBeat()
 
@@ -382,7 +428,7 @@ test("test standard POST form submission with multipart/form-data enctype", asyn
   assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
 })
 
-test("test standard GET form submission ignores enctype", async ({ page }) => {
+test("standard GET form submission ignores enctype", async ({ page }) => {
   await page.click("#standard form[method=get][enctype] input[type=submit]")
   await nextBeat()
 
@@ -390,7 +436,7 @@ test("test standard GET form submission ignores enctype", async ({ page }) => {
   assert.notOk(enctype, "GET form submissions ignore enctype")
 })
 
-test("test standard POST form submission without an enctype", async ({ page }) => {
+test("standard POST form submission without an enctype", async ({ page }) => {
   await page.click("#standard form[method=post].no-enctype input[type=submit]")
   await nextBeat()
 
@@ -401,7 +447,7 @@ test("test standard POST form submission without an enctype", async ({ page }) =
   )
 })
 
-test("test no-action form submission with single parameter", async ({ page }) => {
+test("no-action form submission with single parameter", async ({ page }) => {
   await page.click("#no-action form.single input[type=submit]")
   await nextBody(page)
 
@@ -422,7 +468,7 @@ test("test no-action form submission with single parameter", async ({ page }) =>
   assert.equal(getSearchParam(page.url(), "query"), "1")
 })
 
-test("test no-action form submission with multiple parameters", async ({ page }) => {
+test("no-action form submission with multiple parameters", async ({ page }) => {
   await page.goto("/src/tests/fixtures/form.html?query=2")
   await page.click("#no-action form.multiple input[type=submit]")
   await nextBody(page)
@@ -437,7 +483,7 @@ test("test no-action form submission with multiple parameters", async ({ page })
   assert.deepEqual(searchParams(page.url()).getAll("query"), ["1", "2"])
 })
 
-test("test no-action form submission submitter parameters", async ({ page }) => {
+test("no-action form submission submitter parameters", async ({ page }) => {
   await page.click("#no-action form.button-param [type=submit]")
   await nextBody(page)
 
@@ -453,7 +499,7 @@ test("test no-action form submission submitter parameters", async ({ page }) => 
   assert.deepEqual(searchParams(page.url()).getAll("button"), [""])
 })
 
-test("test submitter with blank formaction submits to the current page", async ({ page }) => {
+test("submitter with blank formaction submits to the current page", async ({ page }) => {
   await page.click("#blank-formaction button")
   await nextBody(page)
 
@@ -461,7 +507,7 @@ test("test submitter with blank formaction submits to the current page", async (
   assert.ok(await hasSelector(page, "#blank-formaction"), "overrides form[action] navigation")
 })
 
-test("test input named action with no action attribute", async ({ page }) => {
+test("input named action with no action attribute", async ({ page }) => {
   await page.click("#action-input form.no-action [type=submit]")
   await nextBody(page)
 
@@ -470,7 +516,7 @@ test("test input named action with no action attribute", async ({ page }) => {
   assert.equal(getSearchParam(page.url(), "query"), "1")
 })
 
-test("test input named action with action attribute", async ({ page }) => {
+test("input named action with action attribute", async ({ page }) => {
   await page.click("#action-input form.action [type=submit]")
   await nextBody(page)
 
@@ -479,7 +525,7 @@ test("test input named action with action attribute", async ({ page }) => {
   assert.equal(getSearchParam(page.url(), "query"), "1")
 })
 
-test("test invalid form submission with unprocessable entity status", async ({ page }) => {
+test("invalid form submission with unprocessable entity status", async ({ page }) => {
   await page.click("#reject form.unprocessable_entity input[type=submit]")
   await nextBody(page)
 
@@ -488,7 +534,7 @@ test("test invalid form submission with unprocessable entity status", async ({ p
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
-test("test invalid form submission with long form", async ({ page }) => {
+test("invalid form submission with long form", async ({ page }) => {
   await scrollToSelector(page, "#reject form.unprocessable_entity_with_tall_form input[type=submit]")
   await page.click("#reject form.unprocessable_entity_with_tall_form input[type=submit]")
   await nextBody(page)
@@ -499,7 +545,7 @@ test("test invalid form submission with long form", async ({ page }) => {
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
-test("test invalid form submission with server error status", async ({ page }) => {
+test("invalid form submission with server error status", async ({ page }) => {
   assert(await hasSelector(page, "head > #form-fixture-styles"))
   await page.click("#reject form.internal_server_error input[type=submit]")
   await nextBody(page)
@@ -510,13 +556,13 @@ test("test invalid form submission with server error status", async ({ page }) =
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
-test("test form submission with network error", async ({ page }) => {
+test("form submission with network error", async ({ page }) => {
   await page.context().setOffline(true)
   await page.click("#reject-form [type=submit]")
   await nextEventOnTarget(page, "reject-form", "turbo:fetch-request-error")
 })
 
-test("test submitter form submission reads button attributes", async ({ page }) => {
+test("submitter form submission reads button attributes", async ({ page }) => {
   const button = await page.locator("#submitter form button[type=submit][formmethod=post]")
   await button.click()
   await nextBody(page)
@@ -525,7 +571,7 @@ test("test submitter form submission reads button attributes", async ({ page }) 
   assert.equal(await visitAction(page), "advance")
 })
 
-test("test submitter POST form submission with multipart/form-data formenctype", async ({ page }) => {
+test("submitter POST form submission with multipart/form-data formenctype", async ({ page }) => {
   await page.click("#submitter form[method=post]:not([enctype]) input[formenctype]")
   await nextBeat()
 
@@ -533,7 +579,7 @@ test("test submitter POST form submission with multipart/form-data formenctype",
   assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
 })
 
-test("test submitter GET submission from submitter with data-turbo-frame", async ({ page }) => {
+test("submitter GET submission from submitter with data-turbo-frame", async ({ page }) => {
   await page.click("#submitter form[method=get] [type=submit][data-turbo-frame]")
   await nextBeat()
 
@@ -543,7 +589,7 @@ test("test submitter GET submission from submitter with data-turbo-frame", async
   assert.equal(await message.textContent(), "Frame redirected")
 })
 
-test("test submitter POST submission from submitter with data-turbo-frame", async ({ page }) => {
+test("submitter POST submission from submitter with data-turbo-frame", async ({ page }) => {
   await page.click("#submitter form[method=post] [type=submit][data-turbo-frame]")
   await nextBeat()
 
@@ -553,7 +599,26 @@ test("test submitter POST submission from submitter with data-turbo-frame", asyn
   assert.equal(await message.textContent(), "Frame redirected")
 })
 
-test("test frame form GET submission from submitter with data-turbo-frame=_top", async ({ page }) => {
+test("form[data-turbo-frame=_top] submission", async ({ page }) => {
+  const form = await page.locator("#standard form.redirect[data-turbo-frame=_top]")
+
+  await form.locator("button").click()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "One")
+})
+
+test("form[data-turbo-frame=_top] submission within frame", async ({ page }) => {
+  const frame = await page.locator("turbo-frame#frame")
+  const form = await frame.locator("form.redirect[data-turbo-frame=_top]")
+
+  await form.locator("button").click()
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.textContent("h1"), "Frames: Form")
+})
+
+test("frame form GET submission from submitter with data-turbo-frame=_top", async ({ page }) => {
   await page.click("#frame form[method=get] [type=submit][data-turbo-frame=_top]")
   await nextBody(page)
 
@@ -561,7 +626,7 @@ test("test frame form GET submission from submitter with data-turbo-frame=_top",
   assert.equal(await title.textContent(), "One")
 })
 
-test("test frame form POST submission from submitter with data-turbo-frame=_top", async ({ page }) => {
+test("frame form POST submission from submitter with data-turbo-frame=_top", async ({ page }) => {
   await page.click("#frame form[method=post] [type=submit][data-turbo-frame=_top]")
   await nextBody(page)
 
@@ -569,7 +634,7 @@ test("test frame form POST submission from submitter with data-turbo-frame=_top"
   assert.equal(await title.textContent(), "One")
 })
 
-test("test frame POST form targeting frame submission", async ({ page }) => {
+test("frame POST form targeting frame submission", async ({ page }) => {
   await page.click("#targets-frame-post-form-submit")
 
   assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
@@ -593,7 +658,7 @@ test("test frame POST form targeting frame submission", async ({ page }) => {
   assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
 })
 
-test("test frame POST form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
+test("frame POST form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
   await page.click("#targets-frame-post-form-submit")
 
   assert.equal(
@@ -608,7 +673,7 @@ test("test frame POST form targeting frame toggles submitter's [disabled] attrib
   )
 })
 
-test("test frame GET form targeting frame submission", async ({ page }) => {
+test("frame GET form targeting frame submission", async ({ page }) => {
   await page.click("#targets-frame-get-form-submit")
 
   assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
@@ -632,7 +697,7 @@ test("test frame GET form targeting frame submission", async ({ page }) => {
   assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
 })
 
-test("test frame GET form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
+test("frame GET form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
   await page.click("#targets-frame-get-form-submit")
 
   assert.equal(
@@ -647,7 +712,7 @@ test("test frame GET form targeting frame toggles submitter's [disabled] attribu
   )
 })
 
-test("test frame form GET submission from submitter referencing another frame", async ({ page }) => {
+test("frame form GET submission from submitter referencing another frame", async ({ page }) => {
   await page.click("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
   await nextBeat()
 
@@ -657,7 +722,7 @@ test("test frame form GET submission from submitter referencing another frame", 
   assert.equal(await title.textContent(), "Form")
 })
 
-test("test frame form POST submission from submitter referencing another frame", async ({ page }) => {
+test("frame form POST submission from submitter referencing another frame", async ({ page }) => {
   await page.click("#frame form[method=post] [type=submit][data-turbo-frame=hello]")
   await nextBeat()
 
@@ -667,7 +732,7 @@ test("test frame form POST submission from submitter referencing another frame",
   assert.equal(await title.textContent(), "Form")
 })
 
-test("test frame form submission with redirect response", async ({ page }) => {
+test("frame form submission with redirect response", async ({ page }) => {
   const path = (await page.getAttribute("#frame form.redirect input[name=path]", "value")) || ""
   const url = new URL(path, "http://localhost:9000")
   url.searchParams.set("enctype", "application/x-www-form-urlencoded;charset=UTF-8")
@@ -684,7 +749,7 @@ test("test frame form submission with redirect response", async ({ page }) => {
   assert.equal(await page.getAttribute("#frame", "src"), url.href, "redirects the target frame")
 })
 
-test("test frame POST form submission toggles the ancestor frame's [aria-busy] attribute", async ({ page }) => {
+test("frame POST form submission toggles the ancestor frame's [aria-busy] attribute", async ({ page }) => {
   await page.click("#frame form.redirect input[type=submit]")
   await nextBeat()
 
@@ -698,7 +763,7 @@ test("test frame POST form submission toggles the ancestor frame's [aria-busy] a
   )
 })
 
-test("test frame POST form submission toggles the target frame's [aria-busy] attribute", async ({ page }) => {
+test("frame POST form submission toggles the target frame's [aria-busy] attribute", async ({ page }) => {
   await page.click('#targets-frame form.frame [type="submit"]')
   await nextBeat()
 
@@ -715,7 +780,7 @@ test("test frame POST form submission toggles the target frame's [aria-busy] att
   )
 })
 
-test("test frame form submission with empty created response", async ({ page }) => {
+test("frame form submission with empty created response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "#frame")
   const button = await page.locator("#frame form.created input[type=submit]")
   await button.click()
@@ -725,7 +790,7 @@ test("test frame form submission with empty created response", async ({ page }) 
   assert.equal(htmlAfter, htmlBefore)
 })
 
-test("test frame form submission with empty no-content response", async ({ page }) => {
+test("frame form submission with empty no-content response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "#frame")
   const button = await page.locator("#frame form.no-content input[type=submit]")
   await button.click()
@@ -735,7 +800,7 @@ test("test frame form submission with empty no-content response", async ({ page 
   assert.equal(htmlAfter, htmlBefore)
 })
 
-test("test frame form submission within a frame submits the Turbo-Frame header", async ({ page }) => {
+test("frame form submission within a frame submits the Turbo-Frame header", async ({ page }) => {
   await page.click("#frame form.redirect input[type=submit]")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
@@ -743,7 +808,7 @@ test("test frame form submission within a frame submits the Turbo-Frame header",
   assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
 })
 
-test("test invalid frame form submission with unprocessable entity status", async ({ page }) => {
+test("invalid frame form submission with unprocessable entity status", async ({ page }) => {
   await page.click("#frame form.unprocessable_entity input[type=submit]")
 
   assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
@@ -761,7 +826,7 @@ test("test invalid frame form submission with unprocessable entity status", asyn
   assert.equal(await title.textContent(), "Frame: Unprocessable Entity")
 })
 
-test("test invalid frame form submission with internal server error status", async ({ page }) => {
+test("invalid frame form submission with internal server error status", async ({ page }) => {
   await page.click("#frame form.internal_server_error input[type=submit]")
 
   assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
@@ -778,7 +843,7 @@ test("test invalid frame form submission with internal server error status", asy
   assert.equal(await page.textContent("#frame h2"), "Frame: Internal Server Error")
 })
 
-test("test frame form submission with stream response", async ({ page }) => {
+test("frame form submission with stream response", async ({ page }) => {
   const button = await page.locator("#frame form.stream[method=post] input[type=submit]")
   await button.click()
   await nextBeat()
@@ -790,7 +855,7 @@ test("test frame form submission with stream response", async ({ page }) => {
   assert.notOk(await page.getAttribute("#frame", "src"), "does not change frame's src")
 })
 
-test("test frame form submission with HTTP verb other than GET or POST", async ({ page }) => {
+test("frame form submission with HTTP verb other than GET or POST", async ({ page }) => {
   await page.click("#frame form.put.stream input[type=submit]")
   await nextBeat()
 
@@ -799,21 +864,21 @@ test("test frame form submission with HTTP verb other than GET or POST", async (
   assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
 })
 
-test("test frame form submission with [data-turbo=false] on the form", async ({ page }) => {
+test("frame form submission with [data-turbo=false] on the form", async ({ page }) => {
   await page.click('#frame form[data-turbo="false"] input[type=submit]')
   await waitUntilSelector(page, "#element-id")
 
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test frame form submission with [data-turbo=false] on the submitter", async ({ page }) => {
+test("frame form submission with [data-turbo=false] on the submitter", async ({ page }) => {
   await page.click('#frame form:not([data-turbo]) input[data-turbo="false"]')
   await waitUntilSelector(page, "#element-id")
 
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test frame form submission ignores submissions with their defaultPrevented", async ({ page }) => {
+test("frame form submission ignores submissions with their defaultPrevented", async ({ page }) => {
   await page.evaluate(() => document.addEventListener("submit", (event) => event.preventDefault(), true))
   await page.click("#frame .redirect [type=submit]")
   await nextBeat()
@@ -822,49 +887,49 @@ test("test frame form submission ignores submissions with their defaultPrevented
   assert.equal(await page.getAttribute("#frame", "src"), null, "does not navigate frame")
 })
 
-test("test form submission with [data-turbo=false] on the form", async ({ page }) => {
+test("form submission with [data-turbo=false] on the form", async ({ page }) => {
   await page.click('#turbo-false form[data-turbo="false"] input[type=submit]')
   await waitUntilSelector(page, "#element-id")
 
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test form submission with [data-turbo=false] on the submitter", async ({ page }) => {
+test("form submission with [data-turbo=false] on the submitter", async ({ page }) => {
   await page.click('#turbo-false form:not([data-turbo]) input[data-turbo="false"]')
   await waitUntilSelector(page, "#element-id")
 
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test form submission skipped within method=dialog", async ({ page }) => {
+test("form submission skipped within method=dialog", async ({ page }) => {
   await page.click('#dialog-method [type="submit"]')
   await nextBeat()
 
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test form submission skipped with submitter formmethod=dialog", async ({ page }) => {
+test("form submission skipped with submitter formmethod=dialog", async ({ page }) => {
   await page.click('#dialog-formmethod-turbo-frame [formmethod="dialog"]')
   await nextBeat()
 
   assert.notOk(await formSubmitEnded(page))
 })
 
-test("test form submission targeting frame skipped within method=dialog", async ({ page }) => {
+test("form submission targeting frame skipped within method=dialog", async ({ page }) => {
   await page.click("#dialog-method-turbo-frame button")
   await nextBeat()
 
   assert.notOk(await formSubmitEnded(page))
 })
 
-test("test form submission targeting frame skipped with submitter formmethod=dialog", async ({ page }) => {
+test("form submission targeting frame skipped with submitter formmethod=dialog", async ({ page }) => {
   await page.click('#dialog-formmethod [formmethod="dialog"]')
   await nextBeat()
 
   assert.notOk(await formSubmitStarted(page))
 })
 
-test("test form submission targets disabled frame", async ({ page }) => {
+test("form submission targets disabled frame", async ({ page }) => {
   await page.evaluate(() => document.getElementById("frame")?.setAttribute("disabled", ""))
   await page.click('#targets-frame form.one [type="submit"]')
   await nextBody(page)
@@ -872,7 +937,7 @@ test("test form submission targets disabled frame", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
 })
 
-test("test form submission targeting a frame submits the Turbo-Frame header", async ({ page }) => {
+test("form submission targeting a frame submits the Turbo-Frame header", async ({ page }) => {
   await page.click('#targets-frame [type="submit"]')
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
@@ -880,7 +945,7 @@ test("test form submission targeting a frame submits the Turbo-Frame header", as
   assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
 })
 
-test("test link method form submission dispatches events from a connected <form> element", async ({ page }) => {
+test("link method form submission dispatches events from a connected <form> element", async ({ page }) => {
   await page.evaluate(() =>
     new MutationObserver(([record]) => {
       for (const form of record.addedNodes) {
@@ -898,7 +963,7 @@ test("test link method form submission dispatches events from a connected <form>
   assert.notOk(await hasSelector(page, "a-form-link"), "the <form> is removed")
 })
 
-test("test link method form submission submits a single request", async ({ page }) => {
+test("link method form submission submits a single request", async ({ page }) => {
   let requestCounter = 0
   page.on("request", () => requestCounter++)
 
@@ -908,11 +973,11 @@ test("test link method form submission submits a single request", async ({ page 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 1, "submits a single HTTP request")
 })
 
-test("test link method form submission inside frame submits a single request", async ({ page }) => {
+test("link method form submission inside frame submits a single request", async ({ page }) => {
   let requestCounter = 0
   page.on("request", () => requestCounter++)
 
@@ -922,11 +987,11 @@ test("test link method form submission inside frame submits a single request", a
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 1, "submits a single HTTP request")
 })
 
-test("test link method form submission targeting frame submits a single request", async ({ page }) => {
+test("link method form submission targeting frame submits a single request", async ({ page }) => {
   let requestCounter = 0
   page.on("request", () => requestCounter++)
 
@@ -936,11 +1001,11 @@ test("test link method form submission targeting frame submits a single request"
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 2, "submits a single HTTP request then follows a redirect")
 })
 
-test("test link method form submission inside frame", async ({ page }) => {
+test("link method form submission inside frame", async ({ page }) => {
   await page.click("#link-method-inside-frame")
   await nextBeat()
 
@@ -948,7 +1013,7 @@ test("test link method form submission inside frame", async ({ page }) => {
   assert.notOk(await hasSelector(page, "#nested-child"))
 })
 
-test("test link method form submission inside frame with data-turbo-frame=_top", async ({ page }) => {
+test("link method form submission inside frame with data-turbo-frame=_top", async ({ page }) => {
   await page.click("#link-method-inside-frame-target-top")
   await nextBody(page)
 
@@ -956,7 +1021,7 @@ test("test link method form submission inside frame with data-turbo-frame=_top",
   assert.equal(await title.textContent(), "Hello")
 })
 
-test("test link method form submission inside frame with data-turbo-frame target", async ({ page }) => {
+test("link method form submission inside frame with data-turbo-frame target", async ({ page }) => {
   await page.click("#link-method-inside-frame-with-target")
   await nextBeat()
 
@@ -966,7 +1031,7 @@ test("test link method form submission inside frame with data-turbo-frame target
   assert.equal(await title.textContent(), "Form")
 })
 
-test("test stream link method form submission inside frame", async ({ page }) => {
+test("stream link method form submission inside frame", async ({ page }) => {
   await page.click("#stream-link-method-inside-frame")
   await nextBeat()
 
@@ -974,7 +1039,7 @@ test("test stream link method form submission inside frame", async ({ page }) =>
   assert.equal(await message.textContent(), "Link!")
 })
 
-test("test stream link GET method form submission inside frame", async ({ page }) => {
+test("stream link GET method form submission inside frame", async ({ page }) => {
   await page.click("#stream-link-get-method-inside-frame")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
@@ -982,7 +1047,7 @@ test("test stream link GET method form submission inside frame", async ({ page }
   assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
 })
 
-test("test stream link inside frame", async ({ page }) => {
+test("stream link inside frame", async ({ page }) => {
   await page.click("#stream-link-inside-frame")
 
   const { fetchOptions, url } = await nextEventNamed(page, "turbo:before-fetch-request")
@@ -991,7 +1056,7 @@ test("test stream link inside frame", async ({ page }) => {
   assert.equal(getSearchParam(url, "content"), "Link!")
 })
 
-test("test link method form submission within form inside frame", async ({ page }) => {
+test("link method form submission within form inside frame", async ({ page }) => {
   await page.click("#stream-link-method-within-form-inside-frame")
   await nextBeat()
 
@@ -999,7 +1064,7 @@ test("test link method form submission within form inside frame", async ({ page 
   assert.equal(await message.textContent(), "Link!")
 })
 
-test("test link method form submission inside frame with confirmation confirmed", async ({ page }) => {
+test("link method form submission inside frame with confirmation confirmed", async ({ page }) => {
   page.on("dialog", (dialog) => {
     assert.equal(dialog.message(), "Are you sure?")
     dialog.accept()
@@ -1012,7 +1077,7 @@ test("test link method form submission inside frame with confirmation confirmed"
   assert.equal(await message.textContent(), "Link!")
 })
 
-test("test link method form submission inside frame with confirmation cancelled", async ({ page }) => {
+test("link method form submission inside frame with confirmation cancelled", async ({ page }) => {
   page.on("dialog", (dialog) => {
     assert.equal(dialog.message(), "Are you sure?")
     dialog.dismiss()
@@ -1024,7 +1089,7 @@ test("test link method form submission inside frame with confirmation cancelled"
   assert.notOk(await hasSelector(page, "#frame div.message"), "Not confirming form submission does not submit the form")
 })
 
-test("test link method form submission outside frame", async ({ page }) => {
+test("link method form submission outside frame", async ({ page }) => {
   await page.click("#link-method-outside-frame")
   await nextBody(page)
 
@@ -1032,7 +1097,7 @@ test("test link method form submission outside frame", async ({ page }) => {
   assert.equal(await title.textContent(), "Hello")
 })
 
-test("test following a link with [data-turbo-method] set and a target set navigates the target frame", async ({
+test("following a link with [data-turbo-method] set and a target set navigates the target frame", async ({
   page
 }) => {
   await page.click("#turbo-method-post-to-targeted-frame")
@@ -1040,7 +1105,7 @@ test("test following a link with [data-turbo-method] set and a target set naviga
   assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
 })
 
-test("test following a link with [data-turbo-method] and [data-turbo=true] set when html[data-turbo=false]", async ({
+test("following a link with [data-turbo-method] and [data-turbo=true] set when html[data-turbo=false]", async ({
   page
 }) => {
   const html = await page.locator("html")
@@ -1055,7 +1120,7 @@ test("test following a link with [data-turbo-method] and [data-turbo=true] set w
   assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
 })
 
-test("test following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
+test("following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
   page
 }) => {
   await page.evaluate(() => (window.Turbo.session.drive = false))
@@ -1069,7 +1134,7 @@ test("test following a link with [data-turbo-method] and [data-turbo=true] set w
   assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
 })
 
-test("test following a link with [data-turbo-method] set when html[data-turbo=false]", async ({ page }) => {
+test("following a link with [data-turbo-method] set when html[data-turbo=false]", async ({ page }) => {
   const html = await page.locator("html")
   await html.evaluate((html) => html.setAttribute("data-turbo", "false"))
 
@@ -1078,14 +1143,14 @@ test("test following a link with [data-turbo-method] set when html[data-turbo=fa
   assert.equal(await page.textContent("h1"), "Hello", "treats link full-page navigation")
 })
 
-test("test following a link with [data-turbo-method] set when Turbo.session.drive = false", async ({ page }) => {
+test("following a link with [data-turbo-method] set when Turbo.session.drive = false", async ({ page }) => {
   await page.evaluate(() => (window.Turbo.session.drive = false))
   await page.click("#turbo-method-post-to-targeted-frame")
 
   assert.equal(await page.textContent("h1"), "Hello", "treats link full-page navigation")
 })
 
-test("test stream link method form submission outside frame", async ({ page }) => {
+test("stream link method form submission outside frame", async ({ page }) => {
   await page.click("#stream-link-method-outside-frame")
   await nextBeat()
 
@@ -1093,7 +1158,7 @@ test("test stream link method form submission outside frame", async ({ page }) =
   assert.equal(await message.textContent(), "Link!")
 })
 
-test("test link method form submission within form outside frame", async ({ page }) => {
+test("link method form submission within form outside frame", async ({ page }) => {
   await page.click("#link-method-within-form-outside-frame")
   await nextBody(page)
 
@@ -1101,24 +1166,24 @@ test("test link method form submission within form outside frame", async ({ page
   assert.equal(await title.textContent(), "Hello")
 })
 
-test("test stream link method form submission within form outside frame", async ({ page }) => {
+test("stream link method form submission within form outside frame", async ({ page }) => {
   await page.click("#stream-link-method-within-form-outside-frame")
   await nextBeat()
 
   assert.equal(await page.textContent("#frame div.message"), "Link!")
 })
 
-test("test turbo:before-fetch-request fires on the form element", async ({ page }) => {
+test("turbo:before-fetch-request fires on the form element", async ({ page }) => {
   await page.click('#targets-frame form.one [type="submit"]')
   assert.ok(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-request"))
 })
 
-test("test turbo:before-fetch-response fires on the form element", async ({ page }) => {
+test("turbo:before-fetch-response fires on the form element", async ({ page }) => {
   await page.click('#targets-frame form.one [type="submit"]')
   assert.ok(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-response"))
 })
 
-test("test POST to external action ignored", async ({ page }) => {
+test("POST to external action ignored", async ({ page }) => {
   await page.click("#submit-external")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
@@ -1128,7 +1193,7 @@ test("test POST to external action ignored", async ({ page }) => {
   assert.equal(page.url(), "https://httpbin.org/post")
 })
 
-test("test POST to external action within frame ignored", async ({ page }) => {
+test("POST to external action within frame ignored", async ({ page }) => {
   await page.click("#submit-external-within-ignored")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
@@ -1138,7 +1203,7 @@ test("test POST to external action within frame ignored", async ({ page }) => {
   assert.equal(page.url(), "https://httpbin.org/post")
 })
 
-test("test POST to external action targeting frame ignored", async ({ page }) => {
+test("POST to external action targeting frame ignored", async ({ page }) => {
   await page.click("#submit-external-target-ignored")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
@@ -1148,7 +1213,7 @@ test("test POST to external action targeting frame ignored", async ({ page }) =>
   assert.equal(page.url(), "https://httpbin.org/post")
 })
 
-test("test form submission skipped with form[target]", async ({ page }) => {
+test("form submission skipped with form[target]", async ({ page }) => {
   await page.click("#skipped form[target] button")
   await nextBeat()
 
@@ -1156,7 +1221,7 @@ test("test form submission skipped with form[target]", async ({ page }) => {
   assert.notOk(await formSubmitEnded(page))
 })
 
-test("test form submission skipped with submitter button[formtarget]", async ({ page }) => {
+test("form submission skipped with submitter button[formtarget]", async ({ page }) => {
   await page.click("#skipped [formtarget]")
   await nextBeat()
 

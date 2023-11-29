@@ -26,7 +26,7 @@ import { PageSnapshot } from "../drive/page_snapshot"
 import { TurboFrameMissingError } from "../errors"
 
 export class FrameController {
-  fetchResponseLoaded = (_fetchResponse) => {}
+  fetchResponseLoaded = (_fetchResponse) => Promise.resolve()
   #currentFetchRequest = null
   #resolveVisitPromise = () => {}
   #connected = false
@@ -140,7 +140,7 @@ export class FrameController {
         }
       }
     } finally {
-      this.fetchResponseLoaded = () => {}
+      this.fetchResponseLoaded = () => Promise.resolve()
     }
   }
 
@@ -276,7 +276,7 @@ export class FrameController {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, _isPreview) {}
+  viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
 
   preloadOnLoadLinksForView(element) {
     session.preloadOnLoadLinksForView(element)
@@ -315,7 +315,7 @@ export class FrameController {
       this.complete = true
       session.frameRendered(fetchResponse, this.element)
       session.frameLoaded(this.element)
-      this.fetchResponseLoaded(fetchResponse)
+      await this.fetchResponseLoaded(fetchResponse)
     } else if (this.#willHandleFrameMissingFromResponse(fetchResponse)) {
       this.#handleFrameMissingFromResponse(fetchResponse)
     }
@@ -354,10 +354,10 @@ export class FrameController {
       const pageSnapshot = PageSnapshot.fromElement(frame).clone()
       const { visitCachedSnapshot } = frame.delegate
 
-      frame.delegate.fetchResponseLoaded = (fetchResponse) => {
+      frame.delegate.fetchResponseLoaded = async (fetchResponse) => {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
-          const responseHTML = frame.ownerDocument.documentElement.outerHTML
+          const responseHTML = await fetchResponse.responseHTML
           const response = { statusCode, redirected, responseHTML }
           const options = {
             response,

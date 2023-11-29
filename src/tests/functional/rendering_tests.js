@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
-test("test triggers before-render and render events", async ({ page }) => {
+test("triggers before-render and render events", async ({ page }) => {
   await page.click("#same-origin-link")
   const { newBody } = await nextEventNamed(page, "turbo:before-render")
 
@@ -36,7 +36,7 @@ test("test triggers before-render and render events", async ({ page }) => {
   assert.equal(await newBody, await page.evaluate(() => document.body.outerHTML))
 })
 
-test("test includes isPreview in render event details", async ({ page }) => {
+test("includes isPreview in render event details", async ({ page }) => {
   await page.click("#same-origin-link")
 
   const { isPreview } = await nextEventNamed(page, "turbo:before-render")
@@ -46,7 +46,7 @@ test("test includes isPreview in render event details", async ({ page }) => {
   assert.equal(await isPreview, false)
 })
 
-test("test triggers before-render, render, and load events for error pages", async ({ page }) => {
+test("triggers before-render, render, and load events for error pages", async ({ page }) => {
   await page.click("#nonexistent-link")
   const { newBody } = await nextEventNamed(page, "turbo:before-render")
 
@@ -58,7 +58,7 @@ test("test triggers before-render, render, and load events for error pages", asy
   await nextEventNamed(page, "turbo:load")
 })
 
-test("test reloads when tracked elements change", async ({ page }) => {
+test("reloads when tracked elements change", async ({ page }) => {
   await page.evaluate(() =>
     window.addEventListener(
       "turbo:reload",
@@ -79,7 +79,7 @@ test("test reloads when tracked elements change", async ({ page }) => {
   assert.equal(reason, "tracked_element_mismatch")
 })
 
-test("test reloads when tracked elements change due to failed form submission", async ({ page }) => {
+test("reloads when tracked elements change due to failed form submission", async ({ page }) => {
   await page.click("#tracked-asset-change-form button")
   await nextBeat()
 
@@ -113,7 +113,7 @@ test("test reloads when tracked elements change due to failed form submission", 
   assert.equal(unloaded, "true")
 })
 
-test("test before-render event supports custom render function", async ({ page }) => {
+test("before-render event supports custom render function", async ({ page }) => {
   await page.evaluate(() =>
     addEventListener("turbo:before-render", (event) => {
       const { detail } = event
@@ -131,7 +131,7 @@ test("test before-render event supports custom render function", async ({ page }
   assert.equal(await customRendered.textContent(), "Custom Rendered", "renders with custom function")
 })
 
-test("test before-render event supports async custom render function", async ({ page }) => {
+test("before-render event supports async custom render function", async ({ page }) => {
   await page.evaluate(() => {
     const nextEventLoopTick = () =>
       new Promise((resolve) => {
@@ -161,7 +161,7 @@ test("test before-render event supports async custom render function", async ({ 
   assert.equal(renderedElement, "Custom Rendered", "renders with custom function")
 })
 
-test("test wont reload when tracked elements has a nonce", async ({ page }) => {
+test("wont reload when tracked elements has a nonce", async ({ page }) => {
   await page.click("#tracked-nonce-tag-link")
   await nextBody(page)
 
@@ -169,7 +169,7 @@ test("test wont reload when tracked elements has a nonce", async ({ page }) => {
   assert.equal(await visitAction(page), "advance")
 })
 
-test("test reloads when turbo-visit-control setting is reload", async ({ page }) => {
+test("reloads when turbo-visit-control setting is reload", async ({ page }) => {
   await page.evaluate(() =>
     window.addEventListener(
       "turbo:reload",
@@ -190,7 +190,7 @@ test("test reloads when turbo-visit-control setting is reload", async ({ page })
   assert.equal(reason, "turbo_visit_control_is_reload")
 })
 
-test("test maintains scroll position before visit when turbo-visit-control setting is reload", async ({ page }) => {
+test("maintains scroll position before visit when turbo-visit-control setting is reload", async ({ page }) => {
   await scrollToSelector(page, "#below-the-fold-visit-control-reload-link")
   assert.notOk(await isScrolledToTop(page), "scrolled down")
 
@@ -215,7 +215,14 @@ test("test maintains scroll position before visit when turbo-visit-control setti
   assert.equal(await visitAction(page), "load")
 })
 
-test("test accumulates asset elements in head", async ({ page }) => {
+test("changes the html[lang] attribute", async ({ page }) => {
+  await page.click("#es_locale_link")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(await page.getAttribute("html", "lang"), "es")
+})
+
+test("accumulates asset elements in head", async ({ page }) => {
   const assetElements = () => page.$$('script, style, link[rel="stylesheet"]')
   const originalElements = await assetElements()
 
@@ -232,7 +239,7 @@ test("test accumulates asset elements in head", async ({ page }) => {
   await disposeAll(...originalElements, ...newElements, ...finalElements)
 })
 
-test("test replaces provisional elements in head", async ({ page }) => {
+test("replaces provisional elements in head", async ({ page }) => {
   const provisionalElements = () => page.$$('head :not(script), head :not(style), head :not(link[rel="stylesheet"])')
   const originalElements = await provisionalElements()
   assert.equal(await page.locator("meta[name=test]").count(), 0)
@@ -252,7 +259,7 @@ test("test replaces provisional elements in head", async ({ page }) => {
   await disposeAll(...originalElements, ...newElements, ...finalElements)
 })
 
-test("test evaluates head stylesheet elements", async ({ page }) => {
+test("evaluates head stylesheet elements", async ({ page }) => {
   assert.equal(await isStylesheetEvaluated(page), false)
 
   await page.click("#additional-assets-link")
@@ -260,7 +267,7 @@ test("test evaluates head stylesheet elements", async ({ page }) => {
   assert.equal(await isStylesheetEvaluated(page), true)
 })
 
-test("test does not evaluate head stylesheet elements inside noscript elements", async ({ page }) => {
+test("does not evaluate head stylesheet elements inside noscript elements", async ({ page }) => {
   assert.equal(await isNoscriptStylesheetEvaluated(page), false)
 
   await page.click("#additional-assets-link")
@@ -268,7 +275,7 @@ test("test does not evaluate head stylesheet elements inside noscript elements",
   assert.equal(await isNoscriptStylesheetEvaluated(page), false)
 })
 
-test("test waits for CSS to be loaded before rendering", async ({ page }) => {
+test("waits for CSS to be loaded before rendering", async ({ page }) => {
   let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
     finishLoadingCSS = resolve
@@ -291,7 +298,7 @@ test("test waits for CSS to be loaded before rendering", async ({ page }) => {
   assert.equal(await isStylesheetEvaluated(page), true)
 })
 
-test("test waits for CSS to fail before rendering", async ({ page }) => {
+test("waits for CSS to fail before rendering", async ({ page }) => {
   let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
     finishLoadingCSS = resolve
@@ -314,7 +321,7 @@ test("test waits for CSS to fail before rendering", async ({ page }) => {
   assert.equal(await isStylesheetEvaluated(page), false)
 })
 
-test("test waits for some time, but renders if CSS takes too much to load", async ({ page }) => {
+test("waits for some time, but renders if CSS takes too much to load", async ({ page }) => {
   let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
     finishLoadingCSS = resolve
@@ -352,7 +359,7 @@ test("skip evaluates head script elements once", async ({ page }) => {
   assert.equal(await headScriptEvaluationCount(page), 1)
 })
 
-test("test evaluates body script elements on each render", async ({ page }) => {
+test("evaluates body script elements on each render", async ({ page }) => {
   assert.equal(await bodyScriptEvaluationCount(page), undefined)
 
   await page.click("#body-script-link")
@@ -368,13 +375,13 @@ test("test evaluates body script elements on each render", async ({ page }) => {
   assert.equal(await bodyScriptEvaluationCount(page), 2)
 })
 
-test("test does not evaluate data-turbo-eval=false scripts", async ({ page }) => {
+test("does not evaluate data-turbo-eval=false scripts", async ({ page }) => {
   await page.click("#eval-false-script-link")
   await nextEventNamed(page, "turbo:render")
   assert.equal(await bodyScriptEvaluationCount(page), undefined)
 })
 
-test("test preserves permanent elements", async ({ page }) => {
+test("preserves permanent elements", async ({ page }) => {
   const permanentElement = await page.locator("#permanent")
   assert.equal(await permanentElement.textContent(), "Rendering")
 
@@ -388,14 +395,14 @@ test("test preserves permanent elements", async ({ page }) => {
   assert.ok(await strictElementEquals(permanentElement, await page.locator("#permanent")))
 })
 
-test("test restores focus during page rendering when transposing the activeElement", async ({ page }) => {
+test("restores focus during page rendering when transposing the activeElement", async ({ page }) => {
   await page.press("#permanent-input", "Enter")
   await nextBody(page)
 
   assert.ok(await selectorHasFocus(page, "#permanent-input"), "restores focus after page loads")
 })
 
-test("test restores focus during page rendering when transposing an ancestor of the activeElement", async ({
+test("restores focus during page rendering when transposing an ancestor of the activeElement", async ({
   page
 }) => {
   await page.press("#permanent-descendant-input", "Enter")
@@ -404,7 +411,7 @@ test("test restores focus during page rendering when transposing an ancestor of 
   assert.ok(await selectorHasFocus(page, "#permanent-descendant-input"), "restores focus after page loads")
 })
 
-test("test before-frame-render event supports custom render function within turbo-frames", async ({ page }) => {
+test("before-frame-render event supports custom render function within turbo-frames", async ({ page }) => {
   const frame = await page.locator("#frame")
   await frame.evaluate((frame) =>
     frame.addEventListener("turbo:before-frame-render", (event) => {
@@ -424,7 +431,7 @@ test("test before-frame-render event supports custom render function within turb
   assert.equal(await customRendered.textContent(), "Custom Rendered Frame", "renders with custom function")
 })
 
-test("test preserves permanent elements within turbo-frames", async ({ page }) => {
+test("preserves permanent elements within turbo-frames", async ({ page }) => {
   assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
 
   await page.click("#permanent-in-frame-element-link")
@@ -433,23 +440,14 @@ test("test preserves permanent elements within turbo-frames", async ({ page }) =
   assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
 })
 
-test("test preserves permanent elements within turbo-frames rendered without layouts", async ({ page }) => {
-  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
-
-  await page.click("#permanent-in-frame-without-layout-element-link")
-  await nextBeat()
-
-  assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
-})
-
-test("test restores focus during turbo-frame rendering when transposing the activeElement", async ({ page }) => {
+test("restores focus during turbo-frame rendering when transposing the activeElement", async ({ page }) => {
   await page.press("#permanent-input-in-frame", "Enter")
   await nextBeat()
 
   assert.ok(await selectorHasFocus(page, "#permanent-input-in-frame"), "restores focus after page loads")
 })
 
-test("test restores focus during turbo-frame rendering when transposing a descendant of the activeElement", async ({
+test("restores focus during turbo-frame rendering when transposing a descendant of the activeElement", async ({
   page
 }) => {
   await page.press("#permanent-descendant-input-in-frame", "Enter")
@@ -458,7 +456,7 @@ test("test restores focus during turbo-frame rendering when transposing a descen
   assert.ok(await selectorHasFocus(page, "#permanent-descendant-input-in-frame"), "restores focus after page loads")
 })
 
-test("test preserves permanent element video playback", async ({ page }) => {
+test("preserves permanent element video playback", async ({ page }) => {
   const videoElement = await page.locator("#permanent-video")
   await page.click("#permanent-video-button")
   await sleep(500)
@@ -473,7 +471,7 @@ test("test preserves permanent element video playback", async ({ page }) => {
   assert.equal(timeAfterRender, timeBeforeRender, "element state is preserved")
 })
 
-test("test preserves permanent element through Turbo Stream update", async ({ page }) => {
+test("preserves permanent element through Turbo Stream update", async ({ page }) => {
   await page.evaluate(() => {
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="update" target="frame">
@@ -488,7 +486,7 @@ test("test preserves permanent element through Turbo Stream update", async ({ pa
   assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
 })
 
-test("test preserves permanent element through Turbo Stream append", async ({ page }) => {
+test("preserves permanent element through Turbo Stream append", async ({ page }) => {
   await page.evaluate(() => {
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="append" target="frame">
@@ -503,7 +501,7 @@ test("test preserves permanent element through Turbo Stream append", async ({ pa
   assert.equal(await page.textContent("#permanent-in-frame"), "Rendering")
 })
 
-test("test preserves input values", async ({ page }) => {
+test("preserves input values", async ({ page }) => {
   await page.fill("#text-input", "test")
   await page.click("#checkbox-input")
   await page.click("#radio-input")
@@ -524,7 +522,7 @@ test("test preserves input values", async ({ page }) => {
   assert.equal(await propertyForSelector(page, "#select-multiple", "value"), "2")
 })
 
-test("test does not preserve password values", async ({ page }) => {
+test("does not preserve password values", async ({ page }) => {
   await page.fill("#password-input", "test")
 
   await page.click("#same-origin-link")
@@ -535,7 +533,7 @@ test("test does not preserve password values", async ({ page }) => {
   assert.equal(await propertyForSelector(page, "#password-input", "value"), "")
 })
 
-test("test <input type='reset'> clears values when restored from cache", async ({ page }) => {
+test("<input type='reset'> clears values when restored from cache", async ({ page }) => {
   await page.fill("#text-input", "test")
   await page.click("#checkbox-input")
   await page.click("#radio-input")
@@ -558,18 +556,19 @@ test("test <input type='reset'> clears values when restored from cache", async (
   assert.equal(await propertyForSelector(page, "#select-multiple", "value"), "")
 })
 
-test("test before-cache event", async ({ page }) => {
+test("before-cache event", async ({ page }) => {
   await page.evaluate(() => {
     addEventListener("turbo:before-cache", () => (document.body.innerHTML = "Modified"), { once: true })
   })
   await page.click("#same-origin-link")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
   await page.goBack()
+  await nextEventNamed(page, "turbo:load")
 
   assert.equal(await page.textContent("body"), "Modified")
 })
 
-test("test mutation record-cache notification", async ({ page }) => {
+test("mutation record-cache notification", async ({ page }) => {
   await modifyBodyAfterRemoval(page)
   await page.click("#same-origin-link")
   await nextBody(page)
@@ -578,13 +577,13 @@ test("test mutation record-cache notification", async ({ page }) => {
   assert.equal(await page.textContent("body"), "Modified")
 })
 
-test("test error pages", async ({ page }) => {
+test("error pages", async ({ page }) => {
   await page.click("#nonexistent-link")
   await nextBody(page)
   assert.equal(await page.textContent("body"), "\nCannot GET /nonexistent\n\n\n")
 })
 
-test("test rendering a redirect response replaces the body once and only once", async ({ page }) => {
+test("rendering a redirect response replaces the body once and only once", async ({ page }) => {
   await page.click("#redirect-link")
   await nextBodyMutation(page)
 

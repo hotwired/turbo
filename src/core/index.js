@@ -1,16 +1,14 @@
 import { Session } from "./session"
-import { Cache } from "./cache"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
+import { StreamActions } from "./streams/stream_actions"
+import { fetch, recentRequests } from "../http/fetch"
 
-const session = new Session()
-const cache = new Cache(session)
-const { navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
-
-export { StreamActions } from "./streams/stream_actions"
+const session = new Session(recentRequests)
+const { cache, navigator } = session
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, StreamActions, fetch }
 
 /**
  * Starts the main session.

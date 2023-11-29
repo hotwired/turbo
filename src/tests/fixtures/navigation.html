@@ -79,7 +79,19 @@
           </custom-link-element>
         </turbo-toggle>
       </p>
+      <p>
+        <form action="/__turbo/redirect" method="post" class="redirect" data-turbo-frame="_top">
+          <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+          <button id="redirect-submit">Redirect to the another location</button>
+        </form>
+      </p>
+      <p>
+        <form action="/__turbo/refresh" method="post" class="redirect">
+          <button id="refresh-submit">Redirect to the current location</button>
+        </form>
+      </p>
       <p><a id="delayed-link" href="/__turbo/delayed_response">Delayed link</a></p>
+      <p><a id="delayed-failure-link" href="/__turbo/delayed_response?status=500">Delayed failure link</a></p>
       <p><a id="link-target-iframe" href="/src/tests/fixtures/one.html" target="iframe">Targets iframe[name="iframe"]</a></p>
       <p><a id="link-target-empty-name-iframe" href="/src/tests/fixtures/one.html" target="">Targets iframe[name=""]</a></p>
       <p>

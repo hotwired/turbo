@@ -1,4 +1,5 @@
 import { PageSnapshot } from "./page_snapshot"
+import { fetch } from "../../http/fetch"
 
 export class Preloader {
   selector = "a[data-turbo-preload]"

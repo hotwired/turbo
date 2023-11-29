@@ -13,8 +13,7 @@ jobs:
       with:
         node-version: '16'
         cache: 'yarn'
-
-    - run: yarn install
+    - run: yarn install --frozen-lockfile
     - run: yarn run playwright install --with-deps
     - run: yarn build
 
@@ -35,3 +34,8 @@ jobs:
 
     - name: Firefox Test
       run: yarn test:browser --project=firefox
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: turbo-dist
+        path: dist/*

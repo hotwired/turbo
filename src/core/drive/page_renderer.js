@@ -29,6 +29,7 @@ export class PageRenderer extends Renderer {
   }
 
   async prepareToRender() {
+    this.#setLanguage()
     await this.mergeHead()
   }
 
@@ -55,6 +56,17 @@ export class PageRenderer extends Renderer {
 
   get newElement() {
     return this.newSnapshot.element
+  }
+
+  #setLanguage() {
+    const { documentElement } = this.currentSnapshot
+    const { lang } = this.newSnapshot
+
+    if (lang) {
+      documentElement.setAttribute("lang", lang)
+    } else {
+      documentElement.removeAttribute("lang")
+    }
   }
 
   async mergeHead() {

@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
-test("test programmatically visiting a same-origin location", async ({ page }) => {
+test("programmatically visiting a same-origin location", async ({ page }) => {
   const urlBeforeVisit = page.url()
   await visitLocation(page, "/src/tests/fixtures/one.html")
 
@@ -50,7 +50,7 @@ test("skip programmatically visiting a cross-origin location falls back to windo
   assert.equal(await visitAction(page), "load")
 })
 
-test("test visiting a location served with a non-HTML content type", async ({ page }) => {
+test("visiting a location served with a non-HTML content type", async ({ page }) => {
   const urlBeforeVisit = page.url()
   await visitLocation(page, "/src/tests/fixtures/svg.svg")
   await nextBeat()
@@ -64,14 +64,14 @@ test("test visiting a location served with a non-HTML content type", async ({ pa
   assert.equal(await visitAction(page), "load")
 })
 
-test("test canceling a turbo:click event falls back to built-in browser navigation", async ({ page }) => {
+test("canceling a turbo:click event falls back to built-in browser navigation", async ({ page }) => {
   await cancelNextEvent(page, "turbo:click")
   await Promise.all([page.waitForNavigation(), page.click("#same-origin-link")])
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
 })
 
-test("test canceling a before-visit event prevents navigation", async ({ page }) => {
+test("canceling a before-visit event prevents navigation", async ({ page }) => {
   await cancelNextVisit(page)
   const urlBeforeVisit = page.url()
 
@@ -86,7 +86,7 @@ test("test canceling a before-visit event prevents navigation", async ({ page })
   assert.equal(urlAfterVisit, urlBeforeVisit)
 })
 
-test("test navigation by history is not cancelable", async ({ page }) => {
+test("navigation by history is not cancelable", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
 
@@ -99,22 +99,22 @@ test("test navigation by history is not cancelable", async ({ page }) => {
   assert.equal(await page.textContent("h1"), "Visit")
 })
 
-test("test turbo:before-fetch-request event.detail", async ({ page }) => {
+test("turbo:before-fetch-request event.detail", async ({ page }) => {
   await page.click("#same-origin-link")
   const { url, fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.equal(fetchOptions.method, "GET")
+  assert.equal(fetchOptions.method, "get")
   assert.ok(url.includes("/src/tests/fixtures/one.html"))
 })
 
-test("test turbo:before-fetch-request event.detail encodes searchParams", async ({ page }) => {
+test("turbo:before-fetch-request event.detail encodes searchParams", async ({ page }) => {
   await page.click("#same-origin-link-search-params")
   const { url } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(url.includes("/src/tests/fixtures/one.html?key=value"))
 })
 
-test("test turbo:before-fetch-response open new site", async ({ page }) => {
+test("turbo:before-fetch-response open new site", async ({ page }) => {
   page.evaluate(() =>
     addEventListener(
       "turbo:before-fetch-response",
@@ -138,7 +138,7 @@ test("test turbo:before-fetch-response open new site", async ({ page }) => {
   assert.isTrue(fetchResponseResult.responseHTML.indexOf("An element with an ID") > -1)
 })
 
-test("test visits with data-turbo-stream include MIME type & search params", async ({ page }) => {
+test("visits with data-turbo-stream include MIME type & search params", async ({ page }) => {
   await page.click("#stream-link")
   const { fetchOptions, url } = await nextEventNamed(page, "turbo:before-fetch-request")
 
@@ -146,7 +146,7 @@ test("test visits with data-turbo-stream include MIME type & search params", asy
   assert.equal(getSearchParam(url, "key"), "value")
 })
 
-test("test visits with data-turbo-stream do not set aria-busy", async ({ page }) => {
+test("visits with data-turbo-stream do not set aria-busy", async ({ page }) => {
   await page.click("#stream-link")
 
   assert.ok(
@@ -155,7 +155,7 @@ test("test visits with data-turbo-stream do not set aria-busy", async ({ page })
   )
 })
 
-test("test cache does not override response after redirect", async ({ page }) => {
+test("cache does not override response after redirect", async ({ page }) => {
   await page.evaluate(() => {
     const cachedElement = document.createElement("some-cached-element")
     document.body.appendChild(cachedElement)
@@ -182,7 +182,7 @@ function contentTypeOfURL(url) {
   })
 }
 
-test("test can scroll to element after click-initiated turbo:visit", async ({ page }) => {
+test("can scroll to element after click-initiated turbo:visit", async ({ page }) => {
   const id = "below-the-fold-link"
   await page.evaluate((id) => {
     addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
@@ -196,7 +196,7 @@ test("test can scroll to element after click-initiated turbo:visit", async ({ pa
   assert(await isScrolledToSelector(page, "#" + id), "scrolls after click-initiated turbo:load")
 })
 
-test("test can scroll to element after history-initiated turbo:visit", async ({ page }) => {
+test("can scroll to element after history-initiated turbo:visit", async ({ page }) => {
   const id = "below-the-fold-link"
   await page.evaluate((id) => {
     addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
@@ -211,7 +211,7 @@ test("test can scroll to element after history-initiated turbo:visit", async ({ 
   assert(await isScrolledToSelector(page, "#" + id), "scrolls after history-initiated turbo:load")
 })
 
-test("test Visit with network error", async ({ page }) => {
+test("Visit with network error", async ({ page }) => {
   await page.evaluate(() => {
     addEventListener("turbo:fetch-request-error", (event) => event.preventDefault())
   })

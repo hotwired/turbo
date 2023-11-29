@@ -43,6 +43,14 @@ export function dispatch(eventName, { target, cancelable, detail } = {}) {
   return event
 }
 
+export function nextRepaint() {
+  if (document.visibilityState === "hidden") {
+    return nextEventLoopTick()
+  } else {
+    return nextAnimationFrame()
+  }
+}
+
 export function nextAnimationFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()))
 }
@@ -184,4 +192,26 @@ export function findClosestRecursively(element, selector) {
       element.closest(selector) || findClosestRecursively(element.assignedSlot || element.getRootNode()?.host, selector)
     )
   }
+}
+
+export function elementIsFocusable(element) {
+  const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
+
+  return !!element && element.closest(inertDisabledOrHidden) == null && typeof element.focus == "function"
+}
+
+export function queryAutofocusableElement(elementOrDocumentFragment) {
+  return Array.from(elementOrDocumentFragment.querySelectorAll("[autofocus]")).find(elementIsFocusable)
+}
+
+export async function around(callback, reader) {
+  const before = reader()
+
+  callback()
+
+  await nextAnimationFrame()
+
+  const after = reader()
+
+  return [before, after]
 }

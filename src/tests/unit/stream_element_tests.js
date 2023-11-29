@@ -2,6 +2,8 @@ import { StreamElement } from "../../elements"
 import { nextAnimationFrame } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
 import { assert } from "@open-wc/testing"
+import { nextBeat } from "../helpers/page"
+import * as Turbo from "../../index"
 
 function createStreamElement(action, target, templateElement) {
   const element = new StreamElement()
@@ -27,7 +29,7 @@ setup(() => {
   subject.fixtureHTML = `<div><div id="hello">Hello Turbo</div></div>`
 })
 
-test("test action=append", async () => {
+test("action=append", async () => {
   const element = createStreamElement("append", "hello", createTemplateElement("<span> Streams</span>"))
   const element2 = createStreamElement("append", "hello", createTemplateElement("<span> and more</span>"))
 
@@ -46,7 +48,7 @@ test("test action=append", async () => {
   assert.isNull(element2.parentElement)
 })
 
-test("test action=append with children ID already present in target", async () => {
+test("action=append with children ID already present in target", async () => {
   const element = createStreamElement("append", "hello", createTemplateElement(' <div id="child_1">First</div> tail1 '))
   const element2 = createStreamElement(
     "append",
@@ -67,7 +69,7 @@ test("test action=append with children ID already present in target", async () =
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo  tail1 New First Second tail2 ")
 })
 
-test("test action=prepend", async () => {
+test("action=prepend", async () => {
   const element = createStreamElement("prepend", "hello", createTemplateElement("<span>Streams </span>"))
   const element2 = createStreamElement("prepend", "hello", createTemplateElement("<span>and more </span>"))
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
@@ -85,7 +87,7 @@ test("test action=prepend", async () => {
   assert.isNull(element.parentElement)
 })
 
-test("test action=prepend with children ID already present in target", async () => {
+test("action=prepend with children ID already present in target", async () => {
   const element = createStreamElement("prepend", "hello", createTemplateElement('<div id="child_1">First</div> tail1 '))
   const element2 = createStreamElement(
     "prepend",
@@ -106,7 +108,7 @@ test("test action=prepend with children ID already present in target", async () 
   assert.equal(subject.find("#hello")?.textContent, "New First Second tail2  tail1 Hello Turbo")
 })
 
-test("test action=remove", async () => {
+test("action=remove", async () => {
   const element = createStreamElement("remove", "hello")
   assert.ok(subject.find("#hello"))
 
@@ -117,7 +119,7 @@ test("test action=remove", async () => {
   assert.isNull(element.parentElement)
 })
 
-test("test action=replace", async () => {
+test("action=replace", async () => {
   const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello">Hello Turbo</h1>`))
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
   assert.ok(subject.find("div#hello"))
@@ -131,7 +133,7 @@ test("test action=replace", async () => {
   assert.isNull(element.parentElement)
 })
 
-test("test action=update", async () => {
+test("action=update", async () => {
   const element = createStreamElement("update", "hello", createTemplateElement("Goodbye Turbo"))
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
@@ -142,7 +144,7 @@ test("test action=update", async () => {
   assert.isNull(element.parentElement)
 })
 
-test("test action=after", async () => {
+test("action=after", async () => {
   const element = createStreamElement("after", "hello", createTemplateElement(`<h1 id="after">After Turbo</h1>`))
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
@@ -155,7 +157,7 @@ test("test action=after", async () => {
   assert.isNull(element.parentElement)
 })
 
-test("test action=before", async () => {
+test("action=before", async () => {
   const element = createStreamElement("before", "hello", createTemplateElement(`<h1 id="before">Before Turbo</h1>`))
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
@@ -166,4 +168,31 @@ test("test action=before", async () => {
   assert.ok(subject.find("div#hello"))
   assert.ok(subject.find("h1#before"))
   assert.isNull(element.parentElement)
+})
+
+test("test action=refresh", async () => {
+  document.body.setAttribute("data-modified", "")
+  assert.ok(document.body.hasAttribute("data-modified"))
+
+  const element = createStreamElement("refresh")
+  subject.append(element)
+
+  await nextBeat()
+
+  assert.notOk(document.body.hasAttribute("data-modified"))
+})
+
+test("test action=refresh discarded when matching request id", async () => {
+  Turbo.session.recentRequests.add("123")
+
+  document.body.setAttribute("data-modified", "")
+  assert.ok(document.body.hasAttribute("data-modified"))
+
+  const element = createStreamElement("refresh")
+  element.setAttribute("request-id", "123")
+  subject.append(element)
+
+  await nextBeat()
+
+  assert.ok(document.body.hasAttribute("data-modified"))
 })

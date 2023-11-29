@@ -30,5 +30,9 @@ export const StreamActions = {
       targetElement.innerHTML = ""
       targetElement.append(this.templateContent)
     })
+  },
+
+  refresh() {
+    window.Turbo.session.refresh(this.baseURI, this.requestId)
   }
 }

@@ -68,11 +68,13 @@ export function nextBody(_page, timeout = 500) {
   return sleep(timeout)
 }
 
-export async function nextEventNamed(page, eventName) {
+export async function nextEventNamed(page, eventName, expectedDetail = {}) {
   let record
   while (!record) {
     const records = await readEventLogs(page, 1)
-    record = records.find(([name]) => name == eventName)
+    record = records.find(([name, detail]) => {
+      return name == eventName && Object.entries(expectedDetail).every(([key, value]) => detail[key] === value)
+    })
   }
   return record[1]
 }
@@ -126,9 +128,11 @@ export async function noNextAttributeMutationNamed(page, elementId, attributeNam
   return !records.some(([name, _, target]) => name == attributeName && target == elementId)
 }
 
-export async function noNextEventNamed(page, eventName) {
-  const records = await readEventLogs(page, 1)
-  return !records.some(([name]) => name == eventName)
+export async function noNextEventNamed(page, eventName, expectedDetail = {}) {
+  const records = await readEventLogs(page)
+  return !records.some(([name, detail]) => {
+    return name === eventName && Object.entries(expectedDetail).every(([key, value]) => value === detail[key])
+  })
 }
 
 export async function noNextEventOnTarget(page, elementId, eventName) {

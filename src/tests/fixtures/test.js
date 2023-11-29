@@ -83,6 +83,7 @@
   "turbo:frame-load",
   "turbo:frame-render",
   "turbo:frame-missing",
+  "turbo:before-frame-morph",
   "turbo:reload"
 ])
 

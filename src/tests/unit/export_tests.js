@@ -1,7 +1,9 @@
 import { assert } from "@open-wc/testing"
-import * as Turbo from "../../index"
+import * as Turbo from "../../"
+import { StreamActions } from "../../"
 
-test("test Turbo interface", () => {
+test("Turbo interface", () => {
+  assert.equal(typeof Turbo.StreamActions, "object")
   assert.equal(typeof Turbo.start, "function")
   assert.equal(typeof Turbo.registerAdapter, "function")
   assert.equal(typeof Turbo.visit, "function")
@@ -13,6 +15,12 @@ test("test Turbo interface", () => {
   assert.equal(typeof Turbo.setConfirmMethod, "function")
   assert.equal(typeof Turbo.setFormMode, "function")
   assert.equal(typeof Turbo.cache, "object")
+  assert.equal(typeof Turbo.cache.clear, "function")
   assert.equal(typeof Turbo.navigator, "object")
   assert.equal(typeof Turbo.session, "object")
+  assert.equal(typeof Turbo.fetch, "function")
+})
+
+test("StreamActions interface", () => {
+  assert.equal(typeof StreamActions, "object")
 })

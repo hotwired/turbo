@@ -12,12 +12,13 @@ export class PageSnapshot extends Snapshot {
     return this.fromDocument(element.ownerDocument)
   }
 
-  static fromDocument({ head, body }) {
-    return new this(body, new HeadSnapshot(head))
+  static fromDocument({ documentElement, body, head }) {
+    return new this(documentElement, body, new HeadSnapshot(head))
   }
 
-  constructor(element, headSnapshot) {
-    super(element)
+  constructor(documentElement, body, headSnapshot) {
+    super(body)
+    this.documentElement = documentElement
     this.headSnapshot = headSnapshot
   }
 
@@ -37,7 +38,11 @@ export class PageSnapshot extends Snapshot {
       clonedPasswordInput.value = ""
     }
 
-    return new PageSnapshot(clonedElement, this.headSnapshot)
+    return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)
+  }
+
+  get lang() {
+    return this.documentElement.getAttribute("lang")
   }
 
   get headElement() {
@@ -67,6 +72,14 @@ export class PageSnapshot extends Snapshot {
 
   get prefersViewTransitions() {
     return this.headSnapshot.getMetaValue("view-transition") === "same-origin"
+  }
+
+  get shouldMorphPage() {
+    return this.getSetting("refresh-method") === "morph"
+  }
+
+  get shouldPreserveScrollPosition() {
+    return this.getSetting("refresh-scroll") === "preserve"
   }
 
   // Private
