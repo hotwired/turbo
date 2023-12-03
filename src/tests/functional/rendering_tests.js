@@ -28,7 +28,7 @@ test.beforeEach(async ({ page }) => {
 
 test("triggers before-render and render events", async ({ page }) => {
   await page.click("#same-origin-link")
-  const { newBody } = await nextEventNamed(page, "turbo:before-render")
+  const { newBody } = await nextEventNamed(page, "turbo:before-render", { renderMethod: "replace" })
 
   assert.equal(await page.textContent("h1"), "One")
 
