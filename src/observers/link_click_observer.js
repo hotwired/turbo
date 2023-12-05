@@ -1,5 +1,4 @@
-import { expandURL } from "../core/url"
-import { findLinkFromClickTarget, doesNotTargetIFrame } from "../util"
+import { doesNotTargetIFrame, findLinkFromClickTarget, getLocationForLink } from "../util"
 
 export class LinkClickObserver {
   started = false
@@ -33,7 +32,7 @@ export class LinkClickObserver {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = findLinkFromClickTarget(target)
       if (link && doesNotTargetIFrame(link)) {
-        const location = this.getLocationForLink(link)
+        const location = getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location, event)) {
           event.preventDefault()
           this.delegate.followedLinkToLocation(link, location)
@@ -52,9 +51,5 @@ export class LinkClickObserver {
       event.metaKey ||
       event.shiftKey
     )
-  }
-
-  getLocationForLink(link) {
-    return expandURL(link.getAttribute("href") || "")
   }
 }
