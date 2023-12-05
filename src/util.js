@@ -1,3 +1,5 @@
+import { expandURL } from "./core/url"
+
 export function activateScriptElement(element) {
   if (element.getAttribute("data-turbo-eval") == "false") {
     return element
@@ -226,4 +228,8 @@ export function doesNotTargetIFrame(anchor) {
   } else {
     return true
   }
+}
+
+export function findLinkFromClickTarget(target) {
+  return findClosestRecursively(target, "a[href]:not([target^=_]):not([download])")
 }
