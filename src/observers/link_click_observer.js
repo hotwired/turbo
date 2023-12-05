@@ -1,5 +1,5 @@
 import { expandURL } from "../core/url"
-import { findClosestRecursively } from "../util"
+import { findClosestRecursively, doesNotTargetIFrame } from "../util"
 
 export class LinkClickObserver {
   started = false
@@ -60,17 +60,5 @@ export class LinkClickObserver {
 
   getLocationForLink(link) {
     return expandURL(link.getAttribute("href") || "")
-  }
-}
-
-function doesNotTargetIFrame(anchor) {
-  if (anchor.hasAttribute("target")) {
-    for (const element of document.getElementsByName(anchor.target)) {
-      if (element instanceof HTMLIFrameElement) return false
-    }
-
-    return true
-  } else {
-    return true
   }
 }

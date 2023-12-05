@@ -215,3 +215,15 @@ export async function around(callback, reader) {
 
   return [before, after]
 }
+
+export function doesNotTargetIFrame(anchor) {
+  if (anchor.hasAttribute("target")) {
+    for (const element of document.getElementsByName(anchor.target)) {
+      if (element instanceof HTMLIFrameElement) return false
+    }
+
+    return true
+  } else {
+    return true
+  }
+}
