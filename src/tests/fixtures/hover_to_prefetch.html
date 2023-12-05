@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hover to Prefetch</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <meta name="turbo-prefetch" content="true" />
+  </head>
+
+  <body>
+    <a href="/src/tests/fixtures/prefetched.html" id="prefetch_anchor">Hover to prefetch me</a>
+    <div data-turbo="false">
+      <a href="/src/tests/fixtures/prefetched.html" id="turbo_false_parent_anchor">Won't prefetch when hovering me</a>
+    </div>
+    <div data-turbo-prefetch="false">
+      <a href="/src/tests/fixtures/prefetched.html" id="turbo_prefetch_false_parent_anchor"
+        >Won't prefetch when hovering me</a
+      >
+    </div>
+    <a href="/src/tests/fixtures/prefetched.html" id="turbo_prefetch_false_anchor" data-turbo-prefetch="false"
+      >Won't prefetch when hovering me</a
+    >
+    <a href="/src/tests/fixtures/prefetched.html" id="turbo_false_anchor" data-turbo="false"
+      >Won't prefetch when hovering me</a
+    >
+    <a href="/src/tests/fixtures/hover_to_prefetch.html" id="same_location_anchor">Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html?foo=bar" id="same_location_anchor_with_query">Hover to prefetch me</a>
+    <a href="https://example.com" id="different_origin_anchor">Won't prefetch when hovering me</a>
+    <a href="http://localhost:9000/src/tests/fixtures/prefetched.html" id="anchor_with_whole_url"
+      >Hover to prefetch me</a
+    >
+    <a href="#some_anchor" id="anchor_with_hash">Won't prefetch when hovering me</a>
+    <a href="ftp://example.com" id="anchor_with_ftp_protocol">Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html" target="prefetch_iframe" id="anchor_with_iframe_target"
+      >Won't prefetch when hovering me</a
+    >
+    <a href="/src/tests/fixtures/prefetched.html" data-turbo-method="post" id="anchor_with_post_method"
+      >Won't prefetch when hovering me</a
+    >
+    <iframe src="/src/tests/fixtures/hover_to_prefetch_iframe.html" name="prefetch_iframe"> </iframe>
+  </body>
+</html>

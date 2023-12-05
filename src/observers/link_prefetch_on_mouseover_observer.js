@@ -1,0 +1,111 @@
+import { doesNotTargetIFrame, findLinkFromClickTarget, getLocationForLink, getMetaContent, findClosestRecursively } from "../util"
+import { prefetchCache } from "../core/drive/prefetch_cache"
+
+export class LinkPrefetchOnMouseoverObserver {
+  started = false
+
+  constructor(delegate, eventTarget) {
+    this.delegate = delegate
+    this.eventTarget = eventTarget
+  }
+
+  start() {
+    if (this.started) return
+
+    if (this.eventTarget.readyState === "loading") {
+      this.eventTarget.addEventListener("DOMContentLoaded", this._enable, { once: true })
+    } else {
+      this._enable()
+    }
+  }
+
+  stop() {
+    if (!this.started) return
+
+    this.eventTarget.removeEventListener("mouseover", this.tryToPrefetchRequest, {
+      capture: true,
+      passive: true
+    })
+    this.eventTarget.removeEventListener("turbo:before-fetch-request", this.tryToUsePrefetchedRequest, true)
+    this.started = false
+  }
+
+  _enable = () => {
+    if (getMetaContent("turbo-prefetch") !== "true") return
+
+    this.eventTarget.addEventListener("mouseover", this.tryToPrefetchRequest, {
+      capture: true,
+      passive: true
+    })
+    this.eventTarget.addEventListener("turbo:before-fetch-request", this.tryToUsePrefetchedRequest, true)
+    this.started = true
+  }
+
+  tryToPrefetchRequest = (event) => {
+    const target = event.target
+    const link = findLinkFromClickTarget(target)
+
+    if (link && this.isPrefetchable(link)) {
+      const location = getLocationForLink(link)
+      if (this.delegate.canPrefetchAndCacheRequestToLocation(link, location, event)) {
+        this.delegate.prefetchAndCacheRequestToLocation(link, location)
+      }
+    }
+  }
+
+  tryToUsePrefetchedRequest = (event) => {
+    if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "get") {
+      const cached = prefetchCache.get(event.detail.url.toString())
+
+      if (cached && cached.ttl > new Date()) {
+        event.detail.response = cached.request
+      }
+    }
+
+    prefetchCache.clear()
+  }
+
+  isPrefetchable(link) {
+    const href = link.getAttribute("href")
+
+    if (!href || href === "#" || link.dataset.turbo === "false" || link.dataset.turboPrefetch === "false") {
+      return false
+    }
+
+    if (link.origin !== document.location.origin) {
+      return false
+    }
+
+    if (!["http:", "https:"].includes(link.protocol)) {
+      return false
+    }
+
+    if (link.pathname + link.search === document.location.pathname + document.location.search) {
+      return false
+    }
+
+    if (link.dataset.turboMethod && link.dataset.turboMethod !== "get") {
+      return false
+    }
+
+    if (targetsIframe(link)) {
+      return false
+    }
+
+    if (link.pathname + link.search === document.location.pathname + document.location.search) {
+      return false
+    }
+
+    const turboPrefetchParent = findClosestRecursively(link, "[data-turbo-prefetch]")
+
+    if (turboPrefetchParent && turboPrefetchParent.dataset.turboPrefetch === "false") {
+      return false
+    }
+
+    return true
+  }
+}
+
+const targetsIframe = (link) => {
+  return !doesNotTargetIFrame(link)
+}

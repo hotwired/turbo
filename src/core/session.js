@@ -3,6 +3,7 @@ import { CacheObserver } from "../observers/cache_observer"
 import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History } from "./drive/history"
+import { LinkPrefetchOnMouseoverObserver } from "../observers/link_prefetch_on_mouseover_observer"
 import { LinkClickObserver } from "../observers/link_click_observer"
 import { FormLinkClickObserver } from "../observers/form_link_click_observer"
 import { getAction, expandURL, locationIsVisitable } from "./url"
@@ -17,6 +18,7 @@ import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 import { Cache } from "./cache"
+import { prefetchCache, cacheTtl } from "./drive/prefetch_cache"
 
 export class Session {
   navigator = new Navigator(this)
@@ -27,6 +29,7 @@ export class Session {
 
   pageObserver = new PageObserver(this)
   cacheObserver = new CacheObserver()
+  linkPrefetchOnMouseoverObserver = new LinkPrefetchOnMouseoverObserver(this, document)
   linkClickObserver = new LinkClickObserver(this, window)
   formSubmitObserver = new FormSubmitObserver(this, document)
   scrollObserver = new ScrollObserver(this)
@@ -50,6 +53,7 @@ export class Session {
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
+      this.linkPrefetchOnMouseoverObserver.start()
       this.formLinkClickObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
@@ -71,6 +75,7 @@ export class Session {
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
+      this.linkPrefetchOnMouseoverObserver.stop()
       this.formLinkClickObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
@@ -165,6 +170,50 @@ export class Session {
   }
 
   submittedFormLinkToLocation() {}
+
+  // Link hover observer delegate
+
+  canPrefetchAndCacheRequestToLocation(link, location, event) {
+    const absoluteUrl = location.toString()
+    const cached = prefetchCache.get(absoluteUrl)
+
+    return (
+      this.elementIsNavigatable(link) &&
+        locationIsVisitable(location, this.snapshot.rootLocation) &&
+        (!cached || cached.ttl < new Date())
+    )
+  }
+
+  prefetchAndCacheRequestToLocation(link, location) {
+    const requestOptions = {
+      credentials: "same-origin",
+      headers: {
+        "Sec-Purpose": "prefetch",
+        Accept: "text/html"
+      },
+      redirect: "follow"
+    }
+
+    if (
+      link.dataset.turboFrame &&
+      link.dataset.turboFrame !== "_top"
+    ) {
+      requestOptions.headers["Turbo-Frame"] = link.dataset.turboFrame
+    } else if (link.dataset.turboFrame !== "_top") {
+      const turboFrame = link.closest("turbo-frame")
+
+      if (turboFrame) {
+        requestOptions.headers["Turbo-Frame"] = turboFrame.id
+      }
+    }
+
+    const absoluteUrl = location.toString()
+
+    prefetchCache.set(absoluteUrl, {
+      request: fetch(absoluteUrl, requestOptions),
+      ttl: new Date(new Date().getTime() + cacheTtl)
+    })
+  }
 
   // Link click observer delegate
 

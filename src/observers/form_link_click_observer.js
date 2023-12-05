@@ -15,6 +15,16 @@ export class FormLinkClickObserver {
     this.linkInterceptor.stop()
   }
 
+  // Link hover observer delegate
+
+  canPrefetchAndCacheRequestToLocation(link, location, event) {
+    return false
+  }
+
+  prefetchAndCacheRequestToLocation(link, location) {
+    return
+  }
+
   // Link click observer delegate
 
   willFollowLinkToLocation(link, location, originalEvent) {
