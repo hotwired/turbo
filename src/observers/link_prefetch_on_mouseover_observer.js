@@ -1,7 +1,17 @@
-import { doesNotTargetIFrame, findLinkFromClickTarget, getLocationForLink, getMetaContent, findClosestRecursively } from "../util"
+import {
+  doesNotTargetIFrame,
+  findLinkFromClickTarget,
+  getLocationForLink,
+  getMetaContent,
+  findClosestRecursively
+} from "../util"
 import { prefetchCache } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchOnMouseoverObserver {
+  triggerEvents = {
+    mouseover: "mouseover",
+    mousedown: "mousedown"
+  }
   started = false
 
   constructor(delegate, eventTarget) {
@@ -22,7 +32,7 @@ export class LinkPrefetchOnMouseoverObserver {
   stop() {
     if (!this.started) return
 
-    this.eventTarget.removeEventListener("mouseover", this.tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener(this.triggerEvent, this.tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
@@ -30,10 +40,14 @@ export class LinkPrefetchOnMouseoverObserver {
     this.started = false
   }
 
+  get triggerEvent() {
+    return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseover
+  }
+
   _enable = () => {
     if (getMetaContent("turbo-prefetch") !== "true") return
 
-    this.eventTarget.addEventListener("mouseover", this.tryToPrefetchRequest, {
+    this.eventTarget.addEventListener(this.triggerEvent, this.tryToPrefetchRequest, {
       capture: true,
       passive: true
     })

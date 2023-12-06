@@ -8,7 +8,7 @@ test.describe("when hovering over a link", () => {
   })
 
   test("it prefetches the page", async ({ page }) => {
-    await assertPrefetchedOnMouseover({ page, selector: "#prefetch_anchor" })
+    await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
   })
 
   test("it doesn't follow the link", async ({ page }) => {
@@ -19,73 +19,73 @@ test.describe("when hovering over a link", () => {
 
   test.describe("when link has a whole valid url as a href", () => {
     test("it prefetches the page", async ({ page }) => {
-      await assertPrefetchedOnMouseover({ page, selector: "#anchor_with_whole_url" })
+      await assertPrefetchedOnHover({ page, selector: "#anchor_with_whole_url" })
     })
   })
 
   test.describe("when link has the same location but with a query string", () => {
     test("it prefetches the page", async ({ page }) => {
-      await assertPrefetchedOnMouseover({ page, selector: "#same_location_anchor_with_query" })
+      await assertPrefetchedOnHover({ page, selector: "#same_location_anchor_with_query" })
     })
   })
 
   test.describe("when link is inside an element with data-turbo=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#turbo_false_parent_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#turbo_false_parent_anchor" })
     })
   })
 
   test.describe("when link is inside an element with data-turbo-prefetch=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#turbo_prefetch_false_parent_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#turbo_prefetch_false_parent_anchor" })
     })
   })
 
   test.describe("when link has data-turbo-prefetch=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#turbo_prefetch_false_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#turbo_prefetch_false_anchor" })
     })
   })
 
   test.describe("when link has data-turbo=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#turbo_false_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#turbo_false_anchor" })
     })
   })
 
   test.describe("when link has the same location as the current page", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#same_location_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#same_location_anchor" })
     })
   })
 
   test.describe("when link has a different origin", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#different_origin_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#different_origin_anchor" })
     })
   })
 
   test.describe("when link has an hash as a href", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#anchor_with_hash" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_hash" })
     })
   })
 
   test.describe("when link has a ftp protocol", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#anchor_with_ftp_protocol" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_ftp_protocol" })
     })
   })
 
   test.describe("when link is valid but it's inside an iframe", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#anchor_with_iframe_target" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_iframe_target" })
     })
   })
 
   test.describe("when link has a POST data-turbo-method", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#anchor_with_post_method" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_post_method" })
     })
   })
 
@@ -95,7 +95,21 @@ test.describe("when hovering over a link", () => {
     })
 
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnMouseover({ page, selector: "#prefetch_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+    })
+  })
+
+  test.describe("when turbo-prefetch-trigger-event is set to mousedown", () => {
+    test.beforeEach(async ({ page }) => {
+      await goTo({ page, path: "/hover_to_prefetch_mousedown.html" })
+    })
+
+    test("it prefetches the page on mousedown", async ({ page }) => {
+      await assertPrefetchedOnMouseDown({ page, selector: "#prefetch_anchor" })
+    })
+
+    test("it doesn't prefetch the page on mouseover", async ({ page }) => {
+      await assertNotPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
     })
   })
 })
@@ -107,7 +121,7 @@ test.describe("when clicking on a link that has been prefetched", () => {
   })
 
   test("it does not make a network request", async ({ page }) => {
-    await assertNotPrefetchedOnMouseover({ page, selector: "#prefetch_anchor" })
+    await assertNotPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
   })
 
   test("it follows the link using the cached response", async ({ page }) => {
@@ -117,7 +131,7 @@ test.describe("when clicking on a link that has been prefetched", () => {
   })
 })
 
-const assertPrefetchedOnMouseover = async ({ page, selector }) => {
+const assertPrefetchedOnHover = async ({ page, selector }) => {
   let requestMade = false
 
   page.on("request", (request) => (requestMade = true))
@@ -127,7 +141,7 @@ const assertPrefetchedOnMouseover = async ({ page, selector }) => {
   assert.equal(requestMade, true, "Network request wasn't made when it should have been.")
 }
 
-const assertNotPrefetchedOnMouseover = async ({ page, selector }) => {
+const assertNotPrefetchedOnHover = async ({ page, selector }) => {
   let requestMade = false
 
   page.on("request", (request) => (requestMade = true))
@@ -135,6 +149,18 @@ const assertNotPrefetchedOnMouseover = async ({ page, selector }) => {
   await hoverSelector({ page, selector })
 
   assert.equal(requestMade, false, "Network request was made when it should not have been.")
+}
+
+const assertPrefetchedOnMouseDown = async ({ page, selector }) => {
+  let requestMade = false
+
+  page.on("request", (request) => (requestMade = true))
+
+  await page.hover(selector)
+  await page.mouse.down()
+  await nextBeat()
+
+  assert.equal(requestMade, true, "Network request wasn't made when it should have been.")
 }
 
 const goTo = async ({ page, path }) => {
