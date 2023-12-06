@@ -205,7 +205,7 @@ export class Visit {
     if (this.response) {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
-        if (this.shouldCacheSnapshot) this.cacheSnapshot()
+        if (this.shouldCacheSnapshot) await this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
 
         if (isSuccessful(statusCode) && responseHTML != null) {
@@ -248,7 +248,7 @@ export class Visit {
     if (snapshot) {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
-        this.cacheSnapshot()
+        await this.cacheSnapshot()
         if (this.isSamePage) {
           this.adapter.visitRendered(this)
         } else {
@@ -280,7 +280,7 @@ export class Visit {
   goToSamePageAnchor() {
     if (this.isSamePage) {
       this.render(async () => {
-        this.cacheSnapshot()
+        await this.cacheSnapshot()
         this.performScroll()
         this.changeHistory()
         this.adapter.visitRendered(this)
@@ -409,9 +409,9 @@ export class Visit {
     }
   }
 
-  cacheSnapshot() {
+  async cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      await this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
       this.snapshotCached = true
     }
   }
