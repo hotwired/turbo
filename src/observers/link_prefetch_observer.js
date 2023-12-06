@@ -7,7 +7,7 @@ import {
 } from "../util"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
-export class LinkPrefetchOnMouseoverObserver {
+export class LinkPrefetchObserver {
   triggerEvents = {
     mouseover: "mouseover",
     mousedown: "mousedown"

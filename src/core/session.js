@@ -3,7 +3,7 @@ import { CacheObserver } from "../observers/cache_observer"
 import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History } from "./drive/history"
-import { LinkPrefetchOnMouseoverObserver } from "../observers/link_prefetch_on_mouseover_observer"
+import { LinkPrefetchObserver } from "../observers/link_prefetch_observer"
 import { LinkClickObserver } from "../observers/link_click_observer"
 import { FormLinkClickObserver } from "../observers/form_link_click_observer"
 import { getAction, expandURL, locationIsVisitable } from "./url"
@@ -29,7 +29,7 @@ export class Session {
 
   pageObserver = new PageObserver(this)
   cacheObserver = new CacheObserver()
-  linkPrefetchOnMouseoverObserver = new LinkPrefetchOnMouseoverObserver(this, document)
+  linkPrefetchObserver = new LinkPrefetchObserver(this, document)
   linkClickObserver = new LinkClickObserver(this, window)
   formSubmitObserver = new FormSubmitObserver(this, document)
   scrollObserver = new ScrollObserver(this)
@@ -53,7 +53,7 @@ export class Session {
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
-      this.linkPrefetchOnMouseoverObserver.start()
+      this.linkPrefetchObserver.start()
       this.formLinkClickObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
@@ -75,7 +75,7 @@ export class Session {
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
-      this.linkPrefetchOnMouseoverObserver.stop()
+      this.linkPrefetchObserver.stop()
       this.formLinkClickObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
