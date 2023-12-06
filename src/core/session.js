@@ -18,7 +18,7 @@ import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 import { Cache } from "./cache"
-import { prefetchCache, cacheTtl } from "./drive/prefetch_cache"
+import { prefetchCache } from "./drive/prefetch_cache"
 
 export class Session {
   navigator = new Navigator(this)
@@ -184,7 +184,7 @@ export class Session {
     )
   }
 
-  prefetchAndCacheRequestToLocation(link, location) {
+  prefetchAndCacheRequestToLocation(link, location, cacheTtl) {
     const requestOptions = {
       credentials: "same-origin",
       headers: {

@@ -1,6 +1,6 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
-import { nextBeat } from "../helpers/page"
+import { nextBeat, sleep } from "../helpers/page"
 
 test.describe("when hovering over a link", () => {
   test.beforeEach(async ({ page }) => {
@@ -110,6 +110,25 @@ test.describe("when hovering over a link", () => {
 
     test("it doesn't prefetch the page on mouseover", async ({ page }) => {
       await assertNotPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+    })
+  })
+
+  test.describe("when turbo-prefetch-cache-time is set to 1", () => {
+    test.beforeEach(async ({ page }) => {
+      await goTo({ page, path: "/hover_to_prefetch_custom_cache_time.html" })
+    })
+
+    test("it prefetches the page", async ({ page }) => {
+      await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+    })
+
+    test("it caches the request for 1 second", async ({ page }) => {
+      await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+
+      await sleep(1100)
+      await page.mouse.move(0, 0)
+
+      await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
     })
   })
 })

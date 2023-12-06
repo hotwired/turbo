@@ -5,7 +5,7 @@ import {
   getMetaContent,
   findClosestRecursively
 } from "../util"
-import { prefetchCache } from "../core/drive/prefetch_cache"
+import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchOnMouseoverObserver {
   triggerEvents = {
@@ -44,6 +44,10 @@ export class LinkPrefetchOnMouseoverObserver {
     return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseover
   }
 
+  get cacheTtl() {
+    return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
+  }
+
   _enable = () => {
     if (getMetaContent("turbo-prefetch") !== "true") return
 
@@ -62,7 +66,7 @@ export class LinkPrefetchOnMouseoverObserver {
     if (link && this.isPrefetchable(link)) {
       const location = getLocationForLink(link)
       if (this.delegate.canPrefetchAndCacheRequestToLocation(link, location, event)) {
-        this.delegate.prefetchAndCacheRequestToLocation(link, location)
+        this.delegate.prefetchAndCacheRequestToLocation(link, location, this.cacheTtl)
       }
     }
   }
