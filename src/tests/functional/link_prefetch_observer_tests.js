@@ -8,11 +8,11 @@ test.describe("when hovering over a link", () => {
   })
 
   test("it prefetches the page", async ({ page }) => {
-    await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+    await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
   })
 
   test("it doesn't follow the link", async ({ page }) => {
-    await hoverSelector({ page, selector: "#prefetch_anchor" })
+    await hoverSelector({ page, selector: "#anchor_for_prefetch" })
 
     assert.equal(await page.title(), "Hover to Prefetch")
   })
@@ -25,43 +25,43 @@ test.describe("when hovering over a link", () => {
 
   test.describe("when link has the same location but with a query string", () => {
     test("it prefetches the page", async ({ page }) => {
-      await assertPrefetchedOnHover({ page, selector: "#same_location_anchor_with_query" })
+      await assertPrefetchedOnHover({ page, selector: "#anchor_for_same_location_with_query" })
     })
   })
 
   test.describe("when link is inside an element with data-turbo=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#turbo_false_parent_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_false_parent" })
     })
   })
 
   test.describe("when link is inside an element with data-turbo-prefetch=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#turbo_prefetch_false_parent_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_prefetch_false_parent" })
     })
   })
 
   test.describe("when link has data-turbo-prefetch=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#turbo_prefetch_false_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_prefetch_false" })
     })
   })
 
   test.describe("when link has data-turbo=false", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#turbo_false_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_false" })
     })
   })
 
   test.describe("when link has the same location as the current page", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#same_location_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_same_location" })
     })
   })
 
   test.describe("when link has a different origin", () => {
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#different_origin_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_different_origin" })
     })
   })
 
@@ -95,7 +95,7 @@ test.describe("when hovering over a link", () => {
     })
 
     test("it doesn't prefetch the page", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
     })
   })
 
@@ -105,11 +105,11 @@ test.describe("when hovering over a link", () => {
     })
 
     test("it prefetches the page on mousedown", async ({ page }) => {
-      await assertPrefetchedOnMouseDown({ page, selector: "#prefetch_anchor" })
+      await assertPrefetchedOnMouseDown({ page, selector: "#anchor_for_prefetch" })
     })
 
     test("it doesn't prefetch the page on mouseover", async ({ page }) => {
-      await assertNotPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+      await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
     })
   })
 
@@ -119,16 +119,16 @@ test.describe("when hovering over a link", () => {
     })
 
     test("it prefetches the page", async ({ page }) => {
-      await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+      await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
     })
 
     test("it caches the request for 1 second", async ({ page }) => {
-      await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+      await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 
       await sleep(10)
       await page.mouse.move(0, 0)
 
-      await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+      await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
     })
   })
 })
@@ -136,15 +136,15 @@ test.describe("when hovering over a link", () => {
 test.describe("when clicking on a link that has been prefetched", () => {
   test.beforeEach(async ({ page }) => {
     await goTo({ page, path: "/hover_to_prefetch.html" })
-    await hoverSelector({ page, selector: "#prefetch_anchor" })
+    await hoverSelector({ page, selector: "#anchor_for_prefetch" })
   })
 
   test("it does not make a network request", async ({ page }) => {
-    await assertNotPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
+    await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
   })
 
   test("it follows the link using the cached response", async ({ page }) => {
-    await clickSelector({ page, selector: "#prefetch_anchor" })
+    await clickSelector({ page, selector: "#anchor_for_prefetch" })
 
     assert.equal(await page.title(), "Prefetched Page")
   })
