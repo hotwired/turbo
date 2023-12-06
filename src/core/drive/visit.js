@@ -1,7 +1,7 @@
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
-import { getHistoryMethodForAction, uuid } from "../../util"
+import { getHistoryMethodForAction, uuid, nextRepaint } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
 
@@ -418,9 +418,7 @@ export class Visit {
 
   async render(callback) {
     this.cancelRender()
-    await new Promise((resolve) => {
-      this.frame = requestAnimationFrame(() => resolve())
-    })
+    this.frame = await nextRepaint()
     await callback()
     delete this.frame
   }
