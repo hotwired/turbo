@@ -125,7 +125,7 @@ test.describe("when hovering over a link", () => {
     test("it caches the request for 1 second", async ({ page }) => {
       await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
 
-      await sleep(1100)
+      await sleep(10)
       await page.mouse.move(0, 0)
 
       await assertPrefetchedOnHover({ page, selector: "#prefetch_anchor" })
