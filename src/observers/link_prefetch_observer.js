@@ -40,14 +40,6 @@ export class LinkPrefetchObserver {
     this.started = false
   }
 
-  get #triggerEvent() {
-    return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseover
-  }
-
-  get #cacheTtl() {
-    return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
-  }
-
   #enable = () => {
     if (getMetaContent("turbo-prefetch") !== "true") return
 
@@ -81,6 +73,14 @@ export class LinkPrefetchObserver {
     }
 
     prefetchCache.clear()
+  }
+
+  get #triggerEvent() {
+    return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseover
+  }
+
+  get #cacheTtl() {
+    return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
   }
 
   #isPrefetchable(link) {
