@@ -87,6 +87,18 @@ test("it preserves the scroll position when the turbo-refresh-scroll meta tag is
   await assertPageScroll(page, 10, 10)
 })
 
+test("it does not preserve the scroll position on regular 'advance' navigations, despite of using a 'preserve' option", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => document.getElementById("reload-link").click())
+  await nextEventNamed(page, "turbo:render", { renderMethod: "replace" })
+
+  await assertPageScroll(page, 0, 0)
+})
+
 test("it resets the scroll position when the turbo-refresh-scroll meta tag is 'reset'", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh_scroll_reset.html")
 
