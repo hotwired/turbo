@@ -17,6 +17,13 @@ test("renders a page refresh with morphing", async ({ page }) => {
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 })
 
+test("renders a page refresh with morphing when the paths are the same but search params are diferent", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#replace-link")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+})
+
 test("doesn't morph when the turbo-refresh-method meta tag is not 'morph'", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh_replace.html")
 
