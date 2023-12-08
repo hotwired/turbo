@@ -21,7 +21,6 @@ import { Cache } from "./cache"
 export class Session {
   navigator = new Navigator(this)
   history = new History(this)
-  preloader = new Preloader(this)
   view = new PageView(this, document.documentElement)
   adapter = new BrowserAdapter(this)
 
@@ -44,6 +43,7 @@ export class Session {
 
   constructor(recentRequests) {
     this.recentRequests = recentRequests
+    this.preloader = new Preloader(this, this.view.snapshotCache)
   }
 
   start() {
@@ -78,6 +78,7 @@ export class Session {
       this.streamObserver.stop()
       this.frameRedirector.stop()
       this.history.stop()
+      this.preloader.stop()
       this.started = false
     }
   }
@@ -135,6 +136,25 @@ export class Session {
 
   get restorationIdentifier() {
     return this.history.restorationIdentifier
+  }
+
+  // Preloader delegate
+
+  shouldPreloadLink(element) {
+    const isUnsafe = element.hasAttribute("data-turbo-method")
+    const isStream = element.hasAttribute("data-turbo-stream")
+    const frameTarget = element.getAttribute("data-turbo-frame")
+    const frame = frameTarget == "_top" ?
+      null :
+      document.getElementById(frameTarget) || findClosestRecursively(element, "turbo-frame:not([disabled])")
+
+    if (isUnsafe || isStream || frame instanceof FrameElement) {
+      return false
+    } else {
+      const location = new URL(element.href)
+
+      return this.elementIsNavigatable(element) && locationIsVisitable(location, this.snapshot.rootLocation)
+    }
   }
 
   // History delegate

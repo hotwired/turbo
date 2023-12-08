@@ -1,10 +1,8 @@
-import { Router } from "express"
-import express from "express"
+import express, { Router } from "express"
 import bodyParser from "body-parser"
 import multer from "multer"
 import path from "path"
-import url from "url"
-import { fileURLToPath } from "url"
+import url, { fileURLToPath } from "url"
 import fs from "fs"
 
 const __filename = fileURLToPath(import.meta.url)
