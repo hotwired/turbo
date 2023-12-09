@@ -116,8 +116,6 @@ export class LinkPrefetchObserver {
     }
 
     if (link.hasAttribute("data-turbo-stream")) {
-      // Add text/vnd.turbo-stream.html to Accept header, apart from the
-      // ones that the request already has.
       request.acceptResponseType("text/vnd.turbo-stream.html")
     }
   }
