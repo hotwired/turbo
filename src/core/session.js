@@ -19,6 +19,7 @@ import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 import { Cache } from "./cache"
 import { prefetchCache } from "./drive/prefetch_cache"
+import { FetchMethod, FetchRequest } from "../http/fetch_request"
 
 export class Session {
   navigator = new Navigator(this)
@@ -185,32 +186,19 @@ export class Session {
   }
 
   prefetchAndCacheRequestToLocation(link, location, cacheTtl) {
-    const requestOptions = {
-      credentials: "same-origin",
-      headers: {
-        "Sec-Purpose": "prefetch",
-        Accept: "text/html"
-      },
-      redirect: "follow"
-    }
-
-    if (
-      link.dataset.turboFrame &&
-      link.dataset.turboFrame !== "_top"
-    ) {
-      requestOptions.headers["Turbo-Frame"] = link.dataset.turboFrame
-    } else if (link.dataset.turboFrame !== "_top") {
-      const turboFrame = link.closest("turbo-frame")
-
-      if (turboFrame) {
-        requestOptions.headers["Turbo-Frame"] = turboFrame.id
-      }
-    }
-
     const absoluteUrl = location.toString()
+    const fetchRequest = new FetchRequest(
+      this.linkPrefetchObserver,
+      FetchMethod.get,
+      location,
+      new URLSearchParams(),
+      link
+    )
+
+    fetchRequest.perform()
 
     prefetchCache.set(absoluteUrl, {
-      request: fetch(absoluteUrl, requestOptions),
+      fetchRequest,
       ttl: new Date(new Date().getTime() + cacheTtl)
     })
   }

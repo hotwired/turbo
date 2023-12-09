@@ -70,12 +70,42 @@ export class LinkPrefetchObserver {
       const cached = prefetchCache.get(event.detail.url.toString())
 
       if (cached && cached.ttl > new Date()) {
-        event.detail.response = cached.request
+        event.detail.fetchRequest = cached.fetchRequest
       }
     }
 
     prefetchCache.clear()
   }
+
+  prepareRequest(request) {
+    const link = request.target
+
+    request.headers["Sec-Purpose"] = "prefetch"
+
+    if (link.dataset.turboFrame && link.dataset.turboFrame !== "_top") {
+      request.headers["Turbo-Frame"] = link.dataset.turboFrame
+    } else if (link.dataset.turboFrame !== "_top") {
+      const turboFrame = link.closest("turbo-frame")
+
+      if (turboFrame) {
+        request.headers["Turbo-Frame"] = turboFrame.id
+      }
+    }
+  }
+
+  // Fetch request interface
+
+  requestSucceededWithResponse() {}
+
+  requestStarted(fetchRequest) {}
+
+  requestErrored(fetchRequest) {}
+
+  requestFinished(fetchRequest) {}
+
+  requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
+
+  requestFailedWithResponse(fetchRequest, fetchResponse) {}
 
   get #triggerEvent() {
     return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseover

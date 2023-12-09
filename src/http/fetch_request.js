@@ -124,7 +124,14 @@ export class FetchRequest {
     const event = await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
-      const response = await (event.detail.response || fetch(this.url.href, fetchOptions))
+
+      if (event.detail.fetchRequest) {
+        this.response = event.detail.fetchRequest.response
+      } else {
+        this.response = fetch(this.url.href, fetchOptions)
+      }
+
+      const response = await this.response
       return await this.receive(response)
     } catch (error) {
       if (error.name !== "AbortError") {
