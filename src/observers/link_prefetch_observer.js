@@ -2,6 +2,7 @@ import {
   doesNotTargetIFrame,
   getLocationForLink,
   getMetaContent,
+  findLinkFromClickTarget,
   findClosestRecursively
 } from "../util"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
@@ -54,10 +55,9 @@ export class LinkPrefetchObserver {
     if (getMetaContent("turbo-prefetch") !== "true") return
 
     const target = event.target
-    const isLink = target.matches("a[href]:not([target^=_]):not([download])")
-    const link = target
+    const link = findLinkFromClickTarget(target)
 
-    if (isLink && this.#isPrefetchable(link)) {
+    if (link && this.#isPrefetchable(link)) {
       const location = getLocationForLink(link)
       if (this.delegate.canPrefetchAndCacheRequestToLocation(link, location, event)) {
         this.delegate.prefetchAndCacheRequestToLocation(link, location, this.#cacheTtl)

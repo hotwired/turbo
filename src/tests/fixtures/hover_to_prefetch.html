@@ -9,6 +9,9 @@
 
   <body>
     <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch">Hover to prefetch me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_inner_elements">
+      <span>Hover to prefetch me</span>
+    </a>
     <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_stream" data-turbo-stream>Hover to prefetch me</a>
     <div data-turbo="false">
       <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_false_parent">Won't prefetch when hovering me</a>

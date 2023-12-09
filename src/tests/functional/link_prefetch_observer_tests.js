@@ -134,6 +134,11 @@ test("it adds text/vnd.turbo-stream.html header to the Accept header when link h
   }})
 })
 
+test("it prefetches links with inner elements", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_with_inner_elements" })
+})
+
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await hoverSelector({ page, selector: "#anchor_for_prefetch" })
