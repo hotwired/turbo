@@ -1,6 +1,5 @@
 import {
   doesNotTargetIFrame,
-  findLinkFromClickTarget,
   getLocationForLink,
   getMetaContent,
   findClosestRecursively
@@ -53,9 +52,10 @@ export class LinkPrefetchObserver {
 
   #tryToPrefetchRequest = (event) => {
     const target = event.target
-    const link = findLinkFromClickTarget(target)
+    const isLink = target.matches("a[href]:not([target^=_]):not([download])")
+    const link = target
 
-    if (link && this.#isPrefetchable(link)) {
+    if (isLink && this.#isPrefetchable(link)) {
       const location = getLocationForLink(link)
       if (this.delegate.canPrefetchAndCacheRequestToLocation(link, location, event)) {
         this.delegate.prefetchAndCacheRequestToLocation(link, location, this.#cacheTtl)
