@@ -2,14 +2,13 @@ import {
   doesNotTargetIFrame,
   getLocationForLink,
   getMetaContent,
-  findLinkFromClickTarget,
   findClosestRecursively
 } from "../util"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
   triggerEvents = {
-    mouseover: "mouseover",
+    mouseover: "mouseenter",
     mousedown: "mousedown"
   }
   started = false
@@ -55,9 +54,10 @@ export class LinkPrefetchObserver {
     if (getMetaContent("turbo-prefetch") !== "true") return
 
     const target = event.target
-    const link = findLinkFromClickTarget(target)
+    const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
+    const link = target
 
-    if (link && this.#isPrefetchable(link)) {
+    if (isLink && this.#isPrefetchable(link)) {
       const delay = target.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
 
       if (delay) {
@@ -65,7 +65,7 @@ export class LinkPrefetchObserver {
           this.#startPrefetch(event, link)
         } , Number(delay))
 
-        link.addEventListener('mouseout', this.#cancelPrefetchTimeoutIfAny, {
+        link.addEventListener('mouseleave', this.#cancelPrefetchTimeoutIfAny, {
           capture: true,
           passive: true
         })
