@@ -93,11 +93,11 @@ export class LinkPrefetchObserver {
       const cached = prefetchCache.get(event.detail.url.toString())
 
       if (cached && cached.ttl > new Date()) {
+        // User clicked link, use cache response and clear cache.
         event.detail.fetchRequest = cached.fetchRequest
+        prefetchCache.clear()
       }
     }
-
-    prefetchCache.clear()
   }
 
   prepareRequest(request) {

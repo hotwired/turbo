@@ -180,6 +180,23 @@ test("it does not make a network request when clicking on a link that has been p
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
+test("it does not more than 2 network requests when hovering between 2 links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestCount = 0
+
+  page.on("request", async (request) => {
+    requestCount++
+  })
+
+  await hoverSelector({ page, selector: "#anchor_for_prefetch" })
+  await hoverSelector({ page, selector: "#anchor_for_prefetch_other_href" })
+  await hoverSelector({ page, selector: "#anchor_for_prefetch" })
+  await hoverSelector({ page, selector: "#anchor_for_prefetch_other_href" })
+
+  assert.equal(requestCount, 2)
+})
+
 test("it follows the link using the cached response when clicking on a link that has been prefetched", async ({
   page
 }) => {
