@@ -113,7 +113,7 @@ test("it prefetches the page when turbo-prefetch-cache-time is set to 1", async 
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
-test("it caches the request for 1 second when turbo-prefetch-cache-time is set to 1", async ({ page }) => {
+test("it caches the request for 1 millisecond when turbo-prefetch-cache-time is set to 1", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch_custom_cache_time.html" })
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 
@@ -137,6 +137,40 @@ test("it adds text/vnd.turbo-stream.html header to the Accept header when link h
 test("it prefetches links with inner elements", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertPrefetchedOnHover({ page, selector: "#anchor_with_inner_elements" })
+})
+
+test("it prefetches links with a delay if present on the element itself", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_with_delay")
+  await sleep(100)
+
+  assertRequestNotMade(requestMade)
+
+  await sleep(300)
+
+  assertRequestMade(requestMade)
+})
+
+test("it cancels the prefetch request if the link is no longer hovered", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_with_delay")
+  await sleep(100)
+
+  assertRequestNotMade(requestMade)
+
+  await page.mouse.move(0, 0)
+
+  await sleep(300)
+
+  assertRequestNotMade(requestMade)
 })
 
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
@@ -166,7 +200,7 @@ const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
 
   await hoverSelector({ page, selector })
 
-  assert.equal(requestMade, true, "Network request wasn't made when it should have been.")
+  assertRequestMade(requestMade)
 }
 
 const assertNotPrefetchedOnHover = async ({ page, selector, callback }) => {
@@ -182,16 +216,27 @@ const assertNotPrefetchedOnHover = async ({ page, selector, callback }) => {
   assert.equal(requestMade, false, "Network request was made when it should not have been.")
 }
 
-const assertPrefetchedOnMouseDown = async ({ page, selector }) => {
+const assertPrefetchedOnMouseDown = async ({ page, selector, callback }) => {
   let requestMade = false
 
-  page.on("request", (request) => (requestMade = true))
+  page.on("request", (request) => {
+    callback && callback(request)
+    requestMade = true
+  })
 
   await page.hover(selector)
   await page.mouse.down()
   await nextBeat()
 
+  assertRequestMade(requestMade)
+}
+
+const assertRequestMade = (requestMade) => {
   assert.equal(requestMade, true, "Network request wasn't made when it should have been.")
+}
+
+const assertRequestNotMade = (requestMade) => {
+  assert.equal(requestMade, false, "Network request was made when it should not have been.")
 }
 
 const goTo = async ({ page, path }) => {

@@ -58,10 +58,33 @@ export class LinkPrefetchObserver {
     const link = findLinkFromClickTarget(target)
 
     if (link && this.#isPrefetchable(link)) {
-      const location = getLocationForLink(link)
-      if (this.delegate.canPrefetchAndCacheRequestToLocation(link, location, event)) {
-        this.delegate.prefetchAndCacheRequestToLocation(link, location, this.#cacheTtl)
+      const delay = target.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
+
+      if (delay) {
+        this.prefetchTimeout = setTimeout(() => {
+          this.#startPrefetch(event, link)
+        } , Number(delay))
+
+        link.addEventListener('mouseout', this.#cancelPrefetchTimeoutIfAny, {
+          capture: true,
+          passive: true
+        })
+      } else {
+        this.#startPrefetch(event, link)
       }
+    }
+  }
+
+  #startPrefetch = (event, link) => {
+    const location = getLocationForLink(link)
+    if (this.delegate.canPrefetchAndCacheRequestToLocation(link, location, event)) {
+      this.delegate.prefetchAndCacheRequestToLocation(link, location, this.#cacheTtl)
+    }
+  }
+
+  #cancelPrefetchTimeoutIfAny = () => {
+    if (this.prefetchTimeout) {
+      clearTimeout(this.prefetchTimeout)
     }
   }
 
