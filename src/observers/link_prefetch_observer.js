@@ -91,6 +91,12 @@ export class LinkPrefetchObserver {
         request.headers["Turbo-Frame"] = turboFrame.id
       }
     }
+
+    if (link.hasAttribute("data-turbo-stream")) {
+      // Add text/vnd.turbo-stream.html to Accept header, apart from the
+      // ones that the request already has.
+      request.acceptResponseType("text/vnd.turbo-stream.html")
+    }
   }
 
   // Fetch request interface

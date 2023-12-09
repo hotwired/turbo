@@ -123,6 +123,17 @@ test("it caches the request for 1 second when turbo-prefetch-cache-time is set t
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
+test("it adds text/vnd.turbo-stream.html header to the Accept header when link has data-turbo-stream", async ({
+  page
+}) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_with_turbo_stream", callback: (request) => {
+    const headers = request.headers()["accept"].split(",").map((header) => header.trim())
+
+    assert.includeMembers(headers, ["text/vnd.turbo-stream.html", "text/html", "application/xhtml+xml"])
+  }})
+})
+
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await hoverSelector({ page, selector: "#anchor_for_prefetch" })
@@ -140,20 +151,26 @@ test("it follows the link using the cached response when clicking on a link that
   assert.equal(await page.title(), "Prefetched Page")
 })
 
-const assertPrefetchedOnHover = async ({ page, selector }) => {
+const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
   let requestMade = false
 
-  page.on("request", (request) => (requestMade = true))
+  page.on("request", (request) => {
+    callback && callback(request)
+    requestMade = true
+  })
 
   await hoverSelector({ page, selector })
 
   assert.equal(requestMade, true, "Network request wasn't made when it should have been.")
 }
 
-const assertNotPrefetchedOnHover = async ({ page, selector }) => {
+const assertNotPrefetchedOnHover = async ({ page, selector, callback }) => {
   let requestMade = false
 
-  page.on("request", (request) => (requestMade = true))
+  page.on("request", (request) => {
+    callback && callback(request)
+    requestMade = true
+  })
 
   await hoverSelector({ page, selector })
 
