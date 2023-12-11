@@ -24,6 +24,8 @@
   <body>
     <h1>Page to be refreshed</h1>
 
+    <a href="/src/tests/fixtures/page_refresh.html" id="reload-link">Reload</a>
+
     <turbo-frame id="refresh-morph" src="/src/tests/fixtures/frame_refresh_morph.html" refresh="morph">
       <h2>Frame to be morphed</h2>
     </turbo-frame>
@@ -44,6 +46,7 @@
       <h3>Element with Stimulus controller</h3>
     </div>
 
+    <p><a id="replace-link" data-turbo-action="replace" href="/src/tests/fixtures/page_refresh.html?param=something">Link with params to refresh the page</a></p>
     <p><a id="link" href="/src/tests/fixtures/one.html">Link to another page</a></p>
 
     <form id="form" action="/__turbo/refresh" method="post" class="redirect">

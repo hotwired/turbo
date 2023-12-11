@@ -1,6 +1,6 @@
 import { Bardo } from "../bardo"
 import { getPermanentElementById, queryPermanentElementsAll } from "../snapshot"
-import { around, elementIsFocusable, nextAnimationFrame, queryAutofocusableElement, uuid } from "../../util"
+import { around, elementIsFocusable, nextRepaint, queryAutofocusableElement, uuid } from "../../util"
 
 export class StreamMessageRenderer {
   render({ fragment }) {
@@ -57,7 +57,7 @@ async function withAutofocusFromFragment(fragment, callback) {
   }
 
   callback()
-  await nextAnimationFrame()
+  await nextRepaint()
 
   const hasNoActiveElement = document.activeElement == null || document.activeElement == document.body
 

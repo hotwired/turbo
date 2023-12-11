@@ -6,13 +6,16 @@ import {
   getSearchParam,
   isScrolledToSelector,
   isScrolledToTop,
+  nextAttributeMutationNamed,
   nextBeat,
   nextEventNamed,
   noNextAttributeMutationNamed,
   pathname,
   readEventLogs,
+  resetMutationLogs,
   scrollToSelector,
   visitAction,
+  waitUntilNoSelector,
   willChangeBody
 } from "../helpers/page"
 
@@ -220,6 +223,55 @@ test("Visit with network error", async ({ page }) => {
   await nextEventNamed(page, "turbo:fetch-request-error")
 })
 
+test("Visit direction data attribute when clicking a link", async ({ page }) => {
+  page.click("#same-origin-link")
+  await assertVisitDirectionAttribute(page, "forward")
+})
+
+test("Visit direction data attribute when navigating back", async ({ page }) => {
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+
+  await resetMutationLogs(page)
+
+  page.goBack()
+
+  await assertVisitDirectionAttribute(page, "back")
+})
+
+test("Visit direction attribute when navigating forward", async ({ page }) => {
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  page.goForward()
+
+  await assertVisitDirectionAttribute(page, "forward")
+})
+
+test("Visit direction attribute on a replace visit", async ({ page }) => {
+  page.click("#same-origin-replace-link")
+
+  await assertVisitDirectionAttribute(page, "none")
+})
+
+test("Turbo history state after a reload", async ({ page }) => {
+  await page.click("#same-origin-link")
+  await nextEventNamed(page, "turbo:load")
+  await page.reload()
+  assert.equal(
+    await page.evaluate(() => window.history.state.turbo.restorationIndex),
+    1,
+    "restorationIndex is persisted between reloads"
+  )
+})
+
 async function visitLocation(page, location) {
   return page.evaluate((location) => window.Turbo.visit(location), location)
+}
+
+async function assertVisitDirectionAttribute(page, direction) {
+  assert.equal(await nextAttributeMutationNamed(page, "html", "data-turbo-visit-direction"), direction)
+  await waitUntilNoSelector(page, "[data-turbo-visit-direction]")
 }

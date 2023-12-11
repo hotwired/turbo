@@ -1,7 +1,7 @@
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
-import { getHistoryMethodForAction, uuid } from "../../util"
+import { getHistoryMethodForAction, uuid, nextRepaint } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
 
@@ -36,6 +36,12 @@ export const SystemStatusCode = {
   contentTypeMismatch: -2
 }
 
+export const Direction = {
+  advance: "forward",
+  restore: "back",
+  replace: "none"
+}
+
 export class Visit {
   identifier = uuid() // Required by turbo-ios
   timingMetrics = {}
@@ -65,7 +71,8 @@ export class Visit {
       willRender,
       updateHistory,
       shouldCacheSnapshot,
-      acceptsStreamResponse
+      acceptsStreamResponse,
+      direction
     } = {
       ...defaultOptions,
       ...options
@@ -83,6 +90,7 @@ export class Visit {
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
+    this.direction = direction || Direction[action]
   }
 
   get adapter() {
@@ -335,7 +343,7 @@ export class Visit {
   // Scrolling
 
   performScroll() {
-    if (!this.scrolled && !this.view.forceReloaded && !this.view.snapshot.shouldPreserveScrollPosition) {
+    if (!this.scrolled && !this.view.forceReloaded && !this.view.shouldPreserveScrollPosition(this)) {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
       } else {
@@ -410,9 +418,7 @@ export class Visit {
 
   async render(callback) {
     this.cancelRender()
-    await new Promise((resolve) => {
-      this.frame = requestAnimationFrame(() => resolve())
-    })
+    this.frame = await nextRepaint()
     await callback()
     delete this.frame
   }

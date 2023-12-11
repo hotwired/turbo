@@ -17,6 +17,13 @@ test("renders a page refresh with morphing", async ({ page }) => {
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 })
 
+test("renders a page refresh with morphing when the paths are the same but search params are diferent", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#replace-link")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+})
+
 test("doesn't morph when the turbo-refresh-method meta tag is not 'morph'", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh_replace.html")
 
@@ -85,6 +92,18 @@ test("it preserves the scroll position when the turbo-refresh-scroll meta tag is
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await assertPageScroll(page, 10, 10)
+})
+
+test("it does not preserve the scroll position on regular 'advance' navigations, despite of using a 'preserve' option", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => document.getElementById("reload-link").click())
+  await nextEventNamed(page, "turbo:render", { renderMethod: "replace" })
+
+  await assertPageScroll(page, 0, 0)
 })
 
 test("it resets the scroll position when the turbo-refresh-scroll meta tag is 'reset'", async ({ page }) => {
