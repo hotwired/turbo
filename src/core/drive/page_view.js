@@ -56,7 +56,11 @@ export class PageView extends View {
   }
 
   isPageRefresh(visit) {
-    return !visit || (this.lastRenderedLocation.href === visit.location.href && visit.action === "replace")
+    return !visit || (this.lastRenderedLocation.pathname === visit.location.pathname && visit.action === "replace")
+  }
+
+  shouldPreserveScrollPosition(visit) {
+    return this.isPageRefresh(visit) && this.snapshot.shouldPreserveScrollPosition
   }
 
   get snapshot() {

@@ -21,7 +21,6 @@ import { Cache } from "./cache"
 export class Session {
   navigator = new Navigator(this)
   history = new History(this)
-  preloader = new Preloader(this)
   view = new PageView(this, document.documentElement)
   adapter = new BrowserAdapter(this)
 
@@ -44,6 +43,7 @@ export class Session {
 
   constructor(recentRequests) {
     this.recentRequests = recentRequests
+    this.preloader = new Preloader(this, this.view.snapshotCache)
   }
 
   start() {
@@ -78,6 +78,7 @@ export class Session {
       this.streamObserver.stop()
       this.frameRedirector.stop()
       this.history.stop()
+      this.preloader.stop()
       this.started = false
     }
   }
@@ -137,13 +138,33 @@ export class Session {
     return this.history.restorationIdentifier
   }
 
+  // Preloader delegate
+
+  shouldPreloadLink(element) {
+    const isUnsafe = element.hasAttribute("data-turbo-method")
+    const isStream = element.hasAttribute("data-turbo-stream")
+    const frameTarget = element.getAttribute("data-turbo-frame")
+    const frame = frameTarget == "_top" ?
+      null :
+      document.getElementById(frameTarget) || findClosestRecursively(element, "turbo-frame:not([disabled])")
+
+    if (isUnsafe || isStream || frame instanceof FrameElement) {
+      return false
+    } else {
+      const location = new URL(element.href)
+
+      return this.elementIsNavigatable(element) && locationIsVisitable(location, this.snapshot.rootLocation)
+    }
+  }
+
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifier(location, restorationIdentifier) {
+  historyPoppedToLocationWithRestorationIdentifierAndDirection(location, restorationIdentifier, direction) {
     if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, {
         action: "restore",
-        historyChanged: true
+        historyChanged: true,
+        direction
       })
     } else {
       this.adapter.pageInvalidated({
@@ -199,6 +220,7 @@ export class Session {
   visitStarted(visit) {
     if (!visit.acceptsStreamResponse) {
       markAsBusy(document.documentElement)
+      this.view.markVisitDirection(visit.direction)
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {
@@ -207,6 +229,7 @@ export class Session {
   }
 
   visitCompleted(visit) {
+    this.view.unmarkVisitDirection()
     clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
   }

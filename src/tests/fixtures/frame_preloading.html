@@ -8,5 +8,11 @@
   </head>
   <body>
     <turbo-frame id="menu" src="/src/tests/fixtures/frames/preloading.html"></turbo-frame>
+
+    <turbo-frame id="hello">
+      <a href="/src/tests/fixtures/frames/hello.html" data-turbo-preload>Navigate #hello</a>
+    </turbo-frame>
+
+    <a href="/src/tests/fixtures/frames/hello.html" data-turbo-frame="hello" data-turbo-preload>Navigate #hello from the outside</a>
   </body>
 </html>

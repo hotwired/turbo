@@ -1,4 +1,4 @@
-import { activateScriptElement, nextAnimationFrame } from "../../util"
+import { activateScriptElement, nextRepaint } from "../../util"
 import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer {
@@ -25,14 +25,14 @@ export class FrameRenderer extends Renderer {
   }
 
   async render() {
-    await nextAnimationFrame()
+    await nextRepaint()
     this.preservingPermanentElements(() => {
       this.loadFrameElement()
     })
     this.scrollFrameIntoView()
-    await nextAnimationFrame()
+    await nextRepaint()
     this.focusFirstAutofocusableElement()
-    await nextAnimationFrame()
+    await nextRepaint()
     this.activateScriptElements()
   }
 
