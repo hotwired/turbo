@@ -96,6 +96,14 @@ test("it doesn't prefetch the page when turbo-prefetch meta tag is set to true, 
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
+test("it prefetches when visiting a page without the meta tag, then visiting a page with it", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch_without_meta_tag_with_link_to_with_meta_tag.html" })
+
+  await clickSelector({ page, selector: "#anchor_for_page_with_meta_tag" })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+})
+
 test("it prefetches the page on mousedown when turbo-prefetch-trigger-event is set to mousedown", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch_mousedown.html" })
   await assertPrefetchedOnMouseDown({ page, selector: "#anchor_for_prefetch" })

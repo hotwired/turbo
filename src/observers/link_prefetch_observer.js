@@ -40,8 +40,6 @@ export class LinkPrefetchObserver {
   }
 
   #enable = () => {
-    if (getMetaContent("turbo-prefetch") !== "true") return
-
     this.eventTarget.addEventListener(this.#triggerEvent, this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
