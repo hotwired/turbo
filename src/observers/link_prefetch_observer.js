@@ -65,7 +65,7 @@ export class LinkPrefetchObserver {
           this.#startPrefetch(event, link)
         } , Number(delay))
 
-        link.addEventListener('mouseleave', this.#cancelPrefetchTimeoutIfAny, {
+        link.addEventListener("mouseleave", this.#cancelPrefetchTimeoutIfAny, {
           capture: true,
           passive: true
         })
