@@ -68,6 +68,12 @@ export function nextBody(_page, timeout = 500) {
   return sleep(timeout)
 }
 
+export async function nextPageRefresh(page, timeout = 500) {
+  const pageRefreshDebouncePeriod = await page.evaluate(() => window.Turbo.session.pageRefreshDebouncePeriod)
+
+  return sleep(pageRefreshDebouncePeriod + timeout)
+}
+
 export async function nextEventNamed(page, eventName, expectedDetail = {}) {
   let record
   while (!record) {

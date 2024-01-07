@@ -215,3 +215,13 @@ export async function around(callback, reader) {
 
   return [before, after]
 }
+
+export function debounce(fn, delay) {
+  let timeoutId = null
+
+  return (...args) => {
+    const callback = () => fn.apply(this, args)
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(callback, delay)
+  }
+}
