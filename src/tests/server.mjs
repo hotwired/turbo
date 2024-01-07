@@ -4,6 +4,7 @@ import multer from "multer"
 import path from "path"
 import url, { fileURLToPath } from "url"
 import fs from "fs"
+import { Eta } from "eta"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -12,6 +13,7 @@ const { json, urlencoded } = bodyParser
 
 const router = Router()
 const streamResponses = new Set()
+const templateRenderer = new Eta({ views: path.join(__dirname, "templates") })
 
 router.use(multer().none())
 
@@ -150,6 +152,104 @@ router.put("/messages/:id", (request, response) => {
     response.sendStatus(422)
   }
 })
+
+router.get("/posts", async (request, response) => {
+  const posts = await getPosts()
+
+  const res = templateRenderer.render("./posts", { posts })
+
+  response.type("html").status(200).send(res)
+})
+
+router.post("/posts", async (request, response) => {
+  const { title, body } = request.body
+
+  await addPost(title, body)
+
+  response.redirect(303, "/__turbo/posts")
+})
+
+router.get("/posts/:id/", async (request, response) => {
+  const posts = await getPosts()
+  const { id } = request.params
+
+  const post = posts.find((post) => post.id == id)
+
+  if (post) {
+    const res = templateRenderer.render("./post", { post })
+
+    response.type("html").status(200).send(res)
+  } else {
+    response.sendStatus(404)
+  }
+})
+
+router.post("/posts/:id", async (request, response) => {
+  if (request.body._method == "delete") {
+    const { id } = request.params
+
+    await deletePost(id)
+    response.redirect(303, "/__turbo/posts")
+  } else {
+    response.sendStatus(422)
+  }
+})
+
+router.post("/posts/:post_id/comments", async (request, response) => {
+  const { post_id } = request.params
+  const { body } = request.body.comment
+
+  const post = await getPost(post_id)
+
+  if (post) {
+    await addComment(post_id, body)
+
+    response.redirect(303, `/__turbo/posts/${post_id}`)
+  } else {
+    response.sendStatus(404)
+  }
+})
+
+const databaseName = "src/tests/fixtures/volatile_posts_database.json"
+
+const getPosts = async () => {
+  return JSON.parse(fs.readFileSync(databaseName).toString())
+}
+
+const addPost = async (title, body) => {
+  const posts = await getPosts()
+
+  const id = posts.length + 1
+
+  posts.push({ id, title, body })
+
+  return fs.writeFileSync(databaseName, JSON.stringify(posts))
+}
+
+const getPost = async (id) => {
+  const posts = await getPosts()
+
+  return posts.find((post) => post.id == id)
+}
+
+const deletePost = async (id) => {
+  const posts = await getPosts()
+  const newPosts = posts.filter((post) => post.id != id)
+
+  return fs.writeFileSync(databaseName, JSON.stringify(newPosts))
+}
+
+const addComment = async (postId, body) => {
+  const posts = await getPosts()
+  const post = posts.find((post) => post.id == postId)
+  const comments = post.comments || []
+  const id = comments.length + 1
+
+  post.comments = comments
+  post.comments.push({ id, body })
+
+  return fs.writeFileSync(databaseName, JSON.stringify(posts))
+}
 
 router.get("/messages", (request, response) => {
   response.set({

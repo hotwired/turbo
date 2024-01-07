@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <title>Post</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <meta name="turbo-prefetch" content="true" />
+  </head>
+  <body>
+    <h1><%= it.post.title %></h1>
+    
+    <p><%= it.post.body %></p>
+
+    <h2>Comments</h2>
+
+    <ul>
+      <% it.post.comments?.forEach(comment => { %>
+        <li data-testid="comment_<%= comment.id %>"><%= comment.body %></li>
+      <% }); %>
+    </ul>
+
+    <h2>Add a comment</h2>
+
+    <form action="/__turbo/posts/<%= it.post.id %>/comments" method="post">
+      <input type="text" name="comment[body]" value="A new comment" autocomplete="off">
+      <input type="submit" value="Add comment" id="comment_submit">
+    </form>
+
+    <form action="/__turbo/posts/<%= it.post.id %>" method="post">
+      <input type="hidden" name="_method" value="delete">
+      <input type="submit" value="Delete">
+    </form>
+
+    <a href="/__turbo/posts" id="anchor_back_to_all_posts">Back to all posts</a>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <title>Posts</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <meta name="turbo-prefetch" content="true" />
+  </head>
+  <body>
+    <h1>Posts</h1>
+    <ul>
+      <% it.posts.forEach(post => { %>
+        <li>
+          <a href="/__turbo/posts/<%= post.id %>" data-testid="post_<%= post.id %>"><%= post.title %></a>
+          
+          <span data-testid="post_<%= post.id %>_comments">(<%= post.comments?.length || 0 %> comments)</span>
+        </li>
+      <% }) %>
+    </ul>
+
+    <form action="/__turbo/posts" method="post">
+      <label for="title">Title</label>
+      <input type="text" name="title" value="A new post title" id="title" autocomplete="off">
+
+      <label for="body">Body</label>
+      <textarea name="body" id="body">A new post body</textarea>
+      
+      <input type="submit" id="submit">
+    </form>
+  </body>
+</html>
