@@ -8,7 +8,7 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
   triggerEvents = {
-    mouseover: "mouseenter",
+    mouseenter: "mouseenter",
     mousedown: "mousedown"
   }
   started = false
@@ -135,7 +135,7 @@ export class LinkPrefetchObserver {
   requestFailedWithResponse(fetchRequest, fetchResponse) {}
 
   get #triggerEvent() {
-    return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseover
+    return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseenter
   }
 
   get #cacheTtl() {
