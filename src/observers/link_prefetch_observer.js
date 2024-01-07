@@ -55,10 +55,10 @@ export class LinkPrefetchObserver {
 
     const target = event.target
     const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
-    const link = target
 
-    if (isLink && this.#isPrefetchable(link)) {
-      const delay = target.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
+    if (isLink && this.#isPrefetchable(target)) {
+      const link = target
+      const delay = link.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
 
       if (delay) {
         this.prefetchTimeout = setTimeout(() => {
