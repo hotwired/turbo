@@ -70,11 +70,14 @@ export class PageRenderer extends Renderer {
   }
 
   async mergeHead() {
-    const mergedHeadElements = this.mergeProvisionalElements()
-    const newStylesheetElements = this.copyNewHeadStylesheetElements()
-    this.copyNewHeadScriptElements()
-    await mergedHeadElements
-    await newStylesheetElements
+    // Load new stylesheets and get them to preload before switching out other elements.
+    const mergeStylesheets = this.copyNewHeadStylesheetElements()
+    this.mergeNonScriptElements()
+    this.mergeElements("script", false, (e) => {
+      return activateScriptElement(e)
+    })
+
+    await mergeStylesheets
   }
 
   async replaceBody() {
@@ -88,71 +91,53 @@ export class PageRenderer extends Renderer {
     return this.currentHeadSnapshot.trackedElementSignature == this.newHeadSnapshot.trackedElementSignature
   }
 
+  async mergeElements(localName, removeOld = true, onAdd = (e) => {return e}) {
+    const currentElements = this.currentHeadSnapshot.getElements(localName)
+    const newElements = [...this.newHeadSnapshot.getElements(localName)]
+
+    for (const currentElement of currentElements) {
+      if (!this.isCurrentElementInElementList(currentElement, newElements)) {
+        if (removeOld) document.head.removeChild(currentElement)
+      }
+    }
+    for (const element of newElements) {
+      document.head.appendChild(onAdd(element))
+    }
+  }
+
   async copyNewHeadStylesheetElements() {
     const loadingElements = []
+    const currentElements = this.currentHeadSnapshot.stylesheets
+    const newElements = [...this.newHeadSnapshot.stylesheets]
 
-    for (const element of this.newHeadStylesheetElements) {
-      loadingElements.push(waitForLoad(element))
-
-      document.head.appendChild(element)
+    for (const currentElement of currentElements) {
+      this.isCurrentElementInElementList(currentElement, newElements)
     }
 
+    for (const element of newElements) {
+      loadingElements.push(waitForLoad(element))
+      document.head.appendChild(element)
+    }
     await Promise.all(loadingElements)
   }
 
-  copyNewHeadScriptElements() {
-    for (const element of this.newHeadScriptElements) {
-      document.head.appendChild(activateScriptElement(element))
-    }
-  }
-
-  async mergeProvisionalElements() {
-    const newHeadElements = [...this.newHeadProvisionalElements]
-
-    for (const element of this.currentHeadProvisionalElements) {
-      if (!this.isCurrentElementInElementList(element, newHeadElements)) {
-        document.head.removeChild(element)
-      }
-    }
-
-    for (const element of newHeadElements) {
-      document.head.appendChild(element)
+  async mergeNonScriptElements() {
+    // eslint-disable-next-line no-unused-vars
+    const { script, ...otherElements } = this.currentSnapshot.headSnapshot.elements
+    for (const localName of Object.keys(otherElements)) {
+      this.mergeElements(localName)
     }
   }
 
   isCurrentElementInElementList(element, elementList) {
+    // removes element from list and returns true if in list
     for (const [index, newElement] of elementList.entries()) {
-      // if title element...
-      if (element.tagName == "TITLE") {
-        if (newElement.tagName != "TITLE") {
-          continue
-        }
-        if (element.innerHTML == newElement.innerHTML) {
-          elementList.splice(index, 1)
-          return true
-        }
-      }
-
-      // if any other element...
       if (newElement.isEqualNode(element)) {
         elementList.splice(index, 1)
         return true
       }
     }
-
     return false
-  }
-
-  removeCurrentHeadProvisionalElements() {
-    for (const element of this.currentHeadProvisionalElements) {
-      document.head.removeChild(element)
-    }
-  }
-
-  copyNewHeadProvisionalElements() {
-    for (const element of this.newHeadProvisionalElements) {
-      document.head.appendChild(element)
-    }
   }
 
   activateNewBody() {
@@ -169,22 +154,6 @@ export class PageRenderer extends Renderer {
 
   async assignNewBody() {
     await this.renderElement(this.currentElement, this.newElement)
-  }
-
-  get newHeadStylesheetElements() {
-    return this.newHeadSnapshot.getStylesheetElementsNotInSnapshot(this.currentHeadSnapshot)
-  }
-
-  get newHeadScriptElements() {
-    return this.newHeadSnapshot.getScriptElementsNotInSnapshot(this.currentHeadSnapshot)
-  }
-
-  get currentHeadProvisionalElements() {
-    return this.currentHeadSnapshot.provisionalElements
-  }
-
-  get newHeadProvisionalElements() {
-    return this.newHeadSnapshot.provisionalElements
   }
 
   get newBodyScriptElements() {

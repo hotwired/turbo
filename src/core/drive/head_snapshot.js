@@ -1,61 +1,39 @@
 import { Snapshot } from "../snapshot"
 
 export class HeadSnapshot extends Snapshot {
-  detailsByOuterHTML = this.children
-    .filter((element) => !elementIsNoscript(element))
-    .map((element) => elementWithoutNonce(element))
-    .reduce((result, element) => {
-      const { outerHTML } = element
-      const details =
-        outerHTML in result
-          ? result[outerHTML]
-          : {
-              type: elementType(element),
-              tracked: elementIsTracked(element),
-              elements: []
-            }
-      return {
-        ...result,
-        [outerHTML]: {
-          ...details,
-          elements: [...details.elements, element]
-        }
+  elements = {}
+  stylesheetElements = []
+  trackedElements = []
+
+  constructor(element) {
+    super(element)
+    this.parseDetailsByOuterHTML()
+  }
+
+  parseDetailsByOuterHTML() {
+    for (let element of this.children) {
+      element = elementWithoutNonce(element)
+      if (elementIsStylesheet(element)) this.stylesheetElements.push(element)
+      else {
+        const collection = this.elements[element.localName] || []
+        collection.push(element)
+        this.elements[element.localName] = collection
       }
-    }, {})
+
+      if (element.getAttribute("data-turbo-track") == "reload") this.trackedElements.push(element)
+    }
+  }
 
   get trackedElementSignature() {
-    return Object.keys(this.detailsByOuterHTML)
-      .filter((outerHTML) => this.detailsByOuterHTML[outerHTML].tracked)
-      .join("")
+    return this.trackedElements.map((e) => e.outerHTML).join("")
   }
 
-  getScriptElementsNotInSnapshot(snapshot) {
-    return this.getElementsMatchingTypeNotInSnapshot("script", snapshot)
+  get stylesheets(){
+    return this.stylesheetElements
   }
 
-  getStylesheetElementsNotInSnapshot(snapshot) {
-    return this.getElementsMatchingTypeNotInSnapshot("stylesheet", snapshot)
-  }
-
-  getElementsMatchingTypeNotInSnapshot(matchedType, snapshot) {
-    return Object.keys(this.detailsByOuterHTML)
-      .filter((outerHTML) => !(outerHTML in snapshot.detailsByOuterHTML))
-      .map((outerHTML) => this.detailsByOuterHTML[outerHTML])
-      .filter(({ type }) => type == matchedType)
-      .map(({ elements: [element] }) => element)
-  }
-
-  get provisionalElements() {
-    return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
-      const { type, tracked, elements } = this.detailsByOuterHTML[outerHTML]
-      if (type == null && !tracked) {
-        return [...result, ...elements]
-      } else if (elements.length > 1) {
-        return [...result, ...elements.slice(1)]
-      } else {
-        return result
-      }
-    }, [])
+  getElements(localName) {
+    return this.elements[localName] || []
   }
 
   getMetaValue(name) {
@@ -64,45 +42,13 @@ export class HeadSnapshot extends Snapshot {
   }
 
   findMetaElementByName(name) {
-    return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
-      const {
-        elements: [element]
-      } = this.detailsByOuterHTML[outerHTML]
-      return elementIsMetaElementWithName(element, name) ? element : result
-    }, undefined | undefined)
+    return this.getElements("meta").find((e) => e.name == name)
   }
-}
-
-function elementType(element) {
-  if (elementIsScript(element)) {
-    return "script"
-  } else if (elementIsStylesheet(element)) {
-    return "stylesheet"
-  }
-}
-
-function elementIsTracked(element) {
-  return element.getAttribute("data-turbo-track") == "reload"
-}
-
-function elementIsScript(element) {
-  const tagName = element.localName
-  return tagName == "script"
-}
-
-function elementIsNoscript(element) {
-  const tagName = element.localName
-  return tagName == "noscript"
 }
 
 function elementIsStylesheet(element) {
   const tagName = element.localName
   return tagName == "style" || (tagName == "link" && element.getAttribute("rel") == "stylesheet")
-}
-
-function elementIsMetaElementWithName(element, name) {
-  const tagName = element.localName
-  return tagName == "meta" && element.getAttribute("name") == name
 }
 
 function elementWithoutNonce(element) {
