@@ -2,6 +2,7 @@ import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromStrin
 import { expandURL } from "../url"
 import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
+import { prefetchCache } from "./prefetch_cache"
 
 export const FormSubmissionState = {
   initialized: "initialized",
@@ -125,13 +126,20 @@ export class FormSubmission {
   }
 
   requestPreventedHandlingResponse(request, response) {
+    prefetchCache.clear()
+
     this.result = { success: response.succeeded, fetchResponse: response }
   }
 
   requestSucceededWithResponse(request, response) {
     if (response.clientError || response.serverError) {
       this.delegate.formSubmissionFailedWithResponse(this, response)
-    } else if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response)) {
+      return
+    }
+
+    prefetchCache.clear()
+
+    if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response)) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
     } else {

@@ -1,6 +1,21 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
 import { nextBeat, sleep } from "../helpers/page"
+import fs from 'fs'
+import path from 'path'
+
+// eslint-disable-next-line no-undef
+const fixturesPath = path.join(process.cwd(), 'src', 'tests', 'fixtures', 'volatile_posts_database.json')
+
+test.beforeEach(() => {
+  // Clear the contents of the file before each test
+  fs.writeFileSync(fixturesPath, '[]')
+})
+
+test.afterEach(() => {
+  // Clear the contents of the file after each test
+  fs.writeFileSync(fixturesPath, '[]')
+})
 
 test("it prefetches the page", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
@@ -213,6 +228,30 @@ test("it cancels the prefetch request if the link with delay present on the meta
   await sleep(300)
 
   assertRequestNotMade(requestMade)
+})
+
+test("it clears cache on form submission", async ({ page }) => {
+  await page.goto("/__turbo/posts")
+
+  await page.click("#submit")
+  const post = await page.getByTestId("post_1")
+  const postText = await post.innerText()
+  assert.equal(postText, "A new post title")
+
+  await post.click()
+
+  await page.hover("#anchor_back_to_all_posts")
+
+  await page.click("#comment_submit")
+  const comment = await page.getByTestId("comment_1")
+  const commentText = await comment.innerText()
+  assert.equal(commentText, "A new comment")
+
+  await page.click("#anchor_back_to_all_posts")
+
+  const postComments = await page.getByTestId("post_1_comments")
+  const postCommentsText = await postComments.innerText()
+  assert.equal(postCommentsText, "(1 comments)")
 })
 
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
