@@ -348,9 +348,9 @@ export class Visit {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
       } else {
         this.scrollToAnchor() || this.view.scrollToTop()
-      }
-      if (this.isSamePage) {
-        this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
+        if (this.isSamePage) {
+          this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
+        }
       }
 
       this.scrolled = true
