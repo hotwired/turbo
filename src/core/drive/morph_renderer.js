@@ -1,4 +1,4 @@
-import Idiomorph from "idiomorph"
+import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
 import { dispatch } from "../../util"
 import { Renderer } from "../renderer"
 
