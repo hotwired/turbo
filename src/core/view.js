@@ -65,7 +65,7 @@ export class View {
 
         const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
         const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement }
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, isPreview, options)
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)

@@ -298,8 +298,8 @@ export class Session {
     }
   }
 
-  allowsImmediateRender({ element }, isPreview, options) {
-    const event = this.notifyApplicationBeforeRender(element, isPreview, options)
+  allowsImmediateRender({ element }, options) {
+    const event = this.notifyApplicationBeforeRender(element, options)
     const {
       defaultPrevented,
       detail: { render }
@@ -312,9 +312,9 @@ export class Session {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, isPreview, renderMethod) {
+  viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
     this.view.lastRenderedLocation = this.history.location
-    this.notifyApplicationAfterRender(isPreview, renderMethod)
+    this.notifyApplicationAfterRender(renderMethod)
   }
 
   preloadOnLoadLinksForView(element) {
@@ -370,15 +370,15 @@ export class Session {
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody, isPreview, options) {
+  notifyApplicationBeforeRender(newBody, options) {
     return dispatch("turbo:before-render", {
-      detail: { newBody, isPreview, ...options },
+      detail: { newBody, ...options },
       cancelable: true
     })
   }
 
-  notifyApplicationAfterRender(isPreview, renderMethod) {
-    return dispatch("turbo:render", { detail: { isPreview, renderMethod } })
+  notifyApplicationAfterRender(renderMethod) {
+    return dispatch("turbo:render", { detail: { renderMethod } })
   }
 
   notifyApplicationAfterPageLoad(timing = {}) {
