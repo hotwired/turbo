@@ -349,7 +349,7 @@ export class Visit {
       } else {
         this.scrollToAnchor() || this.view.scrollToTop()
         if (this.isSamePage) {
-          this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
+          this.delegate.visitScrolledToSamePageLocation(window.location.href, this.location)
         }
       }
 
