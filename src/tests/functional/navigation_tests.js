@@ -19,7 +19,8 @@ import {
   visitAction,
   waitUntilSelector,
   waitUntilNoSelector,
-  willChangeBody
+  willChangeBody,
+  baseURL
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -404,6 +405,68 @@ test("same-page anchor visits do not trigger visit events", async ({ page }) => 
     await page.click('a[href="#main"]')
     assert.ok(await noNextEventNamed(page, eventName), `same-page links do not trigger ${eventName} events`)
   }
+})
+
+test("hashchange events on restoration visits between same-page anchors", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/one.html")
+  await page.waitForLoadState()
+
+  await page.click("#named-anchor")
+  await nextBeat()
+
+  await page.click("#named-anchor-two")
+  await nextBeat()
+
+  await page.evaluate(() => {
+    window.hashchangeEvents = []
+
+    window.addEventListener("hashchange", (event) => {
+      window.hashchangeEvents.push({ oldURL: event.oldURL, newURL: event.newURL })
+    })
+  })
+
+  await page.goBack()
+  await nextBeat()
+
+  assert.deepEqual(
+    await page.evaluate("window.hashchangeEvents"),
+    [{ oldURL: baseURL(page) + "#named-anchor-two", newURL: baseURL(page) + "#named-anchor" }]
+  )
+})
+
+test("moving between multiple same-page anchors", async ({ page }) => {
+  await page.click("#same-origin-anchored-link-named")
+  await page.waitForLoadState()
+
+  await page.evaluate(() => {
+    window.hashchangeEvents = []
+    window.visitEvents = []
+
+    window.addEventListener("hashchange", (event) => {
+      window.hashchangeEvents.push({ oldURL: event.oldURL, newURL: event.newURL })
+    })
+    window.addEventListener("turbo:visit", (event) => {
+      window.visitEvents.push(event.detail)
+    })
+  })
+
+  await page.click("#named-anchor-two")
+  await nextBeat()
+
+  assert.deepEqual(
+    await page.evaluate("window.hashchangeEvents"),
+    [{ oldURL: baseURL(page) + "#named-anchor", newURL: baseURL(page) + "#named-anchor-two" }]
+  )
+  await page.evaluate("window.hashchangeEvents = []")
+
+  await page.click("#named-anchor")
+  await nextBeat()
+
+  assert.deepEqual(
+    await page.evaluate("window.hashchangeEvents"),
+    [{ oldURL: baseURL(page) + "#named-anchor-two", newURL: baseURL(page) + "#named-anchor" }]
+  )
+  assert.deepEqual(await page.evaluate("window.visitEvents"), [])
 })
 
 test("correct referrer header", async ({ page }) => {

@@ -37,6 +37,11 @@ export function hash(url) {
   return hash
 }
 
+export function baseURL(page) {
+  const url = new URL(page.url())
+  return url.origin + url.pathname
+}
+
 export async function hasSelector(page, selector) {
   return !!(await page.locator(selector).count())
 }
