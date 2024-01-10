@@ -411,10 +411,10 @@ test("hashchange events on restoration visits between same-page anchors", async 
   await page.goto("/src/tests/fixtures/one.html")
   await page.waitForLoadState()
 
-  await page.click("#named-anchor")
+  await page.click("#anchor-one")
   await nextBeat()
 
-  await page.click("#named-anchor-two")
+  await page.click("#anchor-two")
   await nextBeat()
 
   await page.evaluate(() => {
@@ -430,12 +430,12 @@ test("hashchange events on restoration visits between same-page anchors", async 
 
   assert.deepEqual(
     await page.evaluate("window.hashchangeEvents"),
-    [{ oldURL: baseURL(page) + "#named-anchor-two", newURL: baseURL(page) + "#named-anchor" }]
+    [{ oldURL: baseURL(page) + "#anchor-two", newURL: baseURL(page) + "#anchor-one" }]
   )
 })
 
 test("moving between multiple same-page anchors", async ({ page }) => {
-  await page.click("#same-origin-anchored-link-named")
+  await page.goto("/src/tests/fixtures/one.html#anchor-one")
   await page.waitForLoadState()
 
   await page.evaluate(() => {
@@ -450,21 +450,21 @@ test("moving between multiple same-page anchors", async ({ page }) => {
     })
   })
 
-  await page.click("#named-anchor-two")
+  await page.click("#anchor-two")
   await nextBeat()
 
   assert.deepEqual(
     await page.evaluate("window.hashchangeEvents"),
-    [{ oldURL: baseURL(page) + "#named-anchor", newURL: baseURL(page) + "#named-anchor-two" }]
+    [{ oldURL: baseURL(page) + "#anchor-one", newURL: baseURL(page) + "#anchor-two" }]
   )
   await page.evaluate("window.hashchangeEvents = []")
 
-  await page.click("#named-anchor")
+  await page.click("#anchor-one")
   await nextBeat()
 
   assert.deepEqual(
     await page.evaluate("window.hashchangeEvents"),
-    [{ oldURL: baseURL(page) + "#named-anchor-two", newURL: baseURL(page) + "#named-anchor" }]
+    [{ oldURL: baseURL(page) + "#anchor-two", newURL: baseURL(page) + "#anchor-one" }]
   )
   assert.deepEqual(await page.evaluate("window.visitEvents"), [])
 })
