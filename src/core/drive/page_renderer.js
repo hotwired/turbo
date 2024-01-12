@@ -1,5 +1,6 @@
-import { Renderer } from "../renderer"
 import { activateScriptElement, waitForLoad } from "../../util"
+import { Renderer } from "../renderer"
+import { ProgressBarID } from "./progress_bar"
 
 export class PageRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
@@ -73,8 +74,13 @@ export class PageRenderer extends Renderer {
     const mergedHeadElements = this.mergeProvisionalElements()
     const newStylesheetElements = this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
+
     await mergedHeadElements
     await newStylesheetElements
+
+    if (this.willRender) {
+      this.removeUnusedHeadStylesheetElements()
+    }
   }
 
   async replaceBody() {
@@ -103,6 +109,12 @@ export class PageRenderer extends Renderer {
   copyNewHeadScriptElements() {
     for (const element of this.newHeadScriptElements) {
       document.head.appendChild(activateScriptElement(element))
+    }
+  }
+
+  removeUnusedHeadStylesheetElements() {
+    for (const element of this.unusedHeadStylesheetElements) {
+      document.head.removeChild(element)
     }
   }
 
@@ -169,6 +181,14 @@ export class PageRenderer extends Renderer {
 
   async assignNewBody() {
     await this.renderElement(this.currentElement, this.newElement)
+  }
+
+  get unusedHeadStylesheetElements() {
+    return this.oldHeadStylesheetElements.filter((element) => element.id !== ProgressBarID)
+  }
+
+  get oldHeadStylesheetElements() {
+    return this.currentHeadSnapshot.getStylesheetElementsNotInSnapshot(this.newHeadSnapshot)
   }
 
   get newHeadStylesheetElements() {

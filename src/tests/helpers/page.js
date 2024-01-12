@@ -23,6 +23,28 @@ export function disposeAll(...handles) {
   return Promise.all(handles.map((handle) => handle.dispose()))
 }
 
+export function getComputedStyle(page, selector, propertyName) {
+  return page.evaluate(
+    ([selector, propertyName]) => {
+      const element = document.querySelector(selector)
+      return getComputedStyle(element)[propertyName]
+    },
+    [selector, propertyName]
+  )
+}
+
+export function cssClassIsDefined(page, className) {
+  return page.evaluate((className) => {
+    for (const stylesheet of document.styleSheets) {
+      for (const rule of stylesheet.cssRules) {
+        if (rule instanceof CSSStyleRule && rule.selectorText == `.${className}`) {
+          return true
+        }
+      }
+    }
+  }, className)
+}
+
 export function getFromLocalStorage(page, key) {
   return page.evaluate((storageKey) => localStorage.getItem(storageKey), key)
 }
