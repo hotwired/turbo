@@ -1,4 +1,4 @@
-import { test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { assert } from "chai"
 import {
   hasSelector,
@@ -111,6 +111,9 @@ test("receiving a stream message over SSE", async ({ page }) => {
       `<turbo-stream-source id="stream-source" src="/__turbo/messages"></turbo-stream-source>`
     )
   })
+
+  await expect(page.locator("#stream-source")).toHaveCSS("display", "none")
+
   await nextBeat()
   assert.equal(await getReadyState(page, "stream-source"), await page.evaluate(() => EventSource.OPEN))
 
