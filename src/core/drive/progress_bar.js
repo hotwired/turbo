@@ -1,5 +1,7 @@
 import { unindent, getMetaContent } from "../../util"
 
+export const ProgressBarID = "turbo-progress-bar"
+
 export class ProgressBar {
   static animationDuration = 300 /*ms*/
 
@@ -104,6 +106,7 @@ export class ProgressBar {
 
   createStylesheetElement() {
     const element = document.createElement("style")
+    element.id = ProgressBarID
     element.type = "text/css"
     element.textContent = ProgressBar.defaultCSS
     if (this.cspNonce) {
