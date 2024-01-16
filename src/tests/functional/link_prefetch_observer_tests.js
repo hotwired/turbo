@@ -155,70 +155,36 @@ test("it prefetches links with inner elements", async ({ page }) => {
   await assertPrefetchedOnHover({ page, selector: "#anchor_with_inner_elements" })
 })
 
-test("it prefetches links with a delay if present on the element itself", async ({ page }) => {
+test("it prefetches links with a delay", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
   let requestMade = false
   page.on("request", async (request) => (requestMade = true))
 
-  await page.hover("#anchor_with_delay")
-  await sleep(100)
+  await page.hover("#anchor_for_prefetch")
+  await sleep(75)
 
   assertRequestNotMade(requestMade)
 
-  await sleep(300)
+  await sleep(100)
 
   assertRequestMade(requestMade)
 })
 
-test("it cancels the prefetch request if the link with delay present on itself is no longer hovered", async ({ page }) => {
+test("it cancels the prefetch request if the link is no longer hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
   let requestMade = false
   page.on("request", async (request) => (requestMade = true))
 
-  await page.hover("#anchor_with_delay")
-  await sleep(100)
+  await page.hover("#anchor_for_prefetch")
+  await sleep(75)
 
   assertRequestNotMade(requestMade)
 
   await page.mouse.move(0, 0)
 
-  await sleep(300)
-
-  assertRequestNotMade(requestMade)
-})
-
-test("it prefetches links with a delay if present on the meta tag", async ({ page }) => {
-  await goTo({ page, path: "/hover_to_prefetch_with_delay_on_meta_tag.html" })
-
-  let requestMade = false
-  page.on("request", async (request) => (requestMade = true))
-
-  await page.hover("#anchor_for_prefetch")
   await sleep(100)
-
-  assertRequestNotMade(requestMade)
-
-  await sleep(300)
-
-  assertRequestMade(requestMade)
-})
-
-test("it cancels the prefetch request if the link with delay present on the meta tag is no longer hovered", async ({ page }) => {
-  await goTo({ page, path: "/hover_to_prefetch_with_delay_on_meta_tag.html" })
-
-  let requestMade = false
-  page.on("request", async (request) => (requestMade = true))
-
-  await page.hover("#anchor_for_prefetch")
-  await sleep(100)
-
-  assertRequestNotMade(requestMade)
-
-  await page.mouse.move(0, 0)
-
-  await sleep(300)
 
   assertRequestNotMade(requestMade)
 })
@@ -250,6 +216,8 @@ test("it clears cache on form submission", async ({ page }) => {
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await hoverSelector({ page, selector: "#anchor_for_prefetch" })
+
+  await sleep(100)
 
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
@@ -291,6 +259,8 @@ const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
 
   await hoverSelector({ page, selector })
 
+  await sleep(100)
+
   assertRequestMade(requestMade)
 }
 
@@ -303,6 +273,8 @@ const assertNotPrefetchedOnHover = async ({ page, selector, callback }) => {
   })
 
   await hoverSelector({ page, selector })
+
+  await sleep(100)
 
   assert.equal(requestMade, false, "Network request was made when it should not have been.")
 }

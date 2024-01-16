@@ -54,20 +54,15 @@ export class LinkPrefetchObserver {
 
     if (isLink && this.#isPrefetchable(target)) {
       const link = target
-      const delay = link.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
 
-      if (delay) {
-        this.prefetchTimeout = setTimeout(() => {
-          this.#startPrefetch(event, link)
-        } , Number(delay))
-
-        link.addEventListener("mouseleave", this.#cancelPrefetchTimeoutIfAny, {
-          capture: true,
-          passive: true
-        })
-      } else {
+      this.prefetchTimeout = setTimeout(() => {
         this.#startPrefetch(event, link)
-      }
+      } , this.delayBeforePrefetching)
+
+      link.addEventListener("mouseleave", this.#cancelPrefetchTimeoutIfAny, {
+        capture: true,
+        passive: true
+      })
     }
   }
 
