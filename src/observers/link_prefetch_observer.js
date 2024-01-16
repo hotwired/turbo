@@ -9,7 +9,8 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 export class LinkPrefetchObserver {
   started = false
   delayBeforePrefetching = 100
-  triggerEvent = "mouseenter"
+  hoverTriggerEvent = "mouseenter"
+  touchTriggerEvent = "touchstart"
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -29,7 +30,11 @@ export class LinkPrefetchObserver {
   stop() {
     if (!this.started) return
 
-    this.eventTarget.removeEventListener(this.triggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+      capture: true,
+      passive: true
+    })
+    this.eventTarget.removeEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
@@ -38,7 +43,11 @@ export class LinkPrefetchObserver {
   }
 
   #enable = () => {
-    this.eventTarget.addEventListener(this.triggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+      capture: true,
+      passive: true
+    })
+    this.eventTarget.addEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
