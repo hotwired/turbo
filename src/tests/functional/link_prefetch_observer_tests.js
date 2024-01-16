@@ -49,6 +49,11 @@ test("it doesn't prefetch the page when link is inside an element with data-turb
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_prefetch_false_parent" })
 })
 
+test("it does prefech the page when link is inside a container with data-turbo-prefetch=true, that is within an element with data-turbo-prefetch=false", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_with_turbo_prefetch_true_parent_within_turbo_prefetch_false_parent" })
+})
+
 test("it doesn't prefetch the page when link has data-turbo-prefetch=false", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_prefetch_false" })

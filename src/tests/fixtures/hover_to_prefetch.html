@@ -20,6 +20,9 @@
     </div>
     <div data-turbo-prefetch="false">
       <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_prefetch_false_parent">Won't prefetch when hovering me</a>
+      <div data-turbo-prefetch="true">
+        <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_prefetch_true_parent_within_turbo_prefetch_false_parent">Hover to prefetch me</a>
+      </div>
     </div>
     <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_prefetch_false" data-turbo-prefetch="false"
       >Won't prefetch when hovering me</a>
