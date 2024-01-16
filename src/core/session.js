@@ -13,7 +13,7 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy } from "../util"
+import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy, debounce } from "../util"
 import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
@@ -44,10 +44,13 @@ export class Session {
   progressBarDelay = 500
   started = false
   formMode = "on"
+  #pageRefreshDebouncePeriod = 150
 
   constructor(recentRequests) {
     this.recentRequests = recentRequests
     this.preloader = new Preloader(this, this.view.snapshotCache)
+    this.debouncedRefresh = this.refresh
+    this.pageRefreshDebouncePeriod = this.pageRefreshDebouncePeriod
   }
 
   start() {
@@ -142,6 +145,15 @@ export class Session {
 
   get restorationIdentifier() {
     return this.history.restorationIdentifier
+  }
+
+  get pageRefreshDebouncePeriod() {
+    return this.#pageRefreshDebouncePeriod
+  }
+
+  set pageRefreshDebouncePeriod(value) {
+    this.refresh = debounce(this.debouncedRefresh.bind(this), value)
+    this.#pageRefreshDebouncePeriod = value
   }
 
   // Preloader delegate

@@ -222,11 +222,11 @@ test("changes the html[lang] attribute", async ({ page }) => {
   assert.equal(await page.getAttribute("html", "lang"), "es")
 })
 
-test("accumulates asset elements in head", async ({ page }) => {
-  const assetElements = () => page.$$('script, style, link[rel="stylesheet"]')
+test("accumulates script elements in head", async ({ page }) => {
+  const assetElements = () => page.$$('script')
   const originalElements = await assetElements()
 
-  await page.click("#additional-assets-link")
+  await page.click("#additional-script-link")
   await nextBody(page)
   const newElements = await assetElements()
   assert.notOk(await deepElementsEqual(page, newElements, originalElements))

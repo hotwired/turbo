@@ -23,6 +23,28 @@ export function disposeAll(...handles) {
   return Promise.all(handles.map((handle) => handle.dispose()))
 }
 
+export function getComputedStyle(page, selector, propertyName) {
+  return page.evaluate(
+    ([selector, propertyName]) => {
+      const element = document.querySelector(selector)
+      return getComputedStyle(element)[propertyName]
+    },
+    [selector, propertyName]
+  )
+}
+
+export function cssClassIsDefined(page, className) {
+  return page.evaluate((className) => {
+    for (const stylesheet of document.styleSheets) {
+      for (const rule of stylesheet.cssRules) {
+        if (rule instanceof CSSStyleRule && rule.selectorText == `.${className}`) {
+          return true
+        }
+      }
+    }
+  }, className)
+}
+
 export function getFromLocalStorage(page, key) {
   return page.evaluate((storageKey) => localStorage.getItem(storageKey), key)
 }
@@ -66,6 +88,12 @@ export function nextBeat() {
 
 export function nextBody(_page, timeout = 500) {
   return sleep(timeout)
+}
+
+export async function nextPageRefresh(page, timeout = 500) {
+  const pageRefreshDebouncePeriod = await page.evaluate(() => window.Turbo.session.pageRefreshDebouncePeriod)
+
+  return sleep(pageRefreshDebouncePeriod + timeout)
 }
 
 export async function nextEventNamed(page, eventName, expectedDetail = {}) {

@@ -2,7 +2,7 @@ import { StreamElement } from "../../elements"
 import { nextAnimationFrame } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
 import { assert } from "@open-wc/testing"
-import { nextBeat } from "../helpers/page"
+import { sleep } from "../helpers/page"
 import * as Turbo from "../../index"
 
 function createStreamElement(action, target, templateElement) {
@@ -177,7 +177,7 @@ test("test action=refresh", async () => {
   const element = createStreamElement("refresh")
   subject.append(element)
 
-  await nextBeat()
+  await sleep(250)
 
   assert.notOk(document.body.hasAttribute("data-modified"))
 })
@@ -192,7 +192,7 @@ test("test action=refresh discarded when matching request id", async () => {
   element.setAttribute("request-id", "123")
   subject.append(element)
 
-  await nextBeat()
+  await sleep(250)
 
   assert.ok(document.body.hasAttribute("data-modified"))
 })

@@ -1,6 +1,6 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe } from "../../http/fetch_request"
 import { expandURL } from "../url"
-import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
+import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { prefetchCache } from "./prefetch_cache"
 
@@ -118,6 +118,7 @@ export class FormSubmission {
     this.state = FormSubmissionState.waiting
     this.submitter?.setAttribute("disabled", "")
     this.setSubmitsWith()
+    markAsBusy(this.formElement)
     dispatch("turbo:submit-start", {
       target: this.formElement,
       detail: { formSubmission: this }
@@ -163,6 +164,7 @@ export class FormSubmission {
     this.state = FormSubmissionState.stopped
     this.submitter?.removeAttribute("disabled")
     this.resetSubmitterText()
+    clearBusyState(this.formElement)
     dispatch("turbo:submit-end", {
       target: this.formElement,
       detail: { formSubmission: this, ...this.result }
