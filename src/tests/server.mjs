@@ -154,29 +154,32 @@ router.put("/messages/:id", (request, response) => {
 })
 
 router.get("/posts", async (request, response) => {
-  const posts = await getPosts()
+  const { worker_id } = request.query
 
-  const res = templateRenderer.render("./posts", { posts })
+  const posts = await getPosts(worker_id)
+
+  const res = templateRenderer.render("./posts", { posts, worker_id })
 
   response.type("html").status(200).send(res)
 })
 
 router.post("/posts", async (request, response) => {
-  const { title, body } = request.body
+  const { title, body, worker_id } = request.body
 
-  await addPost(title, body)
+  await addPost(title, body, worker_id)
 
-  response.redirect(303, "/__turbo/posts")
+  response.redirect(303, `/__turbo/posts?worker_id=${worker_id}`)
 })
 
 router.get("/posts/:id/", async (request, response) => {
-  const posts = await getPosts()
+  const { worker_id } = request.query
   const { id } = request.params
 
+  const posts = await getPosts(worker_id)
   const post = posts.find((post) => post.id == id)
 
   if (post) {
-    const res = templateRenderer.render("./post", { post })
+    const res = templateRenderer.render("./post", { post, worker_id })
 
     response.type("html").status(200).send(res)
   } else {
@@ -186,10 +189,11 @@ router.get("/posts/:id/", async (request, response) => {
 
 router.post("/posts/:id", async (request, response) => {
   if (request.body._method == "delete") {
+    const { worker_id } = request.body
     const { id } = request.params
 
-    await deletePost(id)
-    response.redirect(303, "/__turbo/posts")
+    await deletePost(id, worker_id)
+    response.redirect(303, `/__turbo/posts?worker_id=${worker_id}`)
   } else {
     response.sendStatus(422)
   }
@@ -197,50 +201,69 @@ router.post("/posts/:id", async (request, response) => {
 
 router.post("/posts/:post_id/comments", async (request, response) => {
   const { post_id } = request.params
+  const { worker_id } = request.body
   const { body } = request.body.comment
 
-  const post = await getPost(post_id)
+  const post = await getPost(post_id, worker_id)
 
   if (post) {
-    await addComment(post_id, body)
+    await addComment(post_id, body, worker_id)
 
-    response.redirect(303, `/__turbo/posts/${post_id}`)
+    response.redirect(303, `/__turbo/posts/${post_id}?worker_id=${worker_id}`)
   } else {
     response.sendStatus(404)
   }
 })
 
-const databaseName = "src/tests/fixtures/volatile_posts_database.json"
-
-const getPosts = async () => {
-  return JSON.parse(fs.readFileSync(databaseName).toString())
+const postsDatabaseName = (worker_id) => {
+  return `src/tests/fixtures/volatile_posts_database_${worker_id}.json`
 }
 
-const addPost = async (title, body) => {
-  const posts = await getPosts()
+const ensureDatabase = async (worker_id) => {
+  if (worker_id == null || worker_id == undefined) {
+    throw new Error("worker_id is required")
+  }
+
+  if (!fs.existsSync(postsDatabaseName(worker_id))) {
+    fs.writeFileSync(postsDatabaseName(worker_id), "[]")
+  }
+}
+
+const getPosts = async (worker_id) => {
+  await ensureDatabase(worker_id)
+
+  return JSON.parse(fs.readFileSync(postsDatabaseName(worker_id)).toString())
+}
+
+const addPost = async (title, body, worker_id) => {
+  await ensureDatabase(worker_id)
+  const posts = await getPosts(worker_id)
 
   const id = posts.length + 1
 
   posts.push({ id, title, body })
 
-  return fs.writeFileSync(databaseName, JSON.stringify(posts))
+  return fs.writeFileSync(postsDatabaseName(worker_id), JSON.stringify(posts))
 }
 
-const getPost = async (id) => {
-  const posts = await getPosts()
+const getPost = async (id, worker_id) => {
+  await ensureDatabase(worker_id)
+  const posts = await getPosts(worker_id)
 
   return posts.find((post) => post.id == id)
 }
 
-const deletePost = async (id) => {
-  const posts = await getPosts()
+const deletePost = async (id, worker_id) => {
+  await ensureDatabase(worker_id)
+  const posts = await getPosts(worker_id)
   const newPosts = posts.filter((post) => post.id != id)
 
-  return fs.writeFileSync(databaseName, JSON.stringify(newPosts))
+  return fs.writeFileSync(postsDatabaseName(worker_id), JSON.stringify(newPosts))
 }
 
-const addComment = async (postId, body) => {
-  const posts = await getPosts()
+const addComment = async (postId, body, worker_id) => {
+  await ensureDatabase(worker_id)
+  const posts = await getPosts(worker_id)
   const post = posts.find((post) => post.id == postId)
   const comments = post.comments || []
   const id = comments.length + 1
@@ -248,7 +271,7 @@ const addComment = async (postId, body) => {
   post.comments = comments
   post.comments.push({ id, body })
 
-  return fs.writeFileSync(databaseName, JSON.stringify(posts))
+  return fs.writeFileSync(postsDatabaseName(worker_id), JSON.stringify(posts))
 }
 
 router.get("/messages", (request, response) => {

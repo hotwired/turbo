@@ -5,16 +5,14 @@ import fs from 'fs'
 import path from 'path'
 
 // eslint-disable-next-line no-undef
-const fixturesPath = path.join(process.cwd(), 'src', 'tests', 'fixtures', 'volatile_posts_database.json')
-
-test.beforeEach(() => {
-  // Clear the contents of the file before each test
-  fs.writeFileSync(fixturesPath, '[]')
-})
+const fixturesDir = path.join(process.cwd(), 'src', 'tests', 'fixtures')
 
 test.afterEach(() => {
-  // Clear the contents of the file after each test
-  fs.writeFileSync(fixturesPath, '[]')
+  fs.readdirSync(fixturesDir).forEach(file => {
+    if (file.startsWith('volatile_posts_database')) {
+      fs.unlinkSync(path.join(fixturesDir, file))
+    }
+  })
 })
 
 test("it prefetches the page", async ({ page }) => {
@@ -190,24 +188,31 @@ test("it cancels the prefetch request if the link is no longer hovered", async (
 })
 
 test("it clears cache on form submission", async ({ page }) => {
-  await page.goto("/__turbo/posts")
+  // eslint-disable-next-line no-undef
+  await page.goto(`/__turbo/posts?worker_id=${process.env.TEST_PARALLEL_INDEX}`)
 
+  // Create a post
   await page.click("#submit")
   const post = await page.getByTestId("post_1")
   const postText = await post.innerText()
   assert.equal(postText, "A new post title")
 
+  // Visit the post
   await post.click()
 
+  // Hover over the link back to all posts, prefetching page showing 0 comments
   await page.hover("#anchor_back_to_all_posts")
 
+  // Create a comment, prefetch cache should be discarded
   await page.click("#comment_submit")
   const comment = await page.getByTestId("comment_1")
   const commentText = await comment.innerText()
   assert.equal(commentText, "A new comment")
 
+  // Go back to all posts
   await page.click("#anchor_back_to_all_posts")
 
+  // Assert that the comments count is 1, not 0
   const postComments = await page.getByTestId("post_1_comments")
   const postCommentsText = await postComments.innerText()
   assert.equal(postCommentsText, "(1 comments)")

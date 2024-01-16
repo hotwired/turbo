@@ -22,13 +22,15 @@
     <form action="/__turbo/posts/<%= it.post.id %>/comments" method="post">
       <input type="text" name="comment[body]" value="A new comment" autocomplete="off">
       <input type="submit" value="Add comment" id="comment_submit">
+      <input type="hidden" name="worker_id" value="<%= it.worker_id %>">
     </form>
 
     <form action="/__turbo/posts/<%= it.post.id %>" method="post">
       <input type="hidden" name="_method" value="delete">
       <input type="submit" value="Delete">
+      <input type="hidden" name="worker_id" value="<%= it.worker_id %>">
     </form>
 
-    <a href="/__turbo/posts" id="anchor_back_to_all_posts">Back to all posts</a>
+    <a href="/__turbo/posts?worker_id=<%= it.worker_id %>" id="anchor_back_to_all_posts">Back to all posts</a>
   </body>
 </html>

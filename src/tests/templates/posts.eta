@@ -9,7 +9,7 @@
     <ul>
       <% it.posts.forEach(post => { %>
         <li>
-          <a href="/__turbo/posts/<%= post.id %>" data-testid="post_<%= post.id %>"><%= post.title %></a>
+          <a href="/__turbo/posts/<%= post.id %>?worker_id=<%= it.worker_id %>" data-testid="post_<%= post.id %>"><%= post.title %></a>
           
           <span data-testid="post_<%= post.id %>_comments">(<%= post.comments?.length || 0 %> comments)</span>
         </li>
@@ -22,6 +22,8 @@
 
       <label for="body">Body</label>
       <textarea name="body" id="body">A new post body</textarea>
+
+      <input type="hidden" name="worker_id" value="<%= it.worker_id %>">
       
       <input type="submit" id="submit">
     </form>
