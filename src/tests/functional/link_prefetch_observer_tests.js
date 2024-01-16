@@ -124,18 +124,6 @@ test("it prefetches when visiting a page without the meta tag, then visiting a p
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
-test("it prefetches the page on mousedown when turbo-prefetch-trigger-event is set to mousedown", async ({ page }) => {
-  await goTo({ page, path: "/hover_to_prefetch_mousedown.html" })
-  await assertPrefetchedOnMouseDown({ page, selector: "#anchor_for_prefetch" })
-})
-
-test("it doesn't prefetch the page on mouseover when turbo-prefetch-trigger-event is set to mousedown", async ({
-  page
-}) => {
-  await goTo({ page, path: "/hover_to_prefetch_mousedown.html" })
-  await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
-})
-
 test("it prefetches the page when turbo-prefetch-cache-time is set to 1", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch_custom_cache_time.html" })
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
@@ -317,21 +305,6 @@ const assertNotPrefetchedOnHover = async ({ page, selector, callback }) => {
   await hoverSelector({ page, selector })
 
   assert.equal(requestMade, false, "Network request was made when it should not have been.")
-}
-
-const assertPrefetchedOnMouseDown = async ({ page, selector, callback }) => {
-  let requestMade = false
-
-  page.on("request", (request) => {
-    callback && callback(request)
-    requestMade = true
-  })
-
-  await page.hover(selector)
-  await page.mouse.down()
-  await nextBeat()
-
-  assertRequestMade(requestMade)
 }
 
 const assertRequestMade = (requestMade) => {

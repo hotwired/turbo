@@ -7,11 +7,9 @@ import {
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
-  triggerEvents = {
-    mouseenter: "mouseenter",
-    mousedown: "mousedown"
-  }
   started = false
+  delayBeforePrefetching = 100
+  triggerEvent = "mouseenter"
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -31,7 +29,7 @@ export class LinkPrefetchObserver {
   stop() {
     if (!this.started) return
 
-    this.eventTarget.removeEventListener(this.#triggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener(this.triggerEvent, this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
@@ -40,7 +38,7 @@ export class LinkPrefetchObserver {
   }
 
   #enable = () => {
-    this.eventTarget.addEventListener(this.#triggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener(this.triggerEvent, this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
@@ -131,10 +129,6 @@ export class LinkPrefetchObserver {
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
 
   requestFailedWithResponse(fetchRequest, fetchResponse) {}
-
-  get #triggerEvent() {
-    return this.triggerEvents[getMetaContent("turbo-prefetch-trigger-event")] || this.triggerEvents.mouseenter
-  }
 
   get #cacheTtl() {
     return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
