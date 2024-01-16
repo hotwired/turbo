@@ -1,15 +1,15 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
 import { nextBeat, sleep } from "../helpers/page"
-import fs from 'fs'
-import path from 'path'
+import fs from "fs"
+import path from "path"
 
 // eslint-disable-next-line no-undef
-const fixturesDir = path.join(process.cwd(), 'src', 'tests', 'fixtures')
+const fixturesDir = path.join(process.cwd(), "src", "tests", "fixtures")
 
 test.afterEach(() => {
   fs.readdirSync(fixturesDir).forEach(file => {
-    if (file.startsWith('volatile_posts_database')) {
+    if (file.startsWith("volatile_posts_database")) {
       fs.unlinkSync(path.join(fixturesDir, file))
     }
   })
