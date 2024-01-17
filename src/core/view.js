@@ -56,7 +56,7 @@ export class View {
   // Rendering
 
   async render(renderer) {
-    const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
+    const { shouldRender, newSnapshot: snapshot } = renderer
     if (shouldRender) {
       try {
         this.renderPromise = new Promise((resolve) => (this.#resolveRenderPromise = resolve))
@@ -65,11 +65,11 @@ export class View {
 
         const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
         const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement }
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, isPreview, options)
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, renderer, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
-        this.delegate.viewRenderedSnapshot(snapshot, isPreview, this.renderer.renderMethod)
+        this.delegate.viewRenderedSnapshot(renderer)
         this.delegate.preloadOnLoadLinksForView(this.element)
         this.finishRenderingSnapshot(renderer)
       } finally {
