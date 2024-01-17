@@ -17,7 +17,7 @@ export class FormLinkClickObserver {
 
   // Link hover observer delegate
 
-  canPrefetchAndCacheRequestToLocation(link, location, event) {
+  canPrefetchRequestToLocation(link, location) {
     return false
   }
 

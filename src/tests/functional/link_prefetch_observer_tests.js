@@ -169,53 +169,22 @@ test("it prefetches links with a delay", async ({ page }) => {
   assertRequestMade(requestMade)
 })
 
-test("it cancels the prefetch request if the link is no longer hovered", async ({ page }) => {
+test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
-  let requestMade = false
-  page.on("request", async (request) => (requestMade = true))
+  let requestCount = 0
+  page.on("request", async () => (requestCount++))
 
   await page.hover("#anchor_for_prefetch")
-  await sleep(75)
+  await sleep(200)
 
-  assertRequestNotMade(requestMade)
-
+  assert.equal(requestCount, 1)
   await page.mouse.move(0, 0)
 
-  await sleep(100)
+  await page.hover("#anchor_for_prefetch")
+  await sleep(200)
 
-  assertRequestNotMade(requestMade)
-})
-
-test("it clears cache on form submission", async ({ page }) => {
-  // eslint-disable-next-line no-undef
-  await page.goto(`/__turbo/posts?worker_id=${process.env.TEST_PARALLEL_INDEX}`)
-
-  // Create a post
-  await page.click("#submit")
-  const post = await page.getByTestId("post_1")
-  const postText = await post.innerText()
-  assert.equal(postText, "A new post title")
-
-  // Visit the post
-  await post.click()
-
-  // Hover over the link back to all posts, prefetching page showing 0 comments
-  await page.hover("#anchor_back_to_all_posts")
-
-  // Create a comment, prefetch cache should be discarded
-  await page.click("#comment_submit")
-  const comment = await page.getByTestId("comment_1")
-  const commentText = await comment.innerText()
-  assert.equal(commentText, "A new comment")
-
-  // Go back to all posts
-  await page.click("#anchor_back_to_all_posts")
-
-  // Assert that the comments count is 1, not 0
-  const postComments = await page.getByTestId("post_1_comments")
-  const postCommentsText = await postComments.innerText()
-  assert.equal(postCommentsText, "(1 comments)")
+  assert.equal(requestCount, 2)
 })
 
 test("it prefetches page on touchstart", async ({ page }) => {
@@ -230,23 +199,6 @@ test("it does not make a network request when clicking on a link that has been p
   await sleep(100)
 
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
-})
-
-test("it does not more than 2 network requests when hovering between 2 links", async ({ page }) => {
-  await goTo({ page, path: "/hover_to_prefetch.html" })
-
-  let requestCount = 0
-
-  page.on("request", async (request) => {
-    requestCount++
-  })
-
-  await hoverSelector({ page, selector: "#anchor_for_prefetch" })
-  await hoverSelector({ page, selector: "#anchor_for_prefetch_other_href" })
-  await hoverSelector({ page, selector: "#anchor_for_prefetch" })
-  await hoverSelector({ page, selector: "#anchor_for_prefetch_other_href" })
-
-  assert.equal(requestCount, 2)
 })
 
 test("it follows the link using the cached response when clicking on a link that has been prefetched", async ({
