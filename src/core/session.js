@@ -18,8 +18,6 @@ import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 import { Cache } from "./cache"
-import { prefetchCache } from "./drive/prefetch_cache"
-import { FetchMethod, FetchRequest } from "../http/fetch_request"
 
 export class Session {
   navigator = new Navigator(this)
@@ -207,33 +205,11 @@ export class Session {
 
   // Link hover observer delegate
 
-  canPrefetchAndCacheRequestToLocation(link, location, event) {
-    const absoluteUrl = location.toString()
-    const cached = prefetchCache.get(absoluteUrl)
-
+  canPrefetchRequestToLocation(link, location) {
     return (
       this.elementIsNavigatable(link) &&
-        locationIsVisitable(location, this.snapshot.rootLocation) &&
-        (!cached || cached.ttl < new Date())
+        locationIsVisitable(location, this.snapshot.rootLocation)
     )
-  }
-
-  prefetchAndCacheRequestToLocation(link, location, cacheTtl) {
-    const absoluteUrl = location.toString()
-    const fetchRequest = new FetchRequest(
-      this.linkPrefetchObserver,
-      FetchMethod.get,
-      location,
-      new URLSearchParams(),
-      link
-    )
-
-    fetchRequest.perform()
-
-    prefetchCache.set(absoluteUrl, {
-      fetchRequest,
-      ttl: new Date(new Date().getTime() + cacheTtl)
-    })
   }
 
   // Link click observer delegate

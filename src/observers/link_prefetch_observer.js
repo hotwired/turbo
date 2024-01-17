@@ -4,6 +4,8 @@ import {
   getMetaContent,
   findClosestRecursively
 } from "../util"
+
+import { FetchMethod, FetchRequest } from "../http/fetch_request"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
@@ -63,28 +65,19 @@ export class LinkPrefetchObserver {
 
     if (isLink && this.#isPrefetchable(target)) {
       const link = target
+      const location = getLocationForLink(link)
 
-      this.prefetchTimeout = setTimeout(() => {
-        this.#startPrefetch(event, link)
-      } , this.delayBeforePrefetching)
+      if (this.delegate.canPrefetchRequestToLocation(link, location)) {
+        const fetchRequest = new FetchRequest(
+          this,
+          FetchMethod.get,
+          location,
+          new URLSearchParams(),
+          target
+        )
 
-      link.addEventListener("mouseleave", this.#cancelPrefetchTimeoutIfAny, {
-        capture: true,
-        passive: true
-      })
-    }
-  }
-
-  #startPrefetch = (event, link) => {
-    const location = getLocationForLink(link)
-    if (this.delegate.canPrefetchAndCacheRequestToLocation(link, location, event)) {
-      this.delegate.prefetchAndCacheRequestToLocation(link, location, this.#cacheTtl)
-    }
-  }
-
-  #cancelPrefetchTimeoutIfAny = () => {
-    if (this.prefetchTimeout) {
-      clearTimeout(this.prefetchTimeout)
+        prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
+      }
     }
   }
 
@@ -92,11 +85,12 @@ export class LinkPrefetchObserver {
     if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "get") {
       const cached = prefetchCache.get(event.detail.url.toString())
 
-      if (cached && cached.ttl > new Date()) {
-        // User clicked link, use cache response and clear cache.
-        event.detail.fetchRequest = cached.fetchRequest
-        prefetchCache.clear()
+      if (cached) {
+        // User clicked link, use cache response
+        event.detail.fetchRequest = cached
       }
+
+      prefetchCache.clear()
     }
   }
 
