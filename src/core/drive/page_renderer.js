@@ -114,7 +114,12 @@ export class PageRenderer extends Renderer {
 
   removeUnusedHeadStylesheetElements() {
     for (const element of this.unusedHeadStylesheetElements) {
-      document.head.removeChild(element)
+      // Trix dynamically adds styles to the head that we want to keep around
+      // Long term we should moves those styles to Trix's CSS file
+      // but for now we'll just skip removing them
+      if (!element.dataset.tagName) {
+        document.head.removeChild(element)
+      }
     }
   }
 
