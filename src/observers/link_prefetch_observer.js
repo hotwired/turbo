@@ -10,7 +10,6 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
   started = false
-  delayBeforePrefetching = 100
   hoverTriggerEvent = "mouseenter"
   touchTriggerEvent = "touchstart"
 
