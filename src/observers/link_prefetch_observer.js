@@ -76,6 +76,8 @@ export class LinkPrefetchObserver {
         )
 
         prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
+
+        link.addEventListener("mouseleave", () => prefetchCache.clear(), { once: true })
       }
     }
   }

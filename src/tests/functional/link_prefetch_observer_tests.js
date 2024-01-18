@@ -169,6 +169,24 @@ test("it prefetches links with a delay", async ({ page }) => {
   assertRequestMade(requestMade)
 })
 
+test("it cancels the prefetch request if the link is no longer hovered", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_for_prefetch")
+  await sleep(75)
+
+  assertRequestNotMade(requestMade)
+
+  await page.mouse.move(0, 0)
+
+  await sleep(100)
+
+  assertRequestNotMade(requestMade)
+})
+
 test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
