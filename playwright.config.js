@@ -8,7 +8,8 @@ const config = {
         ...devices["Desktop Chrome"],
         contextOptions: {
           timeout: 60000
-        }
+        },
+        hasTouch: true
       }
     },
     {
@@ -17,7 +18,8 @@ const config = {
         ...devices["Desktop Firefox"],
         contextOptions: {
           timeout: 60000
-        }
+        },
+        hasTouch: true
       }
     }
   ],

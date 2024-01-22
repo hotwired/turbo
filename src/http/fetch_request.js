@@ -121,10 +121,17 @@ export class FetchRequest {
   async perform() {
     const { fetchOptions } = this
     this.delegate.prepareRequest(this)
-    await this.#allowRequestToBeIntercepted(fetchOptions)
+    const event = await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
-      const response = await fetch(this.url.href, fetchOptions)
+
+      if (event.detail.fetchRequest) {
+        this.response = event.detail.fetchRequest.response
+      } else {
+        this.response = fetch(this.url.href, fetchOptions)
+      }
+
+      const response = await this.response
       return await this.receive(response)
     } catch (error) {
       if (error.name !== "AbortError") {
@@ -186,6 +193,8 @@ export class FetchRequest {
     })
     this.url = event.detail.url
     if (event.defaultPrevented) await requestInterception
+
+    return event
   }
 
   #willDelegateErrorHandling(error) {

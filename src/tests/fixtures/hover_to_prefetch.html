@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hover to Prefetch</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <meta name="turbo-prefetch" content="true" />
+  </head>
+
+  <body>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch">Hover to prefetch me</a>
+    <a href="/src/tests/fixtures/bare.html" id="anchor_for_prefetch_other_href">Hover to prefetch me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_inner_elements">
+      <span>Hover to prefetch me</span>
+    </a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_stream" data-turbo-stream>Hover to prefetch me</a>
+    <div data-turbo="false">
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_false_parent">Won't prefetch when hovering me</a>
+    </div>
+    <div data-turbo-prefetch="false">
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_prefetch_false_parent">Won't prefetch when hovering me</a>
+      <div data-turbo-prefetch="true">
+        <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_prefetch_true_parent_within_turbo_prefetch_false_parent">Hover to prefetch me</a>
+      </div>
+    </div>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_prefetch_false" data-turbo-prefetch="false"
+      >Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_turbo_false" data-turbo="false"
+      >Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/hover_to_prefetch.html" id="anchor_for_same_location"
+      >Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html?foo=bar" id="anchor_for_same_location_with_query"
+      >Hover to prefetch me</a>
+    <a href="https://example.com" id="anchor_for_different_origin">Won't prefetch when hovering me</a>
+    <a href="http://localhost:9000/src/tests/fixtures/prefetched.html" id="anchor_with_whole_url"
+      >Hover to prefetch me</a>
+    <a href="#some_anchor" id="anchor_with_hash">Won't prefetch when hovering me</a>
+    <a href="ftp://example.com" id="anchor_with_ftp_protocol">Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html" target="prefetch_iframe" id="anchor_with_iframe_target"
+      >Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html" data-turbo-method="post" id="anchor_with_post_method"
+      >Won't prefetch when hovering me</a>
+    <iframe src="/src/tests/fixtures/hover_to_prefetch_iframe.html" name="prefetch_iframe"> </iframe>
+  </body>
+</html>

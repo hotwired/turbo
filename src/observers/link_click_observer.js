@@ -1,5 +1,4 @@
-import { expandURL } from "../core/url"
-import { findClosestRecursively } from "../util"
+import { doesNotTargetIFrame, findLinkFromClickTarget, getLocationForLink } from "../util"
 
 export class LinkClickObserver {
   started = false
@@ -31,9 +30,9 @@ export class LinkClickObserver {
   clickBubbled = (event) => {
     if (event instanceof MouseEvent && this.clickEventIsSignificant(event)) {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
-      const link = this.findLinkFromClickTarget(target)
+      const link = findLinkFromClickTarget(target)
       if (link && doesNotTargetIFrame(link)) {
-        const location = this.getLocationForLink(link)
+        const location = getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location, event)) {
           event.preventDefault()
           this.delegate.followedLinkToLocation(link, location)
@@ -52,25 +51,5 @@ export class LinkClickObserver {
       event.metaKey ||
       event.shiftKey
     )
-  }
-
-  findLinkFromClickTarget(target) {
-    return findClosestRecursively(target, "a[href]:not([target^=_]):not([download])")
-  }
-
-  getLocationForLink(link) {
-    return expandURL(link.getAttribute("href") || "")
-  }
-}
-
-function doesNotTargetIFrame(anchor) {
-  if (anchor.hasAttribute("target")) {
-    for (const element of document.getElementsByName(anchor.target)) {
-      if (element instanceof HTMLIFrameElement) return false
-    }
-
-    return true
-  } else {
-    return true
   }
 }
