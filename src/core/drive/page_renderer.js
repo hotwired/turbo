@@ -186,9 +186,9 @@ export class PageRenderer extends Renderer {
     return this.oldHeadStylesheetElements.filter((element) => {
       return !(element.hasAttribute("data-turbo-permanent") ||
         // Trix dynamically adds styles to the head that we want to keep around which have a
-        // `data-page-name` attribute. Long term we should moves those styles to Trix's CSS file
+        // `data-tag-name` attribute. Long term we should moves those styles to Trix's CSS file
         // but for now we'll just skip removing them
-        element.hasAttribute("data-page-name"))
+        element.hasAttribute("data-tag-name"))
     })
   }
 
