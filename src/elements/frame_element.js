@@ -28,6 +28,21 @@ export class FrameElement extends HTMLElement {
     return ["disabled", "loading", "src"]
   }
 
+  /**
+   * Returns the `<turbo-frame>` element located by its `[id]` attribute.
+   * Returns `null` when there is not element with a matching `[id]`, or when
+   * the element with a matching `[id]` is not a `<turbo-frame>`.
+   */
+  static getElementById(id) {
+    if (id) {
+      const element = document.getElementById(id)
+
+      if (element instanceof this) {
+        return element
+      }
+    }
+  }
+
   constructor() {
     super()
     this.delegate = new FrameElement.delegateConstructor(this)

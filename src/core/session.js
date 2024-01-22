@@ -163,9 +163,9 @@ export class Session {
     const frameTarget = element.getAttribute("data-turbo-frame")
     const frame = frameTarget == "_top" ?
       null :
-      document.getElementById(frameTarget) || findClosestRecursively(element, "turbo-frame:not([disabled])")
+      FrameElement.getElementById(frameTarget) || findClosestRecursively(element, "turbo-frame")
 
-    if (isUnsafe || isStream || frame instanceof FrameElement) {
+    if (isUnsafe || isStream || (frame && !frame.disabled)) {
       return false
     } else {
       const location = new URL(element.href)
