@@ -1,6 +1,5 @@
 import { activateScriptElement, waitForLoad } from "../../util"
 import { Renderer } from "../renderer"
-import { ProgressBarID } from "./progress_bar"
 
 export class PageRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
@@ -184,7 +183,13 @@ export class PageRenderer extends Renderer {
   }
 
   get unusedHeadStylesheetElements() {
-    return this.oldHeadStylesheetElements.filter((element) => element.id !== ProgressBarID)
+    return this.oldHeadStylesheetElements.filter((element) => {
+      return !(element.hasAttribute("data-turbo-permanent") ||
+        // Trix dynamically adds styles to the head that we want to keep around which have a
+        // `data-page-name` attribute. Long term we should moves those styles to Trix's CSS file
+        // but for now we'll just skip removing them
+        element.hasAttribute("data-page-name"))
+    })
   }
 
   get oldHeadStylesheetElements() {

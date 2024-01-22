@@ -7,9 +7,12 @@ test.beforeEach(async ({ page }) => {
 })
 
 test("navigating removes unused style elements", async ({ page }) => {
+  assert.ok(await hasSelector(page, 'style[id="turbo-progress-bar"]'))
+
   await page.locator("#go-right").click()
   await nextBody(page)
 
+  assert.ok(await hasSelector(page, 'style[id="turbo-progress-bar"]'))
   assert.ok(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/common.css"]'))
   assert.ok(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/right.css"]'))
   assert.notOk(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/left.css"]'))
