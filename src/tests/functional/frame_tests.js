@@ -652,6 +652,39 @@ test("navigating turbo-frame[data-turbo-action=advance] from within pushes URL s
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame.html")
 })
 
+test("navigating turbo-frame[data-turbo-action=advance] from outside with target pushes URL state", async ({ page }) => {
+  await page.click("#add-turbo-action-to-frame")
+  await page.click("#hello-link-frame")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("h1")).toHaveText("Frames")
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  expect(pathname(page.url())).toEqual("/src/tests/fixtures/frames/frame.html")
+})
+
+test("navigating turbo-frame[data-turbo-action=advance] with Turbo.visit pushes URL state", async ({ page }) => {
+  const path = "/src/tests/fixtures/frames/frame.html"
+
+  await page.click("#add-turbo-action-to-frame")
+  await page.evaluate((path) => window.Turbo.visit(path, { frame: "frame" }), path)
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("h1")).toHaveText("Frames")
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  expect(pathname(page.url())).toEqual(path)
+})
+
+test("navigating turbo-frame without advance with Turbo.visit specifying advance pushes URL state", async ({ page }) => {
+  const path = "/src/tests/fixtures/frames/frame.html"
+
+  await page.evaluate((path) => window.Turbo.visit(path, { frame: "frame", action: "advance" }), path)
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("h1")).toHaveText("Frames")
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  expect(pathname(page.url())).toEqual(path)
+})
+
 test("navigating turbo-frame[data-turbo-action=advance] to the same URL clears the [aria-busy] and [data-turbo-preview] state", async ({
   page
 }) => {
