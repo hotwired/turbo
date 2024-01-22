@@ -1,4 +1,3 @@
-
 const PREFETCH_DELAY = 100
 
 class PrefetchCache {

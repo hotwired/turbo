@@ -223,11 +223,9 @@ export function doesNotTargetIFrame(anchor) {
     for (const element of document.getElementsByName(anchor.target)) {
       if (element instanceof HTMLIFrameElement) return false
     }
-
-    return true
-  } else {
-    return true
   }
+
+  return true
 }
 
 export function findLinkFromClickTarget(target) {
