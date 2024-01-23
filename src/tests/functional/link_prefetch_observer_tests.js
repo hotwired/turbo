@@ -153,6 +153,25 @@ test("it prefetches links with inner elements", async ({ page }) => {
   await assertPrefetchedOnHover({ page, selector: "#anchor_with_inner_elements" })
 })
 
+test("it prefetches links inside a turbo frame", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_in_frame", callback: (request) => {
+    const turboFrameHeader = request.headers()["turbo-frame"]
+    assert.equal(turboFrameHeader, "frame_for_prefetch")
+  }})
+})
+
+
+test("doesn't include a turbo-frame header when the link is inside a turbo frame with a target=_top", async ({ page}) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_in_frame_target_top", callback: (request) => {
+    const turboFrameHeader = request.headers()["turbo-frame"]
+    assert.equal(undefined, turboFrameHeader)
+  }})
+})
+
 test("it prefetches links with a delay", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
@@ -253,15 +272,18 @@ const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
   let requestMade = false
 
   page.on("request", (request) => {
-    callback && callback(request)
-    requestMade = true
+    requestMade = request
   })
 
   await hoverSelector({ page, selector })
 
   await sleep(100)
 
-  assertRequestMade(requestMade)
+  if (callback) {
+    await callback(requestMade)
+  }
+
+  assertRequestMade(!!requestMade)
 }
 
 const assertNotPrefetchedOnHover = async ({ page, selector, callback }) => {

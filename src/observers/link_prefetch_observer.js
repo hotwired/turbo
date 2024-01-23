@@ -100,14 +100,11 @@ export class LinkPrefetchObserver {
 
     request.headers["Sec-Purpose"] = "prefetch"
 
-    if (link.dataset.turboFrame && link.dataset.turboFrame !== "_top") {
-      request.headers["Turbo-Frame"] = link.dataset.turboFrame
-    } else if (link.dataset.turboFrame !== "_top") {
-      const turboFrame = link.closest("turbo-frame")
+    const turboFrame = link.closest("turbo-frame")
+    const turboFrameTarget = link.dataset.turboFrame || turboFrame?.getAttribute("target") || turboFrame?.id
 
-      if (turboFrame) {
-        request.headers["Turbo-Frame"] = turboFrame.id
-      }
+    if (turboFrameTarget && turboFrameTarget !== "_top") {
+      request.headers["Turbo-Frame"] = turboFrameTarget
     }
 
     if (link.hasAttribute("data-turbo-stream")) {
