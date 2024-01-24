@@ -41,5 +41,13 @@
     <a href="/src/tests/fixtures/prefetched.html" data-turbo-method="post" id="anchor_with_post_method"
       >Won't prefetch when hovering me</a>
     <iframe src="/src/tests/fixtures/hover_to_prefetch_iframe.html" name="prefetch_iframe"> </iframe>
+
+    <turbo-frame id="frame_for_prefetch">
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame">Hover to prefetch me</a>
+    </turbo-frame>
+
+    <turbo-frame id="frame_for_prefetch_top" target="_top">
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame_target_top">Hover to prefetch me</a>
+    </turbo-frame>
   </body>
 </html>
