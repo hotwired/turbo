@@ -78,7 +78,7 @@ export class PageRenderer extends Renderer {
     await newStylesheetElements
 
     if (this.willRender) {
-      this.removeUnusedHeadStylesheetElements()
+      this.removeUnusedDynamicStylesheetElements()
     }
   }
 
@@ -111,8 +111,8 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  removeUnusedHeadStylesheetElements() {
-    for (const element of this.unusedHeadStylesheetElements) {
+  removeUnusedDynamicStylesheetElements() {
+    for (const element of this.unusedDynamicStylesheetElements) {
       document.head.removeChild(element)
     }
   }
@@ -182,13 +182,9 @@ export class PageRenderer extends Renderer {
     await this.renderElement(this.currentElement, this.newElement)
   }
 
-  get unusedHeadStylesheetElements() {
+  get unusedDynamicStylesheetElements() {
     return this.oldHeadStylesheetElements.filter((element) => {
-      return !(element.hasAttribute("data-turbo-permanent") ||
-        // Trix dynamically adds styles to the head that we want to keep around which have a
-        // `data-tag-name` attribute. Long term we should moves those styles to Trix's CSS file
-        // but for now we'll just skip removing them
-        element.hasAttribute("data-tag-name"))
+      return element.getAttribute("data-turbo-track") === "dynamic"
     })
   }
 

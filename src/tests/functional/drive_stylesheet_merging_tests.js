@@ -6,18 +6,21 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/stylesheets/left.html")
 })
 
-test("navigating removes unused style elements", async ({ page }) => {
-  assert.ok(await hasSelector(page, 'style[id="turbo-progress-bar"]'))
+test("navigating removes unused dynamically tracked style elements", async ({ page }) => {
+  assert.ok(await hasSelector(page, 'style[id="added-style"]'))
+  assert.ok(await hasSelector(page, 'link[id="added-link"]'))
 
   await page.locator("#go-right").click()
   await nextBody(page)
 
-  assert.ok(await hasSelector(page, 'style[id="turbo-progress-bar"]'))
   assert.ok(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/common.css"]'))
   assert.ok(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/right.css"]'))
   assert.notOk(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/left.css"]'))
   assert.equal(await getComputedStyle(page, "body", "backgroundColor"), "rgb(0, 128, 0)")
   assert.equal(await getComputedStyle(page, "body", "color"), "rgb(0, 128, 0)")
+
+  assert.ok(await hasSelector(page, 'style[id="added-style"]'))
+  assert.ok(await hasSelector(page, 'link[id="added-link"]'))
 
   assert.ok(await cssClassIsDefined(page, "right"))
   assert.notOk(await cssClassIsDefined(page, "left"))
