@@ -106,8 +106,6 @@ export class ProgressBar {
 
   createStylesheetElement() {
     const element = document.createElement("style")
-    element.id = ProgressBarID
-    element.setAttribute("data-turbo-permanent", "")
     element.type = "text/css"
     element.textContent = ProgressBar.defaultCSS
     if (this.cspNonce) {
