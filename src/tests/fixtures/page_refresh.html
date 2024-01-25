@@ -88,6 +88,13 @@
       <input>
     </div>
 
+    <form method="get" data-turbo-action="replace" oninput="this.requestSubmit()">
+      <label>
+        Search
+        <input name="query">
+      </label>
+      <button>Form with params to refresh the page</button>
+    </form>
     <p><a id="replace-link" data-turbo-action="replace" href="/src/tests/fixtures/page_refresh.html?param=something">Link with params to refresh the page</a></p>
     <p><a id="link" href="/src/tests/fixtures/one.html">Link to another page</a></p>
 
