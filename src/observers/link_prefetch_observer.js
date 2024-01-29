@@ -98,7 +98,7 @@ export class LinkPrefetchObserver {
   prepareRequest(request) {
     const link = request.target
 
-    request.headers["Sec-Purpose"] = "prefetch"
+    request.headers["X-Sec-Purpose"] = "prefetch"
 
     const turboFrame = link.closest("turbo-frame")
     const turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
