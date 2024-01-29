@@ -1,4 +1,4 @@
-import Idiomorph from "idiomorph"
+import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
 import { dispatch } from "../../util"
 import { Renderer } from "../renderer"
 
@@ -33,7 +33,9 @@ export class MorphRenderer extends Renderer {
       callbacks: {
         beforeNodeAdded: this.#shouldAddElement,
         beforeNodeMorphed: this.#shouldMorphElement,
-        beforeNodeRemoved: this.#shouldRemoveElement
+        beforeAttributeUpdated: this.#shouldUpdateAttribute,
+        beforeNodeRemoved: this.#shouldRemoveElement,
+        afterNodeMorphed: this.#didMorphElement
       }
     })
   }
@@ -44,9 +46,36 @@ export class MorphRenderer extends Renderer {
 
   #shouldMorphElement = (oldNode, newNode) => {
     if (oldNode instanceof HTMLElement) {
-      return !oldNode.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isFrameReloadedWithMorph(oldNode))
-    } else {
-      return true
+      if (!oldNode.hasAttribute("data-turbo-permanent") && (this.isMorphingTurboFrame || !this.#isFrameReloadedWithMorph(oldNode))) {
+        const event = dispatch("turbo:before-morph-element", {
+          cancelable: true,
+          target: oldNode,
+          detail: {
+            newElement: newNode
+          }
+        })
+
+        return !event.defaultPrevented
+      } else {
+        return false
+      }
+    }
+  }
+
+  #shouldUpdateAttribute = (attributeName, target, mutationType) => {
+    const event = dispatch("turbo:before-morph-attribute", { cancelable: true, target, detail: { attributeName, mutationType } })
+
+    return !event.defaultPrevented
+  }
+
+  #didMorphElement = (oldNode, newNode) => {
+    if (newNode instanceof HTMLElement) {
+      dispatch("turbo:morph-element", {
+        target: oldNode,
+        detail: {
+          newElement: newNode
+        }
+      })
     }
   }
 

@@ -12,6 +12,20 @@ test("preloads snapshot on initial load", async ({ page }) => {
   assert.ok(await urlInSnapshotCache(page, href))
 })
 
+test("preloading dispatch turbo:before-fetch-{request,response} events", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/preloading.html")
+
+  const link = await page.locator("#preload_anchor")
+  const href = await link.evaluate((link) => link.href)
+
+  const { url, fetchOptions } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-request")
+  const { fetchResponse } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-response")
+
+  assert.equal(href, url, "dispatches request during preloading")
+  assert.equal(fetchOptions.headers.Accept, "text/html, application/xhtml+xml")
+  assert.equal(fetchResponse.response.url, href)
+})
+
 test("preloads snapshot on page visit", async ({ page }) => {
   // contains `a[rel="preload"][href="http://localhost:9000/src/tests/fixtures/preloading.html"]`
   await page.goto("/src/tests/fixtures/hot_preloading.html")

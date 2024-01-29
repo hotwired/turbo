@@ -9,6 +9,45 @@
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <script type="module">
+      import { Application, Controller } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js"
+
+      const application = Application.start()
+
+      addEventListener("turbo:morph-element", ({ target }) => {
+        for (const { element, context } of application.controllers) {
+          if (element === target) {
+            context.disconnect()
+            context.connect()
+          }
+        }
+      })
+
+      addEventListener("turbo:before-morph-attribute", (event) => {
+        const { target, detail: { attributeName, mutationType } } = event
+
+        for (const { element, context } of application.controllers) {
+          const pattern = new RegExp(`data-${context.identifier}-\\w+-value`)
+
+          if (element === target) {
+            event.preventDefault()
+          }
+        }
+      })
+
+      application.register("test", class extends Controller {
+        static targets = ["output"]
+        static values = { state: String }
+
+        capture({ target }) {
+          this.stateValue = target.value
+        }
+
+        outputTargetConnected(target) {
+          target.textContent = "connected"
+        }
+      })
+    </script>
 
     <style>
         body {
@@ -42,15 +81,18 @@
       </turbo-frame>
     </div>
 
-    <div id="stimulus-controller" data-controller="test">
+    <div id="stimulus-controller" data-controller="test" data-action="input->test#capture">
       <h3>Element with Stimulus controller</h3>
+
+      <div id="test-output" data-test-target="output">reset</div>
+      <input>
     </div>
 
     <p><a id="replace-link" data-turbo-action="replace" href="/src/tests/fixtures/page_refresh.html?param=something">Link with params to refresh the page</a></p>
     <p><a id="link" href="/src/tests/fixtures/one.html">Link to another page</a></p>
 
     <form id="form" action="/__turbo/refresh" method="post" class="redirect">
-      <input type="text" name="text" value="">
+      <input id="form-text" type="text" name="text" value="">
       <input type="hidden" name="path" value="/src/tests/fixtures/page_refresh.html">
       <input type="hidden" name="sleep" value="50">
       <input id="form-submit" type="submit" value="form[method=post]">

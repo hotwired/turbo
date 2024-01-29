@@ -131,6 +131,25 @@ test("standard POST form submission with redirect response", async ({ page }) =>
   )
 })
 
+
+test("sets aria-busy on the form element during a form submission", async ({ page }) => {
+  await page.click("#standard form.redirect input[type=submit]")
+
+  await nextEventNamed(page, "turbo:submit-start")
+  assert.equal(
+    await nextAttributeMutationNamed(page, "standard-form", "aria-busy"),
+    "true",
+    "sets [aria-busy] on the form element"
+  )
+
+  await nextEventNamed(page, "turbo:submit-end")
+  assert.equal(
+    await nextAttributeMutationNamed(page, "standard-form", "aria-busy"),
+    null,
+    "removes [aria-busy] from the form element"
+  )
+})
+
 test("standard POST form submission events", async ({ page }) => {
   await page.click("#standard-post-form-submit")
 

@@ -1,5 +1,5 @@
-import { Renderer } from "../renderer"
 import { activateScriptElement, waitForLoad } from "../../util"
+import { Renderer } from "../renderer"
 
 export class PageRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
@@ -73,8 +73,13 @@ export class PageRenderer extends Renderer {
     const mergedHeadElements = this.mergeProvisionalElements()
     const newStylesheetElements = this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
+
     await mergedHeadElements
     await newStylesheetElements
+
+    if (this.willRender) {
+      this.removeUnusedDynamicStylesheetElements()
+    }
   }
 
   async replaceBody() {
@@ -103,6 +108,12 @@ export class PageRenderer extends Renderer {
   copyNewHeadScriptElements() {
     for (const element of this.newHeadScriptElements) {
       document.head.appendChild(activateScriptElement(element))
+    }
+  }
+
+  removeUnusedDynamicStylesheetElements() {
+    for (const element of this.unusedDynamicStylesheetElements) {
+      document.head.removeChild(element)
     }
   }
 
@@ -169,6 +180,16 @@ export class PageRenderer extends Renderer {
 
   async assignNewBody() {
     await this.renderElement(this.currentElement, this.newElement)
+  }
+
+  get unusedDynamicStylesheetElements() {
+    return this.oldHeadStylesheetElements.filter((element) => {
+      return element.getAttribute("data-turbo-track") === "dynamic"
+    })
+  }
+
+  get oldHeadStylesheetElements() {
+    return this.currentHeadSnapshot.getStylesheetElementsNotInSnapshot(this.newHeadSnapshot)
   }
 
   get newHeadStylesheetElements() {

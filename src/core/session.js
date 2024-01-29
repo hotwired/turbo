@@ -3,6 +3,7 @@ import { CacheObserver } from "../observers/cache_observer"
 import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History } from "./drive/history"
+import { LinkPrefetchObserver } from "../observers/link_prefetch_observer"
 import { LinkClickObserver } from "../observers/link_click_observer"
 import { FormLinkClickObserver } from "../observers/form_link_click_observer"
 import { getAction, expandURL, locationIsVisitable } from "./url"
@@ -12,7 +13,7 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy } from "../util"
+import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy, debounce } from "../util"
 import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
@@ -26,6 +27,7 @@ export class Session {
 
   pageObserver = new PageObserver(this)
   cacheObserver = new CacheObserver()
+  linkPrefetchObserver = new LinkPrefetchObserver(this, document)
   linkClickObserver = new LinkClickObserver(this, window)
   formSubmitObserver = new FormSubmitObserver(this, document)
   scrollObserver = new ScrollObserver(this)
@@ -40,16 +42,20 @@ export class Session {
   progressBarDelay = 500
   started = false
   formMode = "on"
+  #pageRefreshDebouncePeriod = 150
 
   constructor(recentRequests) {
     this.recentRequests = recentRequests
     this.preloader = new Preloader(this, this.view.snapshotCache)
+    this.debouncedRefresh = this.refresh
+    this.pageRefreshDebouncePeriod = this.pageRefreshDebouncePeriod
   }
 
   start() {
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
+      this.linkPrefetchObserver.start()
       this.formLinkClickObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
@@ -71,6 +77,7 @@ export class Session {
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
+      this.linkPrefetchObserver.stop()
       this.formLinkClickObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
@@ -138,6 +145,15 @@ export class Session {
     return this.history.restorationIdentifier
   }
 
+  get pageRefreshDebouncePeriod() {
+    return this.#pageRefreshDebouncePeriod
+  }
+
+  set pageRefreshDebouncePeriod(value) {
+    this.refresh = debounce(this.debouncedRefresh.bind(this), value)
+    this.#pageRefreshDebouncePeriod = value
+  }
+
   // Preloader delegate
 
   shouldPreloadLink(element) {
@@ -186,6 +202,15 @@ export class Session {
   }
 
   submittedFormLinkToLocation() {}
+
+  // Link hover observer delegate
+
+  canPrefetchRequestToLocation(link, location) {
+    return (
+      this.elementIsNavigatable(link) &&
+        locationIsVisitable(location, this.snapshot.rootLocation)
+    )
+  }
 
   // Link click observer delegate
 
@@ -286,8 +311,8 @@ export class Session {
     }
   }
 
-  allowsImmediateRender({ element }, isPreview, options) {
-    const event = this.notifyApplicationBeforeRender(element, isPreview, options)
+  allowsImmediateRender({ element }, options) {
+    const event = this.notifyApplicationBeforeRender(element, options)
     const {
       defaultPrevented,
       detail: { render }
@@ -300,9 +325,9 @@ export class Session {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, isPreview, renderMethod) {
+  viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
     this.view.lastRenderedLocation = this.history.location
-    this.notifyApplicationAfterRender(isPreview, renderMethod)
+    this.notifyApplicationAfterRender(renderMethod)
   }
 
   preloadOnLoadLinksForView(element) {
@@ -358,15 +383,15 @@ export class Session {
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody, isPreview, options) {
+  notifyApplicationBeforeRender(newBody, options) {
     return dispatch("turbo:before-render", {
-      detail: { newBody, isPreview, ...options },
+      detail: { newBody, ...options },
       cancelable: true
     })
   }
 
-  notifyApplicationAfterRender(isPreview, renderMethod) {
-    return dispatch("turbo:render", { detail: { isPreview, renderMethod } })
+  notifyApplicationAfterRender(renderMethod) {
+    return dispatch("turbo:render", { detail: { renderMethod } })
   }
 
   notifyApplicationAfterPageLoad(timing = {}) {
