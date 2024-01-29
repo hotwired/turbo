@@ -362,6 +362,7 @@ export class FrameController {
           const options = {
             response,
             visitCachedSnapshot,
+            frame: frame,
             willRender: false,
             updateHistory: false,
             restorationIdentifier: this.restorationIdentifier,
