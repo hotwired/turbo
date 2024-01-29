@@ -49,6 +49,30 @@ test("lazy-loaded frame promotes navigation", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame_for_eager.html")
 })
 
+test("frame navigation sets the Turbo-Frame header", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  assertNextRequesTurboFrameHeader(page, "frame")
+
+  await page.click("#inside")
+  await nextEventNamed(page, "turbo:load")
+})
+
+test("frame navigation promoted with data-turbo-target=_top doesn't set the Turbo-Frame header", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  assertNextRequesTurboFrameHeader(page, undefined)
+
+  await page.click("#top")
+  await nextEventNamed(page, "turbo:load")
+})
+
+test("frame navigation promoted with data-turbo-action doesn't set the Turbo-Frame header", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/tabs.html")
+  assertNextRequesTurboFrameHeader(page, undefined)
+
+  await page.click("#tab-1")
+  await nextEventNamed(page, "turbo:frame-render")
+})
+
 test("promoted frame navigation updates the URL before rendering", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
 
@@ -104,3 +128,10 @@ test("promoted frame navigations are cached", async ({ page }) => {
   assert.equal(await page.getAttribute("#tab-frame", "src"), null, "caches one.html without #tab-frame[src]")
   assert.equal(await page.getAttribute("#tab-frame", "complete"), null, "caches one.html without [complete]")
 })
+
+function assertNextRequesTurboFrameHeader(page, expected) {
+  page.on("request", (request) => {
+    assert.equal(request.headers()["turbo-frame"], expected)
+  })
+}
+
