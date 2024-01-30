@@ -1,8 +1,8 @@
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
 import { dispatch } from "../../util"
-import { Renderer } from "../renderer"
+import { PageRenderer } from "./page_renderer"
 
-export class MorphRenderer extends Renderer {
+export class MorphRenderer extends PageRenderer {
   async render() {
     if (this.willRender) await this.#morphBody()
   }
