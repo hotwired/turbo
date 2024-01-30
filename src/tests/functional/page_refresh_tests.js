@@ -7,7 +7,8 @@ import {
   nextEventNamed,
   nextEventOnTarget,
   noNextEventOnTarget,
-  noNextEventNamed
+  noNextEventNamed,
+  getSearchParam
 } from "../helpers/page"
 
 test("renders a page refresh with morphing", async ({ page }) => {
@@ -79,6 +80,24 @@ test("renders a page refresh with morphing when the paths are the same but searc
 
   await page.click("#replace-link")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+})
+
+test("renders a page refresh with morphing when the GET form paths are the same but search params are diferent", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  const input = page.locator("form[method=get] input[name=query]")
+
+  await input.fill("Search")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await expect(input).toBeFocused()
+  expect(getSearchParam(page.url(), "query")).toEqual("Search")
+
+  await input.press("?")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await expect(input).toBeFocused()
+  expect(getSearchParam(page.url(), "query")).toEqual("Search?")
 })
 
 test("doesn't morph when the turbo-refresh-method meta tag is not 'morph'", async ({ page }) => {
@@ -181,12 +200,12 @@ test("it preserves focus across morphs", async ({ page }) => {
 
   const input = await page.locator("#form input[type=text]")
 
-  await input.fill("Discard me")
+  await input.fill("Preserve me")
   await input.press("Enter")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await expect(input).toBeFocused()
-  await expect(input).toHaveValue("")
+  await expect(input).toHaveValue("Preserve me")
 })
 
 test("it preserves focus and the [data-turbo-permanent] element's value across morphs", async ({ page }) => {
