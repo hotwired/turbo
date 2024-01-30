@@ -63,7 +63,6 @@ export class Visit {
     const {
       action,
       historyChanged,
-      frame,
       referrer,
       snapshot,
       snapshotHTML,
@@ -80,7 +79,6 @@ export class Visit {
     }
     this.action = action
     this.historyChanged = historyChanged
-    this.fromFrame = frame
     this.referrer = referrer
     this.snapshot = snapshot
     this.snapshotHTML = snapshotHTML
@@ -211,10 +209,8 @@ export class Visit {
         if (this.view.renderPromise) await this.view.renderPromise
 
         if (isSuccessful(statusCode) && responseHTML != null) {
-          if (!this.fromFrame) {
-            const snapshot = PageSnapshot.fromHTMLString(responseHTML)
-            await this.renderPageSnapshot(snapshot, false)
-          }
+          const snapshot = PageSnapshot.fromHTMLString(responseHTML)
+          await this.renderPageSnapshot(snapshot, false)
 
           this.adapter.visitRendered(this)
           this.complete()

@@ -56,7 +56,8 @@ export class View {
   // Rendering
 
   async render(renderer) {
-    const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
+    const { isPreview, shouldRender, willRender, newSnapshot: snapshot } = renderer
+
     if (shouldRender) {
       try {
         this.renderPromise = new Promise((resolve) => (this.#resolveRenderPromise = resolve))
@@ -77,7 +78,7 @@ export class View {
         this.#resolveRenderPromise(undefined)
         delete this.renderPromise
       }
-    } else {
+    } else if (willRender) {
       this.invalidate(renderer.reloadReason)
     }
   }
