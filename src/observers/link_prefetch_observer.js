@@ -5,6 +5,7 @@ import {
   findClosestRecursively
 } from "../util"
 
+import { StreamMessage } from "../core/streams/stream_message"
 import { FetchMethod, FetchRequest } from "../http/fetch_request"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
@@ -108,7 +109,7 @@ export class LinkPrefetchObserver {
     }
 
     if (link.hasAttribute("data-turbo-stream")) {
-      request.acceptResponseType("text/vnd.turbo-stream.html")
+      request.acceptResponseType(StreamMessage.contentType)
     }
   }
 
@@ -133,7 +134,7 @@ export class LinkPrefetchObserver {
   #isPrefetchable(link) {
     const href = link.getAttribute("href")
 
-    if (!href || href === "#" || link.dataset.turbo === "false" || link.dataset.turboPrefetch === "false") {
+    if (!href || href === "#" || link.getAttribute("data-turbo") === "false" || link.getAttribute("data-turbo-prefetch") === "false") {
       return false
     }
 
@@ -149,7 +150,8 @@ export class LinkPrefetchObserver {
       return false
     }
 
-    if (link.dataset.turboMethod && link.dataset.turboMethod !== "get") {
+    const turboMethod = link.getAttribute("data-turbo-method")
+    if (turboMethod && turboMethod !== "get") {
       return false
     }
 
@@ -157,13 +159,9 @@ export class LinkPrefetchObserver {
       return false
     }
 
-    if (link.pathname + link.search === document.location.pathname + document.location.search) {
-      return false
-    }
-
     const turboPrefetchParent = findClosestRecursively(link, "[data-turbo-prefetch]")
 
-    if (turboPrefetchParent && turboPrefetchParent.dataset.turboPrefetch === "false") {
+    if (turboPrefetchParent && turboPrefetchParent.getAttribute("data-turbo-prefetch") === "false") {
       return false
     }
 
