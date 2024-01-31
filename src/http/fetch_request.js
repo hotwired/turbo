@@ -124,6 +124,7 @@ export class FetchRequest {
     const event = await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
+      this.delegate.changeHistory()
 
       if (event.detail.fetchRequest) {
         this.response = event.detail.fetchRequest.response
