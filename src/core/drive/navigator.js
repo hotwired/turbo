@@ -129,13 +129,12 @@ export class Navigator {
 
   locationWithActionIsSamePage(location, action) {
     const anchor = getAnchor(location)
-    const currentAnchor = getAnchor(this.view.lastRenderedLocation)
     const isRestorationToTop = action === "restore" && typeof anchor === "undefined"
 
     return (
       action !== "replace" &&
       getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
-      (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
+      (isRestorationToTop || anchor != null)
     )
   }
 
