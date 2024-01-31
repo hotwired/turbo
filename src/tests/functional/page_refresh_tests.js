@@ -74,6 +74,16 @@ test("turbo:before-morph-attribute Stimulus listeners can handle morphing attrib
   await expect(page.locator("#test-output")).toHaveText("connected")
 })
 
+test("page refreshes cause a reload when assets change", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#add-new-assets")
+  await expect(page.locator("#new-stylesheet")).toHaveCount(1)
+  await page.click("#form-submit")
+
+  await nextEventNamed(page, "turbo:load")
+  await expect(page.locator("#new-stylesheet")).toHaveCount(0)
+})
 
 test("renders a page refresh with morphing when the paths are the same but search params are different", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")

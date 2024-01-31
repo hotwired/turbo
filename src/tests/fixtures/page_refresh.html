@@ -47,6 +47,15 @@
           target.textContent = "connected"
         }
       })
+
+      document.getElementById("add-new-assets").addEventListener("click", () => {
+        const stylesheet = document.createElement("link")
+        stylesheet.id = "new-stylesheet"
+        stylesheet.rel = "stylesheet"
+        stylesheet.href = "/src/tests/fixtures/stylesheets/common.css"
+        stylesheet.dataset.turboTrack = "reload"
+        document.head.appendChild(stylesheet)
+      })
     </script>
 
     <style>
@@ -104,6 +113,8 @@
       <input type="hidden" name="sleep" value="50">
       <input id="form-submit" type="submit" value="form[method=post]">
     </form>
+
+    <button id="add-new-assets">Add new assets</button>
 
     <div id="reject">
       <form class="unprocessable_entity" action="/__turbo/reject" method="post" style="margin-top:100vh">
