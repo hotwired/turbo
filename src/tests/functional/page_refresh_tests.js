@@ -278,6 +278,20 @@ test("renders unprocessable entity responses with morphing", async ({ page }) =>
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
+test("doesn't render previews when morphing", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#link")
+  await page.click("#page-refresh-link")
+  await page.click("#refresh-link")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBody(page)
+
+  const title = await page.locator("h1")
+  assert.equal(await title.textContent(), "Page to be refreshed")
+})
+
 async function assertPageScroll(page, top, left) {
   const [scrollTop, scrollLeft] = await page.evaluate(() => {
     return [

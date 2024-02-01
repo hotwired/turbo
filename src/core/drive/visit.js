@@ -84,6 +84,7 @@ export class Visit {
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
+    this.isPageRefresh = this.view.isPageRefresh(this)
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
     this.updateHistory = updateHistory
@@ -249,7 +250,7 @@ export class Visit {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        if (this.isSamePage) {
+        if (this.isSamePage || this.isPageRefresh) {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
