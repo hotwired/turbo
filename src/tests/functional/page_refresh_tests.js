@@ -19,6 +19,22 @@ test("renders a page refresh with morphing", async ({ page }) => {
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 })
 
+test("async page refresh with turbo-stream", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await expect(page.locator("#title")).toHaveText("Page to be refreshed")
+
+  await page.evaluate(() => document.querySelector("#title").innerText = "Updated")
+  await expect(page.locator("#title")).toHaveText("Updated")
+
+  await page.evaluate(() => {
+    document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh"></turbo-stream>`)
+  })
+
+  await expect(page.locator("#title")).not.toHaveText("Updated")
+  await expect(page.locator("#title")).toHaveText("Page to be refreshed")
+})
+
 test("dispatches a turbo:before-morph-element and turbo:morph-element event for each morphed element", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
   await page.fill("#form-text", "Morph me")
