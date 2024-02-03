@@ -1,3 +1,5 @@
+import { expandURL } from "./core/url"
+
 export function activateScriptElement(element) {
   if (element.getAttribute("data-turbo-eval") == "false") {
     return element
@@ -214,6 +216,24 @@ export async function around(callback, reader) {
   const after = reader()
 
   return [before, after]
+}
+
+export function doesNotTargetIFrame(anchor) {
+  if (anchor.hasAttribute("target")) {
+    for (const element of document.getElementsByName(anchor.target)) {
+      if (element instanceof HTMLIFrameElement) return false
+    }
+  }
+
+  return true
+}
+
+export function findLinkFromClickTarget(target) {
+  return findClosestRecursively(target, "a[href]:not([target^=_]):not([download])")
+}
+
+export function getLocationForLink(link) {
+  return expandURL(link.getAttribute("href") || "")
 }
 
 export function debounce(fn, delay) {

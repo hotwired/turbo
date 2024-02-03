@@ -28,22 +28,12 @@ test.beforeEach(async ({ page }) => {
 
 test("triggers before-render and render events", async ({ page }) => {
   await page.click("#same-origin-link")
-  const { newBody } = await nextEventNamed(page, "turbo:before-render")
+  const { newBody } = await nextEventNamed(page, "turbo:before-render", { renderMethod: "replace" })
 
   assert.equal(await page.textContent("h1"), "One")
 
   await nextEventNamed(page, "turbo:render")
   assert.equal(await newBody, await page.evaluate(() => document.body.outerHTML))
-})
-
-test("includes isPreview in render event details", async ({ page }) => {
-  await page.click("#same-origin-link")
-
-  const { isPreview } = await nextEventNamed(page, "turbo:before-render")
-  assert.equal(isPreview, false)
-
-  await nextEventNamed(page, "turbo:render")
-  assert.equal(await isPreview, false)
 })
 
 test("triggers before-render, render, and load events for error pages", async ({ page }) => {
@@ -222,11 +212,11 @@ test("changes the html[lang] attribute", async ({ page }) => {
   assert.equal(await page.getAttribute("html", "lang"), "es")
 })
 
-test("accumulates asset elements in head", async ({ page }) => {
-  const assetElements = () => page.$$('script, style, link[rel="stylesheet"]')
+test("accumulates script elements in head", async ({ page }) => {
+  const assetElements = () => page.$$('script')
   const originalElements = await assetElements()
 
-  await page.click("#additional-assets-link")
+  await page.click("#additional-script-link")
   await nextBody(page)
   const newElements = await assetElements()
   assert.notOk(await deepElementsEqual(page, newElements, originalElements))

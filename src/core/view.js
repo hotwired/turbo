@@ -56,7 +56,12 @@ export class View {
   // Rendering
 
   async render(renderer) {
-    const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
+    const { isPreview, shouldRender, willRender, newSnapshot: snapshot } = renderer
+
+    // A workaround to ignore tracked element mismatch reloads when performing
+    // a promoted Visit from a frame navigation
+    const shouldInvalidate = willRender
+
     if (shouldRender) {
       try {
         this.renderPromise = new Promise((resolve) => (this.#resolveRenderPromise = resolve))
@@ -64,8 +69,8 @@ export class View {
         await this.prepareToRenderSnapshot(renderer)
 
         const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
-        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement }
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, isPreview, options)
+        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement, renderMethod: this.renderer.renderMethod }
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
@@ -77,7 +82,7 @@ export class View {
         this.#resolveRenderPromise(undefined)
         delete this.renderPromise
       }
-    } else {
+    } else if (shouldInvalidate) {
       this.invalidate(renderer.reloadReason)
     }
   }

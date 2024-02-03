@@ -3,6 +3,7 @@ import { CacheObserver } from "../observers/cache_observer"
 import { FormSubmitObserver } from "../observers/form_submit_observer"
 import { FrameRedirector } from "./frames/frame_redirector"
 import { History } from "./drive/history"
+import { LinkPrefetchObserver } from "../observers/link_prefetch_observer"
 import { LinkClickObserver } from "../observers/link_click_observer"
 import { FormLinkClickObserver } from "../observers/form_link_click_observer"
 import { getAction, expandURL, locationIsVisitable } from "./url"
@@ -26,6 +27,7 @@ export class Session {
 
   pageObserver = new PageObserver(this)
   cacheObserver = new CacheObserver()
+  linkPrefetchObserver = new LinkPrefetchObserver(this, document)
   linkClickObserver = new LinkClickObserver(this, window)
   formSubmitObserver = new FormSubmitObserver(this, document)
   scrollObserver = new ScrollObserver(this)
@@ -53,6 +55,7 @@ export class Session {
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
+      this.linkPrefetchObserver.start()
       this.formLinkClickObserver.start()
       this.linkClickObserver.start()
       this.formSubmitObserver.start()
@@ -74,6 +77,7 @@ export class Session {
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
+      this.linkPrefetchObserver.stop()
       this.formLinkClickObserver.stop()
       this.linkClickObserver.stop()
       this.formSubmitObserver.stop()
@@ -94,8 +98,10 @@ export class Session {
     const frameElement = options.frame ? document.getElementById(options.frame) : null
 
     if (frameElement instanceof FrameElement) {
+      const action = options.action || getVisitAction(frameElement)
+
+      frameElement.delegate.proposeVisitIfNavigatedWithAction(frameElement, action)
       frameElement.src = location.toString()
-      frameElement.loaded
     } else {
       this.navigator.proposeVisit(expandURL(location), options)
     }
@@ -199,6 +205,15 @@ export class Session {
 
   submittedFormLinkToLocation() {}
 
+  // Link hover observer delegate
+
+  canPrefetchRequestToLocation(link, location) {
+    return (
+      this.elementIsNavigatable(link) &&
+        locationIsVisitable(location, this.snapshot.rootLocation)
+    )
+  }
+
   // Link click observer delegate
 
   willFollowLinkToLocation(link, location, event) {
@@ -298,8 +313,8 @@ export class Session {
     }
   }
 
-  allowsImmediateRender({ element }, isPreview, options) {
-    const event = this.notifyApplicationBeforeRender(element, isPreview, options)
+  allowsImmediateRender({ element }, options) {
+    const event = this.notifyApplicationBeforeRender(element, options)
     const {
       defaultPrevented,
       detail: { render }
@@ -312,9 +327,9 @@ export class Session {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, isPreview, renderMethod) {
+  viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
     this.view.lastRenderedLocation = this.history.location
-    this.notifyApplicationAfterRender(isPreview, renderMethod)
+    this.notifyApplicationAfterRender(renderMethod)
   }
 
   preloadOnLoadLinksForView(element) {
@@ -370,15 +385,15 @@ export class Session {
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody, isPreview, options) {
+  notifyApplicationBeforeRender(newBody, options) {
     return dispatch("turbo:before-render", {
-      detail: { newBody, isPreview, ...options },
+      detail: { newBody, ...options },
       cancelable: true
     })
   }
 
-  notifyApplicationAfterRender(isPreview, renderMethod) {
-    return dispatch("turbo:render", { detail: { isPreview, renderMethod } })
+  notifyApplicationAfterRender(renderMethod) {
+    return dispatch("turbo:render", { detail: { renderMethod } })
   }
 
   notifyApplicationAfterPageLoad(timing = {}) {

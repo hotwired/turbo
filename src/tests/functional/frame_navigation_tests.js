@@ -1,5 +1,5 @@
 import { test } from "@playwright/test"
-import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
+import { getFromLocalStorage, nextBeat, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
 import { assert } from "chai"
 
 test("frame navigation with descendant link", async ({ page }) => {
@@ -28,6 +28,20 @@ test("frame navigation with exterior link in Shadow DOM", async ({ page }) => {
   await page.click("#outside-in-shadow-dom")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
+})
+
+test("frame navigation with data-turbo-action", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#link-to-frame-with-empty-head")
+  await nextBeat()
+
+  await nextEventOnTarget(page, "empty-head", "turbo:frame-load")
+
+  const frameText = await page.textContent("#empty-head h2")
+  assert.equal(frameText, "Frame updated")
+
+  const titleText = await page.textContent("h1")
+  assert.equal(titleText, "Frame navigation tests")
 })
 
 test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {

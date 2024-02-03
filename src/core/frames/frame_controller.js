@@ -147,7 +147,7 @@ export class FrameController {
   // Appearance observer delegate
 
   elementAppearedInViewport(element) {
-    this.proposeVisitIfNavigatedWithAction(element, element)
+    this.proposeVisitIfNavigatedWithAction(element, getVisitAction(element))
     this.#loadSourceURL()
   }
 
@@ -235,7 +235,7 @@ export class FrameController {
   formSubmissionSucceededWithResponse(formSubmission, response) {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
-    frame.delegate.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
+    frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
     frame.delegate.loadResponse(response)
 
     if (!formSubmission.isSafe) {
@@ -258,7 +258,7 @@ export class FrameController {
 
   // View delegate
 
-  allowsImmediateRender({ element: newFrame }, _isPreview, options) {
+  allowsImmediateRender({ element: newFrame }, options) {
     const event = dispatch("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
@@ -340,15 +340,15 @@ export class FrameController {
   #navigateFrame(element, url, submitter) {
     const frame = this.#findFrameElement(element, submitter)
 
-    frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
+    frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(submitter, element, frame))
 
     this.#withCurrentNavigationElement(element, () => {
       frame.src = url
     })
   }
 
-  proposeVisitIfNavigatedWithAction(frame, element, submitter) {
-    this.action = getVisitAction(submitter, element, frame)
+  proposeVisitIfNavigatedWithAction(frame, action = null) {
+    this.action = action
 
     if (this.action) {
       const pageSnapshot = PageSnapshot.fromElement(frame).clone()

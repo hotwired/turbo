@@ -1,5 +1,7 @@
 import { unindent, getMetaContent } from "../../util"
 
+export const ProgressBarID = "turbo-progress-bar"
+
 export class ProgressBar {
   static animationDuration = 300 /*ms*/
 

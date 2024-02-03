@@ -43,7 +43,7 @@ export class Preloader {
   // Fetch request delegate
 
   prepareRequest(fetchRequest) {
-    fetchRequest.headers["Sec-Purpose"] = "prefetch"
+    fetchRequest.headers["X-Sec-Purpose"] = "prefetch"
   }
 
   async requestSucceededWithResponse(fetchRequest, fetchResponse) {

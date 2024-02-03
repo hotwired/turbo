@@ -7,21 +7,123 @@ import {
   nextEventNamed,
   nextEventOnTarget,
   noNextEventOnTarget,
-  noNextEventNamed
+  noNextEventNamed,
+  getSearchParam
 } from "../helpers/page"
 
 test("renders a page refresh with morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:before-render", { renderMethod: "morph" })
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 })
 
-test("renders a page refresh with morphing when the paths are the same but search params are diferent", async ({ page }) => {
+test("async page refresh with turbo-stream", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await expect(page.locator("#title")).toHaveText("Page to be refreshed")
+
+  await page.evaluate(() => document.querySelector("#title").innerText = "Updated")
+  await expect(page.locator("#title")).toHaveText("Updated")
+
+  await page.evaluate(() => {
+    document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh"></turbo-stream>`)
+  })
+
+  await expect(page.locator("#title")).not.toHaveText("Updated")
+  await expect(page.locator("#title")).toHaveText("Page to be refreshed")
+})
+
+test("dispatches a turbo:before-morph-element and turbo:morph-element event for each morphed element", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await page.fill("#form-text", "Morph me")
+  await page.click("#form-submit")
+
+  await nextEventOnTarget(page, "form-text", "turbo:before-morph-element")
+  await nextEventOnTarget(page, "form-text", "turbo:morph-element")
+})
+
+test("preventing a turbo:before-morph-element prevents the morph", async ({ page }) => {
+  const input = await page.locator("#form-text")
+  const submit = await page.locator("#form-submit")
+
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await input.evaluate((input) => input.addEventListener("turbo:before-morph-element", (event) => event.preventDefault()))
+  await input.fill("Morph me")
+  await submit.click()
+
+  await nextEventOnTarget(page, "form-text", "turbo:before-morph-element")
+  await noNextEventOnTarget(page, "form-text", "turbo:morph-element")
+
+  await expect(input).toHaveValue("Morph me")
+})
+
+test("turbo:morph-element Stimulus listeners can handle morphing", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await expect(page.locator("#test-output")).toHaveText("connected")
+
+  await page.fill("#form-text", "Ignore me")
+  await page.click("#form-submit")
+
+  await expect(page.locator("#form-text")).toHaveValue("")
+  await expect(page.locator("#test-output")).toHaveText("connected")
+})
+
+test("turbo:before-morph-attribute Stimulus listeners can handle morphing attributes", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  const controller = page.locator("#stimulus-controller")
+  const input = controller.locator("input")
+
+  await expect(page.locator("#test-output")).toHaveText("connected")
+
+  await input.fill("controller state")
+  await page.fill("#form-text", "Ignore me")
+  await page.click("#form-submit")
+
+  const { mutationType } = await nextEventOnTarget(page, "stimulus-controller", "turbo:before-morph-attribute", { attributeName: "data-test-state-value" })
+
+  await expect(mutationType).toEqual("update")
+  await expect(controller).toHaveAttribute("data-test-state-value", "controller state")
+  await expect(page.locator("#form-text")).toHaveValue("")
+  await expect(page.locator("#test-output")).toHaveText("connected")
+})
+
+test("page refreshes cause a reload when assets change", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#add-new-assets")
+  await expect(page.locator("#new-stylesheet")).toHaveCount(1)
+  await page.click("#form-submit")
+
+  await nextEventNamed(page, "turbo:load")
+  await expect(page.locator("#new-stylesheet")).toHaveCount(0)
+})
+
+test("renders a page refresh with morphing when the paths are the same but search params are different", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   await page.click("#replace-link")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+})
+
+test("renders a page refresh with morphing when the GET form paths are the same but search params are diferent", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  const input = page.locator("form[method=get] input[name=query]")
+
+  await input.fill("Search")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await expect(input).toBeFocused()
+  expect(getSearchParam(page.url(), "query")).toEqual("Search")
+
+  await input.press("?")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await expect(input).toBeFocused()
+  expect(getSearchParam(page.url(), "query")).toEqual("Search?")
 })
 
 test("doesn't morph when the turbo-refresh-method meta tag is not 'morph'", async ({ page }) => {
@@ -124,12 +226,12 @@ test("it preserves focus across morphs", async ({ page }) => {
 
   const input = await page.locator("#form input[type=text]")
 
-  await input.fill("Discard me")
+  await input.fill("Preserve me")
   await input.press("Enter")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await expect(input).toBeFocused()
-  await expect(input).toHaveValue("")
+  await expect(input).toHaveValue("Preserve me")
 })
 
 test("it preserves focus and the [data-turbo-permanent] element's value across morphs", async ({ page }) => {
@@ -190,6 +292,20 @@ test("renders unprocessable entity responses with morphing", async ({ page }) =>
   const title = await page.locator("h1")
   assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
+})
+
+test("doesn't render previews when morphing", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#link")
+  await page.click("#page-refresh-link")
+  await page.click("#refresh-link")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBody(page)
+
+  const title = await page.locator("h1")
+  assert.equal(await title.textContent(), "Page to be refreshed")
 })
 
 async function assertPageScroll(page, top, left) {
