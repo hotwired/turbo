@@ -7,7 +7,7 @@ export class StreamMessageRenderer {
     Bardo.preservingPermanentElements(this, getPermanentElementMapForFragment(fragment), () => {
       withAutofocusFromFragment(fragment, () => {
         withPreservedFocus(() => {
-          document.documentElement.appendChild(fragment)
+          this.appendFragment(fragment);
         })
       })
     })
@@ -20,6 +20,10 @@ export class StreamMessageRenderer {
   }
 
   leavingBardo() {}
+
+  appendFragment(fragment) {
+    document.documentElement.appendChild(fragment);
+  }
 }
 
 function getPermanentElementMapForFragment(fragment) {
