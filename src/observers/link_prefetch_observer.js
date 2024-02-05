@@ -76,7 +76,9 @@ export class LinkPrefetchObserver {
           target
         )
 
-        prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
+        const delay = link.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
+
+        prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl, delay)
 
         link.addEventListener("mouseleave", () => prefetchCache.clear(), { once: true })
       }
