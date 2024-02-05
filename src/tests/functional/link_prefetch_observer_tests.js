@@ -188,6 +188,93 @@ test("it prefetches links with a delay", async ({ page }) => {
   assertRequestMade(requestMade)
 })
 
+test("it allows to customize the delay with a data-turbo-prefetch-delay attribute", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_with_custom_delay")
+  await sleep(200)
+
+  assertRequestNotMade(requestMade)
+
+  await sleep(150)
+
+  assertRequestMade(requestMade)
+})
+
+test("it allows to customize the delay with a turbo-prefetch-delay a meta tag", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch_with_delay_on_meta_tag.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_for_prefetch")
+
+  await sleep(200)
+
+  assertRequestNotMade(requestMade)
+
+  await sleep(150)
+
+  assertRequestMade(requestMade)
+})
+
+test("it prefetches immediately with a data-turbo-prefetch-delay attribute set to 0", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_with_zero_delay")
+
+  assertRequestMade(requestMade)
+})
+
+test("it prefetches immediately with a turbo-prefetch-delay meta tag set to 0", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch_with_zero_delay_on_meta_tag.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_for_prefetch")
+
+  assertRequestMade(requestMade)
+})
+
+test("it uses the default delay with a data-turbo-prefetch-delay attribute set to an invalid value", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_with_invalid_delay")
+  await sleep(75)
+
+  assertRequestNotMade(requestMade)
+
+  await sleep(100)
+
+  assertRequestMade(requestMade)
+})
+
+test("it uses the default delay with a turbo-prefetch-delay meta tag set to an invalid value", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch_with_invalid_delay_on_meta_tag.html" })
+
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+
+  await page.hover("#anchor_for_prefetch")
+  await sleep(75)
+
+  assertRequestNotMade(requestMade)
+
+  await sleep(100)
+
+  assertRequestMade(requestMade)
+})
+
 test("it cancels the prefetch request if the link is no longer hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
