@@ -138,6 +138,10 @@ export class LinkPrefetchObserver {
       return false
     }
 
+    if (link.hasAttribute("data-remote") || link.hasAttribute("data-behavior") || link.hasAttribute("data-method") || link.hasAttribute("data-confirm")) {
+      return false
+    }
+
     if (link.origin !== document.location.origin) {
       return false
     }
