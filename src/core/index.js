@@ -116,8 +116,8 @@ export function setFormMode(mode) {
  * data-method or data-confirm attributes, but you can override this behavior by
  * providing your own check.
  *
- * @param checkFn Function that returns a boolean value to indicate whether
- * prefetching should be prevented or not
+ * @param checkFn Function that takes an anchor element and returns a boolean value
+ * to indicate whether prefetching should be prevented or not
  */
 export function preventLinkPrefetch(checkFn) {
   session.linkPrefetchObserver.preventLinkPrefetch = checkFn
