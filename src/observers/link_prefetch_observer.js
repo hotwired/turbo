@@ -58,7 +58,7 @@ export class LinkPrefetchObserver {
   }
 
   #tryToPrefetchRequest = (event) => {
-    if (getMetaContent("turbo-prefetch") !== "true") return
+    if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
     const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
