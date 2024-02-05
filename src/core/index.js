@@ -107,18 +107,3 @@ export function setConfirmMethod(confirmMethod) {
 export function setFormMode(mode) {
   session.setFormMode(mode)
 }
-
-/**
- * Allows to define additional logic to prevent prefetching of links.
- *
- * By default Turbo includes a check for compatibility with older apps to prevent
- * prefetching unsafe UJS links, such as those that include data-remote, data-behavior,
- * data-method or data-confirm attributes, but you can override this behavior by
- * providing your own check.
- *
- * @param checkFn Function that takes an anchor element and returns a boolean value
- * to indicate whether prefetching should be prevented or not
- */
-export function preventLinkPrefetch(checkFn) {
-  session.linkPrefetchObserver.preventLinkPrefetch = checkFn
-}

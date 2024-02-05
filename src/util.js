@@ -236,10 +236,6 @@ export function getLocationForLink(link) {
   return expandURL(link.getAttribute("href") || "")
 }
 
-export function isUJSLink(link) {
-  return link.hasAttribute("data-remote") || link.hasAttribute("data-behavior") || link.hasAttribute("data-method") || link.hasAttribute("data-confirm")
-}
-
 export function debounce(fn, delay) {
   let timeoutId = null
 

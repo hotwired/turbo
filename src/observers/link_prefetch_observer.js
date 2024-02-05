@@ -1,9 +1,9 @@
 import {
+  dispatch,
   doesNotTargetIFrame,
   getLocationForLink,
   getMetaContent,
-  findClosestRecursively,
-  isUJSLink
+  findClosestRecursively
 } from "../util"
 
 import { StreamMessage } from "../core/streams/stream_message"
@@ -18,7 +18,6 @@ export class LinkPrefetchObserver {
   constructor(delegate, eventTarget) {
     this.delegate = delegate
     this.eventTarget = eventTarget
-    this.preventLinkPrefetch = (link) => isUJSLink(link)
   }
 
   start() {
@@ -140,7 +139,12 @@ export class LinkPrefetchObserver {
       return false
     }
 
-    if (this.preventLinkPrefetch(link)) {
+    const event = dispatch("turbo:before-prefetch", {
+      target: link,
+      cancelable: true
+    })
+
+    if (event.defaultPrevented) {
       return false
     }
 
