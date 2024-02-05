@@ -2,7 +2,8 @@ import {
   doesNotTargetIFrame,
   getLocationForLink,
   getMetaContent,
-  findClosestRecursively
+  findClosestRecursively,
+  isUJSLink
 } from "../util"
 
 import { StreamMessage } from "../core/streams/stream_message"
@@ -17,6 +18,7 @@ export class LinkPrefetchObserver {
   constructor(delegate, eventTarget) {
     this.delegate = delegate
     this.eventTarget = eventTarget
+    this.preventLinkPrefetch = (link) => isUJSLink(link)
   }
 
   start() {
@@ -138,7 +140,7 @@ export class LinkPrefetchObserver {
       return false
     }
 
-    if (link.hasAttribute("data-remote") || link.hasAttribute("data-behavior") || link.hasAttribute("data-method") || link.hasAttribute("data-confirm")) {
+    if (this.preventLinkPrefetch(link)) {
       return false
     }
 

@@ -62,9 +62,19 @@ test("it doesn't prefetch the page when link has data-turbo=false", async ({ pag
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_false" })
 })
 
-test("it doesn't prefetch the page when link has data-remote=true", async ({ page }) => {
+test("it doesn't prefetch the page when link has UJS attributes", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_remote_true" })
+})
+
+test("allows to customize the check for prefetchable links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await page.evaluate(() => {
+    window.Turbo.preventLinkPrefetch(() => false)
+  })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_with_remote_true" })
 })
 
 test("it doesn't prefetch the page when link has the same location", async ({ page }) => {
