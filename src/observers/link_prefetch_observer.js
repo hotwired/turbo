@@ -41,19 +41,6 @@ export class LinkPrefetchObserver {
       passive: true
     })
 
-    this.eventTarget.removeEventListener("touchstart", this.#tryToPrefetchRequest, {
-      capture: true,
-      passive: true
-    })
-    this.eventTarget.removeEventListener("touchend", this.#checkIfPrefetchValidAfterTouchChange, {
-      capture: true,
-      passive: true
-    })
-    this.eventTarget.removeEventListener("touchmove", this.#checkIfPrefetchValidAfterTouchChange, {
-      capture: true,
-      passive: true
-    })
-
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.started = false
   }
@@ -64,19 +51,6 @@ export class LinkPrefetchObserver {
       passive: true
     })
     this.eventTarget.addEventListener("mouseleave", this.#checkIfPrefetchValidAfterMouseLeave, {
-      capture: true,
-      passive: true
-    })
-
-    this.eventTarget.addEventListener("touchstart", this.#tryToPrefetchRequest, {
-      capture: true,
-      passive: true
-    })
-    this.eventTarget.addEventListener("touchend", this.#checkIfPrefetchValidAfterTouchChange, {
-      capture: true,
-      passive: true
-    })
-    this.eventTarget.addEventListener("touchmove", this.#checkIfPrefetchValidAfterTouchChange, {
       capture: true,
       passive: true
     })
@@ -113,10 +87,6 @@ export class LinkPrefetchObserver {
 
   #checkIfPrefetchValidAfterMouseLeave = (event) => {
     if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
-  }
-
-  #checkIfPrefetchValidAfterTouchChange = (event) => {
-    if (this.#prefetchedLink && !isTouching(event, this.#prefetchedLink)) this.#cancelPrefetchRequest()
   }
 
   #cancelPrefetchRequest = () => {
@@ -217,10 +187,6 @@ export class LinkPrefetchObserver {
 
     return true
   }
-}
-
-const isTouching = (event, target) => {
-  return Array.from(event.targetTouches).some((touch) => touch.target === target)
 }
 
 const targetsIframe = (link) => {
