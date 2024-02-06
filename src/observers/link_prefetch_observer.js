@@ -36,7 +36,7 @@ export class LinkPrefetchObserver {
       capture: true,
       passive: true
     })
-    this.eventTarget.removeEventListener("mouseleave", this.#checkIfPrefetchValidAfterMouseLeave, {
+    this.eventTarget.removeEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
@@ -50,7 +50,7 @@ export class LinkPrefetchObserver {
       capture: true,
       passive: true
     })
-    this.eventTarget.addEventListener("mouseleave", this.#checkIfPrefetchValidAfterMouseLeave, {
+    this.eventTarget.addEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
@@ -85,7 +85,7 @@ export class LinkPrefetchObserver {
     }
   }
 
-  #checkIfPrefetchValidAfterMouseLeave = (event) => {
+  #cancelRequestIfObsolete = (event) => {
     if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
   }
 
