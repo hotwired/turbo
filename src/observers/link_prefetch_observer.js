@@ -12,8 +12,7 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
   started = false
-  hoverTriggerEvent = "mouseenter"
-  touchTriggerEvent = "touchstart"
+  #prefetchedLink = null
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -33,27 +32,29 @@ export class LinkPrefetchObserver {
   stop() {
     if (!this.started) return
 
-    this.eventTarget.removeEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener("mouseenter", this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
-    this.eventTarget.removeEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
+
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.started = false
   }
 
   #enable = () => {
-    this.eventTarget.addEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener("mouseenter", this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
-    this.eventTarget.addEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
+
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.started = true
   }
@@ -69,6 +70,8 @@ export class LinkPrefetchObserver {
       const location = getLocationForLink(link)
 
       if (this.delegate.canPrefetchRequestToLocation(link, location)) {
+        this.#prefetchedLink = link
+
         const fetchRequest = new FetchRequest(
           this,
           FetchMethod.get,
@@ -78,10 +81,17 @@ export class LinkPrefetchObserver {
         )
 
         prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
-
-        link.addEventListener("mouseleave", () => prefetchCache.clear(), { once: true })
       }
     }
+  }
+
+  #cancelRequestIfObsolete = (event) => {
+    if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
+  }
+
+  #cancelPrefetchRequest = () => {
+    prefetchCache.clear()
+    this.#prefetchedLink = null
   }
 
   #tryToUsePrefetchedRequest = (event) => {
