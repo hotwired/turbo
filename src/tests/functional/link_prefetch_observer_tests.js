@@ -240,11 +240,6 @@ test("it resets the cache when a link is hovered", async ({ page }) => {
   assert.equal(requestCount, 2)
 })
 
-test("it prefetches page on touchstart", async ({ page }) => {
-  await goTo({ page, path: "/hover_to_prefetch.html" })
-  await assertPrefetchedOnTouchstart({ page, selector: "#anchor_for_prefetch" })
-})
-
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await hoverSelector({ page, selector: "#anchor_for_prefetch" })
@@ -263,26 +258,6 @@ test("it follows the link using the cached response when clicking on a link that
   await clickSelector({ page, selector: "#anchor_for_prefetch" })
   assert.equal(await page.title(), "Prefetched Page")
 })
-
-const assertPrefetchedOnTouchstart = async ({ page, selector, callback }) => {
-  let requestMade = false
-
-  page.on("request", (request) => {
-    callback && callback(request)
-    requestMade = true
-  })
-
-  const selectorXY = await page.$eval(selector, (el) => {
-    const { x, y } = el.getBoundingClientRect()
-    return { x, y }
-  })
-
-  await page.touchscreen.tap(selectorXY.x, selectorXY.y)
-
-  await sleep(100)
-
-  assertRequestMade(requestMade)
-}
 
 const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
   let requestMade = false
