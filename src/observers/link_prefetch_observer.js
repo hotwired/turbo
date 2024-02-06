@@ -1,4 +1,5 @@
 import {
+  dispatch,
   doesNotTargetIFrame,
   getLocationForLink,
   getMetaContent,
@@ -58,7 +59,7 @@ export class LinkPrefetchObserver {
   }
 
   #tryToPrefetchRequest = (event) => {
-    if (getMetaContent("turbo-prefetch") !== "true") return
+    if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
     const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
@@ -134,7 +135,16 @@ export class LinkPrefetchObserver {
   #isPrefetchable(link) {
     const href = link.getAttribute("href")
 
-    if (!href || href === "#" || link.getAttribute("data-turbo") === "false" || link.getAttribute("data-turbo-prefetch") === "false") {
+    if (!href || href.startsWith("#") || link.getAttribute("data-turbo") === "false" || link.getAttribute("data-turbo-prefetch") === "false") {
+      return false
+    }
+
+    const event = dispatch("turbo:before-prefetch", {
+      target: link,
+      cancelable: true
+    })
+
+    if (event.defaultPrevented) {
       return false
     }
 
