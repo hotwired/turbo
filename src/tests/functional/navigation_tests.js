@@ -379,6 +379,7 @@ test("following a redirection", async ({ page }) => {
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
 })
 
 test("clicking the back button after redirection", async ({ page }) => {
