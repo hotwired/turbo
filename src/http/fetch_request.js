@@ -56,7 +56,7 @@ export class FetchRequest {
     this.fetchOptions = {
       credentials: "same-origin",
       redirect: "follow",
-      method: method,
+      method: method.toUpperCase(),
       headers: { ...this.defaultHeaders },
       body: body,
       signal: this.abortSignal,
@@ -79,7 +79,7 @@ export class FetchRequest {
 
     this.url = url
     this.fetchOptions.body = body
-    this.fetchOptions.method = fetchMethod
+    this.fetchOptions.method = fetchMethod.toUpperCase()
   }
 
   get headers() {
