@@ -188,7 +188,7 @@ test("supports transforming a POST submission to a GET in a turbo:submit-start l
 test("supports transforming a GET submission to a POST in a turbo:submit-start listener", async ({ page }) => {
   await page.evaluate(() =>
     addEventListener("turbo:submit-start", (({ detail }) => {
-      detail.formSubmission.method = "post"
+      detail.formSubmission.method = "POST"
       detail.formSubmission.body.set("path", "/src/tests/fixtures/one.html")
       detail.formSubmission.body.set("greeting", "Hello, from an event listener")
     }))
@@ -992,7 +992,7 @@ test("link method form submission submits a single request", async ({ page }) =>
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 1, "submits a single HTTP request")
 })
 
@@ -1006,7 +1006,7 @@ test("link method form submission inside frame submits a single request", async 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 1, "submits a single HTTP request")
 })
 
@@ -1020,7 +1020,7 @@ test("link method form submission targeting frame submits a single request", asy
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
+  assert.equal(fetchOptions.method, "POST", "[data-turbo-method] overrides the GET method")
   assert.equal(requestCounter, 2, "submits a single HTTP request then follows a redirect")
 })
 
