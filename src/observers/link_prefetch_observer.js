@@ -1,4 +1,5 @@
 import {
+  dispatch,
   doesNotTargetIFrame,
   getLocationForLink,
   getMetaContent,
@@ -11,8 +12,7 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
   started = false
-  hoverTriggerEvent = "mouseenter"
-  touchTriggerEvent = "touchstart"
+  #prefetchedLink = null
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -32,33 +32,35 @@ export class LinkPrefetchObserver {
   stop() {
     if (!this.started) return
 
-    this.eventTarget.removeEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener("mouseenter", this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
-    this.eventTarget.removeEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
+
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.started = false
   }
 
   #enable = () => {
-    this.eventTarget.addEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener("mouseenter", this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
-    this.eventTarget.addEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
+
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.started = true
   }
 
   #tryToPrefetchRequest = (event) => {
-    if (getMetaContent("turbo-prefetch") !== "true") return
+    if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
     const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
@@ -68,6 +70,8 @@ export class LinkPrefetchObserver {
       const location = getLocationForLink(link)
 
       if (this.delegate.canPrefetchRequestToLocation(link, location)) {
+        this.#prefetchedLink = link
+
         const fetchRequest = new FetchRequest(
           this,
           FetchMethod.get,
@@ -79,10 +83,17 @@ export class LinkPrefetchObserver {
         const delay = link.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
 
         prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl, delay)
-
-        link.addEventListener("mouseleave", () => prefetchCache.clear(), { once: true })
       }
     }
+  }
+
+  #cancelRequestIfObsolete = (event) => {
+    if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
+  }
+
+  #cancelPrefetchRequest = () => {
+    prefetchCache.clear()
+    this.#prefetchedLink = null
   }
 
   #tryToUsePrefetchedRequest = (event) => {
@@ -136,7 +147,16 @@ export class LinkPrefetchObserver {
   #isPrefetchable(link) {
     const href = link.getAttribute("href")
 
-    if (!href || href === "#" || link.getAttribute("data-turbo") === "false" || link.getAttribute("data-turbo-prefetch") === "false") {
+    if (!href || href.startsWith("#") || link.getAttribute("data-turbo") === "false" || link.getAttribute("data-turbo-prefetch") === "false") {
+      return false
+    }
+
+    const event = dispatch("turbo:before-prefetch", {
+      target: link,
+      cancelable: true
+    })
+
+    if (event.defaultPrevented) {
       return false
     }
 
