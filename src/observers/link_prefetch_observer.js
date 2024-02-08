@@ -5,7 +5,6 @@ import {
   findClosestRecursively
 } from "../util"
 
-import { StreamMessage } from "../core/streams/stream_message"
 import { FetchMethod, FetchRequest } from "../http/fetch_request"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
@@ -116,10 +115,6 @@ export class LinkPrefetchObserver {
 
     if (turboFrameTarget && turboFrameTarget !== "_top") {
       request.headers["Turbo-Frame"] = turboFrameTarget
-    }
-
-    if (link.hasAttribute("data-turbo-stream")) {
-      request.acceptResponseType(StreamMessage.contentType)
     }
   }
 

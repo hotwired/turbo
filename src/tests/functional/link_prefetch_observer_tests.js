@@ -153,17 +153,6 @@ test("it caches the request for 1 millisecond when turbo-prefetch-cache-time is 
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
-test("it adds text/vnd.turbo-stream.html header to the Accept header when link has data-turbo-stream", async ({
-  page
-}) => {
-  await goTo({ page, path: "/hover_to_prefetch.html" })
-  await assertPrefetchedOnHover({ page, selector: "#anchor_with_turbo_stream", callback: (request) => {
-    const headers = request.headers()["accept"].split(",").map((header) => header.trim())
-
-    assert.includeMembers(headers, ["text/vnd.turbo-stream.html", "text/html", "application/xhtml+xml"])
-  }})
-})
-
 test("it prefetches links with inner elements", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertPrefetchedOnHover({ page, selector: "#anchor_with_inner_elements" })
