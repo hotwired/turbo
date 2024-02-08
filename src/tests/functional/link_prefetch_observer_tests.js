@@ -78,6 +78,21 @@ test("allows to cancel prefetch requests with custom logic", async ({ page }) =>
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
+test("it doesn't prefetch UJS links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_remote_true" })
+})
+
+test("it doesn't prefetch data-turbo-stream links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_stream" })
+})
+
+test("it doesn't prefetch data-turbo-confirm links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_confirm" })
+})
+
 test("it doesn't prefetch the page when link has the same location", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_same_location" })
