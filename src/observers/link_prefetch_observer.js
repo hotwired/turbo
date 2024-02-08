@@ -176,8 +176,17 @@ const linkOptsOut = (link) => {
 
 const nonSafeLink = (link) => {
   const turboMethod = link.getAttribute("data-turbo-method")
-  if (turboMethod !== "get") return true
+  if (turboMethod && turboMethod.toLowerCase() !== "get") return true
+
+  if (isUJS(link)) return true
+  if (link.hasAttribute("data-turbo-confirm")) return true
+  if (link.hasAttribute("data-turbo-stream")) return true
+
   return false
+}
+
+const isUJS = (link) => {
+  return link.hasAttribute("data-remote") || link.hasAttribute("data-behavior") || link.hasAttribute("data-confirm") || link.hasAttribute("data-method")
 }
 
 const eventPrevented = (link) => {
