@@ -65,7 +65,7 @@ test("it doesn't prefetch the page when link has data-turbo=false", async ({ pag
 test("allows to cancel prefetch requests with custom logic", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
-  await assertPrefetchedOnHover({ page, selector: "#anchor_with_remote_true" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 
   await page.evaluate(() => {
     document.body.addEventListener("turbo:before-prefetch", (event) => {
@@ -75,7 +75,7 @@ test("allows to cancel prefetch requests with custom logic", async ({ page }) =>
     })
   })
 
-  await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_remote_true" })
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
 test("it doesn't prefetch the page when link has the same location", async ({ page }) => {
