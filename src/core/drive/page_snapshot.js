@@ -82,6 +82,10 @@ export class PageSnapshot extends Snapshot {
     return this.getSetting("refresh-scroll") === "preserve"
   }
 
+  get morphURLPrefix() {
+    return this.getSetting("morph-url-prefix") ?? ""
+  }
+
   // Private
 
   getSetting(name) {
