@@ -1,6 +1,5 @@
 import {
   dispatch,
-  doesNotTargetIFrame,
   getLocationForLink,
   getMetaContent,
   findClosestRecursively
@@ -145,50 +144,43 @@ export class LinkPrefetchObserver {
   #isPrefetchable(link) {
     const href = link.getAttribute("href")
 
-    if (!href || href.startsWith("#") || link.getAttribute("data-turbo") === "false" || link.getAttribute("data-turbo-prefetch") === "false") {
-      return false
-    }
+    if (!href) return false
 
-    const event = dispatch("turbo:before-prefetch", {
-      target: link,
-      cancelable: true
-    })
-
-    if (event.defaultPrevented) {
-      return false
-    }
-
-    if (link.origin !== document.location.origin) {
-      return false
-    }
-
-    if (!["http:", "https:"].includes(link.protocol)) {
-      return false
-    }
-
-    if (link.pathname + link.search === document.location.pathname + document.location.search) {
-      return false
-    }
-
-    const turboMethod = link.getAttribute("data-turbo-method")
-    if (turboMethod && turboMethod !== "get") {
-      return false
-    }
-
-    if (targetsIframe(link)) {
-      return false
-    }
-
-    const turboPrefetchParent = findClosestRecursively(link, "[data-turbo-prefetch]")
-
-    if (turboPrefetchParent && turboPrefetchParent.getAttribute("data-turbo-prefetch") === "false") {
-      return false
-    }
+    if (unfetchableLink(link)) return false
+    if (linkToTheSamePage(link)) return false
+    if (linkOptsOut(link)) return false
+    if (nonSafeLink(link)) return false
+    if (eventPrevented(link)) return false
 
     return true
   }
 }
 
-const targetsIframe = (link) => {
-  return !doesNotTargetIFrame(link)
+const unfetchableLink = (link) => {
+  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+}
+
+const linkToTheSamePage = (link) => {
+  return (link.pathname + link.search === document.location.pathname + document.location.search) || link.href.startsWith("#")
+}
+
+const linkOptsOut = (link) => {
+  if (link.getAttribute("data-turbo-prefetch") === "false") return true
+  if (link.getAttribute("data-turbo") === "false") return true
+
+  const turboPrefetchParent = findClosestRecursively(link, "[data-turbo-prefetch]")
+  if (turboPrefetchParent && turboPrefetchParent.getAttribute("data-turbo-prefetch") === "false") return true
+
+  return false
+}
+
+const nonSafeLink = (link) => {
+  const turboMethod = link.getAttribute("data-turbo-method")
+  if (turboMethod !== "get") return true
+  return false
+}
+
+const eventPrevented = (link) => {
+  const event = dispatch("turbo:before-prefetch", { target: link, cancelable: true })
+  return event.defaultPrevented
 }
