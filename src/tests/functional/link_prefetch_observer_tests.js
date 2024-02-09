@@ -168,6 +168,27 @@ test("it caches the request for 1 millisecond when turbo-prefetch-cache-time is 
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 })
 
+test("it caches the request for 10 second when turbo-prefetch-cache-time is set to 10000 and doesn't fetches from server", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch_custom_cache_time.html" })
+
+  await page.evaluate(() => {
+    const meta = document.querySelector('meta[name="turbo-prefetch-cache-time"]')
+    meta.setAttribute("content", "10000")
+  })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+
+  await sleep(5000)
+  await page.mouse.move(0, 0)
+
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+
+  await sleep(10000)
+  await page.mouse.move(0, 0)
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+})
+
 test("it prefetches links with inner elements", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertPrefetchedOnHover({ page, selector: "#anchor_with_inner_elements" })
