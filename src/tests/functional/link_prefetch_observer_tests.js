@@ -65,7 +65,7 @@ test("it doesn't prefetch the page when link has data-turbo=false", async ({ pag
 test("allows to cancel prefetch requests with custom logic", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
-  await assertPrefetchedOnHover({ page, selector: "#anchor_with_remote_true" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
 
   await page.evaluate(() => {
     document.body.addEventListener("turbo:before-prefetch", (event) => {
@@ -75,7 +75,22 @@ test("allows to cancel prefetch requests with custom logic", async ({ page }) =>
     })
   })
 
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+})
+
+test("it doesn't prefetch UJS links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_remote_true" })
+})
+
+test("it doesn't prefetch data-turbo-stream links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_stream" })
+})
+
+test("it doesn't prefetch data-turbo-confirm links", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_turbo_confirm" })
 })
 
 test("it doesn't prefetch the page when link has the same location", async ({ page }) => {
@@ -151,17 +166,6 @@ test("it caches the request for 1 millisecond when turbo-prefetch-cache-time is 
   await page.mouse.move(0, 0)
 
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
-})
-
-test("it adds text/vnd.turbo-stream.html header to the Accept header when link has data-turbo-stream", async ({
-  page
-}) => {
-  await goTo({ page, path: "/hover_to_prefetch.html" })
-  await assertPrefetchedOnHover({ page, selector: "#anchor_with_turbo_stream", callback: (request) => {
-    const headers = request.headers()["accept"].split(",").map((header) => header.trim())
-
-    assert.includeMembers(headers, ["text/vnd.turbo-stream.html", "text/html", "application/xhtml+xml"])
-  }})
 })
 
 test("it prefetches links with inner elements", async ({ page }) => {
