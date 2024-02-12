@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test("test drive enabled by default; click normal link", async ({ page }) => {
-  page.click("#drive_enabled")
+  await page.click("#drive_enabled")
   await nextBody(page)
   assert.equal(pathname(page.url()), path)
 })
@@ -19,7 +19,7 @@ test("test drive to external link", async ({ page }) => {
     await route.fulfill({ body: "Hello from the outside world" })
   })
 
-  page.click("#drive_enabled_external")
+  await page.click("#drive_enabled_external")
   await nextBody(page)
 
   assert.equal(await page.evaluate(() => window.location.href), "https://example.com/")
@@ -27,7 +27,7 @@ test("test drive to external link", async ({ page }) => {
 })
 
 test("test drive enabled by default; click link inside data-turbo='false'", async ({ page }) => {
-  page.click("#drive_disabled")
+  await page.click("#drive_disabled")
   await nextBody(page)
   assert.equal(pathname(page.url()), path)
   assert.equal(await visitAction(page), "load")
