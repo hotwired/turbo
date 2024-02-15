@@ -1,7 +1,6 @@
 import { session } from "../"
-import { morph } from "idiomorph"
+import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
 import { dispatch } from "../../util"
-
 
 export const StreamActions = {
   after() {
@@ -39,38 +38,75 @@ export const StreamActions = {
 
   refresh() {
     session.refresh(this.baseURI, this.requestId)
-  }
+  },
 
   morph() {
     this.targetElements.forEach((targetElement) => {
       try {
-        const morphStyle = this.getAttribute("data-turbo-morph-style") || "outerHTML"
-        const ignoreActive = this.getAttribute("data-turbo-morph-ignore-active") || true
-        const ignoreActiveValue  = this.getAttribute("data-turbo-morph-ignore-active-value") || true
-        const head = this.getAttribute("data-turbo-morph-head") || 'merge'
-        morph(targetElement, this.templateContent, {
+        const morphStyle = targetElement.getAttribute("data-turbo-morph-style") || "outerHTML"
+        Idiomorph.morph(targetElement, this.templateContent, {
           morphStyle: morphStyle,
-          ignoreActive: ignoreActive,
-          ignoreActiveValue: ignoreActiveValue,
-          head: head,
+          ignoreActiveValue: true,
           callbacks: {
-            beforeNodeAdded: (node) => {
-              return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
-            },
-            afterNodeMorphed: (oldNode, newNode) => {
-              if (newNode instanceof HTMLElement) {
-                dispatch("turbo:morph-element", {
-                  target: oldNode,
-                  detail: {
-                    newElement: newNode
-                  }
-                })
-              }
-            }
+            beforeNodeAdded,
+            beforeNodeMorphed,
+            beforeAttributeUpdated,
+            beforeNodeRemoved,
+            afterNodeMorphed
+          }
+        })
+
+        dispatch("turbo:morph", {
+          detail: {
+            currentElement: targetElement,
+            newElement: this.templateContent
           }
         })
       } catch (error) {
         console.error(error)
+      }
+    })
+  }
+}
+
+const beforeNodeAdded = (node) => {
+  return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
+}
+
+const beforeNodeMorphed = (target, newElement) => {
+  if (target instanceof HTMLElement && !target.hasAttribute("data-turbo-permanent")) {
+    const event = dispatch("turbo:before-morph-element", {
+      cancelable: true,
+      detail: {
+        target,
+        newElement
+      }
+    })
+    return !event.defaultPrevented
+  }
+  return false
+}
+
+const beforeAttributeUpdated = (attributeName, target, mutationType) => {
+  const event = dispatch("turbo:before-morph-attribute", {
+    cancelable: true,
+    target,
+    detail: {
+      attributeName,
+      mutationType
+    }
+  })
+  return !event.defaultPrevented
+}
+
+const beforeNodeRemoved = beforeNodeMorphed
+
+const afterNodeMorphed = (target, newElement) => {
+  if (newElement instanceof HTMLElement) {
+    dispatch("turbo:morph-element", {
+      target,
+      detail: {
+        newElement
       }
     })
   }
