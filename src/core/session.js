@@ -108,10 +108,12 @@ export class Session {
   }
 
   refresh(url, requestId) {
+    const refreshUrl = url || document.baseURI
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
+
     if (!isRecentRequest) {
       this.cache.exemptPageFromPreview()
-      this.visit(url, { action: "refresh" })
+      this.visit(refreshUrl, { action: "refresh" })
     }
   }
 

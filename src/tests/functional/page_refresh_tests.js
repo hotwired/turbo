@@ -319,3 +319,10 @@ async function assertPageScroll(page, top, left) {
   expect(scrollTop).toEqual(top)
   expect(scrollLeft).toEqual(left)
 }
+
+test("Turbo.session.refresh() will refresh current page", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await page.evaluate(() => window.Turbo.session.refresh())
+
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+})

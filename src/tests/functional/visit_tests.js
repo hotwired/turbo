@@ -256,6 +256,13 @@ test("Visit direction attribute on a replace visit", async ({ page }) => {
   await assertVisitDirectionAttribute(page, "none")
 })
 
+test("Visit direction when refreshing", async ({ page }) => {
+  page.evaluate(() => window.Turbo.session.refresh())
+
+  await assertVisitDirectionAttribute(page, "none")
+})
+
+
 test("Turbo history state after a reload", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
