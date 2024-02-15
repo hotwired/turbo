@@ -308,6 +308,13 @@ test("doesn't render previews when morphing", async ({ page }) => {
   assert.equal(await title.textContent(), "Page to be refreshed")
 })
 
+test("it snapshots page before starting a page refresh", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:before-cache")
+})
+
 async function assertPageScroll(page, top, left) {
   const [scrollTop, scrollLeft] = await page.evaluate(() => {
     return [

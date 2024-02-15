@@ -114,10 +114,15 @@ export class Visit {
     return this.isSamePage
   }
 
-  start() {
+  async start() {
     if (this.state == VisitState.initialized) {
       this.recordTimingMetric(TimingMetric.visitStart)
       this.state = VisitState.started
+
+      if (this.isPageRefresh) {
+        await this.cacheSnapshot()
+      }
+
       this.adapter.visitStarted(this)
       this.delegate.visitStarted(this)
     }
@@ -410,9 +415,14 @@ export class Visit {
     }
   }
 
-  cacheSnapshot() {
+  async cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      const snapshot = await this.view.cacheSnapshot(this.snapshot)
+
+      if (snapshot) {
+        this.visitCachedSnapshot(snapshot)
+      }
+
       this.snapshotCached = true
     }
   }
