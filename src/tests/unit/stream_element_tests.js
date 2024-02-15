@@ -196,3 +196,16 @@ test("test action=refresh discarded when matching request id", async () => {
 
   assert.ok(document.body.hasAttribute("data-modified"))
 })
+
+test("action=morph", async () => {
+  const templateElement = createTemplateElement(`<div id="hello">Hello Turbo Morphed</div>`)
+  const element = createStreamElement("morph", "hello", templateElement)
+  
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.notOk(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo Morphed")
+})
