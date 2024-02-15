@@ -39,7 +39,8 @@ export const SystemStatusCode = {
 export const Direction = {
   advance: "forward",
   restore: "back",
-  replace: "none"
+  replace: "none",
+  refresh: "none"
 }
 
 export class Visit {
@@ -389,6 +390,7 @@ export class Visit {
   getHistoryMethodForAction(action) {
     switch (action) {
       case "replace":
+      case "refresh":
         return history.replaceState
       case "advance":
       case "restore":
