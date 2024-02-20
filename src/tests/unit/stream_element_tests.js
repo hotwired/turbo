@@ -210,12 +210,12 @@ test("action=morph", async () => {
   assert.equal(subject.find("h1#hello")?.textContent, "Hello Turbo Morphed")
 })
 
-test("action=morph with data-turbo-morph-style='innerHTML'", async () => {
+test("action=morph children-only", async () => {
   const templateElement = createTemplateElement(`<h1 id="hello-child-element">Hello Turbo Morphed</h1>`)
   const element = createStreamElement("morph", "hello", templateElement)
   const target = subject.find("div#hello")
   assert.equal(target?.textContent, "Hello Turbo")
-  target.setAttribute("data-turbo-morph-style", "innerHTML")
+  element.setAttribute("children-only", true)
 
   subject.append(element)
 
@@ -225,4 +225,3 @@ test("action=morph with data-turbo-morph-style='innerHTML'", async () => {
   assert.ok(subject.find("div#hello > h1#hello-child-element"))
   assert.equal(subject.find("div#hello > h1#hello-child-element").textContent, "Hello Turbo Morphed")
 })
-
