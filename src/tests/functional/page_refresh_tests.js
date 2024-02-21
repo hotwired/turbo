@@ -33,6 +33,7 @@ test("async page refresh with turbo-stream", async ({ page }) => {
 
   await expect(page.locator("#title")).not.toHaveText("Updated")
   await expect(page.locator("#title")).toHaveText("Page to be refreshed")
+  expect(await noNextEventNamed(page, "turbo:before-cache")).toBeTruthy()
 })
 
 test("dispatches a turbo:before-morph-element and turbo:morph-element event for each morphed element", async ({ page }) => {

@@ -110,8 +110,7 @@ export class Session {
   refresh(url, requestId) {
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
     if (!isRecentRequest) {
-      this.cache.exemptPageFromPreview()
-      this.visit(url, { action: "replace" })
+      this.visit(url, { action: "replace", shouldCacheSnapshot: false })
     }
   }
 
