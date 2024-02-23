@@ -24,3 +24,8 @@ test("Turbo interface", () => {
 test("StreamActions interface", () => {
   assert.equal(typeof StreamActions, "object")
 })
+
+test("Turbo.navigator interface", () => {
+  assert.equal(typeof Turbo.navigator.locationWithActionIsPageRefresh, "function")
+  assert.equal(typeof Turbo.navigator.locationWithActionIsSamePage, "function")
+})

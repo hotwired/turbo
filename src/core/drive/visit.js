@@ -84,7 +84,7 @@ export class Visit {
     this.snapshotHTML = snapshotHTML
     this.response = response
     this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
-    this.isPageRefresh = this.view.isPageRefresh(this)
+    this.isPageRefresh = this.delegate.locationWithActionIsPageRefresh(this.location, this.action)
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
     this.updateHistory = updateHistory

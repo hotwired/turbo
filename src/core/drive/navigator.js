@@ -139,6 +139,10 @@ export class Navigator {
     )
   }
 
+  locationWithActionIsPageRefresh(location, action) {
+    return this.view.lastRenderedLocation.pathname === location.pathname && action === "replace"
+  }
+
   visitScrolledToSamePageLocation(oldURL, newURL) {
     this.delegate.visitScrolledToSamePageLocation(oldURL, newURL)
   }
