@@ -75,7 +75,6 @@ export class View {
 
         await this.renderSnapshot(renderer)
         this.delegate.viewRenderedSnapshot(snapshot, isPreview, this.renderer.renderMethod)
-        this.delegate.preloadOnLoadLinksForView(this.element)
         this.finishRenderingSnapshot(renderer)
       } finally {
         delete this.renderer
