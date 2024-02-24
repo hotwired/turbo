@@ -46,7 +46,7 @@ export class Session {
 
   constructor(recentRequests) {
     this.recentRequests = recentRequests
-    this.preloader = new Preloader(this, this.view.snapshotCache)
+    this.preloader = new Preloader(this, document.documentElement, this.view.snapshotCache)
     this.debouncedRefresh = this.refresh
     this.pageRefreshDebouncePeriod = this.pageRefreshDebouncePeriod
   }
@@ -329,10 +329,6 @@ export class Session {
   viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender(renderMethod)
-  }
-
-  preloadOnLoadLinksForView(element) {
-    this.preloader.preloadOnLoadLinksForView(element)
   }
 
   viewInvalidated(reason) {
