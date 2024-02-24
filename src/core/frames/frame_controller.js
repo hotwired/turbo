@@ -278,10 +278,6 @@ export class FrameController {
 
   viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
 
-  preloadOnLoadLinksForView(element) {
-    session.preloadOnLoadLinksForView(element)
-  }
-
   viewInvalidated() {}
 
   // Frame renderer delegate
