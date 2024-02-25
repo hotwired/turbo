@@ -42,7 +42,6 @@ export class FrameElement extends HTMLElement {
   }
 
   reload() {
-    console.log(`frame.reload()`)
     return this.delegate.sourceURLReloaded()
   }
 
