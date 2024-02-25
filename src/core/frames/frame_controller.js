@@ -20,6 +20,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
 import { FormLinkClickObserver } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
+import { MorphFrameRenderer } from "./morph_frame_renderer"
 import { session } from "../index"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
@@ -259,11 +260,13 @@ export class FrameController {
   // View delegate
 
   allowsImmediateRender({ element: newFrame }, options) {
+    console.log(`turbo:before-frame-render`)
     const event = dispatch("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
       cancelable: true
     })
+
     const {
       defaultPrevented,
       detail: { render }
@@ -303,11 +306,21 @@ export class FrameController {
   // Private
 
   async #loadFrameResponse(fetchResponse, document) {
+    console.log(`loadFrameResponse`)
     const newFrameElement = await this.extractForeignFrameElement(document.body)
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
-      const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
+      let renderer
+
+      if (this.element.src && this.element.refresh === "morph") {
+        console.log(`new morphing frame renderer`)
+        renderer = new MorphFrameRenderer(this, this.view.snapshot, snapshot, MorphFrameRenderer.renderElement, false, false)
+      } else {
+        console.log(`new frame renderer`)
+        renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
+      }
+
       if (this.view.renderPromise) await this.view.renderPromise
       this.changeHistory()
 
