@@ -281,7 +281,7 @@ test("following a link within a frame with a target set navigates the target fra
   await nextBeat()
 
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
-  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy() // FAILS
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
 })
 
 test("navigating turbo-frame from within replaces the contents", async ({ page }) => {
@@ -299,7 +299,7 @@ test("navigating turbo-frame[refresh=morph] from within morphs the contents", as
   await nextBeat()
 
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
-  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy() // FAILS
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
 })
 
 test("calling reload on a frame replaces the contents", async ({ page }) => {
@@ -323,7 +323,7 @@ test("calling reload on a frame[refresh=morph] morphs the contents", async ({ pa
   const textAfterReload = await page.textContent("#frame h3")
 
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
-  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy() //FAILS
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
   assert.notEqual(textBeforeReload, textAfterReload)
 })
 
