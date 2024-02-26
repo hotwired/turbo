@@ -53,6 +53,7 @@ export class FormLinkClickObserver {
     const turboFrame = link.getAttribute("data-turbo-frame")
     if (turboFrame) form.setAttribute("data-turbo-frame", turboFrame)
 
+    // TODO: Determine if I need to check data-turbo-replace-method here — I need to find the corresponding tests
     const turboAction = getVisitAction(link)
     if (turboAction) form.setAttribute("data-turbo-action", turboAction)
 

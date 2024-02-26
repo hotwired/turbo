@@ -17,7 +17,6 @@ export class PageView extends View {
 
   renderPage(snapshot, isPreview = false, willRender = true, visit) {
     const shouldMorphPage = this.shouldMorphPage(snapshot, visit)
-    console.log(`should morph? ${shouldMorphPage}`)
     const rendererClass = shouldMorphPage ? MorphRenderer : PageRenderer
 
     const renderer = new rendererClass(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
@@ -57,7 +56,6 @@ export class PageView extends View {
   }
 
   shouldMorphPage(snapshot, visit) {
-    console.log(`shouldMorphPage snapshot? ${snapshot.shouldMorphPage}... ${visit.action} and ${visit.replaceMethod}`)
     return snapshot.shouldMorphPage &&
             (this.isPageRefresh(visit) || this.isReplaceMethodMorph(visit))
   }

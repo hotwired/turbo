@@ -171,7 +171,6 @@ router.get("/messages", (request, response) => {
 function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
-    console.log("delivering message to stream", response.socket?.remotePort)
     response.write(data)
   }
 }

@@ -147,6 +147,7 @@ export class FrameController {
   // Appearance observer delegate
 
   elementAppearedInViewport(element) {
+    // TODO: Determine if I need to check replaceMethod() here — I need to find the corresponding tests
     this.proposeVisitIfNavigatedWithAction(element, getVisitAction(element))
     this.#loadSourceURL()
   }

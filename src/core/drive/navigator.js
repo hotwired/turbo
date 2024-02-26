@@ -10,7 +10,6 @@ export class Navigator {
   }
 
   proposeVisit(location, options = {}) {
-    console.log(`proposeVisit ${location}`, options)
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
       this.delegate.visitProposedToLocation(location, options)
     }
@@ -70,7 +69,6 @@ export class Navigator {
   }
 
   async formSubmissionSucceededWithResponse(formSubmission, fetchResponse) {
-    console.log(`formSubmissionSucceededWithResponse`)
     if (formSubmission == this.formSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
@@ -82,14 +80,12 @@ export class Navigator {
         const { statusCode, redirected } = fetchResponse
         const action = this.#getActionForFormSubmission(formSubmission, fetchResponse)
         const replaceMethod = this.#getReplaceMethodForFormSubmission(formSubmission, fetchResponse)
-        console.log(`action = ${action} and replaceMethod = ${replaceMethod}`)
         const visitOptions = {
           action,
           replaceMethod,
           shouldCacheSnapshot,
           response: { statusCode, responseHTML, redirected }
         }
-        console.log(`calling proposeVisit from formSubmission`)
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
     }

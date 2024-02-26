@@ -228,7 +228,6 @@ export class Session {
     const replaceMethod = this.getVisitReplaceMethodForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
 
-    console.log(`followedLinkToLocation`)
     this.visit(location.href, { action, replaceMethod, acceptsStreamResponse })
   }
 
