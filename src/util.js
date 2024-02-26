@@ -154,14 +154,24 @@ export function getHistoryMethodForAction(action) {
   }
 }
 
-export function isAction(action) {
+export function isValidAction(action) {
   return action == "advance" || action == "replace" || action == "restore"
 }
 
 export function getVisitAction(...elements) {
   const action = getAttribute("data-turbo-action", ...elements)
 
-  return isAction(action) ? action : null
+  return isValidAction(action) ? action : null
+}
+
+export function isValidReplaceMethod(method) {
+  return method == "morph" || method == "body"
+}
+
+export function getVisitReplaceMethod(...elements) {
+  const method = getAttribute("data-turbo-replace-method", ...elements)
+
+  return isValidReplaceMethod(method) ? method : null
 }
 
 export function getMetaElement(name) {

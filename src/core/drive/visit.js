@@ -62,6 +62,7 @@ export class Visit {
 
     const {
       action,
+      replaceMethod,
       historyChanged,
       referrer,
       snapshot,
@@ -78,6 +79,7 @@ export class Visit {
       ...options
     }
     this.action = action
+    this.replaceMethod = replaceMethod
     this.historyChanged = historyChanged
     this.referrer = referrer
     this.snapshot = snapshot

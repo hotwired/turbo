@@ -13,7 +13,7 @@ import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
-import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy, debounce } from "../util"
+import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, getVisitReplaceMethod, markAsBusy, debounce } from "../util"
 import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
@@ -225,9 +225,11 @@ export class Session {
 
   followedLinkToLocation(link, location) {
     const action = this.getActionForLink(link)
+    const replaceMethod = this.getVisitReplaceMethodForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
 
-    this.visit(location.href, { action, acceptsStreamResponse })
+    console.log(`followedLinkToLocation`)
+    this.visit(location.href, { action, replaceMethod, acceptsStreamResponse })
   }
 
   // Navigator delegate
@@ -464,6 +466,12 @@ export class Session {
 
   getActionForLink(link) {
     return getVisitAction(link) || "advance"
+  }
+
+  getVisitReplaceMethodForLink(link) {
+    if (this.getActionForLink(link) !== "replace") return
+
+    return getVisitReplaceMethod(link) || "body"
   }
 
   get snapshot() {
