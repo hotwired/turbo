@@ -291,6 +291,16 @@ export function visitAction(page) {
   })
 }
 
+export function visitReplaceMethod(page) {
+  return page.evaluate(() => {
+    try {
+      return window.Turbo.navigator.currentVisit.replaceMethod
+    } catch (error) {
+      return "load"
+    }
+  })
+}
+
 export function waitForPathname(page, pathname) {
   return page.waitForURL((url) => url.pathname == pathname)
 }

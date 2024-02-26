@@ -1,4 +1,4 @@
-import { test } from "@playwright/test"
+import { test, expect } from "@playwright/test"
 import { assert } from "chai"
 import {
   clickWithoutScrolling,
@@ -17,6 +17,7 @@ import {
   search,
   selectorHasFocus,
   visitAction,
+  visitReplaceMethod,
   waitUntilSelector,
   waitUntilNoSelector,
   willChangeBody
@@ -159,6 +160,7 @@ test("following a same-origin data-turbo-action=replace link", async ({ page }) 
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
 test("following a same-origin GET form[data-turbo-action=replace]", async ({ page }) => {
@@ -166,6 +168,7 @@ test("following a same-origin GET form[data-turbo-action=replace]", async ({ pag
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
 test("following a same-origin GET form button[data-turbo-action=replace]", async ({ page }) => {
@@ -173,6 +176,7 @@ test("following a same-origin GET form button[data-turbo-action=replace]", async
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
 test("following a same-origin POST form[data-turbo-action=replace]", async ({ page }) => {
@@ -181,6 +185,7 @@ test("following a same-origin POST form[data-turbo-action=replace]", async ({ pa
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
 test("following a same-origin POST form button[data-turbo-action=replace]", async ({ page }) => {
@@ -189,7 +194,74 @@ test("following a same-origin POST form button[data-turbo-action=replace]", asyn
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "replace")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
+
+
+
+test("following a same-origin data-turbo-action=replace and data-turbo-replace-method=morph link", async ({ page }) => {
+  page.on('console', message => console.log(message.text()))
+
+  await page.click("#same-origin-replace-morph-link")
+  await nextBody(page)
+  console.log(`url = ${pathname(page.url())}`)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "replace")
+  assert.equal(await visitReplaceMethod(page), "morph")
+  expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin data-turbo-action=advance and data-turbo-replace-method=morph link should ignore method", async ({ page }) => {
+  await page.click("#same-origin-advance-morph-link")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "advance")
+  console.log(`== ${await visitReplaceMethod(page)}`)
+  assert.equal(await visitReplaceMethod(page), "body")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin GET form[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
+  page.on('console', message => console.log(message.text()))
+
+  await page.click("#same-origin-replace-morph-form-get button")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "replace")
+  console.log(await visitReplaceMethod(page))
+  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin GET form button[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
+  await page.click("#same-origin-replace-morph-form-submitter-get button")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "replace")
+  console.log(await visitReplaceMethod(page))
+  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin POST form[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
+  await page.click("#same-origin-replace-morph-form-post button")
+  await nextBody(page)
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "replace")
+  console.log(await visitReplaceMethod(page))
+  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin POST form button[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
+  await page.click("#same-origin-replace-morph-form-submitter-post button")
+  await nextEventNamed(page, "turbo:load")
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "replace")
+  console.log(await visitReplaceMethod(page))
+  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+
 
 test("following a POST form clears cache", async ({ page }) => {
   await page.evaluate(() => {
@@ -277,14 +349,16 @@ test("following a same-origin [download] link", async ({ page }) => {
 })
 
 test("following a same-origin link inside an SVG element", async ({ page }) => {
-  await page.click("#same-origin-link-inside-svg-element", { force: true })
+  await page.waitForSelector("#same-origin-link-inside-svg-element") // ensures it's scrolled into viewport
+  await page.dispatchEvent("#same-origin-link-inside-svg-element", 'click')
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
-})
+});
 
 test("following a cross-origin link inside an SVG element", async ({ page }) => {
-  await page.click("#cross-origin-link-inside-svg-element", { force: true })
+  await page.waitForSelector("#cross-origin-link-inside-svg-element") // ensures it's scrolled into viewport
+  await page.dispatchEvent("#cross-origin-link-inside-svg-element", 'click')
   await nextBody(page)
   assert.equal(page.url(), "about:blank")
   assert.equal(await visitAction(page), "load")

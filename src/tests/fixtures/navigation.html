@@ -20,6 +20,7 @@
       <p><a id="same-origin-unannotated-link" href="/src/tests/fixtures/one.html">Same-origin unannotated link</a></p>
       <p><a id="same-origin-unannotated-link-search-params" href="/src/tests/fixtures/one.html?key=value">Same-origin unannotated link ?key=value</a></p>
       <p><form id="same-origin-unannotated-form" method="get" action="/src/tests/fixtures/one.html"><button>Same-origin unannotated form</button></form></p>
+
       <p><a id="same-origin-replace-link" href="/src/tests/fixtures/one.html" data-turbo-action="replace">Same-origin data-turbo-action=replace link</a></p>
       <p><form id="same-origin-replace-form-get" action="/src/tests/fixtures/one.html" data-turbo-action="replace"><button>Same-origin data-turbo-action=replace form</button></form></p>
       <p><form id="same-origin-replace-form-submitter-get" action="/src/tests/fixtures/one.html"><button data-turbo-action="replace">Same-origin data-turbo-action=replace form</button></form></p>
@@ -31,6 +32,20 @@
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <button data-turbo-action="replace">Same-origin form[method="post"] button[data-turbo-action="replace"]</button>
       </form>
+
+      <p><a id="same-origin-replace-morph-link" href="/src/tests/fixtures/destination_for_morphing.html" data-turbo-action="replace" data-turbo-replace-method="morph">Same-origin data-turbo-action=replace data-turbo-replace-method=morph link</a></p>
+      <p><a id="same-origin-advance-morph-link" href="/src/tests/fixtures/destination_for_morphing.html" data-turbo-action="advance" data-turbo-replace-method="morph">Same-origin data-turbo-action=advance data-turbo-replace-method=morph link</a></p>
+      <p><form id="same-origin-replace-morph-form-get" action="/src/tests/fixtures/destination_for_morphing.html" data-turbo-action="replace" data-turbo-replace-method="morph"><button>Same-origin data-turbo-action=replace data-turbo-replace-method=morph form</button></form></p>
+      <p><form id="same-origin-replace-morph-form-submitter-get" action="/src/tests/fixtures/destination_for_morphing.html"><button data-turbo-action="replace" data-turbo-replace-method="morph">Same-origin data-turbo-action=replace data-turbo-replace-method=morph form</button></form></p>
+      <form id="same-origin-replace-morph-form-post" method="post" action="/__turbo/redirect" data-turbo-action="replace" data-turbo-replace-method="morph">
+        <input type="hidden" name="path" value="/src/tests/fixtures/destination_for_morphing.html">
+        <button>Same-origin form[method="post"][data-turbo-action="replace"][data-turbo-replace-method="morph"]</button>
+      </form>
+      <form id="same-origin-replace-morph-form-submitter-post" method="post" action="/__turbo/redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/destination_for_morphing.html">
+        <button data-turbo-action="replace">Same-origin form[method="post"] button[data-turbo-action="replace"]</button>
+      </form>
+
       <form id="form-post" method="post" action="/__turbo/redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <input type="submit" id="form-post-submit" value="Submit"/>
