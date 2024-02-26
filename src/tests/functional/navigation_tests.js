@@ -206,7 +206,7 @@ test("following a same-origin data-turbo-action=replace and data-turbo-replace-m
   expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
-test("following a same-origin data-turbo-action=advance and data-turbo-replace-method=morph link should ignore method", async ({ page }) => {
+test("following a same-origin data-turbo-action=advance and data-turbo-replace-method=morph link should ignore morph method", async ({ page }) => {
   await page.click("#same-origin-advance-morph-link")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
@@ -216,14 +216,21 @@ test("following a same-origin data-turbo-action=advance and data-turbo-replace-m
 })
 
 test("following a same-origin GET form[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
-  page.on('console', message => console.log(message.text()))
-
   await page.click("#same-origin-replace-morph-form-get button")
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
   assert.equal(await visitAction(page), "replace")
-  console.log(await visitReplaceMethod(page))
-  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+  assert.equal(await visitReplaceMethod(page), "morph")
+  expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin GET form[data-turbo-action=advance][data-turbo-replace-method=morph] should ignore morph method", async ({ page }) => {
+  await page.click("#same-origin-advance-morph-form-get button")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "advance")
+  assert.notEqual(await visitReplaceMethod(page), "morph")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
 test("following a same-origin GET form button[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
@@ -231,31 +238,56 @@ test("following a same-origin GET form button[data-turbo-action=replace][data-tu
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
   assert.equal(await visitAction(page), "replace")
-  console.log(await visitReplaceMethod(page))
-  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+  assert.equal(await visitReplaceMethod(page), "morph")
+  expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin GET form button[data-turbo-action=advance][data-turbo-replace-method=morph] should ignore morph method", async ({ page }) => {
+  await page.click("#same-origin-advance-morph-form-submitter-get button")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "advance")
+  assert.notEqual(await visitReplaceMethod(page), "morph")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
 test("following a same-origin POST form[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
   await page.click("#same-origin-replace-morph-form-post button")
   await nextBody(page)
-
   assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
   assert.equal(await visitAction(page), "replace")
-  console.log(await visitReplaceMethod(page))
-  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+  assert.equal(await visitReplaceMethod(page), "morph")
+  expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+})
+
+test("following a same-origin POST form[data-turbo-action=advance][data-turbo-replace-method=morph] should ignore morph method", async ({ page }) => {
+  await page.click("#same-origin-advance-morph-form-post button")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "advance")
+  assert.notEqual(await visitReplaceMethod(page), "morph")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 })
 
 test("following a same-origin POST form button[data-turbo-action=replace][data-turbo-replace-method=morph]", async ({ page }) => {
   await page.click("#same-origin-replace-morph-form-submitter-post button")
-  await nextEventNamed(page, "turbo:load")
+  expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+  expect(await nextEventNamed(page, "turbo:load")).toBeTruthy()
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
   assert.equal(await visitAction(page), "replace")
-  console.log(await visitReplaceMethod(page))
-  //expect(await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+  assert.equal(await visitReplaceMethod(page), "morph")
 })
 
+test("following a same-origin POST form button[data-turbo-action=advance][data-turbo-replace-method=morph] should ignore morph method", async ({ page }) => {
+  await page.click("#same-origin-advance-morph-form-submitter-post button")
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
+  expect(await nextEventNamed(page, "turbo:load")).toBeTruthy()
 
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/destination_for_morphing.html")
+  assert.equal(await visitAction(page), "advance")
+  assert.notEqual(await visitReplaceMethod(page), "morph")
+})
 
 test("following a POST form clears cache", async ({ page }) => {
   await page.evaluate(() => {

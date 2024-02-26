@@ -96,12 +96,12 @@ export async function nextPageRefresh(page, timeout = 500) {
   return sleep(pageRefreshDebouncePeriod + timeout)
 }
 
-export async function nextEventNamed(page, eventName, expectedDetail = {}) {
+export async function nextEventNamed(page, expectedName, expectedDetail = {}) {
   let record
   while (!record) {
     const records = await readEventLogs(page, 1)
     record = records.find(([name, detail]) => {
-      return name == eventName && Object.entries(expectedDetail).every(([key, value]) => detail[key] === value)
+      return name == expectedName && Object.entries(expectedDetail).every(([key, value]) => detail[key] === value)
     })
   }
   return record[1]

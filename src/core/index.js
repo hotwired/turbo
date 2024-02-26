@@ -34,6 +34,10 @@ export function registerAdapter(adapter) {
  * @param options Options to apply
  * @param options.action Type of history navigation to apply ("restore",
  * "replace" or "advance")
+ * @param options.frame If specified, finds a turbo-frame element with an [id]
+ * attribute that matches this.
+ * @param options.replaceMethod If specified, changes the method used to
+ * perform a replace ("morph" or else it defaults to "body" replace)
  * @param options.historyChanged Specifies whether the browser history has
  * already been changed for this visit or not
  * @param options.referrer Specifies the referrer of this visit such that
