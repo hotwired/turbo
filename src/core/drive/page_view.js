@@ -16,7 +16,7 @@ export class PageView extends View {
   }
 
   renderPage(snapshot, isPreview = false, willRender = true, visit) {
-    const shouldMorphPage = this.shouldMorphPage(snapshot, visit)
+    const shouldMorphPage = snapshot.shouldMorphPage && this.isMorphableVisit(visit)
     const rendererClass = shouldMorphPage ? MorphRenderer : PageRenderer
 
     const renderer = new rendererClass(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
@@ -55,9 +55,8 @@ export class PageView extends View {
     return this.snapshotCache.get(location)
   }
 
-  shouldMorphPage(snapshot, visit) {
-    return snapshot.shouldMorphPage &&
-            (this.isPageRefresh(visit) || this.isReplaceMethodMorph(visit))
+  isMorphableVisit(visit) {
+    return this.isPageRefresh(visit) || this.isReplaceMethodMorph(visit)
   }
 
   isPageRefresh(visit) {
@@ -65,7 +64,7 @@ export class PageView extends View {
   }
 
   isReplaceMethodMorph(visit) {
-    return !visit || (visit.action === "replace" && visit.replaceMethod === "morph")
+    return visit.action === "replace" && visit.replaceMethod === "morph"
   }
 
   shouldPreserveScrollPosition(visit) {
