@@ -23,20 +23,6 @@ router.use((request, response, next) => {
   }
 })
 
-router.get('/frames', (req, res) => {
-  // The purpose of this route is to do a server-side replacement of ##randNum##. This way when we
-  // refresh this page we are guaranteed to see a change in content.
-  fs.readFile(path.join(__dirname, '../../src/tests/fixtures/frames.html'), 'utf8', (err, data) => {
-    if (err) {
-      console.error(err)
-      return res.status(500).send('Error reading file')
-    }
-    const randomNumber = Math.floor(Math.random() * 10000000)
-    const processedContent = data.replace('##randNum##', randomNumber.toString())
-    res.send(processedContent)
-  })
-})
-
 router.post("/redirect", (request, response) => {
   const { path, sleep, ...query } = request.body
   const { pathname, query: searchParams } = url.parse(

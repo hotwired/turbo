@@ -16,7 +16,7 @@
         } else if (target.id == "add-refresh-morph-to-frame") {
           target.closest("turbo-frame")?.setAttribute("refresh", "morph")
         } else if (target.id == "add-src-to-frame") {
-          target.closest("turbo-frame")?.setAttribute("src", "/__turbo/frames")
+          target.closest("turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
         }
       })
     </script>
@@ -29,7 +29,6 @@
 
     <turbo-frame id="frame" data-loaded-from="/src/tests/fixtures/frames.html">
       <h2>Frames: #frame</h2>
-      <h3>This text always changes ##randNum##</h3>
 
       <form action="/src/tests/fixtures/frames/frame.html">
         <button id="frame-form-get-no-redirect">Navigate #frame without a redirect</button>

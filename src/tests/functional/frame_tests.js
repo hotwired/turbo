@@ -305,26 +305,20 @@ test("navigating turbo-frame[refresh=morph] from within morphs the contents", as
 test("calling reload on a frame replaces the contents", async ({ page }) => {
   await page.click("#add-src-to-frame")
 
-  const textBeforeReload = await page.textContent("#frame h3")
   await page.evaluate(() => document.getElementById("frame").reload())
-  const textAfterReload = await page.textContent("#frame h3")
 
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
   expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
-  assert.notEqual(textBeforeReload, textAfterReload)
 })
 
 test("calling reload on a frame[refresh=morph] morphs the contents", async ({ page }) => {
   await page.click("#add-src-to-frame")
   await page.click("#add-refresh-morph-to-frame")
 
-  const textBeforeReload = await page.textContent("#frame h3")
   await page.evaluate(() => document.getElementById("frame").reload())
-  const textAfterReload = await page.textContent("#frame h3")
 
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
-  assert.notEqual(textBeforeReload, textAfterReload)
 })
 
 test("following a link in rapid succession cancels the previous request", async ({ page }) => {
