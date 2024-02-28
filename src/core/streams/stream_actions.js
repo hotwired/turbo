@@ -50,6 +50,10 @@ export const StreamActions = {
   },
 
   refresh() {
-    session.refresh(this.baseURI, this.requestId)
+    const method = this.getAttribute("method")
+    const requestId = this.requestId
+    const scroll = this.getAttribute("scroll")
+
+    session.refresh(this.baseURI, { method, requestId, scroll })
   }
 }

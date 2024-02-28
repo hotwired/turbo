@@ -107,10 +107,11 @@ export class Session {
     }
   }
 
-  refresh(url, requestId) {
+  refresh(url, options = {}) {
+    const { method, requestId, scroll } = options
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
     if (!isRecentRequest && !this.navigator.currentVisit) {
-      this.visit(url, { action: "replace", shouldCacheSnapshot: false })
+      this.visit(url, { action: "replace", shouldCacheSnapshot: false, refresh: { method, scroll } })
     }
   }
 
