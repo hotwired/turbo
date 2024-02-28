@@ -105,11 +105,14 @@ export class Session {
     }
   }
 
-  refresh(url, requestId) {
+  refresh(url, options = {}) {
+    options = typeof options === "string" ? { requestId: options } : options
+
+    const { method, requestId, scroll } = options
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
     const isCurrentUrl = url === document.baseURI
     if (!isRecentRequest && !this.navigator.currentVisit && isCurrentUrl) {
-      this.visit(url, { action: "replace", shouldCacheSnapshot: false })
+      this.visit(url, { action: "replace", shouldCacheSnapshot: false, refresh: { method, scroll } })
     }
   }
 
