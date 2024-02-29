@@ -93,6 +93,10 @@ export class FrameElement extends HTMLElement {
     }
   }
 
+  get shouldReloadWithMorph() {
+    return this.src && this.refresh === "morph"
+  }
+
   /**
    * Determines if the element is loading
    */

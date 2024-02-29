@@ -27,7 +27,7 @@ export class MorphPageRenderer extends PageRenderer {
 
   #reloadRemoteFrames() {
     this.#remoteFrames().forEach((frame) => {
-      if (this.#isFrameReloadedWithMorph(frame)) {
+      if (frame.shouldReloadWithMorph) {
         frame.reload()
       }
     })
@@ -37,9 +37,5 @@ export class MorphPageRenderer extends PageRenderer {
     return Array.from(document.querySelectorAll('turbo-frame[src]')).filter(frame => {
       return !frame.closest('[data-turbo-permanent]')
     })
-  }
-
-  #isFrameReloadedWithMorph(element) {
-    return element.src && element.refresh === "morph"
   }
 }

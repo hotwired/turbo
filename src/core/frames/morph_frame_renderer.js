@@ -11,6 +11,6 @@ export class MorphFrameRenderer extends FrameRenderer {
       detail: { currentElement, newElement }
     })
 
-    MorphElements.morph(currentElement, newElement, 'innerHTML')
+    MorphElements.morph(currentElement, newElement, "innerHTML")
   }
 }

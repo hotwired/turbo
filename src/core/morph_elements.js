@@ -1,5 +1,6 @@
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
 import { dispatch } from "../util"
+import { FrameElement } from "../elements/frame_element"
 
 export class MorphElements {
   static morph(currentElement, newElement, morphStyle = "outerHTML") {
@@ -18,7 +19,7 @@ export class MorphElements {
   }
 
   static isFrameReloadedWithMorph(element) {
-    return element.src && element.refresh === "morph"
+    return (element instanceof FrameElement) && element.shouldReloadWithMorph
   }
 
   static shouldAddElement = (node) => {

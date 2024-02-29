@@ -311,7 +311,7 @@ export class FrameController {
       const snapshot = new Snapshot(newFrameElement)
       let renderer
 
-      if (this.element.src && this.element.refresh === "morph") {
+      if (this.element.shouldReloadWithMorph) {
         renderer = new MorphFrameRenderer(this, this.view.snapshot, snapshot, MorphFrameRenderer.renderElement, false, false)
       } else {
         renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
