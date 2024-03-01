@@ -125,6 +125,7 @@ export class Navigator {
 
   visitCompleted(visit) {
     this.delegate.visitCompleted(visit)
+    delete this.currentVisit
   }
 
   locationWithActionIsSamePage(location, action) {
