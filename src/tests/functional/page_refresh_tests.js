@@ -8,7 +8,8 @@ import {
   nextEventOnTarget,
   noNextEventOnTarget,
   noNextEventNamed,
-  getSearchParam
+  getSearchParam,
+  refreshWithStream
 } from "../helpers/page"
 
 test("renders a page refresh with morphing", async ({ page }) => {
@@ -26,14 +27,30 @@ test("async page refresh with turbo-stream", async ({ page }) => {
 
   await page.evaluate(() => document.querySelector("#title").innerText = "Updated")
   await expect(page.locator("#title")).toHaveText("Updated")
-
-  await page.evaluate(() => {
-    document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh"></turbo-stream>`)
-  })
+  await refreshWithStream(page)
 
   await expect(page.locator("#title")).not.toHaveText("Updated")
   await expect(page.locator("#title")).toHaveText("Page to be refreshed")
   expect(await noNextEventNamed(page, "turbo:before-cache")).toBeTruthy()
+})
+
+test("async page refresh with turbo-stream sequentially initiate Visits", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await refreshWithStream(page)
+  await nextEventNamed(page, "turbo:morph")
+  await nextEventNamed(page, "turbo:load")
+
+  await refreshWithStream(page)
+  await nextEventNamed(page, "turbo:morph")
+  await nextEventNamed(page, "turbo:load")
+})
+
+test("async page refresh with turbo-stream does not interrupt an initiated Visit", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await page.click("#delayed_link")
+  await refreshWithStream(page)
+
+  await expect(page.locator("h1")).toHaveText("One")
 })
 
 test("dispatches a turbo:before-morph-element and turbo:morph-element event for each morphed element", async ({ page }) => {
