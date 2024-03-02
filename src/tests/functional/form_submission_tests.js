@@ -1142,7 +1142,7 @@ test("following a link with [data-turbo-method] and [data-turbo=true] set when h
 test("following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
   page
 }) => {
-  await page.evaluate(() => (window.Turbo.session.drive = false))
+  await page.evaluate(() => (window.Turbo.config.drive = false))
 
   const link = await page.locator("#turbo-method-post-to-targeted-frame")
   await link.evaluate((link) => link.setAttribute("data-turbo", "true"))
@@ -1163,7 +1163,7 @@ test("following a link with [data-turbo-method] set when html[data-turbo=false]"
 })
 
 test("following a link with [data-turbo-method] set when Turbo.session.drive = false", async ({ page }) => {
-  await page.evaluate(() => (window.Turbo.session.drive = false))
+  await page.evaluate(() => (window.Turbo.config.drive = false))
   await page.click("#turbo-method-post-to-targeted-frame")
 
   assert.equal(await page.textContent("h1"), "Hello", "treats link full-page navigation")
