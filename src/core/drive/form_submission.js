@@ -121,7 +121,7 @@ export class FormSubmission {
 
   requestStarted(_request) {
     this.state = FormSubmissionState.waiting
-    this.submitter?.setAttribute("disabled", "")
+    if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
     this.setSubmitsWith()
     markAsBusy(this.formElement)
     dispatch("turbo:submit-start", {
@@ -167,7 +167,7 @@ export class FormSubmission {
 
   requestFinished(_request) {
     this.state = FormSubmissionState.stopped
-    this.submitter?.removeAttribute("disabled")
+    if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
     this.resetSubmitterText()
     clearBusyState(this.formElement)
     dispatch("turbo:submit-end", {
