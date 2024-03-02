@@ -16,8 +16,7 @@ export class PageView extends View {
   }
 
   renderPage(snapshot, isPreview = false, willRender = true, visit) {
-    const shouldMorphPage = this.isPageRefresh(visit) && snapshot.shouldMorphPage;
-    console.info("shold morph", shouldMorphPage);
+    const shouldMorphPage = this.isPageRefresh(visit) && snapshot.shouldMorphPage
     const rendererClass = shouldMorphPage ? MorphRenderer : PageRenderer
 
     const renderer = new rendererClass(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
