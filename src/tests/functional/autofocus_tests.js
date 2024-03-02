@@ -140,6 +140,7 @@ test("autofocus from a Turbo Stream message does not leak a placeholder [id]", a
     `)
   })
   await nextBeat()
+  await nextBeat()  // to avoid flakiness
 
   assert.ok(
     await hasSelector(page, "#container-from-stream input:focus"),
