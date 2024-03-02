@@ -240,6 +240,22 @@ test("standard POST form submission toggles submitter [disabled] attribute", asy
   )
 })
 
+test("standard POST form submission toggles submitter [aria-disabled=true] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#standard-post-form-submit")
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "standard-post-form-submit", "aria-disabled"),
+    "true",
+    "sets [aria-disabled=true] on the submitter"
+  )
+  assert.equal(
+    await nextAttributeMutationNamed(page, "standard-post-form-submit", "aria-disabled"),
+    null,
+    "removes [aria-disabled] from the submitter"
+  )
+})
+
 test("replaces input value with data-turbo-submits-with on form submission", async ({ page }) => {
   page.click("#submits-with-form-input")
 
@@ -407,6 +423,22 @@ test("standard GET form submission toggles submitter [disabled] attribute", asyn
     await nextAttributeMutationNamed(page, "standard-get-form-submit", "disabled"),
     null,
     "removes [disabled] from the submitter"
+  )
+})
+
+test("standard GET form submission toggles submitter [aria-disabled] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#standard-get-form-submit")
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "standard-get-form-submit", "aria-disabled"),
+    "true",
+    "sets [aria-disabled] on the submitter"
+  )
+  assert.equal(
+    await nextAttributeMutationNamed(page, "standard-get-form-submit", "aria-disabled"),
+    null,
+    "removes [aria-disabled] from the submitter"
   )
 })
 
@@ -692,6 +724,22 @@ test("frame POST form targeting frame toggles submitter's [disabled] attribute",
   )
 })
 
+test("frame POST form targeting frame toggles submitter's [aria-disabled] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#targets-frame-post-form-submit")
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "targets-frame-post-form-submit", "aria-disabled"),
+    "true",
+    "sets [aria-disabled] on the submitter"
+  )
+  assert.equal(
+    await nextAttributeMutationNamed(page, "targets-frame-post-form-submit", "aria-disabled"),
+    null,
+    "removes [aria-disabled] from the submitter"
+  )
+})
+
 test("frame GET form targeting frame submission", async ({ page }) => {
   await page.click("#targets-frame-get-form-submit")
 
@@ -728,6 +776,22 @@ test("frame GET form targeting frame toggles submitter's [disabled] attribute", 
     await nextAttributeMutationNamed(page, "targets-frame-get-form-submit", "disabled"),
     null,
     "removes [disabled] from the submitter"
+  )
+})
+
+test("frame GET form targeting frame toggles submitter's [aria-disabled] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#targets-frame-get-form-submit")
+
+  assert.equal(
+    await nextAttributeMutationNamed(page, "targets-frame-get-form-submit", "aria-disabled"),
+    "true",
+    "sets [aria-disabled] on the submitter"
+  )
+  assert.equal(
+    await nextAttributeMutationNamed(page, "targets-frame-get-form-submit", "aria-disabled"),
+    null,
+    "removes [aria-disabled] from the submitter"
   )
 })
 
