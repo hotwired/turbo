@@ -29,7 +29,6 @@ export class MorphRenderer extends PageRenderer {
     this.isMorphingTurboFrame = this.#isFrameReloadedWithMorph(currentElement)
 
     Idiomorph.morph(currentElement, newElement, {
-      ignoreActiveValue: true,
       morphStyle: morphStyle,
       callbacks: {
         beforeNodeAdded: this.#shouldAddElement,

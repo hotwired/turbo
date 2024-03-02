@@ -136,11 +136,11 @@ export class Visit {
   complete() {
     if (this.state == VisitState.started) {
       this.recordTimingMetric(TimingMetric.visitEnd)
+      this.adapter.visitCompleted(this)
       this.state = VisitState.completed
       this.followRedirect()
 
       if (!this.followedRedirect) {
-        this.adapter.visitCompleted(this)
         this.delegate.visitCompleted(this)
       }
     }

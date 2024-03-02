@@ -14,6 +14,14 @@
 
       const application = Application.start()
 
+      addEventListener("focusin", ({ target }) => {
+        if (target instanceof HTMLInputElement && !target.hasAttribute("data-turbo-permanent")) {
+          target.toggleAttribute("data-turbo-permanent", true)
+
+          target.addEventListener("focusout", () => target.toggleAttribute("data-turbo-permanent", false), { once: true })
+        }
+      })
+
       addEventListener("turbo:morph-element", ({ target }) => {
         for (const { element, context } of application.controllers) {
           if (element === target) {
