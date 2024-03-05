@@ -2,8 +2,13 @@ import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
 import { dispatch } from "../util"
 import { FrameElement } from "../elements/frame_element"
 
-export class MorphElements {
-  static morph(currentElement, newElement, morphStyle = "outerHTML") {
+export function morphElements(currentElement, newElement, morphStyle = "outerHTML") {
+  const renderer = new Renderer()
+
+  renderer.morph(currentElement, newElement, morphStyle)
+}
+class Renderer {
+  morph(currentElement, newElement, morphStyle) {
     this.isMorphingTurboFrame = this.isFrameReloadedWithMorph(currentElement)
 
     Idiomorph.morph(currentElement, newElement, {
@@ -18,15 +23,15 @@ export class MorphElements {
     })
   }
 
-  static isFrameReloadedWithMorph(element) {
+  isFrameReloadedWithMorph(element) {
     return (element instanceof FrameElement) && element.shouldReloadWithMorph
   }
 
-  static shouldAddElement = (node) => {
+  shouldAddElement = (node) => {
     return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
   }
 
-  static shouldMorphElement = (oldNode, newNode) => {
+  shouldMorphElement = (oldNode, newNode) => {
     if (!(oldNode instanceof HTMLElement)) return
 
     if (oldNode.hasAttribute("data-turbo-permanent")) return false
@@ -44,17 +49,17 @@ export class MorphElements {
     return !event.defaultPrevented
   }
 
-  static shouldUpdateAttribute = (attributeName, target, mutationType) => {
+  shouldUpdateAttribute = (attributeName, target, mutationType) => {
     const event = dispatch("turbo:before-morph-attribute", { cancelable: true, target, detail: { attributeName, mutationType } })
 
     return !event.defaultPrevented
   }
 
-  static shouldRemoveElement = (node) => {
+  shouldRemoveElement = (node) => {
     return this.shouldMorphElement(node)
   }
 
-  static didMorphElement = (oldNode, newNode) => {
+  didMorphElement = (oldNode, newNode) => {
     if (newNode instanceof HTMLElement) {
       dispatch("turbo:morph-element", {
         target: oldNode,

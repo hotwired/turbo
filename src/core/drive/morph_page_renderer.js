@@ -1,6 +1,6 @@
 import { dispatch } from "../../util"
 import { PageRenderer } from "./page_renderer"
-import { MorphElements } from "../morph_elements"
+import { morphElements } from "../morph_elements"
 
 export class MorphPageRenderer extends PageRenderer {
   async render() {
@@ -14,7 +14,7 @@ export class MorphPageRenderer extends PageRenderer {
   // Private
 
   async #morphBody() {
-    MorphElements.morph(this.currentElement, this.newElement)
+    morphElements(this.currentElement, this.newElement)
     this.#reloadRemoteFrames()
 
     dispatch("turbo:morph", {

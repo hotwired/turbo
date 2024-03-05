@@ -1,5 +1,5 @@
 import { FrameRenderer } from "./frame_renderer"
-import { MorphElements } from "../morph_elements"
+import { morphElements } from "../morph_elements"
 import { dispatch } from "../../util"
 
 export class MorphFrameRenderer extends FrameRenderer {
@@ -11,6 +11,6 @@ export class MorphFrameRenderer extends FrameRenderer {
       detail: { currentElement, newElement }
     })
 
-    MorphElements.morph(currentElement, newElement, "innerHTML")
+    morphElements(currentElement, newElement, "innerHTML")
   }
 }
