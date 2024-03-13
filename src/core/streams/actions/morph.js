@@ -4,21 +4,16 @@ import { dispatch } from "../../../util"
 export default function morph(streamElement) {
   const morphStyle = streamElement.hasAttribute("children-only") ? "innerHTML" : "outerHTML"
   streamElement.targetElements.forEach((element) => {
-    try {
-      Idiomorph.morph(element, streamElement.templateContent, {
-        morphStyle: morphStyle,
-        ignoreActiveValue: true,
-        callbacks: {
-          beforeNodeAdded,
-          beforeNodeMorphed,
-          beforeAttributeUpdated,
-          beforeNodeRemoved,
-          afterNodeMorphed,
-        },
-      })
-    } catch (e) {
-      console.error(e)
-    }
+    Idiomorph.morph(element, streamElement.templateContent, {
+      morphStyle: morphStyle,
+      callbacks: {
+        beforeNodeAdded,
+        beforeNodeMorphed,
+        beforeAttributeUpdated,
+        beforeNodeRemoved,
+        afterNodeMorphed
+      }
+    })
   })
 }
 
@@ -34,10 +29,10 @@ function beforeNodeMorphed(target, newElement) {
   if (target instanceof HTMLElement && !target.hasAttribute("data-turbo-permanent")) {
     const event = dispatch("turbo:before-morph-element", {
       cancelable: true,
+      target,
       detail: {
-        target,
-        newElement,
-      },
+        newElement
+      }
     })
     return !event.defaultPrevented
   }
@@ -50,8 +45,8 @@ function beforeAttributeUpdated(attributeName, target, mutationType) {
     target,
     detail: {
       attributeName,
-      mutationType,
-    },
+      mutationType
+    }
   })
   return !event.defaultPrevented
 }
@@ -61,8 +56,8 @@ function afterNodeMorphed(target, newElement) {
     dispatch("turbo:morph-element", {
       target,
       detail: {
-        newElement,
-      },
+        newElement
+      }
     })
   }
 }

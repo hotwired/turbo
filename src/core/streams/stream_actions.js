@@ -41,5 +41,5 @@ export const StreamActions = {
 
   morph() {
     morph(this)
-  },
+  }
 }
