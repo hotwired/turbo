@@ -59,7 +59,9 @@ test("autofocus from a Turbo Stream message does not leak a placeholder [id]", a
       </turbo-stream>
     `)
   })
+
   await expect(page.locator("#container-from-stream input")).toBeFocused()
+
 })
 
 test("receiving a Turbo Stream message with an [autofocus] element when an element within the document has focus", async ({ page }) => {
