@@ -1,4 +1,5 @@
 import { session } from "../"
+import morph from "./actions/morph"
 
 export const StreamActions = {
   after() {
@@ -36,5 +37,9 @@ export const StreamActions = {
 
   refresh() {
     session.refresh(this.baseURI, this.requestId)
+  },
+
+  morph() {
+    morph(this)
   }
 }
