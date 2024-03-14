@@ -1,7 +1,7 @@
 import { nextEventLoopTick } from "../../util"
 import { View } from "../view"
 import { ErrorRenderer } from "./error_renderer"
-import { MorphRenderer } from "./morph_renderer"
+import { MorphPageRenderer } from "./morph_page_renderer"
 import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
@@ -17,7 +17,7 @@ export class PageView extends View {
 
   renderPage(snapshot, isPreview = false, willRender = true, visit) {
     const shouldMorphPage = this.isPageRefresh(visit) && this.snapshot.shouldMorphPage
-    const rendererClass = shouldMorphPage ? MorphRenderer : PageRenderer
+    const rendererClass = shouldMorphPage ? MorphPageRenderer : PageRenderer
 
     const renderer = new rendererClass(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
 
