@@ -210,6 +210,19 @@ test("action=morph", async () => {
   assert.equal(subject.find("h1#hello")?.textContent, "Hello Turbo Morphed")
 })
 
+test("action=morph with text content change", async () => {
+  const templateElement = createTemplateElement(`<div id="hello">Hello Turbo Morphed</div>`)
+  const element = createStreamElement("morph", "hello", templateElement)
+
+  assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.ok(subject.find("div#hello"))
+  assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo Morphed")
+})
+
 test("action=morph children-only", async () => {
   const templateElement = createTemplateElement(`<h1 id="hello-child-element">Hello Turbo Morphed</h1>`)
   const element = createStreamElement("morph", "hello", templateElement)
