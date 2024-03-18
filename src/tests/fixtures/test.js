@@ -91,6 +91,10 @@
   "turbo:reload"
 ])
 
+window.visitLogs = []
+
+addEventListener("turbo:visit", ({ detail }) => window.visitLogs.push(detail))
+
 customElements.define(
   "custom-link-element",
   class extends HTMLElement {
