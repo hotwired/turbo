@@ -26,19 +26,20 @@ function beforeNodeRemoved(node) {
 }
 
 function beforeNodeMorphed(target, newElement) {
-  if (target instanceof HTMLElement) {
-    if (!target.hasAttribute("data-turbo-permanent")) {
-      const event = dispatch("turbo:before-morph-element", {
-        cancelable: true,
-        target,
-        detail: {
-          newElement
-        }
-      })
-      return !event.defaultPrevented
-    }
-    return false
+  if (!(target instanceof HTMLElement)) {
+    return
   }
+  if (!target.hasAttribute("data-turbo-permanent")) {
+    const event = dispatch("turbo:before-morph-element", {
+      cancelable: true,
+      target,
+      detail: {
+        newElement
+      }
+    })
+    return !event.defaultPrevented
+  }
+  return false
 }
 
 function beforeAttributeUpdated(attributeName, target, mutationType) {
