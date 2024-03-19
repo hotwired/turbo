@@ -38,6 +38,24 @@ test("lazy loading within a details element", async ({ page }) => {
   assert.ok(await hasSelector(page, "#loading-lazy turbo-frame[complete]"), "has [complete] attribute")
 })
 
+test("loading after completed lazy loading and restored visit", async ({ page }) => {
+  const frameContents = "#loading-lazy turbo-frame h2"
+  await page.click("#loading-lazy summary")
+  await nextBeat()
+
+  const contents = await page.locator(frameContents)
+  assert.equal(await contents.textContent(), "Hello from a frame")
+  await page.click("#two")
+  await nextBeat()
+
+  await page.goBack()
+  await page.click("#hello2")
+  await nextBeat()
+
+  const contents2 = await page.locator(frameContents)
+  assert.equal(await contents2.textContent(), "Hello 2 from a frame")
+})
+
 test("changing loading attribute from lazy to eager loads frame", async ({ page }) => {
   const frameContents = "#loading-lazy turbo-frame h2"
   await nextBeat()
