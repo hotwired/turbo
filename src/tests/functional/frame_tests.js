@@ -608,9 +608,9 @@ test("navigating pushing URL state from a frame navigation fires events", async 
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
   await nextEventOnTarget(page, "frame", "turbo:frame-render")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
-  assert.notOk(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "removes aria-busy from the <turbo-frame>")
-
   assert.equal(await nextAttributeMutationNamed(page, "html", "aria-busy"), "true", "sets aria-busy on the <html>")
+
+  assert.notOk(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "removes aria-busy from the <turbo-frame>")
   await nextEventOnTarget(page, "html", "turbo:before-visit")
   await nextEventOnTarget(page, "html", "turbo:visit")
   await nextEventOnTarget(page, "html", "turbo:before-cache")
