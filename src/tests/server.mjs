@@ -168,6 +168,20 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
+router.get("/file.unknown_svg", (request, response) => {
+  response.set({
+    "Content-Type": "image/svg+xml"
+  })
+  response.sendFile(path.join(__dirname, "../../src/tests/fixtures/svg.svg"))
+})
+
+router.get("/file.unknown_html", (request, response) => {
+  response.set({
+    "Content-Type": "text/html"
+  })
+  response.sendFile(path.join(__dirname, "../../src/tests/fixtures/visit.html"))
+})
+
 function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
