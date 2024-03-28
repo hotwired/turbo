@@ -10,14 +10,14 @@ class PrefetchCache {
     }
   }
 
-  setLater(url, request, ttl) {
+  setLater(url, request, ttl, delay) {
     this.clear()
 
-    this.#prefetchTimeout = setTimeout(() => {
-      request.perform()
-      this.set(url, request, ttl)
-      this.#prefetchTimeout = null
-    }, PREFETCH_DELAY)
+    if (delay === "off") {
+      this.#setNow(url, request, ttl)
+    } else {
+      this.#enqueue(url, request, ttl, PREFETCH_DELAY)
+    }
   }
 
   set(url, request, ttl) {
@@ -27,6 +27,18 @@ class PrefetchCache {
   clear() {
     if (this.#prefetchTimeout) clearTimeout(this.#prefetchTimeout)
     this.#prefetched = null
+  }
+
+  #enqueue(url, request, ttl, delay) {
+    this.#prefetchTimeout = setTimeout(() => {
+      this.#setNow(url, request, ttl)
+      this.#prefetchTimeout = null
+    }, delay)
+  }
+
+  #setNow(url, request, ttl) {
+    request.perform()
+    this.set(url, request, ttl)
   }
 }
 
