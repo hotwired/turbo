@@ -454,6 +454,19 @@ test("'turbo:frame-render' is triggered after frame has finished rendering", asy
   assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
 })
 
+test("navigating a frame from an outer link with a turbo-frame child fires events", async ({ page }) => {
+  await page.click("#outside-frame-link-with-frame-child")
+
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  expect(fetchResponse.response.url).toContain("/src/tests/fixtures/frames/form.html")
+
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  expect(await readEventLogs(page), "no more events").toHaveLength(0)
+})
+
 test("navigating a frame from an outer form fires events", async ({ page }) => {
   await page.click("#outside-frame-form")
 
