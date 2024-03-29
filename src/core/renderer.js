@@ -3,12 +3,16 @@ import { Bardo } from "./bardo"
 export class Renderer {
   #activeElement = null
 
-  constructor(currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
+  static renderElement(currentElement, newElement) {
+    // Abstract method
+  }
+
+  constructor(currentSnapshot, newSnapshot, isPreview, willRender = true) {
     this.currentSnapshot = currentSnapshot
     this.newSnapshot = newSnapshot
     this.isPreview = isPreview
     this.willRender = willRender
-    this.renderElement = renderElement
+    this.renderElement = this.constructor.renderElement
     this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
   }
 
