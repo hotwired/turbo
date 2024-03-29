@@ -74,12 +74,12 @@ export class PageSnapshot extends Snapshot {
     return this.headSnapshot.getMetaValue("view-transition") === "same-origin"
   }
 
-  get shouldMorphPage() {
-    return this.getSetting("refresh-method") === "morph"
+  get refreshMethod() {
+    return this.getSetting("refresh-method")
   }
 
-  get shouldPreserveScrollPosition() {
-    return this.getSetting("refresh-scroll") === "preserve"
+  get refreshScroll() {
+    return this.getSetting("refresh-scroll")
   }
 
   // Private
