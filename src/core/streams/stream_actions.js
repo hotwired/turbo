@@ -1,5 +1,5 @@
 import { session } from "../"
-import morph from "./actions/morph"
+import { morphElements, morphChildren } from "../morphing"
 
 export const StreamActions = {
   after() {
@@ -40,6 +40,10 @@ export const StreamActions = {
   },
 
   morph() {
-    morph(this)
+    const morph = this.hasAttribute("children-only") ?
+      morphChildren :
+      morphElements
+
+    this.targetElements.forEach((targetElement) => morph(targetElement, this.templateContent))
   }
 }
