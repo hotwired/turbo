@@ -31,7 +31,7 @@ export class LinkClickObserver {
     if (event instanceof MouseEvent && this.clickEventIsSignificant(event)) {
       const target = (event.composedPath && event.composedPath()[0]) || event.target
       const link = findLinkFromClickTarget(target)
-      if (link && doesNotTargetIFrame(link)) {
+      if (link && doesNotTargetIFrame(link.target)) {
         const location = getLocationForLink(link)
         if (this.delegate.willFollowLinkToLocation(link, location, event)) {
           event.preventDefault()
