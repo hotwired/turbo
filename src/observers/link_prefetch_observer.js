@@ -1,18 +1,16 @@
 import {
-  doesNotTargetIFrame,
+  dispatch,
   getLocationForLink,
   getMetaContent,
   findClosestRecursively
 } from "../util"
 
-import { StreamMessage } from "../core/streams/stream_message"
 import { FetchMethod, FetchRequest } from "../http/fetch_request"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export class LinkPrefetchObserver {
   started = false
-  hoverTriggerEvent = "mouseenter"
-  touchTriggerEvent = "touchstart"
+  #prefetchedLink = null
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -32,33 +30,35 @@ export class LinkPrefetchObserver {
   stop() {
     if (!this.started) return
 
-    this.eventTarget.removeEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener("mouseenter", this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
-    this.eventTarget.removeEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.removeEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
+
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.started = false
   }
 
   #enable = () => {
-    this.eventTarget.addEventListener(this.hoverTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener("mouseenter", this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
     })
-    this.eventTarget.addEventListener(this.touchTriggerEvent, this.#tryToPrefetchRequest, {
+    this.eventTarget.addEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
     })
+
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.started = true
   }
 
   #tryToPrefetchRequest = (event) => {
-    if (getMetaContent("turbo-prefetch") !== "true") return
+    if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
     const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
@@ -68,6 +68,8 @@ export class LinkPrefetchObserver {
       const location = getLocationForLink(link)
 
       if (this.delegate.canPrefetchRequestToLocation(link, location)) {
+        this.#prefetchedLink = link
+
         const fetchRequest = new FetchRequest(
           this,
           FetchMethod.get,
@@ -79,10 +81,17 @@ export class LinkPrefetchObserver {
         const delay = link.dataset.turboPrefetchDelay || getMetaContent("turbo-prefetch-delay")
 
         prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl, delay)
-
-        link.addEventListener("mouseleave", () => prefetchCache.clear(), { once: true })
       }
     }
+  }
+
+  #cancelRequestIfObsolete = (event) => {
+    if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
+  }
+
+  #cancelPrefetchRequest = () => {
+    prefetchCache.clear()
+    this.#prefetchedLink = null
   }
 
   #tryToUsePrefetchedRequest = (event) => {
@@ -109,10 +118,6 @@ export class LinkPrefetchObserver {
     if (turboFrameTarget && turboFrameTarget !== "_top") {
       request.headers["Turbo-Frame"] = turboFrameTarget
     }
-
-    if (link.hasAttribute("data-turbo-stream")) {
-      request.acceptResponseType(StreamMessage.contentType)
-    }
   }
 
   // Fetch request interface
@@ -136,41 +141,52 @@ export class LinkPrefetchObserver {
   #isPrefetchable(link) {
     const href = link.getAttribute("href")
 
-    if (!href || href === "#" || link.getAttribute("data-turbo") === "false" || link.getAttribute("data-turbo-prefetch") === "false") {
-      return false
-    }
+    if (!href) return false
 
-    if (link.origin !== document.location.origin) {
-      return false
-    }
-
-    if (!["http:", "https:"].includes(link.protocol)) {
-      return false
-    }
-
-    if (link.pathname + link.search === document.location.pathname + document.location.search) {
-      return false
-    }
-
-    const turboMethod = link.getAttribute("data-turbo-method")
-    if (turboMethod && turboMethod !== "get") {
-      return false
-    }
-
-    if (targetsIframe(link)) {
-      return false
-    }
-
-    const turboPrefetchParent = findClosestRecursively(link, "[data-turbo-prefetch]")
-
-    if (turboPrefetchParent && turboPrefetchParent.getAttribute("data-turbo-prefetch") === "false") {
-      return false
-    }
+    if (unfetchableLink(link)) return false
+    if (linkToTheSamePage(link)) return false
+    if (linkOptsOut(link)) return false
+    if (nonSafeLink(link)) return false
+    if (eventPrevented(link)) return false
 
     return true
   }
 }
 
-const targetsIframe = (link) => {
-  return !doesNotTargetIFrame(link)
+const unfetchableLink = (link) => {
+  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+}
+
+const linkToTheSamePage = (link) => {
+  return (link.pathname + link.search === document.location.pathname + document.location.search) || link.href.startsWith("#")
+}
+
+const linkOptsOut = (link) => {
+  if (link.getAttribute("data-turbo-prefetch") === "false") return true
+  if (link.getAttribute("data-turbo") === "false") return true
+
+  const turboPrefetchParent = findClosestRecursively(link, "[data-turbo-prefetch]")
+  if (turboPrefetchParent && turboPrefetchParent.getAttribute("data-turbo-prefetch") === "false") return true
+
+  return false
+}
+
+const nonSafeLink = (link) => {
+  const turboMethod = link.getAttribute("data-turbo-method")
+  if (turboMethod && turboMethod.toLowerCase() !== "get") return true
+
+  if (isUJS(link)) return true
+  if (link.hasAttribute("data-turbo-confirm")) return true
+  if (link.hasAttribute("data-turbo-stream")) return true
+
+  return false
+}
+
+const isUJS = (link) => {
+  return link.hasAttribute("data-remote") || link.hasAttribute("data-behavior") || link.hasAttribute("data-confirm") || link.hasAttribute("data-method")
+}
+
+const eventPrevented = (link) => {
+  const event = dispatch("turbo:before-prefetch", { target: link, cancelable: true })
+  return event.defaultPrevented
 }

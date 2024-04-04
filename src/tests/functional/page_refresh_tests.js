@@ -33,6 +33,7 @@ test("async page refresh with turbo-stream", async ({ page }) => {
 
   await expect(page.locator("#title")).not.toHaveText("Updated")
   await expect(page.locator("#title")).toHaveText("Page to be refreshed")
+  expect(await noNextEventNamed(page, "turbo:before-cache")).toBeTruthy()
 })
 
 test("dispatches a turbo:before-morph-element and turbo:morph-element event for each morphed element", async ({ page }) => {
@@ -181,6 +182,34 @@ test("frames marked with refresh='morph' are excluded from full page morphing", 
 
   await expect(page.locator("#refresh-morph")).toHaveAttribute("data-modified", "true")
   await expect(page.locator("#refresh-morph")).toHaveText("Loaded morphed frame")
+})
+
+test("navigated frames without refresh attribute are reset after morphing", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.click("#refresh-after-navigation-link")
+
+  await nextBeat()
+
+  assert.ok(
+    await hasSelector(page, "#refresh-after-navigation-content"),
+    "navigates theframe"
+  )
+
+  await page.click("#form-submit")
+
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBeat()
+
+  assert.ok(
+    await hasSelector(page, "#refresh-after-navigation-link"),
+    "resets the frame"
+  )
+
+  assert.notOk(
+    await hasSelector(page, "#refresh-after-navigation-content"),
+    "does not reload the frame"
+  )
 })
 
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {

@@ -25,7 +25,7 @@ export class FrameElement extends HTMLElement {
   loaded = Promise.resolve()
 
   static get observedAttributes() {
-    return ["disabled", "complete", "loading", "src"]
+    return ["disabled", "loading", "src"]
   }
 
   constructor() {
@@ -48,11 +48,9 @@ export class FrameElement extends HTMLElement {
   attributeChangedCallback(name) {
     if (name == "loading") {
       this.delegate.loadingStyleChanged()
-    } else if (name == "complete") {
-      this.delegate.completeChanged()
     } else if (name == "src") {
       this.delegate.sourceURLChanged()
-    } else {
+    } else if (name == "disabled") {
       this.delegate.disabledChanged()
     }
   }

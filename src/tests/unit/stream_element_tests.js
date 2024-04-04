@@ -196,3 +196,45 @@ test("test action=refresh discarded when matching request id", async () => {
 
   assert.ok(document.body.hasAttribute("data-modified"))
 })
+
+test("action=morph", async () => {
+  const templateElement = createTemplateElement(`<h1 id="hello">Hello Turbo Morphed</h1>`)
+  const element = createStreamElement("morph", "hello", templateElement)
+
+  assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.notOk(subject.find("div#hello"))
+  assert.equal(subject.find("h1#hello")?.textContent, "Hello Turbo Morphed")
+})
+
+test("action=morph with text content change", async () => {
+  const templateElement = createTemplateElement(`<div id="hello">Hello Turbo Morphed</div>`)
+  const element = createStreamElement("morph", "hello", templateElement)
+
+  assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.ok(subject.find("div#hello"))
+  assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo Morphed")
+})
+
+test("action=morph children-only", async () => {
+  const templateElement = createTemplateElement(`<h1 id="hello-child-element">Hello Turbo Morphed</h1>`)
+  const element = createStreamElement("morph", "hello", templateElement)
+  const target = subject.find("div#hello")
+  assert.equal(target?.textContent, "Hello Turbo")
+  element.setAttribute("children-only", true)
+
+  subject.append(element)
+
+  await nextAnimationFrame()
+
+  assert.ok(subject.find("div#hello"))
+  assert.ok(subject.find("div#hello > h1#hello-child-element"))
+  assert.equal(subject.find("div#hello > h1#hello-child-element").textContent, "Hello Turbo Morphed")
+})
