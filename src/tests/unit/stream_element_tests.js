@@ -5,11 +5,12 @@ import { assert } from "@open-wc/testing"
 import { sleep } from "../helpers/page"
 import * as Turbo from "../../index"
 
-function createStreamElement(action, target, templateElement) {
+function createStreamElement(action, target, templateElement, attributes = {}) {
   const element = new StreamElement()
   if (action) element.setAttribute("action", action)
   if (target) element.setAttribute("target", target)
   if (templateElement) element.appendChild(templateElement)
+  Object.entries(attributes).forEach((attribute) => element.setAttribute(...attribute))
   return element
 }
 
@@ -197,9 +198,9 @@ test("test action=refresh discarded when matching request id", async () => {
   assert.ok(document.body.hasAttribute("data-modified"))
 })
 
-test("action=morph", async () => {
+test("action=replace method=morph", async () => {
   const templateElement = createTemplateElement(`<h1 id="hello">Hello Turbo Morphed</h1>`)
-  const element = createStreamElement("morph", "hello", templateElement)
+  const element = createStreamElement("replace", "hello", templateElement, { method: "morph" })
 
   assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo")
 
@@ -210,9 +211,9 @@ test("action=morph", async () => {
   assert.equal(subject.find("h1#hello")?.textContent, "Hello Turbo Morphed")
 })
 
-test("action=morph with text content change", async () => {
+test("action=replace method=morph with text content change", async () => {
   const templateElement = createTemplateElement(`<div id="hello">Hello Turbo Morphed</div>`)
-  const element = createStreamElement("morph", "hello", templateElement)
+  const element = createStreamElement("replace", "hello", templateElement, { method: "morph" })
 
   assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo")
 
@@ -223,9 +224,9 @@ test("action=morph with text content change", async () => {
   assert.equal(subject.find("div#hello")?.textContent, "Hello Turbo Morphed")
 })
 
-test("action=morph children-only", async () => {
+test("action=update method=morph", async () => {
   const templateElement = createTemplateElement(`<h1 id="hello-child-element">Hello Turbo Morphed</h1>`)
-  const element = createStreamElement("morph", "hello", templateElement)
+  const element = createStreamElement("update", "hello", templateElement, { method: "morph" })
   const target = subject.find("div#hello")
   assert.equal(target?.textContent, "Hello Turbo")
   element.setAttribute("children-only", true)
