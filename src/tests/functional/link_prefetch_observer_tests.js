@@ -246,11 +246,8 @@ test("it resets the cache when a link is hovered", async ({ page }) => {
 
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
-  await hoverSelector({ page, selector: "#anchor_for_prefetch" })
-
-  await sleep(100)
-
-  await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+  await assertRequestNotMadeOnClick({ page, selector: "#anchor_for_prefetch" })
 })
 
 test("it follows the link using the cached response when clicking on a link that has been prefetched", async ({
@@ -294,6 +291,13 @@ const assertNotPrefetchedOnHover = async ({ page, selector, callback }) => {
   await sleep(100)
 
   assert.equal(requestMade, false, "Network request was made when it should not have been.")
+}
+
+const assertRequestNotMadeOnClick = async ({ page, selector }) => {
+  let requestMade = false
+  page.on("request", async (request) => (requestMade = true))
+  await clickSelector({ page, selector })
+  assertRequestNotMade(requestMade)
 }
 
 const assertRequestMade = (requestMade) => {
