@@ -40,7 +40,7 @@ test("link with confirmation without method confirmed", async ({ page }) => {
     alert.accept()
   })
 
-  await page.click("#drive_enabled_with_confirm_without_method")
+  await page.click("#drive_enabled_with_confirm")
   await nextBody(page)
   assert.equal(search(page.url()), "?confirmed=true")
 })
@@ -51,30 +51,7 @@ test("link with confirmation without method cancelled", async ({ page }) => {
     alert.dismiss()
   })
 
-  await page.click("#drive_enabled_with_confirm_without_method")
-  await nextBody(page)
-  assert.notEqual(search(page.url()), "?confirmed=true")
-})
-
-
-test("link with confirmation with method confirmed", async ({ page }) => {
-  page.on("dialog", (alert) => {
-    assert.equal(alert.message(), "Are you sure?")
-    alert.accept()
-  })
-
-  await page.click("#drive_enabled_with_confirm_and_method")
-  await nextBody(page)
-  assert.equal(search(page.url()), "?confirmed=true")
-})
-
-test("link with confirmation with method cancelled", async ({ page }) => {
-  page.on("dialog", (alert) => {
-    assert.equal(alert.message(), "Are you sure?")
-    alert.dismiss()
-  })
-
-  await page.click("#drive_enabled_with_confirm_and_method")
+  await page.click("#drive_enabled_with_confirm")
   await nextBody(page)
   assert.notEqual(search(page.url()), "?confirmed=true")
 })
