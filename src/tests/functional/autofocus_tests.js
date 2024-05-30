@@ -79,13 +79,13 @@ test("receiving a Turbo Stream message with an [autofocus] element when an eleme
 test("don't focus on [autofocus] elements on page refreshes with morphing", async ({ page }) => {
   const input = await page.locator("#form input[autofocus]")
 
-  const button = await page.locator("#first-autofocus-element")
+  const button = page.locator("#first-autofocus-element")
   await button.click()
 
   await nextPageRefresh(page)
 
-  expect(button).toBeFocused()
-  expect(input).not.toBeFocused()
+  await expect(button).toBeFocused()
+  await expect(input).not.toBeFocused()
 
   await page.evaluate(() => {
     document.querySelector("#form").requestSubmit()
@@ -94,5 +94,5 @@ test("don't focus on [autofocus] elements on page refreshes with morphing", asyn
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextPageRefresh(page)
 
-  expect(button).toBeFocused()
+  await expect(button).toBeFocused()
 })
