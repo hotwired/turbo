@@ -15,7 +15,7 @@
         }
 
         async adjustFocus() {
-          await this.frameElementTarget.lazyLoaded
+          await this.frameElementTarget.loaded
           document.getElementById("permanent-input-in-frame").focus()
         }
 

@@ -17,21 +17,6 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
-test("when lazy loading, loaded promise does not resolve until it is actually loaded", async ({ page }) => {
-  await nextBeat()
-
-  const frameContents = "#loading-lazy turbo-frame h2"
-  assert.notOk(await hasSelector(page, frameContents))
-  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame:not([complete])"))
-
-  await page.click("#loading-lazy summary")
-  await nextBeat()
-
-  const inputSelector = "#permanent-input-in-frame"
-
-  await expect(page.locator(inputSelector)).toBeFocused()
-})
-
 test("eager loading within a details element", async ({ page }) => {
   await nextBeat()
   assert.ok(await hasSelector(page, "#loading-eager turbo-frame#frame h2"))
@@ -209,4 +194,19 @@ test("disconnecting and reconnecting a frame does not reload the frame", async (
   const eventLogs = await readEventLogs(page)
   const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
   assert.equal(requestLogs.length, 0)
+})
+
+test("when lazy loading, loaded promise does not resolve until it is actually loaded", async ({ page }) => {
+  await nextBeat()
+
+  const frameContents = "#loading-lazy turbo-frame h2"
+  assert.notOk(await hasSelector(page, frameContents))
+  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame:not([complete])"))
+
+  await page.click("#loading-lazy summary")
+  await nextBeat()
+
+  const inputSelector = "#permanent-input-in-frame"
+
+  await expect(page.locator(inputSelector)).toBeFocused()
 })

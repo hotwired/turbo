@@ -50,7 +50,7 @@ export class FrameController {
     if (!this.#connected) {
       this.#connected = true
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
-        this.element.lazyLoaded = new Promise((resolve) => {
+        this.element.loaded = new Promise((resolve) => {
           this.lazyLoadResolver = resolve
         })
         this.appearanceObserver.start()
@@ -110,9 +110,12 @@ export class FrameController {
 
   async #loadSourceURL() {
     if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
-      this.element.loaded = this.#visit(expandURL(this.sourceURL))
+      const visitLoadedPromise = this.#visit(expandURL(this.sourceURL))
+      if (!this.element.loaded) {
+        this.element.loaded = visitLoadedPromise
+      }
       this.appearanceObserver.stop()
-      await this.element.loaded
+      await visitLoadedPromise
       if (this.lazyLoadResolver)
       {
         this.lazyLoadResolver()
