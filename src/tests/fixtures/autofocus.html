@@ -5,6 +5,8 @@
     <title>Autofocus</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
+    <meta name="turbo-refresh-method" content="morph">
+    <meta name="turbo-refresh-scroll" content="preserve">
   </head>
   <body>
     <h1>Autofocus</h1>
@@ -22,5 +24,12 @@
     <turbo-frame id="drives-frame" target="frame">
       <a id="drives-frame-target-link" href="/src/tests/fixtures/frames/form.html">#drives-frame link to frames/form.html</a>
     </turbo-frame>
+
+    <form id="form" action="/__turbo/refresh" method="post" class="redirect">
+      <input id="form-text" type="text" name="text" value="" autofocus>
+      <input type="hidden" name="path" value="/src/tests/fixtures/autofocus.html">
+      <input type="hidden" name="sleep" value="50">
+      <input id="form-submit" type="submit" value="form[method=post]">
+    </form>
   </body>
 </html>

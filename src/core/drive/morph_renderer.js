@@ -11,6 +11,10 @@ export class MorphRenderer extends PageRenderer {
     return "morph"
   }
 
+  get shouldAutofocus() {
+    return false
+  }
+
   // Private
 
   async #morphBody() {

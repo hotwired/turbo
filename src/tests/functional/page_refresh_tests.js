@@ -109,7 +109,7 @@ test("renders a page refresh with morphing when the paths are the same but searc
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 })
 
-test("renders a page refresh with morphing when the GET form paths are the same but search params are diferent", async ({ page }) => {
+test("renders a page refresh with morphing when the GET form paths are the same but search params are different", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   const input = page.locator("form[method=get] input[name=query]")
