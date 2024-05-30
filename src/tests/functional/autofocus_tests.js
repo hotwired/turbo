@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { nextEventNamed, nextPageRefresh } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/autofocus.html")
@@ -73,4 +74,25 @@ test("receiving a Turbo Stream message with an [autofocus] element when an eleme
     `)
   })
   await expect(page.locator("#first-autofocus-element")).toBeFocused()
+})
+
+test("don't focus on [autofocus] elements on page refreshes with morphing", async ({ page }) => {
+  const input = await page.locator("#form input[autofocus]")
+
+  const button = page.locator("#first-autofocus-element")
+  await button.click()
+
+  await nextPageRefresh(page)
+
+  await expect(button).toBeFocused()
+  await expect(input).not.toBeFocused()
+
+  await page.evaluate(() => {
+    document.querySelector("#form").requestSubmit()
+  })
+
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextPageRefresh(page)
+
+  await expect(button).toBeFocused()
 })

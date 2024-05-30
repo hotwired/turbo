@@ -16,6 +16,10 @@ export class Renderer {
     return true
   }
 
+  get shouldAutofocus() {
+    return true
+  }
+
   get reloadReason() {
     return
   }
@@ -40,9 +44,11 @@ export class Renderer {
   }
 
   focusFirstAutofocusableElement() {
-    const element = this.connectedSnapshot.firstAutofocusableElement
-    if (element) {
-      element.focus()
+    if (this.shouldAutofocus) {
+      const element = this.connectedSnapshot.firstAutofocusableElement
+      if (element) {
+        element.focus()
+      }
     }
   }
 
