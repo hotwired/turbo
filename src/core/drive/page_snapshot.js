@@ -82,6 +82,10 @@ export class PageSnapshot extends Snapshot {
     return this.getSetting("refresh-scroll") === "preserve"
   }
 
+  get shouldHideProgressBarOnRefresh() {
+    return this.shouldMorphPage && this.getSetting("refresh-progress-bar") === "hide"
+  }
+
   // Private
 
   getSetting(name) {
