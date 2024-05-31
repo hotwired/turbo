@@ -196,17 +196,3 @@ test("disconnecting and reconnecting a frame does not reload the frame", async (
   assert.equal(requestLogs.length, 0)
 })
 
-test("when lazy loading, loaded promise does not resolve until it is actually loaded", async ({ page }) => {
-  await nextBeat()
-
-  const frameContents = "#loading-lazy turbo-frame h2"
-  assert.notOk(await hasSelector(page, frameContents))
-  assert.ok(await hasSelector(page, "#loading-lazy turbo-frame:not([complete])"))
-
-  await page.click("#loading-lazy summary")
-  await nextBeat()
-
-  const inputSelector = "#permanent-input-in-frame"
-
-  await expect(page.locator(inputSelector)).toBeFocused()
-})

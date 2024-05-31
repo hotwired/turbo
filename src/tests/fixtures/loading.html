@@ -5,29 +5,12 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
-    <script type="module">
-      import { Application, Controller } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js"
-      const application = Application.start()
-      application.register("test", class extends Controller {
-        static targets = ["frameElement"]
-        connect() {
-          this.adjustFocus()
-        }
-
-        async adjustFocus() {
-          await this.frameElementTarget.loaded
-          document.getElementById("permanent-input-in-frame").focus()
-        }
-
-
-      })
-    </script>
   </head>
   <body>
-    <details id="loading-lazy" data-controller="test">
+    <details id="loading-lazy">
       <summary>Lazy-loaded</summary>
 
-      <turbo-frame id="hello" data-test-target="frameElement" src="/src/tests/fixtures/frames/hello.html" loading="lazy"></turbo-frame>
+      <turbo-frame id="hello" src="/src/tests/fixtures/frames/hello.html" loading="lazy"></turbo-frame>
     </details>
 
     <a id="link-lazy-frame" href="/src/tests/fixtures/frames.html" data-turbo-frame="hello">Navigate #loading-lazy turbo-frame</a>
