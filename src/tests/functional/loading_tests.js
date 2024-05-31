@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test } from "@playwright/test"
 import { assert } from "chai"
 import {
   attributeForSelector,
@@ -195,4 +195,3 @@ test("disconnecting and reconnecting a frame does not reload the frame", async (
   const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
   assert.equal(requestLogs.length, 0)
 })
-
