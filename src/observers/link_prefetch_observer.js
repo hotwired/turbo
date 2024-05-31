@@ -93,28 +93,28 @@ export class LinkPrefetchObserver {
   }
 
   #tryToUsePrefetchedRequest = (event) => {
-    if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "get") {
-      const cached = prefetchCache.get(event.detail.url.toString())
+    if (event.target.tagName !== "FORM" && event.detail.request.method === "GET") {
+      const cached = prefetchCache.get(event.detail.request.url)
 
       if (cached) {
         // User clicked link, use cache response
-        event.detail.fetchRequest = cached
+        event.detail.request = cached.request
       }
 
       prefetchCache.clear()
     }
   }
 
-  prepareRequest(request) {
-    const link = request.target
+  prepareRequest(fetchRequest) {
+    const link = fetchRequest.target
 
-    request.headers["X-Sec-Purpose"] = "prefetch"
+    fetchRequest.headers.set("X-Sec-Purpose", "prefetch")
 
     const turboFrame = link.closest("turbo-frame")
     const turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
 
     if (turboFrameTarget && turboFrameTarget !== "_top") {
-      request.headers["Turbo-Frame"] = turboFrameTarget
+      fetchRequest.headers.set("Turbo-Frame", turboFrameTarget)
     }
   }
 
