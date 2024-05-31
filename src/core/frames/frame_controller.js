@@ -110,12 +110,9 @@ export class FrameController {
 
   async #loadSourceURL() {
     if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
-      const visitLoadedPromise = this.#visit(expandURL(this.sourceURL))
-      if (!this.element.loaded) {
-        this.element.loaded = visitLoadedPromise
-      }
+      this.element.loaded = this.#visit(expandURL(this.sourceURL))
       this.appearanceObserver.stop()
-      await visitLoadedPromise
+      await this.element.loaded
       if (this.lazyLoadResolver)
       {
         this.lazyLoadResolver()
