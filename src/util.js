@@ -10,7 +10,11 @@ export function activateScriptElement(element) {
       createdScriptElement.nonce = cspNonce
     }
     createdScriptElement.textContent = element.textContent
-    createdScriptElement.async = false
+    if (element.getAttribute("data-eval") == "async") {
+      createdScriptElement.async = true
+    } else {
+      createdScriptElement.async = false
+    }
     copyElementAttributes(createdScriptElement, element)
     return createdScriptElement
   }
