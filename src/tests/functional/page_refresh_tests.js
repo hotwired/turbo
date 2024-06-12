@@ -311,15 +311,15 @@ test("it preserves data-turbo-permanent elements that don't match when their ids
   await expect(page.locator("#preserve-me")).toHaveText("Preserve me, I have a family!")
 })
 
-test("renders unprocessable entity responses with morphing", async ({ page }) => {
+test("renders unprocessable content responses with morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
-  await page.click("#reject form.unprocessable_entity input[type=submit]")
+  await page.click("#reject form.unprocessable_content input[type=submit]")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextBody(page)
 
   const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
+  assert.equal(await title.textContent(), "Unprocessable Content", "renders the response HTML")
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
