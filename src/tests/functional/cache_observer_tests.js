@@ -15,6 +15,18 @@ test("removes temporary elements", async ({ page }) => {
   assert.notOk(await hasSelector(page, "#temporary"))
 })
 
+test("removes temporary elements when restoring from the browser's Back-Forward cache", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/cache_observer.html")
+  await haltTurboCaching(page)
+
+  assert.equal(await page.textContent("#temporary"), "data-turbo-temporary")
+
+  await page.click("#link")
+  await page.goBack()
+
+  assert.notOk(await hasSelector(page, "#temporary"))
+})
+
 test("removes temporary elements with deprecated turbo-cache=false selector", async ({ page }) => {
   await page.goto("/src/tests/fixtures/cache_observer.html")
 
@@ -35,3 +47,7 @@ test("following a redirect renders [data-turbo-temporary] elements before the ca
 
   assert.equal(await page.textContent("#temporary"), "data-turbo-temporary")
 })
+
+function haltTurboCaching(page) {
+  return page.evaluate(() => addEventListener("turbo:before-cache", (event) => event.stopImmediatePropagation(), { capture: true }))
+}
