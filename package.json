@@ -62,7 +62,7 @@
     "release": "yarn build && npm publish",
     "lint": "eslint . --ext .js"
   },
-  "engines": {
+  "devEngines": {
     "node": ">= 14"
   }
 }
