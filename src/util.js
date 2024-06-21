@@ -218,14 +218,18 @@ export async function around(callback, reader) {
   return [before, after]
 }
 
-export function doesNotTargetIFrame(anchor) {
-  if (anchor.hasAttribute("target")) {
-    for (const element of document.getElementsByName(anchor.target)) {
+export function doesNotTargetIFrame(name) {
+  if (name === "_blank") {
+    return false
+  } else if (name) {
+    for (const element of document.getElementsByName(name)) {
       if (element instanceof HTMLIFrameElement) return false
     }
-  }
 
-  return true
+    return true
+  } else {
+    return true
+  }
 }
 
 export function findLinkFromClickTarget(target) {

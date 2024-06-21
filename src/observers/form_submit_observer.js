@@ -1,3 +1,5 @@
+import { doesNotTargetIFrame } from "../util"
+
 export class FormSubmitObserver {
   started = false
 
@@ -51,15 +53,7 @@ function submissionDoesNotDismissDialog(form, submitter) {
 }
 
 function submissionDoesNotTargetIFrame(form, submitter) {
-  if (submitter?.hasAttribute("formtarget") || form.hasAttribute("target")) {
-    const target = submitter?.getAttribute("formtarget") || form.target
+  const target = submitter?.getAttribute("formtarget") || form.getAttribute("target")
 
-    for (const element of document.getElementsByName(target)) {
-      if (element instanceof HTMLIFrameElement) return false
-    }
-
-    return true
-  } else {
-    return true
-  }
+  return doesNotTargetIFrame(target)
 }
