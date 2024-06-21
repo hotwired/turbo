@@ -37,6 +37,9 @@
       </form>
     </turbo-frame>
     <a id="outside-frame-form" href="/src/tests/fixtures/frames/form.html" data-turbo-frame="frame">Navigate #frame to /frames/form.html</a>
+    <a id="outside-frame-link-with-frame-child" href="/src/tests/fixtures/frames/form.html" data-turbo-frame="frame">
+      <turbo-frame id="ignored-frame">Has a turbo-frame child</turbo-frame>
+    </a>
 
     <a id="link-outside-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame" data-turbo-action="advance">Navigate #frame from outside with a[data-turbo-action="advance"]</a>
     <form id="form-get-frame-action-advance" action="/__turbo/redirect" data-turbo-frame="frame" data-turbo-action="advance">
