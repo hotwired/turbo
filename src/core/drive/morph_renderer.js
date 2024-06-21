@@ -45,7 +45,18 @@ export class MorphRenderer extends PageRenderer {
   }
 
   #shouldAddElement = (node) => {
-    return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
+    if (node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id)) {
+      return false
+    } else {
+      const event = dispatch("turbo:before-add-element", {
+        cancelable: true,
+        target: node,
+        detail: {
+          newElement:  node
+        }
+      })
+      return !event.defaultPrevented
+    }
   }
 
   #shouldMorphElement = (oldNode, newNode) => {
