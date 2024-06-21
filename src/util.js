@@ -5,7 +5,7 @@ export function activateScriptElement(element) {
     return element
   } else {
     const createdScriptElement = document.createElement("script")
-    const cspNonce = getMetaContent("csp-nonce")
+    const cspNonce = getCspNonce()
     if (cspNonce) {
       createdScriptElement.nonce = cspNonce
     }
@@ -171,6 +171,15 @@ export function getMetaElement(name) {
 export function getMetaContent(name) {
   const element = getMetaElement(name)
   return element && element.content
+}
+
+export function getCspNonce() {
+  const element = getMetaElement("csp-nonce")
+
+  if (element) {
+    const { nonce, content } = element
+    return nonce == "" ? content : nonce
+  }
 }
 
 export function setMetaContent(name, content) {
