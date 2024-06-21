@@ -1,19 +1,24 @@
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm"
 import { dispatch } from "../../../util"
 
-export default function morph(streamElement) {
-  const morphStyle = streamElement.hasAttribute("children-only") ? "innerHTML" : "outerHTML"
-  streamElement.targetElements.forEach((element) => {
-    Idiomorph.morph(element, streamElement.templateContent, {
-      morphStyle: morphStyle,
-      callbacks: {
-        beforeNodeAdded,
-        beforeNodeMorphed,
-        beforeAttributeUpdated,
-        beforeNodeRemoved,
-        afterNodeMorphed
-      }
-    })
+export function morphElement(target, element) {
+  idiomorph(target, element, { morphStyle: "outerHTML" })
+}
+
+export function morphChildren(target, childElements) {
+  idiomorph(target, childElements, { morphStyle: "innerHTML" })
+}
+
+function idiomorph(target, element, options = {}) {
+  Idiomorph.morph(target, element, {
+    ...options,
+    callbacks: {
+      beforeNodeAdded,
+      beforeNodeMorphed,
+      beforeAttributeUpdated,
+      beforeNodeRemoved,
+      afterNodeMorphed
+    }
   })
 }
 
