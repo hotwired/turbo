@@ -85,7 +85,7 @@ export class View {
     } else if (shouldInvalidate) {
       this.invalidate(renderer.reloadReason)
     } else {
-      this.delegate.setLastRenderedLocation();
+      this.delegate.setLastRenderedLocation()
     }
   }
 
