@@ -195,3 +195,17 @@ test("disconnecting and reconnecting a frame does not reload the frame", async (
   const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
   assert.equal(requestLogs.length, 0)
 })
+
+test("loading via a POST request - JSON", async ({ page }) => {
+  await nextBeat()
+
+  const contents = await page.locator("#post h2")
+  assert.equal(await contents.textContent(), 'Hello from a frame retrieved via POST. The following POST body was provided: {"required":"true","type":"string"}')
+})
+
+test("loading via a POST request - string", async ({ page }) => {
+  await nextBeat()
+
+  const contents = await page.locator("#post-string h2")
+  assert.equal(await contents.textContent(), 'Hello from a frame retrieved via POST. The following POST body was provided: {"q":"URLUtils.searchParams","topic":"api"}')
+})

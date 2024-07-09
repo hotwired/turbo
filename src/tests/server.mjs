@@ -175,6 +175,14 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
+router.post("/post/:frame_id", (request, response) => {
+  const template = fs.readFileSync("src/tests/fixtures/frames/post.html").toString()
+  response
+    .type("html")
+    .status(200)
+    .send(template.replace("$PARAMS", JSON.stringify(request.body)).replace(":frame_id", request.params["frame_id"]))
+})
+
 function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {

@@ -177,6 +177,26 @@ export class FrameElement extends HTMLElement {
   get isPreview() {
     return this.ownerDocument?.documentElement?.hasAttribute("data-turbo-preview")
   }
+
+  /**
+   * Determines the HTTP method that should be used to load the frame. Supports GET, POST, or blank (defaults to GET).
+   */
+  get method() {
+    return (this.getAttribute("method") || "get").toLowerCase()
+  }
+
+  /**
+   * Provides the params that should be sent when loading the frame. Only relevant if method is POST.
+   * 
+   * If the params can be parsed as JSON they are returned as JSON, otherwise they are returned as a String.
+   */
+  get params() {
+    try {
+      return JSON.parse(this.getAttribute("params"))
+    } catch (e) {
+      return this.getAttribute("params")
+    }
+  }
 }
 
 function frameLoadingStyleFromString(style) {
