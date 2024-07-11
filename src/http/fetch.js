@@ -5,15 +5,18 @@ export const recentRequests = new LimitedSet(20)
 
 const nativeFetch = window.fetch
 
-function fetchWithTurboHeaders(url, options = {}) {
-  const modifiedHeaders = new Headers(options.headers || {})
+function fetchWithTurboHeaders(resource, options = {}) {
+  const headers = resource instanceof Request ?
+    resource.headers :
+    new Headers(options.headers || {})
+
   const requestUID = uuid()
   recentRequests.add(requestUID)
-  modifiedHeaders.append("X-Turbo-Request-Id", requestUID)
+  headers.append("X-Turbo-Request-Id", requestUID)
 
-  return nativeFetch(url, {
+  return nativeFetch(resource, {
     ...options,
-    headers: modifiedHeaders
+    headers
   })
 }
 
