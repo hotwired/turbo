@@ -92,7 +92,7 @@ export class FrameController {
     const { src } = this.element
     this.element.removeAttribute("complete")
     this.element.src = null
-    this.element.src = src
+    this.element.src = src || this.element.baseURI
     return this.element.loaded
   }
 
