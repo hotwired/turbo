@@ -1,6 +1,6 @@
-import { test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { assert } from "chai"
-import { nextBeat, sleep } from "../helpers/page"
+import { nextBeat, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
 import fs from "fs"
 import path from "path"
 
@@ -17,7 +17,22 @@ test.afterEach(() => {
 
 test("it prefetches the page", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
-  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+
+  const link = page.locator("#anchor_for_prefetch")
+
+  await link.hover()
+  await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-prefetch")
+  const { url, fetchOptions } = await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
+
+  expect(url).toEqual(await link.evaluate(a => a.href))
+  expect(fetchOptions.headers["X-Sec-Purpose"]).toEqual("prefetch")
+
+  await link.hover()
+  await noNextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
+  await link.click()
+  await noNextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
+
+  await expect(page.locator("body")).toHaveText("Prefetched Page Content")
 })
 
 test("it doesn't follow the link", async ({ page }) => {
@@ -65,17 +80,16 @@ test("it doesn't prefetch the page when link has data-turbo=false", async ({ pag
 test("allows to cancel prefetch requests with custom logic", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
-  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+  const link = page.locator("#anchor_for_prefetch")
+  await link.evaluate(a => a.addEventListener("turbo:before-prefetch", event => event.preventDefault()))
 
-  await page.evaluate(() => {
-    document.body.addEventListener("turbo:before-prefetch", (event) => {
-      if (event.target.hasAttribute("data-remote")) {
-        event.preventDefault()
-      }
-    })
-  })
+  await page.pause()
+  await link.hover()
+  await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-prefetch")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+  await link.click()
 
-  await assertNotPrefetchedOnHover({ page, selector: "#anchor_for_prefetch" })
+  await expect(page.locator("body")).toHaveText("Prefetched Page Content")
 })
 
 test("it doesn't prefetch UJS links", async ({ page }) => {
