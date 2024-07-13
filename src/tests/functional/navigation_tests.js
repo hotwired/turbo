@@ -1,4 +1,4 @@
-import { test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { assert } from "chai"
 import {
   clickWithoutScrolling,
@@ -473,6 +473,12 @@ test("ignores links with a [target] attribute that targets an iframe with [name=
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
 })
 
+test("ignores forms with a [target=_blank] attribute", async ({ page }) => {
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#form-target-blank button")])
+
+  expect(pathname(popup.url())).toContain("/src/tests/fixtures/one.html")
+})
+
 test("ignores forms with a [target] attribute that targets an iframe with a matching [name]", async ({ page }) => {
   await page.click("#form-target-iframe button")
   await nextBeat()
@@ -480,6 +486,12 @@ test("ignores forms with a [target] attribute that targets an iframe with a matc
 
   assert.equal(pathname(page.url()), "/src/tests/fixtures/navigation.html")
   assert.equal(await pathnameForIFrame(page, "iframe"), "/src/tests/fixtures/one.html")
+})
+
+test("ignores forms with a button[formtarget=_blank] attribute", async ({ page }) => {
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#button-formtarget-blank")])
+
+  expect(pathname(popup.url())).toContain("/src/tests/fixtures/one.html")
 })
 
 test("ignores forms with a button[formtarget] attribute that targets an iframe with [name='']", async ({
