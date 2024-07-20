@@ -253,6 +253,8 @@ export function findLinkFromClickTarget(target) {
   const linkTarget = link.getAttribute("target")
   if (linkTarget && linkTarget !== "_self") return null
 
+  if (/\A#/.test(link.href)) return null
+
   return link
 }
 
