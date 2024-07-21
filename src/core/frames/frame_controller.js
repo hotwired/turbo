@@ -314,7 +314,7 @@ export class FrameController {
   }
 
   async #visit(url) {
-    const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
+    const request = new FetchRequest(this, this.visitMethod, url, this.visitRequestBody, this.element)
 
     this.#currentFetchRequest?.cancel()
     this.#currentFetchRequest = request
@@ -535,6 +535,22 @@ export class FrameController {
     const meta = this.element.ownerDocument.querySelector(`meta[name="turbo-root"]`)
     const root = meta?.content ?? "/"
     return expandURL(root)
+  }
+
+  get visitMethod() {
+    if (this.element.method === "post") {
+      return FetchMethod.post
+    } else {
+      return FetchMethod.get
+    }
+  }
+
+  get visitRequestBody() {
+    if (this.element.method === "post") {
+      return new URLSearchParams(this.element.params)
+    } else {
+      return new URLSearchParams()
+    }
   }
 
   #isIgnoringChangesTo(attributeName) {
