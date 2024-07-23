@@ -45,6 +45,11 @@ export function dispatch(eventName, { target, cancelable, detail } = {}) {
   return event
 }
 
+export function cancelEvent(event) {
+  event.preventDefault()
+  event.stopImmediatePropagation()
+}
+
 export function nextRepaint() {
   if (document.visibilityState === "hidden") {
     return nextEventLoopTick()
