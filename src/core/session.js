@@ -312,8 +312,8 @@ export class Session {
     }
   }
 
-  allowsImmediateRender({ element }, options) {
-    const event = this.notifyApplicationBeforeRender(element, options)
+  allowsImmediateRender({ element }, renderer, options) {
+    const event = this.notifyApplicationBeforeRender(element, renderer, options)
     const {
       defaultPrevented,
       detail: { render }
@@ -326,9 +326,9 @@ export class Session {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
+  viewRenderedSnapshot(renderer) {
     this.view.lastRenderedLocation = this.history.location
-    this.notifyApplicationAfterRender(renderMethod)
+    this.notifyApplicationAfterRender(renderer)
   }
 
   preloadOnLoadLinksForView(element) {
@@ -343,10 +343,6 @@ export class Session {
 
   frameLoaded(frame) {
     this.notifyApplicationAfterFrameLoad(frame)
-  }
-
-  frameRendered(fetchResponse, frame) {
-    this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
   // Application events
@@ -384,15 +380,15 @@ export class Session {
     return dispatch("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody, options) {
+  notifyApplicationBeforeRender(newBody, { renderMethod }, options) {
     return dispatch("turbo:before-render", {
-      detail: { newBody, ...options },
+      detail: { newBody, renderMethod, ...options },
       cancelable: true
     })
   }
 
-  notifyApplicationAfterRender(renderMethod) {
-    return dispatch("turbo:render", { detail: { renderMethod } })
+  notifyApplicationAfterRender({ isPreview, renderMethod }) {
+    return dispatch("turbo:render", { detail: { isPreview, renderMethod } })
   }
 
   notifyApplicationAfterPageLoad(timing = {}) {
@@ -412,14 +408,6 @@ export class Session {
 
   notifyApplicationAfterFrameLoad(frame) {
     return dispatch("turbo:frame-load", { target: frame })
-  }
-
-  notifyApplicationAfterFrameRender(fetchResponse, frame) {
-    return dispatch("turbo:frame-render", {
-      detail: { fetchResponse },
-      target: frame,
-      cancelable: true
-    })
   }
 
   // Helpers
