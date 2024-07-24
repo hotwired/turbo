@@ -63,6 +63,10 @@ export class PageView extends View {
     return this.isPageRefresh(visit) && this.snapshot.shouldPreserveScrollPosition
   }
 
+  shouldHideProgressBar() {
+    return this.snapshot.shouldHideProgressBarOnRefresh
+  }
+
   get snapshot() {
     return PageSnapshot.fromElement(this.element)
   }
