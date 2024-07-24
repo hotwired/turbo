@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import { assert } from "chai"
 import {
   hasSelector,
+  nextAttributeMutationNamed,
   nextBeat,
   nextEventNamed,
   nextEventOnTarget,
@@ -113,35 +114,39 @@ test("receiving a stream message over SSE", async ({ page }) => {
       `<turbo-stream-source id="stream-source" src="/__turbo/messages"></turbo-stream-source>`
     )
   })
-  await nextBeat()
-  assert.equal(await getReadyState(page, "stream-source"), await page.evaluate(() => EventSource.OPEN))
 
-  const messages = await page.locator("#messages .message")
+  const messages = page.locator("#messages .message")
+  const streamSource = page.locator("#stream-source")
+  const submit = page.locator("#async button")
 
-  assert.deepEqual(await messages.allTextContents(), ["First"])
+  await expectReadyState(streamSource, "OPEN")
+  await expect(messages).toHaveText(["First"])
 
-  await page.click("#async button")
+  await submit.click()
 
-  await waitUntilText(page, "Hello world!")
-  assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
+  await expect(messages).toHaveText(["First", "Hello world!"])
 
-  const readyState = await page.evaluate((id) => {
-    const element = document.getElementById(id)
+  await expectReadyState(streamSource, "CLOSED", { removeBeforeCheck: true })
 
-    if (element && element.streamSource) {
-      element.remove()
+  await submit.click()
 
-      return element.streamSource.readyState
-    } else {
-      return -1
-    }
-  }, "stream-source")
-  assert.equal(readyState, await page.evaluate(() => EventSource.CLOSED))
+  await expect(messages).toHaveText(["First", "Hello world!"])
+})
 
-  await page.click("#async button")
-  await nextBeat()
+test("changes to the <turbo-stream-source> attributes triggers a reconnection", async ({ page }) => {
+  await page.evaluate(() => {
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      `<turbo-stream-source id="stream-source" src="/__turbo/messages"></turbo-stream-source>`
+    )
+  })
 
-  assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
+  const streamSource = page.locator("#stream-source")
+  await expectReadyState(streamSource, "OPEN")
+
+  await streamSource.evaluate((element) => element.setAttribute("src", "/__turbo/changed"))
+
+  await expect(await nextAttributeMutationNamed(page, "stream-source", "connected")).toEqual("")
 })
 
 test("receiving an update stream message preserves focus if the activeElement has an [id]", async ({ page }) => {
@@ -226,14 +231,14 @@ test("preventing a turbo:before-morph-element prevents the morph", async ({ page
   await expect(page.locator("#message_1")).toHaveText("Morph me")
 })
 
-async function getReadyState(page, id) {
-  return page.evaluate((id) => {
-    const element = document.getElementById(id)
+async function expectReadyState(streamSource, name, { removeBeforeCheck } = { removeBeforeCheck: false }) {
+  const expected = await streamSource.evaluate((_, name) => EventSource[name], name)
+  const [actual, connected] = await streamSource.evaluate((element, removeBeforeCheck) => {
+    if (removeBeforeCheck) element.remove()
 
-    if (element?.streamSource) {
-      return element.streamSource.readyState
-    } else {
-      return -1
-    }
-  }, id)
+    return [element.streamSource.readyState, element.getAttribute("connected")]
+  }, removeBeforeCheck)
+
+  await expect(connected).toEqual(name === "OPEN" ? "" : null)
+  await expect(actual).toEqual(expected)
 }
