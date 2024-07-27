@@ -1,3 +1,4 @@
+import { Confirmation } from "../confirmation"
 import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe } from "../../http/fetch_request"
 import { expandURL } from "../url"
 import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
@@ -21,10 +22,6 @@ export const FormEnctype = {
 
 export class FormSubmission {
   state = FormSubmissionState.initialized
-
-  static confirmMethod(message, _element, _submitter) {
-    return Promise.resolve(confirm(message))
-  }
 
   constructor(delegate, formElement, submitter, mustRedirect = false) {
     const method = getMethod(formElement, submitter)
@@ -78,7 +75,7 @@ export class FormSubmission {
     const confirmationMessage = getAttribute("data-turbo-confirm", this.submitter, this.formElement)
 
     if (typeof confirmationMessage === "string") {
-      const answer = await FormSubmission.confirmMethod(confirmationMessage, this.formElement, this.submitter)
+      const answer = await Confirmation.confirmMethod(confirmationMessage, this.formElement, this.submitter)
       if (!answer) {
         return
       }
