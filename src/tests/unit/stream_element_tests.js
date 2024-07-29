@@ -157,6 +157,17 @@ test("action=after", async () => {
   assert.isNull(element.parentElement)
 })
 
+
+test("action=after with children ID already present in target", async () => {
+  subject.fixtureHTML = `<div id="hello"><div id="top">Top</div><div id="middle">Middle</div><div id="bottom">Bottom</div></div>`
+  const element = createStreamElement("after", "top", createTemplateElement(' <div id="middle">New Middle</div> tail1 '))
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Top New Middle tail1 Bottom")
+})
+
 test("action=before", async () => {
   const element = createStreamElement("before", "hello", createTemplateElement(`<h1 id="before">Before Turbo</h1>`))
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
@@ -168,6 +179,17 @@ test("action=before", async () => {
   assert.ok(subject.find("div#hello"))
   assert.ok(subject.find("h1#before"))
   assert.isNull(element.parentElement)
+})
+
+
+test("action=before with children ID already present in target", async () => {
+  subject.fixtureHTML = `<div id="hello"><div id="top">Top</div><div id="middle">Middle</div><div id="bottom">Bottom</div></div>`
+  const element = createStreamElement("before", "bottom", createTemplateElement(' <div id="middle">New Middle</div> tail1 '))
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Top New Middle tail1 Bottom")
 })
 
 test("test action=refresh", async () => {
