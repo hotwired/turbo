@@ -78,7 +78,7 @@ export class StreamElement extends HTMLElement {
   /**
   * Removes duplicate siblings (by ID)
   */
-  removeDuplicateSiblings() {
+  removeDuplicateTargetSiblings() {
     this.duplicateSiblings.forEach((c) => c.remove())
   }
 
