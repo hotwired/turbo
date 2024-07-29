@@ -76,6 +76,23 @@ export class StreamElement extends HTMLElement {
   }
 
   /**
+  * Removes duplicate siblings (by ID)
+  */
+  removeDuplicateSiblings() {
+    this.duplicateSiblings.forEach((c) => c.remove())
+  }
+
+  /**
+  * Gets the list of duplicate siblings (i.e. those with the same ID)
+  */
+  get duplicateSiblings() {
+    const existingChildren = this.targetElements.flatMap((e) => [...e.parentElement.children]).filter((c) => !!c.id)
+    const newChildrenIds = [...(this.templateContent?.children || [])].filter((c) => !!c.id).map((c) => c.id)
+
+    return existingChildren.filter((c) => newChildrenIds.includes(c.id))
+  }
+
+  /**
    * Gets the action function to be performed.
    */
   get performAction() {

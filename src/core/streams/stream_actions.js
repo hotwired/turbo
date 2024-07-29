@@ -3,6 +3,7 @@ import morph from "./actions/morph"
 
 export const StreamActions = {
   after() {
+    this.removeDuplicateSiblings()
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
   },
 
@@ -12,6 +13,7 @@ export const StreamActions = {
   },
 
   before() {
+    this.removeDuplicateSiblings()
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e))
   },
 
