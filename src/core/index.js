@@ -4,10 +4,11 @@ import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { FormSubmission } from "./drive/form_submission"
 import { fetch, recentRequests } from "../http/fetch"
+import { unvisitableExtensions } from "./url"
 
 const session = new Session(recentRequests)
 const { cache, navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch }
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch, unvisitableExtensions }
 
 /**
  * Starts the main session.
