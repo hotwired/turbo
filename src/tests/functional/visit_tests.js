@@ -179,7 +179,7 @@ test("turbo:before-fetch-request event.detail", async ({ page }) => {
   await page.click("#same-origin-link")
   const { url, fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.equal(fetchOptions.method, "get")
+  assert.equal(fetchOptions.method, "GET")
   assert.ok(url.includes("/src/tests/fixtures/one.html"))
 })
 
