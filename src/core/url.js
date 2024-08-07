@@ -29,11 +29,12 @@ export function isPrefixedBy(baseURL, url) {
 
 export const unvisitableExtensions = new Set(
   [
-    ".css", ".csv", ".gif", ".jpeg", ".jpg", ".json", ".png",
-    ".pdf", ".svg", ".txt", ".xls", ".xlsx", ".zip",
-    ".tar", ".gz", ".bz2", ".rar", ".7z", ".dmg", ".exe", ".msi", ".pkg", ".deb",
-    ".iso", ".bmp", ".mp4", ".mov", ".avi", ".mkv", ".wmv", ".heic", ".heif", ".mp3",
-    ".wav", ".ogg", ".aac", ".wma", ".webm", ".ogv", ".mpg", ".mpeg"
+    ".7z", ".aac", ".apk", ".avi", ".bmp", ".bz2", ".css", ".csv", ".deb", ".dmg", ".doc",
+    ".docx", ".exe", ".gif", ".gz", ".heic", ".heif", ".ico", ".iso", ".jpeg", ".jpg",
+    ".js", ".json", ".m4a", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg", ".mpg", ".msi",
+    ".ogg", ".ogv", ".pdf", ".pkg", ".png", ".ppt", ".pptx", ".rar", ".rtf",
+    ".svg", ".tar", ".tif", ".tiff", ".txt", ".wav", ".webm", ".webp", ".wma", ".wmv",
+    ".xls", ".xlsx", ".xml", ".zip"
   ]
 )
 
