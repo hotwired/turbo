@@ -27,15 +27,18 @@ export function isPrefixedBy(baseURL, url) {
   return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
 }
 
-export const treatAsNonHtml = new Set(
+export const unvisitableExtensions = new Set(
   [
     ".css", ".csv", ".gif", ".jpeg", ".jpg", ".json", ".png",
-    ".pdf", ".svg", ".txt", ".xls", ".xlsx", ".zip"
+    ".pdf", ".svg", ".txt", ".xls", ".xlsx", ".zip",
+    ".tar", ".gz", ".bz2", ".rar", ".7z", ".dmg", ".exe", ".msi", ".pkg", ".deb",
+    ".iso", ".bmp", ".mp4", ".mov", ".avi", ".mkv", ".wmv", ".heic", ".heif", ".mp3",
+    ".wav", ".ogg", ".aac", ".wma", ".webm", ".ogv", ".mpg", ".mpeg"
   ]
 )
 
 export function locationIsVisitable(location, rootLocation) {
-  return isPrefixedBy(location, rootLocation) && !treatAsNonHtml.has(getExtension(location))
+  return isPrefixedBy(location, rootLocation) && !unvisitableExtensions.has(getExtension(location))
 }
 
 export function getRequestURL(url) {

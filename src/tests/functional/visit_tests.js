@@ -67,8 +67,8 @@ test("visiting a location served with a known non-HTML content type", async ({ p
 
   assert.deepEqual(
     requestedUrls, [
-      ['document', 'http://localhost:9000/src/tests/fixtures/svg.svg']
-    ]
+    ['document', 'http://localhost:9000/src/tests/fixtures/svg.svg']
+  ]
   )
 
   const urlAfterVisit = page.url()
@@ -88,9 +88,9 @@ test("visiting a location served with an unknown non-HTML content type", async (
   // determine the content type and only then refresh the full page to the provided location
   assert.deepEqual(
     requestedUrls, [
-      ['fetch', 'http://localhost:9000/__turbo/file.unknown_svg'],
-      ['document', 'http://localhost:9000/__turbo/file.unknown_svg']
-    ]
+    ['fetch', 'http://localhost:9000/__turbo/file.unknown_svg'],
+    ['document', 'http://localhost:9000/__turbo/file.unknown_svg']
+  ]
   )
 
   const urlAfterVisit = page.url()
@@ -98,12 +98,12 @@ test("visiting a location served with an unknown non-HTML content type", async (
   assert.equal(await visitAction(page), "load")
 })
 
-test("visiting a location served with an unknown non-HTML content type added to the treatAsNonHtml set", async ({ page }) => {
+test("visiting a location served with an unknown non-HTML content type added to the unvisitableExtensions set", async ({ page }) => {
   const requestedUrls = []
   page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
 
   page.evaluate(() => {
-    window.Turbo.treatAsNonHtml.add(".unknown_svg")
+    window.Turbo.unvisitableExtensions.add(".unknown_svg")
   })
 
   const urlBeforeVisit = page.url()
@@ -112,8 +112,8 @@ test("visiting a location served with an unknown non-HTML content type added to 
 
   assert.deepEqual(
     requestedUrls, [
-      ['document', 'http://localhost:9000/__turbo/file.unknown_svg']
-    ]
+    ['document', 'http://localhost:9000/__turbo/file.unknown_svg']
+  ]
   )
 
   const urlAfterVisit = page.url()
