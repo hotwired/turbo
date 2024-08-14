@@ -3,6 +3,7 @@ import { expandURL } from "../url"
 import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { prefetchCache } from "./prefetch_cache"
+import { config } from "../config"
 
 export const FormSubmissionState = {
   initialized: "initialized",
@@ -22,7 +23,7 @@ export const FormEnctype = {
 export class FormSubmission {
   state = FormSubmissionState.initialized
 
-  static confirmMethod(message, _element, _submitter) {
+  static confirmMethod(message) {
     return Promise.resolve(confirm(message))
   }
 
@@ -78,7 +79,11 @@ export class FormSubmission {
     const confirmationMessage = getAttribute("data-turbo-confirm", this.submitter, this.formElement)
 
     if (typeof confirmationMessage === "string") {
-      const answer = await FormSubmission.confirmMethod(confirmationMessage, this.formElement, this.submitter)
+      const confirmMethod = typeof config.forms.confirm === "function" ?
+        config.forms.confirm :
+        FormSubmission.confirmMethod
+
+      const answer = await confirmMethod(confirmationMessage, this.formElement, this.submitter)
       if (!answer) {
         return
       }
@@ -116,7 +121,7 @@ export class FormSubmission {
 
   requestStarted(_request) {
     this.state = FormSubmissionState.waiting
-    this.submitter?.setAttribute("disabled", "")
+    if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
     this.setSubmitsWith()
     markAsBusy(this.formElement)
     dispatch("turbo:submit-start", {
@@ -162,7 +167,7 @@ export class FormSubmission {
 
   requestFinished(_request) {
     this.state = FormSubmissionState.stopped
-    this.submitter?.removeAttribute("disabled")
+    if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
     this.resetSubmitterText()
     clearBusyState(this.formElement)
     dispatch("turbo:submit-end", {
