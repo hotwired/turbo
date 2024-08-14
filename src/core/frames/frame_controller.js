@@ -299,7 +299,7 @@ export class FrameController {
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
-      const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
+      const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false)
       if (this.view.renderPromise) await this.view.renderPromise
       this.changeHistory()
 
