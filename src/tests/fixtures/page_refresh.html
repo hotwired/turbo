@@ -81,6 +81,7 @@
     <h1 id="title">Page to be refreshed</h1>
 
     <a href="/src/tests/fixtures/page_refresh.html" id="reload-link">Reload</a>
+    <a href="/__turbo/delayed_response" id="delayed_link">Navigate with delayed response</a>
 
     <turbo-frame id="refresh-morph" src="/src/tests/fixtures/frame_refresh_morph.html" refresh="morph">
       <h2>Frame to be morphed</h2>
@@ -88,6 +89,11 @@
 
     <turbo-frame id="refresh-reload" src="/src/tests/fixtures/frame_refresh_reload.html" refresh="reload">
       <h2>Frame to be reloaded</h2>
+    </turbo-frame>
+
+    <turbo-frame id="refresh-after-navigation">
+      <h2>Frame to be navigated then reset to its initial state after reload</h2>
+      <a id="refresh-after-navigation-link" href="/src/tests/fixtures/frame_refresh_after_navigation.html">Navigate</a>
     </turbo-frame>
 
     <div id="preserve-me" data-turbo-permanent>
@@ -126,7 +132,7 @@
     <button id="add-new-assets">Add new assets</button>
 
     <div id="reject">
-      <form class="unprocessable_entity" action="/__turbo/reject" method="post" style="margin-top:100vh">
+      <form class="unprocessable_entity" action="/__turbo/reject/morph" method="post" style="margin-top:100vh">
         <input type="hidden" name="status" value="422">
         <input type="submit">
       </form>

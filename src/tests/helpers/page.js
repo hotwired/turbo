@@ -226,6 +226,10 @@ export function readMutationLogs(page, length) {
   return readArray(page, "mutationLogs", length)
 }
 
+export function refreshWithStream(page) {
+  return page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh"></turbo-stream>`))
+}
+
 export function search(url) {
   const { search } = new URL(url)
 
@@ -284,8 +288,10 @@ export function textContent(page, html) {
 export function visitAction(page) {
   return page.evaluate(() => {
     try {
-      return window.Turbo.navigator.currentVisit.action
-    } catch (error) {
+      const lastVisit = window.visitLogs[window.visitLogs.length - 1]
+
+      return lastVisit.action
+    } catch {
       return "load"
     }
   })

@@ -91,18 +91,10 @@ export class FrameController {
 
   sourceURLReloaded() {
     const { src } = this.element
-    this.#ignoringChangesToAttribute("complete", () => {
-      this.element.removeAttribute("complete")
-    })
+    this.element.removeAttribute("complete")
     this.element.src = null
     this.element.src = src
     return this.element.loaded
-  }
-
-  completeChanged() {
-    if (this.#isIgnoringChangesTo("complete")) return
-
-    this.#loadSourceURL()
   }
 
   loadingStyleChanged() {
@@ -537,13 +529,11 @@ export class FrameController {
   }
 
   set complete(value) {
-    this.#ignoringChangesToAttribute("complete", () => {
-      if (value) {
-        this.element.setAttribute("complete", "")
-      } else {
-        this.element.removeAttribute("complete")
-      }
-    })
+    if (value) {
+      this.element.setAttribute("complete", "")
+    } else {
+      this.element.removeAttribute("complete")
+    }
   }
 
   get isActive() {

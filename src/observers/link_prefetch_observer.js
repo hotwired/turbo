@@ -93,7 +93,7 @@ export class LinkPrefetchObserver {
   }
 
   #tryToUsePrefetchedRequest = (event) => {
-    if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "get") {
+    if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
       const cached = prefetchCache.get(event.detail.url.toString())
 
       if (cached) {

@@ -1,4 +1,5 @@
 import { session } from "../"
+import { morphElements, morphChildren } from "../morphing"
 
 export const StreamActions = {
   after() {
@@ -24,13 +25,27 @@ export const StreamActions = {
   },
 
   replace() {
-    this.targetElements.forEach((e) => e.replaceWith(this.templateContent))
+    const method = this.getAttribute("method")
+
+    this.targetElements.forEach((targetElement) => {
+      if (method === "morph") {
+        morphElements(targetElement, this.templateContent)
+      } else {
+        targetElement.replaceWith(this.templateContent)
+      }
+    })
   },
 
   update() {
+    const method = this.getAttribute("method")
+
     this.targetElements.forEach((targetElement) => {
-      targetElement.innerHTML = ""
-      targetElement.append(this.templateContent)
+      if (method === "morph") {
+        morphChildren(targetElement, this.templateContent)
+      } else {
+        targetElement.innerHTML = ""
+        targetElement.append(this.templateContent)
+      }
     })
   },
 

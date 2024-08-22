@@ -6,20 +6,22 @@ import { nextRepaint } from "../util"
 /**
  * Renders updates to the page from a stream of messages.
  *
- * Using the `action` attribute, this can be configured one of four ways:
+ * Using the `action` attribute, this can be configured one of eight ways:
  *
- * - `append` - appends the result to the container
- * - `prepend` - prepends the result to the container
- * - `replace` - replaces the contents of the container
- * - `remove` - removes the container
- * - `before` - inserts the result before the target
  * - `after` - inserts the result after the target
+ * - `append` - appends the result to the target
+ * - `before` - inserts the result before the target
+ * - `prepend` - prepends the result to the target
+ * - `refresh` - initiates a page refresh
+ * - `remove` - removes the target
+ * - `replace` - replaces the outer HTML of the target
+ * - `update` - replaces the inner HTML of the target
  *
  * @customElement turbo-stream
  * @example
  *   <turbo-stream action="append" target="dom_id">
  *     <template>
- *       Content to append to container designated with the dom_id.
+ *       Content to append to target designated with the dom_id.
  *     </template>
  *   </turbo-stream>
  */

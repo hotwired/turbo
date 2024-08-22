@@ -119,17 +119,6 @@ test("navigating away from a page does not reload its frames", async ({ page }) 
   assert.equal(requestLogs.length, 1)
 })
 
-test("removing the [complete] attribute of an eager frame reloads the content", async ({ page }) => {
-  await nextEventOnTarget(page, "frame", "turbo:frame-load")
-  await page.evaluate(() => document.querySelector("#loading-eager turbo-frame")?.removeAttribute("complete"))
-  await nextEventOnTarget(page, "frame", "turbo:frame-load")
-
-  assert.ok(
-    await hasSelector(page, "#loading-eager turbo-frame[complete]"),
-    "sets the [complete] attribute after re-loading"
-  )
-})
-
 test("changing [src] attribute on a [complete] frame with loading=lazy defers navigation", async ({ page }) => {
   await page.click("#loading-lazy summary")
   await nextEventOnTarget(page, "hello", "turbo:frame-load")
