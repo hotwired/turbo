@@ -20,7 +20,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
 import { FormLinkClickObserver } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
-import { MorphFrameRenderer } from "./morph_frame_renderer"
+import { MorphingFrameRenderer } from "./morphing_frame_renderer"
 import { session } from "../index"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
@@ -304,7 +304,7 @@ export class FrameController {
       let renderer
 
       if (this.element.shouldReloadWithMorph) {
-        renderer = new MorphFrameRenderer(this, this.view.snapshot, snapshot, MorphFrameRenderer.renderElement, false, false)
+        renderer = new MorphingFrameRenderer(this, this.view.snapshot, snapshot, MorphFrameRenderer.renderElement, false, false)
       } else {
         renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
       }
