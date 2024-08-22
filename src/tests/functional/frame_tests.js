@@ -267,7 +267,7 @@ test("following a link to a page with a matching frame does not dispatch a turbo
   )
 })
 
-test("following a link within a frame with a target set navigates the target frame without morphing", async ({ page }) => {
+test("following a link within a frame which has a target set navigates the target frame without morphing", async ({ page }) => {
   await page.click("#hello a")
   await nextBeat()
 
@@ -275,7 +275,7 @@ test("following a link within a frame with a target set navigates the target fra
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
 })
 
-test("following a link within a frame with a target set navigates the target frame[refresh=morph] with a morph", async ({ page }) => {
+test("following a link within a frame which has a target set navigates the target frame[refresh=morph] with a morph", async ({ page }) => {
   await page.click("#add-refresh-morph-to-frame")
   await page.click("#hello a")
   await nextBeat()
