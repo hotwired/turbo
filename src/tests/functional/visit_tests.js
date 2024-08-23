@@ -175,6 +175,22 @@ test("cache does not override response after redirect", async ({ page }) => {
   assert.equal(await page.locator("some-cached-element").count(), 0)
 })
 
+test("cache does not hide temporary elements on the second visit after redirect", async ({ page }) => {
+  await page.click("#cache-observer-link")
+  await nextBeat()
+  await page.click("#redirect-here-link")
+  await nextBeat() // 301 redirect response
+  await nextBeat() // 200 response
+
+  assert.equal(await page.locator("#temporary").count(), 1)
+
+  await page.click("#redirect-here-link")
+  await nextBeat() // 301 redirect response
+  await nextBeat() // 200 response
+
+  assert.equal(await page.locator("#temporary").count(), 1)
+})
+
 function cancelNextVisit(page) {
   return cancelNextEvent(page, "turbo:before-visit")
 }

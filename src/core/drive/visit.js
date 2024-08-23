@@ -419,7 +419,9 @@ export class Visit {
 
   async render(callback) {
     this.cancelRender()
-    this.frame = await nextRepaint()
+    await new Promise((resolve) => {
+      this.frame = requestAnimationFrame(() => resolve())
+    })
     await callback()
     delete this.frame
   }
