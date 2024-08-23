@@ -304,7 +304,7 @@ export class FrameController {
       let renderer
 
       if (this.element.shouldReloadWithMorph) {
-        renderer = new MorphingFrameRenderer(this, this.view.snapshot, snapshot, MorphFrameRenderer.renderElement, false, false)
+        renderer = new MorphingFrameRenderer(this, this.view.snapshot, snapshot, MorphingFrameRenderer.renderElement, false, false)
       } else {
         renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
       }
