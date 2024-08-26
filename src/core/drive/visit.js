@@ -1,7 +1,7 @@
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
-import { getHistoryMethodForAction, uuid, nextRepaint } from "../../util"
+import { getHistoryMethodForAction, uuid } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
 
