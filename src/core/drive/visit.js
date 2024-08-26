@@ -420,7 +420,8 @@ export class Visit {
   async render(callback) {
     this.cancelRender()
     await new Promise((resolve) => {
-      this.frame = requestAnimationFrame(() => resolve())
+      this.frame =
+        document.visibilityState === "hidden" ? setTimeout(() => resolve(), 0) : requestAnimationFrame(() => resolve())
     })
     await callback()
     delete this.frame
