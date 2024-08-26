@@ -47,6 +47,7 @@ test("programmatically visiting a same-origin location", async ({ page }) => {
 test("skip programmatically visiting a cross-origin location falls back to window.location", async ({ page }) => {
   const urlBeforeVisit = page.url()
   await visitLocation(page, "about:blank")
+  await nextBeat()
 
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
