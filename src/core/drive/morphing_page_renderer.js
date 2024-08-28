@@ -13,7 +13,7 @@ export class MorphingPageRenderer extends PageRenderer {
     })
 
     for (const frame of currentElement.querySelectorAll("turbo-frame")) {
-      if (canRefreshFrame(frame)) refreshFrame(frame)
+      if (canRefreshFrame(frame)) frame.reload()
     }
 
     dispatch("turbo:morph", { detail: { currentElement, newElement } })
@@ -34,15 +34,6 @@ export class MorphingPageRenderer extends PageRenderer {
 
 function canRefreshFrame(frame) {
   return frame instanceof FrameElement &&
-    frame.src &&
-    frame.refresh === "morph" &&
+    frame.shouldReloadWithMorph &&
     !frame.closest("[data-turbo-permanent]")
-}
-
-function refreshFrame(frame) {
-  frame.addEventListener("turbo:before-frame-render", ({ detail }) => {
-    detail.render = MorphingFrameRenderer.renderElement
-  }, { once: true })
-
-  frame.reload()
 }

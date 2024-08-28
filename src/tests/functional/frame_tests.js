@@ -267,25 +267,9 @@ test("following a link to a page with a matching frame does not dispatch a turbo
   )
 })
 
-test("following a link within a frame which has a target set navigates the target frame without morphing", async ({ page }) => {
-  await page.click("#hello a")
-  await nextBeat()
-
-  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
-  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
-})
-
-test("following a link within a frame which has a target set navigates the target frame[refresh=morph] with a morph", async ({ page }) => {
+test("following a link within a frame which has a target set navigates the target frame without morphing even when frame[refresh=morph]", async ({ page }) => {
   await page.click("#add-refresh-morph-to-frame")
   await page.click("#hello a")
-  await nextBeat()
-
-  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
-  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
-})
-
-test("navigating turbo-frame from within replaces the contents", async ({ page }) => {
-  await page.click("#link-frame")
   await nextBeat()
 
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
@@ -293,13 +277,14 @@ test("navigating turbo-frame from within replaces the contents", async ({ page }
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
 })
 
-test("navigating turbo-frame[refresh=morph] from within morphs the contents", async ({ page }) => {
+test("navigating from within replaces the contents even with turbo-frame[refresh=morph]", async ({ page }) => {
   await page.click("#add-refresh-morph-to-frame")
   await page.click("#link-frame")
   await nextBeat()
 
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
-  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
 })
 
 test("calling reload on a frame replaces the contents", async ({ page }) => {
