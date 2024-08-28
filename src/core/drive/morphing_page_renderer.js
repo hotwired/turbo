@@ -34,6 +34,6 @@ export class MorphingPageRenderer extends PageRenderer {
 
 function canRefreshFrame(frame) {
   return frame instanceof FrameElement &&
-    frame.shouldReloadWithMorph &&
+    frame.src &&
     !frame.closest("[data-turbo-permanent]")
 }
