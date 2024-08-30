@@ -180,12 +180,9 @@ test("uses morphing to only update remote frames marked with refresh='morph'", a
 test("don't refresh frames contained in [data-turbo-permanent] elements", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
-  await page.evaluate(() => {
-    const frame = document.getElementById("remote-permanent-frame");
-    if (frame) {
-      frame.textContent = "Frame to be preserved"
-    }
-  }) // The final assertion cannot be noNextEventOnTarget because the assertion passes even when it reloads the frame.
+  // Set the frame's text since the final assertion cannot be noNextEventOnTarget as that is passing even when the frame reloads.
+  const frame = page.locator("#remote-permanent-frame")
+  await frame.evaluate((frame) => frame.textContent = "Frame to be preserved")
 
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
