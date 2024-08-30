@@ -1,5 +1,4 @@
 import { FrameElement } from "../../elements/frame_element"
-import { MorphingFrameRenderer } from "../frames/morphing_frame_renderer"
 import { PageRenderer } from "./page_renderer"
 import { dispatch } from "../../util"
 import { morphElements } from "../morphing"
