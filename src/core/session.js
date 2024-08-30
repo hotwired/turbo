@@ -144,6 +144,22 @@ export class Session {
     return config.drive.progressBarDelay
   }
 
+  set drive(value) {
+    config.drive.enabled = value
+  }
+
+  get drive() {
+    return config.drive.enabled
+  }
+
+  set formMode(value) {
+    config.forms.mode = value
+  }
+
+  get formMode() {
+    return config.forms.mode
+  }
+
   get location() {
     return this.history.location
   }
