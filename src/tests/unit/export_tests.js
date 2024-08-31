@@ -19,7 +19,26 @@ test("Turbo interface", () => {
   assert.equal(typeof Turbo.cache.clear, "function")
   assert.equal(typeof Turbo.navigator, "object")
   assert.equal(typeof Turbo.session, "object")
+  assert.equal(typeof Turbo.session.drive, "boolean")
+  assert.equal(typeof Turbo.session.formMode, "string")
   assert.equal(typeof Turbo.fetch, "function")
+})
+
+test("Session interface", () => {
+  const { session, config } = Turbo
+
+  assert.equal(true, session.drive)
+  assert.equal(true, config.drive.enabled)
+  assert.equal("on", session.formMode)
+  assert.equal("on", config.forms.mode)
+
+  session.drive = false
+  session.formMode = "off"
+
+  assert.equal(false, session.drive)
+  assert.equal(false, config.drive.enabled)
+  assert.equal("off", session.formMode)
+  assert.equal("off", config.forms.mode)
 })
 
 test("StreamActions interface", () => {
