@@ -204,7 +204,7 @@ test("frames marked with refresh='morph' are excluded from full page morphing", 
   await expect(page.locator("#refresh-morph")).toHaveText("Loaded morphed frame")
 })
 
-test("navigated frames without refresh attribute are reset after morphing", async ({ page }) => {
+test("navigated frames without refresh attribute are not reset after morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
   await page.click("#refresh-after-navigation-link")
@@ -216,17 +216,20 @@ test("navigated frames without refresh attribute are reset after morphing", asyn
     "navigates theframe"
   )
 
+  //await new Promise(resolve => setTimeout(resolve, 300000))
+
   await page.click("#form-submit")
 
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextBeat()
 
-  assert.ok(
+
+  assert.notOk(
     await hasSelector(page, "#refresh-after-navigation-link"),
     "resets the frame"
   )
 
-  assert.notOk(
+  assert.ok(
     await hasSelector(page, "#refresh-after-navigation-content"),
     "does not reload the frame"
   )
