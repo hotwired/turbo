@@ -163,7 +163,7 @@ test("successfully following a link to a page without a matching frame shows an 
 
   await page.click("#missing-frame-link")
 
-  assert.match(await page.innerText("#missing"), /Content missing/)
+  await expect(page.locator("#missing")).toHaveText("Content missing")
 
   assert.exists(error)
   assert.include(error.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
@@ -195,7 +195,7 @@ test("failing to follow a link to a page without a matching frame shows an error
 
   await page.click("#missing-page-link")
 
-  assert.match(await page.innerText("#missing"), /Content missing/)
+  await expect(page.locator("#missing")).toHaveText("Content missing")
 
   assert.exists(error)
   assert.include(error.message, `The response (404) did not contain the expected <turbo-frame id="missing">`)

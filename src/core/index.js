@@ -2,13 +2,13 @@ import { Session } from "./session"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
-import { FormSubmission } from "./drive/form_submission"
 import { fetch, recentRequests } from "../http/fetch"
+import { config } from "./config"
 import { unvisitableExtensions } from "./url"
 
 const session = new Session(recentRequests)
 const { cache, navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch, unvisitableExtensions }
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch, config, unvisitableExtensions }
 
 /**
  * Starts the main session.
@@ -98,13 +98,22 @@ export function clearCache() {
  * @param delay Time to delay in milliseconds
  */
 export function setProgressBarDelay(delay) {
-  session.setProgressBarDelay(delay)
+  console.warn(
+    "Please replace `Turbo.setProgressBarDelay(delay)` with `Turbo.config.drive.progressBarDelay = delay`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
+  config.drive.progressBarDelay = delay
 }
 
 export function setConfirmMethod(confirmMethod) {
-  FormSubmission.confirmMethod = confirmMethod
+  console.warn(
+    "Please replace `Turbo.setConfirmMethod(confirmMethod)` with `Turbo.config.forms.confirm = confirmMethod`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
+  config.forms.confirm = confirmMethod
 }
 
 export function setFormMode(mode) {
-  session.setFormMode(mode)
+  console.warn(
+    "Please replace `Turbo.setFormMode(mode)` with `Turbo.config.forms.mode = mode`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
+  config.forms.mode = mode
 }

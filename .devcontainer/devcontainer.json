@@ -1,24 +1,28 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.191.1/containers/typescript-node
 {
-  "name": "Node.js & TypeScript",
+  "name": "Node.js & Playwright",
   "build": {
     "dockerfile": "Dockerfile",
-    // Update 'VARIANT' to pick a Node version: 12, 14, 16
+    // Change to pick a different tag, see https://mcr.microsoft.com/en-us/product/playwright/tags
+    //
+    // IMPORTANT: The playwright image version must match @playwright/test version from package.json.
+    // Otherwise it will not work, the test version will look for the browser versions which it won't
+    // find on the image.
+    //
+    // pick '...-arm64' version if running on Apple Silicon.
     "args": {
-      "VARIANT": "16"
+      "PLAYWRIGHT_TAG": "v1.30.0-focal"
     }
   },
-  // Set *default* container specific settings.json values on container create.
-  "settings": {},
   // Add the IDs of extensions you want installed when the container is created.
-  "extensions": [
-    "dbaeumer.vscode-eslint"
-  ],
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint"]
+    }
+  },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
+  "forwardPorts": [9000],
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "yarn install && yarn build",
-  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-  "remoteUser": "node"
+  "postCreateCommand": "yarn install && yarn build"
 }
