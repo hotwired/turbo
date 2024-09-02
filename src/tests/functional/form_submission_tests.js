@@ -1206,7 +1206,7 @@ test("following a link with [data-turbo-method] and [data-turbo=true] set when h
 test("following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
   page
 }) => {
-  await page.evaluate(() => (window.Turbo.config.drive = false))
+  await page.evaluate(() => (window.Turbo.config.drive.enabled = false))
 
   const link = await page.locator("#turbo-method-post-to-targeted-frame")
   await link.evaluate((link) => link.setAttribute("data-turbo", "true"))
