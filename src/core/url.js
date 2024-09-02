@@ -1,4 +1,4 @@
-import { config } from "./config";
+import { config } from "./config"
 
 export function expandURL(locatable) {
   return new URL(locatable.toString(), document.baseURI)
