@@ -103,7 +103,7 @@ test("visiting a location served with an unknown non-HTML content type added to 
   page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
 
   page.evaluate(() => {
-    window.Turbo.unvisitableExtensions.add(".unknown_svg")
+    window.Turbo.config.drive.unvisitableExtensions.add(".unknown_svg")
   })
 
   const urlBeforeVisit = page.url()

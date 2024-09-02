@@ -1,3 +1,5 @@
+import { config } from "./config";
+
 export function expandURL(locatable) {
   return new URL(locatable.toString(), document.baseURI)
 }
@@ -27,19 +29,8 @@ export function isPrefixedBy(baseURL, url) {
   return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
 }
 
-export const unvisitableExtensions = new Set(
-  [
-    ".7z", ".aac", ".apk", ".avi", ".bmp", ".bz2", ".css", ".csv", ".deb", ".dmg", ".doc",
-    ".docx", ".exe", ".gif", ".gz", ".heic", ".heif", ".ico", ".iso", ".jpeg", ".jpg",
-    ".js", ".json", ".m4a", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg", ".mpg", ".msi",
-    ".ogg", ".ogv", ".pdf", ".pkg", ".png", ".ppt", ".pptx", ".rar", ".rtf",
-    ".svg", ".tar", ".tif", ".tiff", ".txt", ".wav", ".webm", ".webp", ".wma", ".wmv",
-    ".xls", ".xlsx", ".xml", ".zip"
-  ]
-)
-
 export function locationIsVisitable(location, rootLocation) {
-  return isPrefixedBy(location, rootLocation) && !unvisitableExtensions.has(getExtension(location))
+  return isPrefixedBy(location, rootLocation) && !config.drive.unvisitableExtensions.has(getExtension(location))
 }
 
 export function getRequestURL(url) {
