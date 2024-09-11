@@ -1,5 +1,4 @@
 import { FrameElement } from "../../elements/frame_element"
-import { MorphingFrameRenderer } from "../frames/morphing_frame_renderer"
 import { PageRenderer } from "./page_renderer"
 import { dispatch } from "../../util"
 import { morphElements } from "../morphing"
@@ -13,7 +12,7 @@ export class MorphingPageRenderer extends PageRenderer {
     })
 
     for (const frame of currentElement.querySelectorAll("turbo-frame")) {
-      if (canRefreshFrame(frame)) refreshFrame(frame)
+      if (canRefreshFrame(frame)) frame.reload()
     }
 
     dispatch("turbo:morph", { detail: { currentElement, newElement } })
@@ -37,12 +36,4 @@ function canRefreshFrame(frame) {
     frame.src &&
     frame.refresh === "morph" &&
     !frame.closest("[data-turbo-permanent]")
-}
-
-function refreshFrame(frame) {
-  frame.addEventListener("turbo:before-frame-render", ({ detail }) => {
-    detail.render = MorphingFrameRenderer.renderElement
-  }, { once: true })
-
-  frame.reload()
 }

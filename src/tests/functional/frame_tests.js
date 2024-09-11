@@ -267,12 +267,43 @@ test("following a link to a page with a matching frame does not dispatch a turbo
   )
 })
 
-test("following a link within a frame with a target set navigates the target frame", async ({ page }) => {
+test("following a link within a frame which has a target set navigates the target frame without morphing even when frame[refresh=morph]", async ({ page }) => {
+  await page.click("#add-refresh-morph-to-frame")
   await page.click("#hello a")
   await nextBeat()
 
-  const frameText = await page.textContent("#frame h2")
-  assert.equal(frameText, "Frame: Loaded")
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+})
+
+test("navigating from within replaces the contents even with turbo-frame[refresh=morph]", async ({ page }) => {
+  await page.click("#add-refresh-morph-to-frame")
+  await page.click("#link-frame")
+  await nextBeat()
+
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+})
+
+test("calling reload on a frame replaces the contents", async ({ page }) => {
+  await page.click("#add-src-to-frame")
+
+  await page.evaluate(() => document.getElementById("frame").reload())
+
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+})
+
+test("calling reload on a frame[refresh=morph] morphs the contents", async ({ page }) => {
+  await page.click("#add-src-to-frame")
+  await page.click("#add-refresh-morph-to-frame")
+
+  await page.evaluate(() => document.getElementById("frame").reload())
+
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
 })
 
 test("following a link in rapid succession cancels the previous request", async ({ page }) => {
@@ -667,7 +698,7 @@ test("navigating turbo-frame[data-turbo-action=advance] from within pushes URL s
 
 test("navigating turbo-frame[data-turbo-action=advance] from outside with target pushes URL state", async ({ page }) => {
   await page.click("#add-turbo-action-to-frame")
-  await page.click("#hello-link-frame")
+  await page.click("#hello a")
   await nextEventNamed(page, "turbo:load")
 
   await expect(page.locator("h1")).toHaveText("Frames")

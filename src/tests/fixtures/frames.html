@@ -11,6 +11,12 @@
           target.closest("turbo-frame")?.setAttribute("data-turbo-action", "advance")
         } else if (target.id == "remove-target-from-hello") {
           document.getElementById("hello").removeAttribute("target")
+        } else if (target.id == "add-refresh-reload-to-frame") {
+          target.closest("turbo-frame")?.setAttribute("refresh", "reload")
+        } else if (target.id == "add-refresh-morph-to-frame") {
+          target.closest("turbo-frame")?.setAttribute("refresh", "morph")
+        } else if (target.id == "add-src-to-frame") {
+          target.closest("turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
         }
       })
     </script>
@@ -28,6 +34,9 @@
         <button id="frame-form-get-no-redirect">Navigate #frame without a redirect</button>
       </form>
       <button id="add-turbo-action-to-frame" type="button">Add [data-turbo-action="advance"] to #frame</button>
+      <button id="add-refresh-reload-to-frame" type="button">Add [refresh="reload"] to #frame</button>
+      <button id="add-refresh-morph-to-frame" type="button">Add [refresh="morph"] to #frame</button>
+      <button id="add-src-to-frame" type="button">Add [src="/src/tests/fixtures/frames.html"] to #frame so it can be reloaded</button>
       <a id="link-frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame from within</a>
       <a id="link-frame-with-search-params" href="/src/tests/fixtures/frames/frame.html?key=value">Navigate #frame with ?key=value</a>
       <a id="link-nested-frame-action-advance" href="/src/tests/fixtures/frames/frame.html" data-turbo-action="advance">Navigate #frame from within with a[data-turbo-action="advance"]</a>
@@ -60,7 +69,7 @@
     <turbo-frame id="hello" target="frame">
       <h2>Frames: #hello</h2>
 
-      <a id="hello-link-frame" href="/src/tests/fixtures/frames/frame.html">Load #frame</a>
+      <a href="/src/tests/fixtures/frames/frame.html">Load #frame</a>
       <button type="button" id="remove-target-from-hello">Remove #hello[target]</button>
 
     </turbo-frame>
