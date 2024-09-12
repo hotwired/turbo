@@ -65,11 +65,9 @@ test("visiting a location served with a known non-HTML content type", async ({ p
   const contentType = await contentTypeOfURL(url)
   assert.equal(contentType, "image/svg+xml")
 
-  assert.deepEqual(
-    requestedUrls, [
-    ['document', 'http://localhost:9000/src/tests/fixtures/svg.svg']
-  ]
-  )
+  assert.deepEqual(requestedUrls, [
+    ["document", "http://localhost:9000/src/tests/fixtures/svg.svg"]
+  ])
 
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
@@ -86,12 +84,10 @@ test("visiting a location served with an unknown non-HTML content type", async (
 
   // Because the file extension is not a known extension, Turbo will request it first to
   // determine the content type and only then refresh the full page to the provided location
-  assert.deepEqual(
-    requestedUrls, [
-    ['fetch', 'http://localhost:9000/__turbo/file.unknown_svg'],
-    ['document', 'http://localhost:9000/__turbo/file.unknown_svg']
-  ]
-  )
+  assert.deepEqual(requestedUrls, [
+    ["fetch", "http://localhost:9000/__turbo/file.unknown_svg"],
+    ["document", "http://localhost:9000/__turbo/file.unknown_svg"]
+  ])
 
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
@@ -110,11 +106,9 @@ test("visiting a location served with an unknown non-HTML content type added to 
   await visitLocation(page, "/__turbo/file.unknown_svg")
   await nextBeat()
 
-  assert.deepEqual(
-    requestedUrls, [
-    ['document', 'http://localhost:9000/__turbo/file.unknown_svg']
-  ]
-  )
+assert.deepEqual(requestedUrls, [
+  ["document", "http://localhost:9000/__turbo/file.unknown_svg"]
+])
 
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
