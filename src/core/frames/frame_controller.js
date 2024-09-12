@@ -93,6 +93,7 @@ export class FrameController {
     if (this.element.shouldReloadWithMorph) {
       this.element.addEventListener("turbo:before-frame-render", ({ detail }) => {
         detail.render = MorphingFrameRenderer.renderElement
+        detail.preservingPermanentElements = MorphingFrameRenderer.preservingPermanentElements
       }, { once: true })
     }
 
@@ -266,11 +267,16 @@ export class FrameController {
 
     const {
       defaultPrevented,
-      detail: { render }
+      detail: { render, preservingPermanentElements }
     } = event
 
-    if (this.view.renderer && render) {
-      this.view.renderer.renderElement = render
+    if (this.view.renderer) {
+      if (render) {
+        this.view.renderer.renderElement = render
+      }
+      if (preservingPermanentElements) {
+        this.view.renderer.preservingPermanentElements = preservingPermanentElements
+      }
     }
 
     return !defaultPrevented
