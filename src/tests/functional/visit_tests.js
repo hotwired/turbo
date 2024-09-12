@@ -53,7 +53,10 @@ test("skip programmatically visiting a cross-origin location falls back to windo
   assert.equal(await visitAction(page), "load")
 })
 
-test("visiting a location served with a non-HTML content type", async ({ page }) => {
+test("visiting a location served with a known non-HTML content type", async ({ page }) => {
+  const requestedUrls = []
+  page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
+
   const urlBeforeVisit = page.url()
   await visitLocation(page, "/src/tests/fixtures/svg.svg")
   await nextBeat()
@@ -62,9 +65,73 @@ test("visiting a location served with a non-HTML content type", async ({ page })
   const contentType = await contentTypeOfURL(url)
   assert.equal(contentType, "image/svg+xml")
 
+  assert.deepEqual(requestedUrls, [
+    ["document", "http://localhost:9000/src/tests/fixtures/svg.svg"]
+  ])
+
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
   assert.equal(await visitAction(page), "load")
+})
+
+test("visiting a location served with an unknown non-HTML content type", async ({ page }) => {
+  const requestedUrls = []
+  page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
+
+  const urlBeforeVisit = page.url()
+  await visitLocation(page, "/__turbo/file.unknown_svg")
+  await nextBeat()
+
+  // Because the file extension is not a known extension, Turbo will request it first to
+  // determine the content type and only then refresh the full page to the provided location
+  assert.deepEqual(requestedUrls, [
+    ["fetch", "http://localhost:9000/__turbo/file.unknown_svg"],
+    ["document", "http://localhost:9000/__turbo/file.unknown_svg"]
+  ])
+
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
+})
+
+test("visiting a location served with an unknown non-HTML content type added to the unvisitableExtensions set", async ({ page }) => {
+  const requestedUrls = []
+  page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
+
+  page.evaluate(() => {
+    window.Turbo.config.drive.unvisitableExtensions.add(".unknown_svg")
+  })
+
+  const urlBeforeVisit = page.url()
+  await visitLocation(page, "/__turbo/file.unknown_svg")
+  await nextBeat()
+
+assert.deepEqual(requestedUrls, [
+  ["document", "http://localhost:9000/__turbo/file.unknown_svg"]
+])
+
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
+})
+
+test("visiting a location with a non-HTML extension", async ({ page }) => {
+  await visitLocation(page, "/__turbo/file.unknown_html")
+  await nextBeat()
+
+  assert.equal(await visitAction(page), "advance")
+})
+
+test("refreshing a location with a non-HTML extension", async ({ page }) => {
+  await page.goto("/__turbo/file.unknown_html")
+  const urlBeforeVisit = page.url()
+
+  await visitLocation(page, "/__turbo/file.unknown_html")
+  await nextBeat()
+
+  const urlAfterVisit = page.url()
+  assert.equal(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "advance")
 })
 
 test("canceling a turbo:click event falls back to built-in browser navigation", async ({ page }) => {
