@@ -280,7 +280,7 @@ test("it preserves focus across morphs", async ({ page }) => {
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await expect(input).toBeFocused()
-  await expect(input).toHaveValue("Preserve me")
+  await expect(input).toHaveValue("")
 })
 
 test("it preserves focus and the [data-turbo-permanent] element's value across morphs", async ({ page }) => {

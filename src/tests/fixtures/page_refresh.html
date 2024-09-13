@@ -15,10 +15,12 @@
       const application = Application.start()
 
       addEventListener("focusin", ({ target }) => {
-        if (target instanceof HTMLInputElement && !target.hasAttribute("data-turbo-permanent")) {
+        if (target instanceof HTMLInputElement && target.hasAttribute("data-toggle-permanent-on-focus")) {
           target.toggleAttribute("data-turbo-permanent", true)
 
-          target.addEventListener("focusout", () => target.toggleAttribute("data-turbo-permanent", false), { once: true })
+          target.addEventListener("focusout", () => {
+            target.toggleAttribute("data-turbo-permanent", false)
+          }, { once: true })
         }
       })
 
@@ -114,7 +116,7 @@
     <form method="get" data-turbo-action="replace" oninput="this.requestSubmit()">
       <label>
         Search
-        <input name="query">
+        <input id="query" name="query" data-toggle-permanent-on-focus>
       </label>
       <button>Form with params to refresh the page</button>
     </form>
