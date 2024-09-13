@@ -11,8 +11,4 @@ export class MorphingFrameRenderer extends FrameRenderer {
 
     morphChildren(currentElement, newElement)
   }
-
-  async preservingPermanentElements(callback) {
-    return await callback()
-  }
 }

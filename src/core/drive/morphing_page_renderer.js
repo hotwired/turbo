@@ -18,10 +18,6 @@ export class MorphingPageRenderer extends PageRenderer {
     dispatch("turbo:morph", { detail: { currentElement, newElement } })
   }
 
-  async preservingPermanentElements(callback) {
-    return await callback()
-  }
-
   get renderMethod() {
     return "morph"
   }

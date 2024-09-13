@@ -21,13 +21,9 @@ class DefaultIdiomorphCallbacks {
     this.#beforeNodeMorphed = beforeNodeMorphed || (() => true)
   }
 
-  beforeNodeAdded = (node) => {
-    return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
-  }
-
   beforeNodeMorphed = (currentElement, newElement) => {
     if (currentElement instanceof Element) {
-      if (!currentElement.hasAttribute("data-turbo-permanent") && this.#beforeNodeMorphed(currentElement, newElement)) {
+      if (this.#beforeNodeMorphed(currentElement, newElement)) {
         const event = dispatch("turbo:before-morph-element", {
           cancelable: true,
           target: currentElement,
