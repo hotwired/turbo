@@ -35,7 +35,9 @@ export class Bardo {
 
   replaceCurrentPermanentElementWithClone(permanentElement) {
     const clone = permanentElement.cloneNode(true)
+    const shouldRefocus = document.activeElement == permanentElement
     permanentElement.replaceWith(clone)
+    if (shouldRefocus) clone.focus()
   }
 
   replacePlaceholderWithPermanentElement(permanentElement) {
