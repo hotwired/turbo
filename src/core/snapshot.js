@@ -21,6 +21,10 @@ export class Snapshot {
     return anchor ? this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`) : null
   }
 
+  getElementById(id) {
+    return this.element.querySelector(`#${id}`)
+  }
+
   get isConnected() {
     return this.element.isConnected
   }
@@ -42,7 +46,7 @@ export class Snapshot {
 
     for (const currentPermanentElement of this.permanentElements) {
       const { id } = currentPermanentElement
-      const newPermanentElement = snapshot.getPermanentElementById(id)
+      const newPermanentElement = snapshot.getElementById(id)
       if (newPermanentElement) {
         permanentElementMap[id] = [currentPermanentElement, newPermanentElement]
       }
