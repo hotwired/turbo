@@ -19,7 +19,7 @@ export class PageView extends View {
     const shouldMorphPage = this.isPageRefresh(visit) && this.snapshot.shouldMorphPage
     const rendererClass = shouldMorphPage ? MorphingPageRenderer : PageRenderer
 
-    const renderer = new rendererClass(this.snapshot, snapshot, rendererClass.renderElement, isPreview, willRender)
+    const renderer = new rendererClass(this.snapshot, snapshot, isPreview, willRender)
 
     if (!renderer.shouldRender) {
       this.forceReloaded = true
@@ -32,7 +32,7 @@ export class PageView extends View {
 
   renderError(snapshot, visit) {
     visit?.changeHistory()
-    const renderer = new ErrorRenderer(this.snapshot, snapshot, ErrorRenderer.renderElement, false)
+    const renderer = new ErrorRenderer(this.snapshot, snapshot, false)
     return this.render(renderer)
   }
 
