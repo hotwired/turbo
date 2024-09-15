@@ -3,7 +3,7 @@ import { morphChildren } from "../morphing"
 import { dispatch } from "../../util"
 
 export class MorphingFrameRenderer extends FrameRenderer {
-  static renderElement(currentElement, newElement) {
+  renderElement(currentElement, newElement) {
     dispatch("turbo:before-frame-morph", {
       target: currentElement,
       detail: { currentElement, newElement }

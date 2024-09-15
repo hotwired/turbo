@@ -2,7 +2,7 @@ import { activateScriptElement } from "../../util"
 import { Renderer } from "../renderer"
 
 export class ErrorRenderer extends Renderer {
-  static renderElement(currentElement, newElement) {
+  renderElement(currentElement, newElement) {
     const { documentElement, body } = document
 
     documentElement.replaceChild(newElement, body)

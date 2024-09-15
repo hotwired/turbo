@@ -2,7 +2,7 @@ import { activateScriptElement, nextRepaint } from "../../util"
 import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer {
-  static renderElement(currentElement, newElement) {
+  renderElement(currentElement, newElement) {
     const destinationRange = document.createRange()
     destinationRange.selectNodeContents(currentElement)
     destinationRange.deleteContents()
@@ -15,8 +15,8 @@ export class FrameRenderer extends Renderer {
     }
   }
 
-  constructor(delegate, currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
-    super(currentSnapshot, newSnapshot, renderElement, isPreview, willRender)
+  constructor(delegate, currentSnapshot, newSnapshot, isPreview, willRender = true) {
+    super(currentSnapshot, newSnapshot, isPreview, willRender)
     this.delegate = delegate
   }
 

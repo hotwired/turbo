@@ -3,7 +3,7 @@ import { Bardo } from "./bardo"
 export class Renderer {
   #activeElement = null
 
-  static renderElement(currentElement, newElement) {
+  renderElement(currentElement, newElement) {
     // Abstract method
   }
 
@@ -12,7 +12,6 @@ export class Renderer {
     this.newSnapshot = newSnapshot
     this.isPreview = isPreview
     this.willRender = willRender
-    this.renderElement = this.constructor.renderElement
     this.promise = new Promise((resolve, reject) => (this.resolvingFunctions = { resolve, reject }))
   }
 

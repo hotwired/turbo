@@ -4,7 +4,7 @@ import { dispatch } from "../../util"
 import { morphElements } from "../morphing"
 
 export class MorphingPageRenderer extends PageRenderer {
-  static renderElement(currentElement, newElement) {
+  renderElement(currentElement, newElement) {
     morphElements(currentElement, newElement, {
       callbacks: {
         beforeNodeMorphed: element => !canRefreshFrame(element)

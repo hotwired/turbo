@@ -26,7 +26,7 @@ import { nextRepaint } from "../util"
  *   </turbo-stream>
  */
 export class StreamElement extends HTMLElement {
-  static async renderElement(newElement) {
+  async renderElement(newElement) {
     await newElement.performAction()
   }
 
@@ -164,7 +164,7 @@ export class StreamElement extends HTMLElement {
     return new CustomEvent("turbo:before-stream-render", {
       bubbles: true,
       cancelable: true,
-      detail: { newStream: this, render: StreamElement.renderElement }
+      detail: { newStream: this, render: this.renderElement }
     })
   }
 
