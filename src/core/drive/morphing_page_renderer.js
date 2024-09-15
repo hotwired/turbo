@@ -35,5 +35,6 @@ function canRefreshFrame(frame) {
   return frame instanceof FrameElement &&
     frame.src &&
     frame.refresh === "morph" &&
-    !frame.closest("[data-turbo-permanent]")
+    !frame.closest("[data-turbo-permanent]") &&
+    !frame.parentElement.closest("turbo-frame[src][refresh=morph]")
 }

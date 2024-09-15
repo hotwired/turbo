@@ -8,8 +8,9 @@ export function morphElements(currentElement, newElement, { callbacks, ...option
   })
 }
 
-export function morphChildren(currentElement, newElement) {
+export function morphChildren(currentElement, newElement, options = {}) {
   morphElements(currentElement, newElement.childNodes, {
+    ...options,
     morphStyle: "innerHTML"
   })
 }
