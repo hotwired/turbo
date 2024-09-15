@@ -1,4 +1,3 @@
-import { FrameElement } from "../../elements/frame_element"
 import { FrameRenderer } from "./frame_renderer"
 import { morphChildren } from "../morphing"
 import { dispatch } from "../../util"
@@ -12,11 +11,15 @@ export class MorphingFrameRenderer extends FrameRenderer {
 
     morphChildren(currentElement, newElement, {
       callbacks: {
-        beforeNodeMorphed: element => !canRefreshFrame(element, currentElement)
+        beforeNodeMorphed: element => {
+          return !super.shouldRefreshChildFrameWithMorphing(currentElement, element)
+        }
       }
     })
     for (const frame of currentElement.querySelectorAll("turbo-frame")) {
-      if (canRefreshFrame(frame, currentElement)) frame.reload()
+      if (super.shouldRefreshChildFrameWithMorphing(currentElement, frame)) {
+        frame.reload()
+      }
     }
   }
 
@@ -25,10 +28,3 @@ export class MorphingFrameRenderer extends FrameRenderer {
   }
 }
 
-function canRefreshFrame(frame, currentFrame) {
-  return frame instanceof FrameElement &&
-    frame.src &&
-    frame.refresh === "morph" &&
-    !frame.closest("[data-turbo-permanent]") &&
-    frame.parentElement.closest("turbo-frame[src][refresh=morph]").id === currentFrame.id
-}

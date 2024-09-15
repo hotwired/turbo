@@ -1,3 +1,4 @@
+import { FrameElement } from "../elements/frame_element"
 import { Bardo } from "./bardo"
 
 export class Renderer {
@@ -5,6 +6,13 @@ export class Renderer {
 
   static renderElement(currentElement, newElement) {
     // Abstract method
+  }
+
+  static shouldRefreshChildFrameWithMorphing(parentFrame, frame) {
+    return frame instanceof FrameElement &&
+      frame.shouldReloadWithMorph &&
+      !frame.closest("[data-turbo-permanent]") &&
+      frame.parentElement.closest("turbo-frame[src][refresh=morph]") === parentFrame
   }
 
   constructor(currentSnapshot, newSnapshot, isPreview, willRender = true) {
