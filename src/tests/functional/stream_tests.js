@@ -226,6 +226,25 @@ test("preventing a turbo:before-morph-element prevents the morph", async ({ page
   await expect(page.locator("#message_1")).toHaveText("Morph me")
 })
 
+test("rendering a stream message into the HTML executes it", async ({ page }) => {
+  await page.evaluate(() => {
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      `
+        <turbo-stream action="append" target="messages">
+          <template>
+            <div class="message">Hello world!</div>
+          </template>
+        </turbo-stream>
+      `
+    )
+  })
+  await nextBeat()
+
+  const messages = await page.locator("#messages .message")
+  assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
+})
+
 async function getReadyState(page, id) {
   return page.evaluate((id) => {
     const element = document.getElementById(id)
