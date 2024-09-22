@@ -91,10 +91,9 @@ export class FrameController {
   }
 
   sourceURLReloaded() {
-    const { refresh, src } = this.element
+    const { src } = this.element
 
-    this.#shouldMorphFrame = src && refresh === "morph"
-
+    this.#shouldMorphFrame = this.element.shouldReloadWithMorph
     this.element.removeAttribute("complete")
     this.element.src = null
     this.element.src = src
@@ -234,6 +233,9 @@ export class FrameController {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
+    if (frame.src === response.response.url && frame.shouldReloadWithMorph) {
+      frame.delegate.#shouldMorphFrame = true
+    }
     frame.delegate.loadResponse(response)
 
     if (!formSubmission.isSafe) {
@@ -343,6 +345,9 @@ export class FrameController {
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(submitter, element, frame))
 
     this.#withCurrentNavigationElement(element, () => {
+      if (frame.src === url && frame.shouldReloadWithMorph) {
+        frame.delegate.#shouldMorphFrame = true
+      }
       frame.src = url
     })
   }
