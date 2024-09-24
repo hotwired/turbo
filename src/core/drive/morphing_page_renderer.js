@@ -6,17 +6,15 @@ export class MorphingPageRenderer extends PageRenderer {
   static renderElement(currentElement, newElement) {
     morphElements(currentElement, newElement, {
       callbacks: {
-        beforeNodeMorphed: element => {
-          return !super.shouldRefreshChildFrameWithMorphing(null, element)
+        beforeNodeMorphed: (node, newNode) => {
+          if (super.shouldRefreshChildFrameWithMorphing(null, node, newNode)) {
+            node.reload()
+            return false
+          }
+          return true
         }
       }
     })
-
-    for (const frame of currentElement.querySelectorAll("turbo-frame")) {
-      if (super.shouldRefreshChildFrameWithMorphing(null, frame)) {
-        frame.reload()
-      }
-    }
 
     dispatch("turbo:morph", { detail: { currentElement, newElement } })
   }

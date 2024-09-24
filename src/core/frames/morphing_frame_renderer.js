@@ -11,16 +11,15 @@ export class MorphingFrameRenderer extends FrameRenderer {
 
     morphChildren(currentElement, newElement, {
       callbacks: {
-        beforeNodeMorphed: element => {
-          return !super.shouldRefreshChildFrameWithMorphing(currentElement, element)
+        beforeNodeMorphed: (node, newNode) => {
+          if (super.shouldRefreshChildFrameWithMorphing(currentElement, node, newNode)) {
+            node.reload()
+            return false
+          }
+          return true
         }
       }
     })
-    for (const frame of currentElement.querySelectorAll("turbo-frame")) {
-      if (super.shouldRefreshChildFrameWithMorphing(currentElement, frame)) {
-        frame.reload()
-      }
-    }
   }
 
   async preservingPermanentElements(callback) {

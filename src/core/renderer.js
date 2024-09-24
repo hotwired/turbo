@@ -8,11 +8,16 @@ export class Renderer {
     // Abstract method
   }
 
-  static shouldRefreshChildFrameWithMorphing(parentFrame, frame) {
-    return frame instanceof FrameElement &&
-      frame.shouldReloadWithMorph &&
-      !frame.closest("[data-turbo-permanent]") &&
-      frame.parentElement.closest("turbo-frame[src][refresh=morph]") === parentFrame
+  static shouldRefreshChildFrameWithMorphing(parentFrame, currentFrame, newFrame) {
+    return currentFrame instanceof FrameElement &&
+      // newFrame cannot yet be an instance of FrameElement because custom
+      // elements don't get initialized until they're attached to the DOM, so
+      // test its Element#nodeName instead
+      newFrame instanceof Element && newFrame.nodeName === "TURBO-FRAME" &&
+      currentFrame.shouldReloadWithMorph &&
+      currentFrame.id === newFrame.id &&
+      !currentFrame.closest("[data-turbo-permanent]") &&
+      currentFrame.parentElement.closest("turbo-frame[src][refresh=morph]") === parentFrame
   }
 
   constructor(currentSnapshot, newSnapshot, isPreview, willRender = true) {
