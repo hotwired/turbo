@@ -96,9 +96,15 @@ export async function nextPageRefresh(page, timeout = 500) {
   return sleep(pageRefreshDebouncePeriod + timeout)
 }
 
+const timeout = 2000
+
 export async function nextEventNamed(page, eventName, expectedDetail = {}) {
   let record
+  const startTime = new Date()
   while (!record) {
+    if (new Date() - startTime > timeout) {
+      throw new Error(`Event ${eventName} with ${JSON.stringify(expectedDetail)} wasn't dispatched within ${timeout}ms`)
+    }
     const records = await readEventLogs(page, 1)
     record = records.find(([name, detail]) => {
       return name == eventName && Object.entries(expectedDetail).every(([key, value]) => detail[key] === value)
@@ -109,7 +115,11 @@ export async function nextEventNamed(page, eventName, expectedDetail = {}) {
 
 export async function nextEventOnTarget(page, elementId, eventName) {
   let record
+  const startTime = new Date()
   while (!record) {
+    if (new Date() - startTime > timeout) {
+      throw new Error(`Element ${elementId} didn't dispatch event ${eventName} within ${timeout}ms`)
+    }
     const records = await readEventLogs(page, 1)
     record = records.find(([name, _, id]) => name == eventName && id == elementId)
   }
@@ -130,7 +140,11 @@ export async function listenForEventOnTarget(page, elementId, eventName) {
 
 export async function nextBodyMutation(page) {
   let record
+  const startTime = new Date()
   while (!record) {
+    if (new Date() - startTime > timeout) {
+      throw new Error(`body mutation didn't occur within ${timeout}ms`)
+    }
     [record] = await readBodyMutationLogs(page, 1)
   }
   return record[0]
@@ -143,7 +157,11 @@ export async function noNextBodyMutation(page) {
 
 export async function nextAttributeMutationNamed(page, elementId, attributeName) {
   let record
+  const startTime = new Date()
   while (!record) {
+    if (new Date() - startTime > timeout) {
+      throw new Error(`Element ${elementId}'s ${attributeName} attribute mutation didn't occur within ${timeout}ms`)
+    }
     const records = await readMutationLogs(page, 1)
     record = records.find(([name, id]) => name == attributeName && id == elementId)
   }
