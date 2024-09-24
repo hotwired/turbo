@@ -17,6 +17,8 @@
           target.closest("turbo-frame")?.setAttribute("refresh", "morph")
         } else if (target.id == "add-src-to-frame") {
           target.closest("turbo-frame")?.setAttribute("src", "/src/tests/fixtures/frames.html")
+        } else if (target.id == "change-frame-id-to-different-nested-child") {
+          target.closest("turbo-frame")?.setAttribute("id", "different-nested-child")
         }
       })
     </script>
@@ -90,6 +92,7 @@
         <h2>Frames: #nested-child</h2>
         <button id="add-refresh-morph-to-frame" type="button">Add [refresh="morph"] to #frame</button>
         <button id="add-src-to-frame" type="button">Add [src="/src/tests/fixtures/frames.html"] to #frame so it can be reloaded</button>
+        <button id="change-frame-id-to-different-nested-child" type="button">Change id to different-nested-child</button>
         <a href="/src/tests/fixtures/frames/frame.html">Load #nested-child</a>
         <a href="/src/tests/fixtures/one.html" data-turbo-frame="_top">Visit one.html</a>
 
