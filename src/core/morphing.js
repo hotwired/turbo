@@ -1,4 +1,4 @@
-import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
+import { Idiomorph } from "idiomorph"
 import { dispatch } from "../util"
 
 export function morphElements(currentElement, newElement, { callbacks, ...options } = {}) {

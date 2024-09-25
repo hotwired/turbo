@@ -1932,9 +1932,10 @@ iconv-lite@0.4.24:
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
-"idiomorph@https://github.com/bigskysoftware/idiomorph.git":
-  version "0.3.0"
-  resolved "https://github.com/bigskysoftware/idiomorph.git#b5115add9f7ab04c04af0624385540dff04e0735"
+idiomorph@~0.7.1:
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/idiomorph/-/idiomorph-0.7.1.tgz#f3e4999af439840cdd97215581166d4df623f981"
+  integrity sha512-6HI1AWYQL/WijVQNyE+1rn4Rt83XxMGShXa4IP4Ulhs8fj2FNJ2mgCDwO/OrDjMRjauPI/STRPsysM6zw3aX0w==
 
 ieee754@^1.1.13:
   version "1.2.1"
