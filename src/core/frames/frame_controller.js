@@ -233,9 +233,7 @@ export class FrameController {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
-    if (frame.src && pathnamesAreEqual(frame.src, response.response.url) && frame.shouldReloadWithMorph) {
-      frame.delegate.#shouldMorphFrame = true
-    }
+    frame.delegate.decideOnMorphingTo(response.response.url)
     frame.delegate.loadResponse(response)
 
     if (!formSubmission.isSafe) {
@@ -345,11 +343,15 @@ export class FrameController {
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(submitter, element, frame))
 
     this.#withCurrentNavigationElement(element, () => {
-      if (frame.src && pathnamesAreEqual(frame.src, url) && frame.shouldReloadWithMorph) {
-        frame.delegate.#shouldMorphFrame = true
-      }
+      frame.delegate.decideOnMorphingTo(url)
       frame.src = url
     })
+  }
+
+  decideOnMorphingTo(url) {
+    if (this.element.src && pathnamesAreEqual(this.element.src, url) && this.element.shouldReloadWithMorph) {
+      this.#shouldMorphFrame = true
+    }
   }
 
   proposeVisitIfNavigatedWithAction(frame, action = null) {
