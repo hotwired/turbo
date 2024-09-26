@@ -14,7 +14,7 @@ import {
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { getAction, expandURL, urlsAreEqual, pathnamesAreEqual, locationIsVisitable } from "../url"
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
@@ -233,7 +233,7 @@ export class FrameController {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
-    if (frame.src === response.response.url && frame.shouldReloadWithMorph) {
+    if (frame.src && pathnamesAreEqual(frame.src, response.response.url) && frame.shouldReloadWithMorph) {
       frame.delegate.#shouldMorphFrame = true
     }
     frame.delegate.loadResponse(response)
@@ -345,7 +345,7 @@ export class FrameController {
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(submitter, element, frame))
 
     this.#withCurrentNavigationElement(element, () => {
-      if (frame.src === url && frame.shouldReloadWithMorph) {
+      if (frame.src && pathnamesAreEqual(frame.src, url) && frame.shouldReloadWithMorph) {
         frame.delegate.#shouldMorphFrame = true
       }
       frame.src = url

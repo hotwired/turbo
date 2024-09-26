@@ -46,6 +46,10 @@ export function urlsAreEqual(left, right) {
   return expandURL(left).href == expandURL(right).href
 }
 
+export function pathnamesAreEqual(left, right) {
+  return expandURL(left).pathname == expandURL(right).pathname
+}
+
 function getPathComponents(url) {
   return url.pathname.split("/").slice(1)
 }
