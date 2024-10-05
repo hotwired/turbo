@@ -37,6 +37,13 @@ export class HeadSnapshot extends Snapshot {
     return this.getElementsMatchingTypeNotInSnapshot("stylesheet", snapshot)
   }
 
+  getElementsMatchingType(matchedType) {
+    return Object.keys(this.detailsByOuterHTML)
+      .map((outerHTML) => this.detailsByOuterHTML[outerHTML])
+      .filter(({ type }) => type == matchedType)
+      .map(({ elements: [element] }) => element)
+  }
+
   getElementsMatchingTypeNotInSnapshot(matchedType, snapshot) {
     return Object.keys(this.detailsByOuterHTML)
       .filter((outerHTML) => !(outerHTML in snapshot.detailsByOuterHTML))
