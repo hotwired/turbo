@@ -49,6 +49,33 @@ test("action=append", async () => {
   assert.isNull(element2.parentElement)
 })
 
+test("action=append with a form template containing an input named id", async () => {
+  const element = createStreamElement(
+    "append",
+    "hello",
+    createTemplateElement(' <form id="child_1"><input type="hidden" name="id" value="First"></form> tail1 ')
+  )
+  const element2 = createStreamElement(
+    "append",
+    "hello",
+    createTemplateElement(
+      '<form id="child_1"><input type="hidden" name="id" value="New First"></form> <form id="child_2"><input type="hidden" name="id" value="Second"></form> tail2 '
+    )
+  )
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.innerHTML, 'Hello Turbo <form id="child_1"><input type="hidden" name="id" value="First"></form> tail1 ')
+  assert.isNull(element.parentElement)
+
+  subject.append(element2)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.innerHTML, 'Hello Turbo  tail1 <form id="child_1"><input type="hidden" name="id" value="New First"></form> <form id="child_2"><input type="hidden" name="id" value="Second"></form> tail2 ')
+})
+
 test("action=append with children ID already present in target", async () => {
   const element = createStreamElement("append", "hello", createTemplateElement(' <div id="child_1">First</div> tail1 '))
   const element2 = createStreamElement(
@@ -86,6 +113,29 @@ test("action=prepend", async () => {
 
   assert.equal(subject.find("#hello")?.textContent, "and more Streams Hello Turbo")
   assert.isNull(element.parentElement)
+})
+
+test("action=prepend with a form template containing an input named id", async () => {
+  const element = createStreamElement("prepend", "hello", createTemplateElement('<form id="child_1"><input type="hidden" name="id" value="First"></form> tail1 '))
+  const element2 = createStreamElement(
+    "prepend",
+    "hello",
+    createTemplateElement(
+      '<form id="child_1"><input type="hidden" name="id" value="New First"></form> <form id="child_2"><input type="hidden" name="id" value="Second"></form> tail2 '
+    )
+  )
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.innerHTML, '<form id="child_1"><input type="hidden" name="id" value="First"></form> tail1 Hello Turbo')
+  assert.isNull(element.parentElement)
+
+  subject.append(element2)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.innerHTML, '<form id="child_1"><input type="hidden" name="id" value="New First"></form> <form id="child_2"><input type="hidden" name="id" value="Second"></form> tail2  tail1 Hello Turbo')
 })
 
 test("action=prepend with children ID already present in target", async () => {
