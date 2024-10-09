@@ -134,8 +134,117 @@ test("action=replace", async () => {
   assert.isNull(element.parentElement)
 })
 
+test("action=replace with greater version", async () => {
+  subject.fixtureHTML = `<div><div id="hello" data-turbo-version="1">Hello Turbo</div></div>`
+  
+  const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello" data-turbo-version="2">Goodbye Turbo</h1>`), { version: "2" })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.ok(subject.find("div#hello"))
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Goodbye Turbo")
+  assert.notOk(subject.find("div#hello"))
+  assert.ok(subject.find("h1#hello"))
+  assert.isNull(element.parentElement)
+})
+
+test("action=replace with older version", async () => {
+  subject.fixtureHTML = `<div><div id="hello" data-turbo-version="2">Hello Turbo</div></div>`
+
+  const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello" data-turbo-version="1">Goodbye Turbo</h1>`), { version: "1" })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.ok(subject.find("div#hello"))
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.ok(subject.find("div#hello"))
+})
+
+test("action=replace with no version", async () => {
+  subject.fixtureHTML = `<div><div id="hello" data-turbo-version="1">Hello Turbo</div></div>`
+
+  const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello">Goodbye Turbo</h1>`))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.ok(subject.find("div#hello"))
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.notOk(subject.find("h1#hello"))
+  assert.isNull(element.parentElement)
+})
+
+test("action=replace with a version", async () => {
+  const element = createStreamElement("replace", "hello", createTemplateElement(`<h1 id="hello" data-turbo-version="1">Goodbye Turbo</h1>`), { version: "1" })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.ok(subject.find("div#hello"))
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Goodbye Turbo")
+  assert.notOk(subject.find("div#hello"))
+  assert.ok(subject.find("h1#hello"))
+  assert.isNull(element.parentElement)
+})
+
 test("action=update", async () => {
   const element = createStreamElement("update", "hello", createTemplateElement("Goodbye Turbo"))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Goodbye Turbo")
+  assert.isNull(element.parentElement)
+})
+
+test("action=update with greater version", async () => {
+  subject.fixtureHTML = `<div><div id="hello" data-turbo-version="1">Hello Turbo</div></div>`
+
+  const element = createStreamElement("update", "hello", createTemplateElement(`<h1 id="hello" data-turbo-version="2">Goodbye Turbo</h1>`), { version: "2" })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Goodbye Turbo")
+  assert.isNull(element.parentElement)
+})
+
+test("action=update with older version", async () => {
+  subject.fixtureHTML = `<div><div id="hello" data-turbo-version="2">Hello Turbo</div></div>`
+
+  const element = createStreamElement("update", "hello", createTemplateElement(`<h1 id="hello" data-turbo-version="1">Goodbye Turbo</h1>`), { version: "1" })
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.isNull(element.parentElement)
+})
+
+test("action=update with no version", async () => {
+  subject.fixtureHTML = `<div><div id="hello" data-turbo-version="1">Hello Turbo</div></div>`
+
+  const element = createStreamElement("update", "hello", createTemplateElement(`<h1 id="hello">Goodbye Turbo</h1>`))
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+
+  subject.append(element)
+  await nextAnimationFrame()
+
+  assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
+  assert.isNull(element.parentElement)
+})
+
+test("action=update with a version", async () => {
+  const element = createStreamElement("update", "hello", createTemplateElement(`<h1 id="hello" data-turbo-version="1">Goodbye Turbo</h1>`), { version: "1" })
   assert.equal(subject.find("#hello")?.textContent, "Hello Turbo")
 
   subject.append(element)
