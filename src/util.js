@@ -254,3 +254,11 @@ export function debounce(fn, delay) {
     timeoutId = setTimeout(callback, delay)
   }
 }
+
+export function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n)
+}
+
+export function attributeToNumber(value) {
+  return isNumeric(value) ? Number(value) : null
+}
