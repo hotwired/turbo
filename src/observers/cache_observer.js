@@ -8,6 +8,7 @@ export class CacheObserver {
     if (!this.started) {
       this.started = true
       addEventListener("turbo:before-cache", this.removeTemporaryElements, false)
+      addEventListener("pagehide", this.removeTemporaryElementsPriorToEnteringBackForwardCache, false)
     }
   }
 
@@ -15,6 +16,13 @@ export class CacheObserver {
     if (this.started) {
       this.started = false
       removeEventListener("turbo:before-cache", this.removeTemporaryElements, false)
+      removeEventListener("pagehide", this.removeTemporaryElementsPriorToEnteringBackForwardCache, false)
+    }
+  }
+
+  removeTemporaryElementsPriorToEnteringBackForwardCache = (event) => {
+    if (event.persisted) {
+      this.removeTemporaryElements(event)
     }
   }
 
