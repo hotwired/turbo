@@ -43,12 +43,13 @@ export class BrowserAdapter {
       case SystemStatusCode.networkFailure:
       case SystemStatusCode.timeoutFailure:
       case SystemStatusCode.contentTypeMismatch:
-        return this.reload({
+        this.reload({
           reason: "request_failed",
           context: {
             statusCode
           }
         })
+        return visit.fail()
       default:
         return visit.loadResponse()
     }
