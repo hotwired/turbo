@@ -189,6 +189,10 @@ router.get("/file.unknown_html", (request, response) => {
   response.sendFile(path.join(__dirname, "../../src/tests/fixtures/visit.html"))
 })
 
+router.get("/download", (request, response) => {
+  response.download(path.join(__dirname, "../../src/tests/fixtures/svg.svg"))
+})
+
 function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {

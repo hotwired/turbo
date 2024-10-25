@@ -568,6 +568,14 @@ test("rendering a redirect response replaces the body once and only once", async
   expect(await noNextBodyMutation(page), "replaces <body> element once").toEqual(true)
 })
 
+
+test("hides progress bar when reloading due to request failure", async ({ page }) => {
+  await page.click("#download-link")
+  await page.waitForEvent("download")
+
+  await expect(page.locator(".turbo-progress-bar"), "hides progress bar").not.toBeAttached()
+})
+
 function deepElementsEqual(page, left, right) {
   return page.evaluate(
     ([left, right]) => left.length == right.length && left.every((element) => right.includes(element)),
