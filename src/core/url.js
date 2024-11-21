@@ -55,9 +55,5 @@ function getLastPathComponent(url) {
 }
 
 function getPrefix(url) {
-  return addTrailingSlash(url.origin + url.pathname)
-}
-
-function addTrailingSlash(value) {
-  return value.endsWith("/") ? value : value + "/"
+  url.origin + url.pathname
 }
