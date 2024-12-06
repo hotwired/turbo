@@ -16,7 +16,8 @@ import {
   readEventLogs,
   scrollPosition,
   scrollToSelector,
-  searchParams, visitAction
+  searchParams,
+  visitAction
 } from "../helpers/page"
 
 assert.equalIgnoringWhitespace = function (actual, expected, message) {
