@@ -16,7 +16,7 @@ import {
   readEventLogs,
   scrollPosition,
   scrollToSelector,
-  searchParams
+  searchParams, visitAction
 } from "../helpers/page"
 
 assert.equalIgnoringWhitespace = function (actual, expected, message) {
@@ -167,6 +167,113 @@ test("successfully following a link to a page without a matching frame shows an 
 
   assert.exists(error)
   assert.include(error.message, `The response (200) did not contain the expected <turbo-frame id="missing">`)
+})
+
+test("following a link to a non html file changes page src", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frames.html")
+
+  const requestedUrls = []
+  page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
+
+  const urlBeforeVisit = page.url()
+
+  await page.click("#non-html")
+  await nextBeat()
+
+  assert.deepEqual(requestedUrls, [
+    ["document", "http://localhost:9000/src/tests/fixtures/svg.svg"]
+  ])
+
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
+})
+
+test("following a link to an unknown non html file changes page src", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frames.html")
+
+  const requestedUrls = []
+  page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
+
+  const urlBeforeVisit = page.url()
+
+  await page.click("#unknown-non-html")
+  await nextBeat()
+
+  // Because the file extension is not a known extension, Turbo will request it first to
+  // determine the content type and only then refresh the full page to the provided location
+  assert.deepEqual(requestedUrls, [
+    ["fetch", "http://localhost:9000/__turbo/file.unknown_svg"],
+    ["document", "http://localhost:9000/__turbo/file.unknown_svg"]
+  ])
+
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
+})
+
+test("following a link that redirects to a non html file changes page src", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frames.html")
+
+  const requestedUrls = []
+  page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
+
+  const urlBeforeVisit = page.url()
+
+  await page.click("#redirect-to-non-html")
+  await nextBeat() // 302
+  await nextBeat() // 200
+
+  assert.deepEqual(requestedUrls, [
+    [
+      "fetch", "http://localhost:9000/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fsvg.svg"
+    ],
+    [
+      "fetch", "http://localhost:9000/src/tests/fixtures/svg.svg"
+    ],
+    [
+      "document", "http://localhost:9000/__turbo/redirect?path=/src/tests/fixtures/svg.svg"
+    ],
+    [
+      "document", "http://localhost:9000/src/tests/fixtures/svg.svg"
+    ]
+  ])
+
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
+})
+
+test("following a link that redirects to an unknown non html file changes page src", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frames.html")
+
+  const requestedUrls = []
+  page.on('request', (req) => { requestedUrls.push([req.resourceType(), req.url()]) })
+
+  const urlBeforeVisit = page.url()
+
+  await page.click("#redirect-to-unknown-non-html")
+  await nextBeat() // 302
+  await nextBeat() // 200
+
+  assert.deepEqual(requestedUrls, [
+    [
+      "fetch", "http://localhost:9000/__turbo/redirect?path=%2F__turbo%2Ffile.unknown_svg"
+    ],
+    [
+      "fetch", "http://localhost:9000/__turbo/file.unknown_svg"
+    ],
+    [
+      "document", "http://localhost:9000/__turbo/redirect?path=/__turbo/file.unknown_svg"
+    ],
+    [
+      "document", "http://localhost:9000/__turbo/file.unknown_svg"
+    ]
+  ])
+
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  assert.equal(await visitAction(page), "load")
 })
 
 test("successfully following a link to a page with `turbo-visit-control` `reload` performs a full page reload", async ({
