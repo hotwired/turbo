@@ -1,6 +1,14 @@
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
 import { dispatch } from "../util"
 
+/**
+ * Morph the state of the currentElement based on the attributes and contents of
+ * the newElement. Morphing may dispatch turbo:before-morph-element,
+ * turbo:before-morph-attribute, and turbo:morph-element events.
+ *
+ * @param currentElement Element destination of morphing changes
+ * @param newElement Element source of morphing changes
+ */
 export function morphElements(currentElement, newElement, { callbacks, ...options } = {}) {
   Idiomorph.morph(currentElement, newElement, {
     ...options,
@@ -8,6 +16,14 @@ export function morphElements(currentElement, newElement, { callbacks, ...option
   })
 }
 
+/**
+ * Morph the child elements of the currentElement based on the child elements of
+ * the newElement. Morphing children may dispatch turbo:before-morph-element,
+ * turbo:before-morph-attribute, and turbo:morph-element events.
+ *
+ * @param currentElement Element destination of morphing children changes
+ * @param newElement Element source of morphing children changes
+ */
 export function morphChildren(currentElement, newElement) {
   morphElements(currentElement, newElement.children, {
     morphStyle: "innerHTML"
