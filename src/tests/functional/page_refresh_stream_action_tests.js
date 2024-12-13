@@ -1,6 +1,6 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
-import { nextPageRefresh, readEventLogs } from "../helpers/page"
+import { nextPageRefresh, readEventLogs, pathname } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh_stream_action.html")
@@ -54,6 +54,20 @@ test("debounce stream page refreshes", async ({ page }) => {
   assert.equal(requestLogs.length, 2)
 })
 
+test("debounced refresh of stale URL does not hijack new location navigated to", async ({ page }) => {
+  await setLongerPageRefreshDebouncePeriod(page)
+  const urlBeforeVisit = page.url()
+
+  await page.click("#refresh button")
+  await page.click("#regular-link")
+  await nextPageRefresh(page)
+
+  const urlAfterVisit = page.url()
+  assert.notEqual(urlBeforeVisit, urlAfterVisit)
+  const expectedPath = "/src/tests/fixtures/one.html"
+  assert.equal(pathname(urlAfterVisit), expectedPath)
+})
+
 async function textContent(page) {
   const messages = await page.locator("#content")
   return await messages.textContent()
@@ -64,4 +78,8 @@ async function fetchRequestId(page) {
     const response = await window.Turbo.fetch("/__turbo/request_id_header")
     return response.text()
   })
+}
+
+async function setLongerPageRefreshDebouncePeriod(page, period = 500) {
+  return page.evaluate((period) => window.Turbo.session.pageRefreshDebouncePeriod = period, period)
 }
