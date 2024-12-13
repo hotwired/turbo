@@ -25,7 +25,7 @@ export function getExtension(url) {
 }
 
 export function isPrefixedBy(baseURL, url) {
-  const prefix = getPrefix(url)
+  const prefix = getPrefix(url) || '/'
   return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
 }
 
@@ -55,9 +55,5 @@ function getLastPathComponent(url) {
 }
 
 function getPrefix(url) {
-  return addTrailingSlash(url.origin + url.pathname)
-}
-
-function addTrailingSlash(value) {
-  return value.endsWith("/") ? value : value + "/"
+  url.origin + url.pathname
 }
