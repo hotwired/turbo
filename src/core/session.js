@@ -232,7 +232,8 @@ export class Session {
   canPrefetchRequestToLocation(link, location) {
     return (
       this.elementIsNavigatable(link) &&
-        locationIsVisitable(location, this.snapshot.rootLocation)
+      locationIsVisitable(location, this.snapshot.rootLocation) &&
+      this.navigator.linkPrefetchingIsEnabledForLocation(location)
     )
   }
 

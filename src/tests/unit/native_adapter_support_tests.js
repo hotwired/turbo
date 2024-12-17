@@ -11,6 +11,7 @@ class NativeAdapterSupportTest {
   finishedVisitRequests = []
   startedFormSubmissions = []
   finishedFormSubmissions = []
+  linkPrefetchRequests = []
 
   // Adapter interface
 
@@ -53,6 +54,10 @@ class NativeAdapterSupportTest {
   }
 
   pageInvalidated() {}
+
+  linkPrefetchingIsEnabledForLocation(location) {
+    this.linkPrefetchRequests.push(location)
+  }
 }
 
 let adapter
@@ -203,4 +208,14 @@ test("visit follows redirect and proposes replace visit to adapter", async () =>
   const [visit] = adapter.proposedVisits
   assert.equal(visit.location, redirectedLocation)
   assert.equal(visit.options.action, "replace")
+})
+
+test ("link prefetch requests verify with adapter", async () => {
+  const locatable = window.location.toString()
+
+  Turbo.navigator.linkPrefetchingIsEnabledForLocation(locatable)
+  assert.equal(adapter.linkPrefetchRequests.length, 1)
+
+  const [location] = adapter.linkPrefetchRequests
+  assert.equal(location, locatable)
 })

@@ -72,6 +72,12 @@ export class BrowserAdapter {
 
   visitRendered(_visit) {}
 
+  // Link prefetching
+
+  linkPrefetchingIsEnabledForLocation(location) {
+    return true
+  }
+
   // Form Submission Delegate
 
   formSubmissionStarted(_formSubmission) {
