@@ -1,5 +1,5 @@
 import { StreamActions } from "../core/streams/stream_actions"
-import { nextRepaint } from "../util"
+import { attributeToNumber, nextRepaint } from "../util"
 
 // <turbo-stream action=replace target=id><template>...
 
@@ -143,6 +143,10 @@ export class StreamElement extends HTMLElement {
    */
   get targets() {
     return this.getAttribute("targets")
+  }
+
+  get version() {
+    return attributeToNumber(this.getAttribute("version"))
   }
 
   /**
