@@ -4,6 +4,10 @@ import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { fetch, recentRequests } from "../http/fetch"
 import { config } from "./config"
+import { MorphingPageRenderer } from "./drive/morphing_page_renderer"
+import { MorphingFrameRenderer } from "./frames/morphing_frame_renderer"
+
+export { morphChildren, morphElements } from "./morphing"
 
 const session = new Session(recentRequests)
 const { cache, navigator } = session
@@ -115,4 +119,30 @@ export function setFormMode(mode) {
     "Please replace `Turbo.setFormMode(mode)` with `Turbo.config.forms.mode = mode`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
   )
   config.forms.mode = mode
+}
+
+/**
+ * Morph the state of the currentBody based on the attributes and contents of
+ * the newBody. Morphing body elements may dispatch turbo:morph,
+ * turbo:before-morph-element, turbo:before-morph-attribute, and
+ * turbo:morph-element events.
+ *
+ * @param currentBody HTMLBodyElement destination of morphing changes
+ * @param newBody HTMLBodyElement source of morphing changes
+ */
+export function morphBodyElements(currentBody, newBody) {
+  MorphingPageRenderer.renderElement(currentBody, newBody)
+}
+
+/**
+ * Morph the child elements of the currentFrame based on the child elements of
+ * the newFrame. Morphing turbo-frame elements may dispatch turbo:before-frame-morph,
+ * turbo:before-morph-element, turbo:before-morph-attribute, and
+ * turbo:morph-element events.
+ *
+ * @param currentFrame FrameElement destination of morphing children changes
+ * @param newFrame FrameElement source of morphing children changes
+ */
+export function morphTurboFrameElements(currentFrame, newFrame) {
+  MorphingFrameRenderer.renderElement(currentFrame, newFrame)
 }
