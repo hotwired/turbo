@@ -3,6 +3,7 @@ import { assert } from "chai"
 import {
   clearLocalStorage,
   disposeAll,
+  hasSelector,
   isScrolledToTop,
   nextBeat,
   nextBody,
@@ -17,7 +18,8 @@ import {
   sleep,
   strictElementEquals,
   textContent,
-  visitAction
+  visitAction,
+  waitUntilNoSelector,
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -578,6 +580,15 @@ test("rendering a redirect response replaces the body once and only once", async
   await nextBodyMutation(page)
 
   assert.ok(await noNextBodyMutation(page), "replaces <body> element once")
+})
+
+
+test.only("hides progress bar when reloading due to request failure", async ({ page }) => {
+  await page.click("#download-link")
+  await page.waitForEvent('download')
+
+  await waitUntilNoSelector(page, ".turbo-progress-bar")
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
 })
 
 function deepElementsEqual(page, left, right) {
