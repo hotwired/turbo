@@ -1932,9 +1932,9 @@ iconv-lite@0.4.24:
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
-"idiomorph@https://github.com/bigskysoftware/idiomorph.git":
+"idiomorph@https://github.com/botandrose/idiomorph.git#better-reorder-with-build":
   version "0.3.0"
-  resolved "https://github.com/bigskysoftware/idiomorph.git#b5115add9f7ab04c04af0624385540dff04e0735"
+  resolved "https://github.com/botandrose/idiomorph.git#31de637b17b9ab05a3c8418ba7d92fd35ab2a172"
 
 ieee754@^1.1.13:
   version "1.2.1"
