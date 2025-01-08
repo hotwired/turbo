@@ -576,22 +576,22 @@ test("input named action with action attribute", async ({ page }) => {
   assert.equal(getSearchParam(page.url(), "query"), "1")
 })
 
-test("invalid form submission with unprocessable entity status", async ({ page }) => {
-  await page.click("#reject form.unprocessable_entity input[type=submit]")
+test("invalid form submission with unprocessable content status", async ({ page }) => {
+  await page.click("#reject form.unprocessable_content input[type=submit]")
   await nextBody(page)
 
   const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
+  assert.equal(await title.textContent(), "Unprocessable Content", "renders the response HTML")
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 
 test("invalid form submission with long form", async ({ page }) => {
-  await scrollToSelector(page, "#reject form.unprocessable_entity_with_tall_form input[type=submit]")
-  await page.click("#reject form.unprocessable_entity_with_tall_form input[type=submit]")
+  await scrollToSelector(page, "#reject form.unprocessable_content_with_tall_form input[type=submit]")
+  await page.click("#reject form.unprocessable_content_with_tall_form input[type=submit]")
   await nextBody(page)
 
   const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
+  assert.equal(await title.textContent(), "Unprocessable Content", "renders the response HTML")
   assert(await isScrolledToTop(page), "page is scrolled to the top")
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
@@ -891,8 +891,8 @@ test("frame form submission within a frame submits the Turbo-Frame header", asyn
   assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
 })
 
-test("invalid frame form submission with unprocessable entity status", async ({ page }) => {
-  await page.click("#frame form.unprocessable_entity input[type=submit]")
+test("invalid frame form submission with unprocessable content status", async ({ page }) => {
+  await page.click("#frame form.unprocessable_content input[type=submit]")
 
   assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
   await nextEventNamed(page, "turbo:before-fetch-request")
@@ -906,7 +906,7 @@ test("invalid frame form submission with unprocessable entity status", async ({ 
 
   const title = await page.locator("#frame h2")
   assert.ok(await hasSelector(page, "#reject form"), "only replaces frame")
-  assert.equal(await title.textContent(), "Frame: Unprocessable Entity")
+  assert.equal(await title.textContent(), "Frame: Unprocessable Content")
 })
 
 test("invalid frame form submission with internal server error status", async ({ page }) => {
