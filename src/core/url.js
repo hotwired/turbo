@@ -25,7 +25,7 @@ export function getExtension(url) {
 }
 
 export function isPrefixedBy(baseURL, url) {
-  const prefix = getPrefix(url) || '/'
+  const prefix = getPrefix(url) || "/"
   return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
 }
 

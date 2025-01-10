@@ -2,7 +2,7 @@ import { test } from "@playwright/test"
 import { assert } from "chai"
 import { nextBody, pathname, visitAction } from "../helpers/page"
 
-test("test visiting a location inside the root", async ({ page }) => {
+test("visiting a location inside the root", async ({ page }) => {
   page.goto("/src/tests/fixtures/root/index.html")
   page.click("#link-page-inside")
   await nextBody(page)
@@ -10,7 +10,7 @@ test("test visiting a location inside the root", async ({ page }) => {
   assert.notEqual(await visitAction(page), "load")
 })
 
-test("test visiting the root itself", async ({ page }) => {
+test("visiting the root itself", async ({ page }) => {
   page.goto("/src/tests/fixtures/root/page.html")
   page.click("#link-root")
   await nextBody(page)
@@ -18,7 +18,7 @@ test("test visiting the root itself", async ({ page }) => {
   assert.notEqual(await visitAction(page), "load")
 })
 
-test("test visiting a location outside the root", async ({ page }) => {
+test("visiting a location outside the root", async ({ page }) => {
   page.goto("/src/tests/fixtures/root/index.html")
   page.click("#link-page-outside")
   await nextBody(page)
