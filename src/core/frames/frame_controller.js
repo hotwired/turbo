@@ -450,9 +450,6 @@ export class FrameController {
         await element.loaded
         return await this.extractForeignFrameElement(element)
       }
-    } catch (error) {
-      console.error(error)
-      return new FrameElement()
     }
 
     return null
