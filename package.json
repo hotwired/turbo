@@ -1,5 +1,5 @@
 {
-  "name": "@hotwired/turbo",
+  "name": "@neosyne/turbo",
   "version": "7.3.0",
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
@@ -12,7 +12,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hotwired/turbo.git"
+    "url": "git+https://github.com/neosyne/turbo.git"
   },
   "keywords": [
     "hotwire",
