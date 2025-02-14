@@ -571,7 +571,7 @@ test("navigating a frame targeting _top from an outer link fires events", async 
   assert.equal(otherEvents.length, 0, "no more events")
 })
 
-test("invoking .reload() re-fetches the frame's content", async ({ page }) => {
+test("invoking .reload() re-fetches the content of a <turbo-frame> element with a [src] attribute", async ({ page }) => {
   await page.click("#link-frame")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
   await page.evaluate(() => document.getElementById("frame").reload())
@@ -579,7 +579,37 @@ test("invoking .reload() re-fetches the frame's content", async ({ page }) => {
   const dispatchedEvents = await readEventLogs(page)
 
   assert.deepEqual(
-    dispatchedEvents.map(([name, _, id]) => [id, name]),
+    dispatchedEvents
+      .map(([name, _, id]) => [id, name])
+      .filter(([id]) => id === "frame"),
+    [
+      ["frame", "turbo:before-fetch-request"],
+      ["frame", "turbo:before-fetch-response"],
+      ["frame", "turbo:before-frame-render"],
+      ["frame", "turbo:frame-render"],
+      ["frame", "turbo:frame-load"]
+    ]
+  )
+})
+
+test("invoking .reload() re-fetches the content of a <turbo-frame> element without a [src] attribute", async ({ page }) => {
+  const frame = await page.locator("turbo-frame#frame")
+  const heading = await frame.locator("h2")
+
+  assert.match(await heading.textContent(), /Frames: #frame/)
+
+  await heading.evaluate((element) => element.textContent = "Not yet refreshed")
+
+  assert.match(await heading.textContent(), /Not yet refreshed/)
+
+  await frame.evaluate((element) => element.reload())
+
+  const dispatchedEvents = await readEventLogs(page)
+
+  assert.deepEqual(
+    dispatchedEvents
+      .map(([name, _, id]) => [id, name])
+      .filter(([id]) => id === "frame"),
     [
       ["frame", "turbo:before-fetch-request"],
       ["frame", "turbo:before-fetch-response"],
