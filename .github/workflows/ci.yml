@@ -35,7 +35,7 @@ jobs:
     - name: Firefox Test
       run: yarn test:browser --project=firefox
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: turbo-dist
         path: dist/*
