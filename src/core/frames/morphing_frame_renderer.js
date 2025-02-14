@@ -9,10 +9,21 @@ export class MorphingFrameRenderer extends FrameRenderer {
       detail: { currentElement, newElement }
     })
 
-    morphChildren(currentElement, newElement)
+    morphChildren(currentElement, newElement, {
+      callbacks: {
+        beforeNodeMorphed: (node, newNode) => {
+          if (super.shouldRefreshChildFrameWithMorphing(currentElement, node, newNode)) {
+            node.reload()
+            return false
+          }
+          return true
+        }
+      }
+    })
   }
 
   async preservingPermanentElements(callback) {
     return await callback()
   }
 }
+

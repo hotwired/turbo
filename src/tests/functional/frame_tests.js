@@ -306,6 +306,36 @@ test("calling reload on a frame[refresh=morph] morphs the contents", async ({ pa
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
 })
 
+test("calling reload on a frame[refresh=morph] reloads descendant frame[refresh=morph]s via reload() as well", async ({ page }) => {
+  await page.click("#nested-root #add-refresh-morph-to-frame")
+  await page.click("#nested-root #add-src-to-frame")
+  await page.click("#nested-child #add-refresh-morph-to-frame")
+  await page.click("#nested-child #add-src-to-frame")
+  await page.click("#nested-child-navigate-top #add-src-to-frame")
+
+  await page.evaluate(() => document.getElementById("nested-root").reload())
+
+  // Only the frames marked with refresh="morph" uses morphing
+  expect(await nextEventOnTarget(page, "nested-root", "turbo:before-frame-morph")).toBeTruthy()
+  expect(await nextEventOnTarget(page, "nested-child", "turbo:before-frame-morph")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "nested-child-navigate-top", "turbo:before-frame-morph")).toBeTruthy()
+})
+
+test("calling reload on a frame[refresh=morph] morphs descendant frame[refresh=morph] normally if the id no longer matches", async ({ page }) => {
+  await page.click("#nested-root #add-refresh-morph-to-frame")
+  await page.click("#nested-root #add-src-to-frame")
+  await page.click("#nested-child #add-refresh-morph-to-frame")
+  await page.click("#nested-child #add-src-to-frame")
+  await page.click("#nested-child #change-frame-id-to-different-nested-child")
+
+  await page.evaluate(() => document.getElementById("nested-root").reload())
+
+  expect(await nextEventOnTarget(page, "nested-root", "turbo:before-frame-morph")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "different-nested-child", "turbo:before-frame-morph")).toBeTruthy()
+  assert.ok(await hasSelector(page, "#nested-child"))
+  assert.notOk(await hasSelector(page, "#different-nested-child"))
+})
+
 test("calling reload on a frame[refresh=morph] preserves [data-turbo-permanent] elements", async ({ page }) => {
   await page.click("#add-src-to-frame")
   await page.click("#add-refresh-morph-to-frame")
