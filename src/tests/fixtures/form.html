@@ -101,6 +101,11 @@
         <input type="submit">
         <button type="submit" name="greeting" id="secondary_submitter" data-turbo-confirm="Are you really sure?" formaction="/__turbo/redirect?path=/src/tests/fixtures/one.html" formmethod="post" value="secondary_submitter">Secondary action</button>
       </form>
+      <form action="/__turbo/redirect" method="post" data-turbo-action="replace">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a replace redirect">
+        <button id="standard-post-form-replace-submit">form[method=post][data-turbo-action="replace"]</button>
+      </form>
     </div>
     <hr>
     <div id="no-action">
