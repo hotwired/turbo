@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Form</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body data-turbo="false">
+    <form id="optin-form" data-turbo="true" action="/__turbo/redirect" method="post" class="redirect">
+      <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+      <input type="hidden" name="greeting" value="Hello from a redirect">
+    </form>
+    <button id="default-behavior-submit" form="optin-form" type="submit" name="button">Submit</button>
+    <button id="opted-out-submit" data-turbo="false" form="optin-form" type="submit" name="button">Submit</button>
+  </body>
+</html>
