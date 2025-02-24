@@ -1,5 +1,6 @@
 import { FrameElement } from "../elements/frame_element"
 import { Bardo } from "./bardo"
+import { urlsAreEqual } from "./url"
 
 export class Renderer {
   #activeElement = null
@@ -16,6 +17,7 @@ export class Renderer {
       newFrame instanceof Element && newFrame.nodeName === "TURBO-FRAME" &&
       currentFrame.shouldReloadWithMorph &&
       currentFrame.id === newFrame.id &&
+      (!newFrame.getAttribute("src") || urlsAreEqual(currentFrame.src, newFrame.getAttribute("src"))) &&
       !currentFrame.closest("[data-turbo-permanent]") &&
       currentFrame.parentElement.closest("turbo-frame[src][refresh=morph]") === parentFrame
   }
