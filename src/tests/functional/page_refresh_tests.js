@@ -331,6 +331,28 @@ test("it preserves data-turbo-permanent elements that don't match when their ids
   await expect(page.locator("#preserve-me")).toHaveText("Preserve me, I have a family!")
 })
 
+test("it preserves data-turbo-permanent children", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/permanent_children.html")
+
+  await page.evaluate(() => {
+    // simulate result of client-side drag-and-drop reordering
+    document.getElementById("first-li").before(document.getElementById("second-li"))
+
+    // set state of data-turbo-permanent checkbox
+    document.getElementById("second-checkbox").checked = true
+  })
+
+  // morph page back to original li ordering
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  // data-turbo-permanent checkbox should still be checked
+  assert.ok(
+    await hasSelector(page, "#second-checkbox:checked"),
+    "retains state of data-turbo-permanent child"
+  )
+})
+
 test("renders unprocessable content responses with morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 

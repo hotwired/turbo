@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-refresh-method" content="morph">
+    <meta name="turbo-refresh-scroll" content="preserve">
+
+    <title>Turbo</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <section>
+      <h1>Permanent children</h1>
+    </section>
+
+    <ul>
+      <li id="first-li">
+        <input id="first-checkbox" type="checkbox" data-turbo-permanent>
+        <label for="first-checkbox">First checkbox</label>
+      </li>
+      <li id="second-li">
+        <input id="second-checkbox" type="checkbox" data-turbo-permanent>
+        <label for="second-checkbox">Second checkbox</label>
+      </li>
+    </ul>
+
+    <form id="form" action="/__turbo/refresh" method="post" class="redirect">
+      <input type="hidden" name="path" value="/src/tests/fixtures/permanent_children.html">
+      <input type="hidden" name="sleep" value="50">
+      <input id="form-submit" type="submit" value="form[method=post]">
+    </form>
+
+  </body>
+</html>
+
