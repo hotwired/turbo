@@ -1,4 +1,4 @@
-import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
+import { Idiomorph } from "idiomorph"
 import { dispatch } from "../util"
 
 export function morphElements(currentElement, newElement, { callbacks, ...options } = {}) {
@@ -9,7 +9,7 @@ export function morphElements(currentElement, newElement, { callbacks, ...option
 }
 
 export function morphChildren(currentElement, newElement) {
-  morphElements(currentElement, newElement.children, {
+  morphElements(currentElement, newElement.childNodes, {
     morphStyle: "innerHTML"
   })
 }
