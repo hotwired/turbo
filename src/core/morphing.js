@@ -1,5 +1,7 @@
 import { Idiomorph } from "idiomorph"
+import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
+import { urlsAreEqual } from "./url"
 
 export function morphElements(currentElement, newElement, { callbacks, ...options } = {}) {
   Idiomorph.morph(currentElement, newElement, {
@@ -13,6 +15,22 @@ export function morphChildren(currentElement, newElement, options = {}) {
     ...options,
     morphStyle: "innerHTML"
   })
+}
+
+export function shouldRefreshFrameWithMorphing(currentFrame, newFrame) {
+  return currentFrame instanceof FrameElement &&
+    // newFrame cannot yet be an instance of FrameElement because custom
+    // elements don't get initialized until they're attached to the DOM, so
+    // test its Element#nodeName instead
+    newFrame instanceof Element && newFrame.nodeName === "TURBO-FRAME" &&
+    currentFrame.shouldReloadWithMorph &&
+    currentFrame.id === newFrame.id &&
+    (!newFrame.getAttribute("src") || urlsAreEqual(currentFrame.src, newFrame.getAttribute("src"))) &&
+    !currentFrame.closest("[data-turbo-permanent]")
+}
+
+export function closestFrameReloadableWithMorphing(node) {
+  return node.parentElement.closest("turbo-frame[src][refresh=morph]")
 }
 
 class DefaultIdiomorphCallbacks {
