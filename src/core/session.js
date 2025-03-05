@@ -250,8 +250,9 @@ export class Session {
   followedLinkToLocation(link, location) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+    const direction = link.getAttribute("data-turbo-visit-direction")
 
-    this.visit(location.href, { action, acceptsStreamResponse })
+    this.visit(location.href, { action, acceptsStreamResponse, direction })
   }
 
   // Navigator delegate
