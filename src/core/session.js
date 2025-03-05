@@ -95,6 +95,10 @@ export class Session {
   visit(location, options = {}) {
     const frameElement = options.frame ? document.getElementById(options.frame) : null
 
+    if (["forward", "back"].includes(options.direction)) {
+      this.history.updateRestorationData({ direction: options.direction })
+    }
+
     if (frameElement instanceof FrameElement) {
       const action = options.action || getVisitAction(frameElement)
 
