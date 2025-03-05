@@ -275,7 +275,7 @@ export class Session {
   visitStarted(visit) {
     if (!visit.acceptsStreamResponse) {
       markAsBusy(document.documentElement)
-      this.view.markVisitDirection(visit.direction)
+      this.view.markVisitDirection(visit.viewTransitionDirection)
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {

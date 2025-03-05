@@ -87,13 +87,8 @@ export class History {
         this.location = new URL(window.location.href)
         const { restorationIdentifier, restorationIndex } = turbo
         this.restorationIdentifier = restorationIdentifier
-        const direction = this.restorationVisitDirection(restorationIdentifier, restorationIndex)
-
-        this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(
-          this.location,
-          restorationIdentifier,
-          direction
-        )
+        const direction = restorationIndex > this.currentIndex ? "forward" : "back"
+        this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(this.location, restorationIdentifier, direction)
         this.currentIndex = restorationIndex
       }
     }
@@ -113,17 +108,5 @@ export class History {
 
   pageIsLoaded() {
     return this.pageLoaded || document.readyState == "complete"
-  }
-
-  restorationVisitDirection(restorationIdentifier, restorationIndex) {
-    const historyDirection = restorationIndex > this.currentIndex ? "forward" : "back"
-    const originalVisitDirection =
-      this.restorationData[restorationIdentifier]?.direction === "back" ? "back" : "forward"
-
-    return historyDirection === "forward" ? originalVisitDirection : this.oppositeDirection(originalVisitDirection)
-  }
-
-  oppositeDirection(direction) {
-    return direction === "forward" ? "back" : "forward"
   }
 }

@@ -92,6 +92,7 @@ export class Visit {
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
     this.direction = direction || Direction[action]
+    this.viewTransitionDirection = this.calculateViewTransitionDirection()
   }
 
   get adapter() {
@@ -428,6 +429,16 @@ export class Visit {
     if (this.frame) {
       cancelAnimationFrame(this.frame)
       delete this.frame
+    }
+  }
+
+  calculateViewTransitionDirection() {
+    const originalVisitDirection = this.restorationData.direction === "back" ? "back" : "forward"
+
+    if (this.direction === "forward") {
+      return originalVisitDirection
+    } else {
+      return originalVisitDirection === "forward" ? "back" : "forward"
     }
   }
 }
