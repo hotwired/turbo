@@ -1,19 +1,23 @@
-import { FrameElement } from "../../elements/frame_element"
 import { PageRenderer } from "./page_renderer"
 import { dispatch } from "../../util"
-import { morphElements } from "../morphing"
+import { morphElements, shouldRefreshFrameWithMorphing, closestFrameReloadableWithMorphing } from "../morphing"
 
 export class MorphingPageRenderer extends PageRenderer {
   static renderElement(currentElement, newElement) {
     morphElements(currentElement, newElement, {
       callbacks: {
-        beforeNodeMorphed: element => !canRefreshFrame(element)
+        beforeNodeMorphed: (node, newNode) => {
+          if (
+            shouldRefreshFrameWithMorphing(node, newNode) &&
+              !closestFrameReloadableWithMorphing(node)
+          ) {
+            node.reload()
+            return false
+          }
+          return true
+        }
       }
     })
-
-    for (const frame of currentElement.querySelectorAll("turbo-frame")) {
-      if (canRefreshFrame(frame)) frame.reload()
-    }
 
     dispatch("turbo:morph", { detail: { currentElement, newElement } })
   }
@@ -31,9 +35,3 @@ export class MorphingPageRenderer extends PageRenderer {
   }
 }
 
-function canRefreshFrame(frame) {
-  return frame instanceof FrameElement &&
-    frame.src &&
-    frame.refresh === "morph" &&
-    !frame.closest("[data-turbo-permanent]")
-}
