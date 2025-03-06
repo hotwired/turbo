@@ -195,6 +195,10 @@ export class FrameController {
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
       request.acceptResponseType(StreamMessage.contentType)
     }
+
+    if (this.action) {
+      request.headers["Turbo-Action"] = this.action
+    }
   }
 
   requestStarted(_request) {
