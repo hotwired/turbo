@@ -322,6 +322,7 @@ test("waits for some time, but renders if CSS takes too much to load", async ({ 
   })
 
   await page.click("#additional-assets-link")
+  await sleep(3000)
   await nextEventNamed(page, "turbo:render")
 
   assert.equal(await page.textContent("h1"), "Additional assets")
