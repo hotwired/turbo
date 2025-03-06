@@ -95,6 +95,10 @@ export class Session {
   visit(location, options = {}) {
     const frameElement = options.frame ? document.getElementById(options.frame) : null
 
+    if (["forward", "back"].includes(options.direction)) {
+      this.history.updateRestorationData({ direction: options.direction })
+    }
+
     if (frameElement instanceof FrameElement) {
       const action = options.action || getVisitAction(frameElement)
 
@@ -250,8 +254,9 @@ export class Session {
   followedLinkToLocation(link, location) {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
+    const direction = link.getAttribute("data-turbo-visit-direction")
 
-    this.visit(location.href, { action, acceptsStreamResponse })
+    this.visit(location.href, { action, acceptsStreamResponse, direction })
   }
 
   // Navigator delegate
@@ -270,7 +275,7 @@ export class Session {
   visitStarted(visit) {
     if (!visit.acceptsStreamResponse) {
       markAsBusy(document.documentElement)
-      this.view.markVisitDirection(visit.direction)
+      this.view.markVisitDirection(visit.viewTransitionDirection)
     }
     extendURLWithDeprecatedProperties(visit.location)
     if (!visit.silent) {

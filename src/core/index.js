@@ -34,6 +34,8 @@ export function registerAdapter(adapter) {
  * @param options Options to apply
  * @param options.action Type of history navigation to apply ("restore",
  * "replace" or "advance")
+ * @param options.direction Logical direction of the navigation, applies to
+ * view transitions ("forward", "back")
  * @param options.historyChanged Specifies whether the browser history has
  * already been changed for this visit or not
  * @param options.referrer Specifies the referrer of this visit such that
