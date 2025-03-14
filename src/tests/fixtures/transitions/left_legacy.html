@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Left</title>
+  <meta name="view-transition" content="same-origin" />
+  <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+
+  <style>
+    .square {
+      display: block;
+      width: 100px;
+      height: 100px;
+      border-radius: 6px;
+      background-color: blue;
+      view-transition-name: square;
+    }
+
+    .square.right {
+      margin-left: auto;
+    }
+  </style>
+</head>
+
+<body style="background-color: orange">
+  <h1>Left</h1>
+  <p><a id="go-right" href="/src/tests/fixtures/transitions/right_legacy.html">go right</a></p>
+  <div class="square"></div>
+  <p><a id="go-other" href="/src/tests/fixtures/transitions/other.html">go other</a></p>
+</body>
+
+</html>
