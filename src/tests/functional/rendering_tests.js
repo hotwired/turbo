@@ -19,7 +19,7 @@ import {
   strictElementEquals,
   textContent,
   visitAction,
-  waitUntilNoSelector,
+  waitUntilNoSelector
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
