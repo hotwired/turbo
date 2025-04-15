@@ -65,11 +65,13 @@ export class FrameController {
   disconnect() {
     if (this.#connected) {
       this.#connected = false
-      this.#currentFetchRequest?.cancel()
       this.appearanceObserver.stop()
       this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
+      if (!this.element.hasAttribute('recurse')) {
+        this.#currentFetchRequest?.cancel()
+      }
     }
   }
 
