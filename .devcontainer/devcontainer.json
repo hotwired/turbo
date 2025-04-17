@@ -12,7 +12,7 @@
     //
     // pick '...-arm64' version if running on Apple Silicon.
     "args": {
-      "PLAYWRIGHT_TAG": "v1.51.1-focal"
+      "PLAYWRIGHT_TAG": "v1.51.1-jammy"
     }
   },
   // Add the IDs of extensions you want installed when the container is created.
