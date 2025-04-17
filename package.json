@@ -63,6 +63,6 @@
     "lint": "eslint . --ext .js"
   },
   "engines": {
-    "node": ">= 14"
+    "node": ">= 18"
   }
 }
