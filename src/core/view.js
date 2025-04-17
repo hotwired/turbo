@@ -14,8 +14,8 @@ export class View {
   scrollToAnchor(anchor) {
     const element = this.snapshot.getElementForAnchor(anchor)
     if (element) {
-      this.scrollToElement(element)
       this.focusElement(element)
+      this.scrollToElement(element)
     } else {
       this.scrollToPosition({ x: 0, y: 0 })
     }
