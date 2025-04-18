@@ -2,7 +2,7 @@ import { test } from "@playwright/test"
 import { assert } from "chai"
 import {
   nextBeat,
-  nextBody,
+  reloadPage,
   scrollPosition,
   scrollToSelector
 } from "../helpers/page"
@@ -20,10 +20,7 @@ test("reloading after scrolling", async ({ page }) => {
   const { y: yAfterScrolling } = await scrollPosition(page)
   assert.notEqual(yAfterScrolling, 0)
 
-  await Promise.all([
-    nextBody(page),
-    page.evaluate(() => window.location.reload())
-  ])
+  await reloadPage(page)
   const { y: yAfterReloading } = await scrollPosition(page)
   assert.notEqual(yAfterReloading, 0)
 })

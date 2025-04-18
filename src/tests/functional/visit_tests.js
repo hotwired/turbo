@@ -8,11 +8,11 @@ import {
   isScrolledToTop,
   nextAttributeMutationNamed,
   nextBeat,
-  nextBody,
   nextEventNamed,
   noNextAttributeMutationNamed,
   pathname,
   readEventLogs,
+  reloadPage,
   resetMutationLogs,
   scrollToSelector,
   visitAction,
@@ -344,10 +344,7 @@ test("Visit direction attribute on a replace visit", async ({ page }) => {
 test("Turbo history state after a reload", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
-  await Promise.all([
-    nextBody(page),
-    page.evaluate(() => window.location.reload())
-  ])
+  await reloadPage(page)
   assert.equal(
     await page.evaluate(() => window.history.state.turbo.restorationIndex),
     1,
