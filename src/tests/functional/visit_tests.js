@@ -12,6 +12,7 @@ import {
   noNextAttributeMutationNamed,
   pathname,
   readEventLogs,
+  reloadPage,
   resetMutationLogs,
   scrollToSelector,
   visitAction,
@@ -47,6 +48,7 @@ test("programmatically visiting a same-origin location", async ({ page }) => {
 test("skip programmatically visiting a cross-origin location falls back to window.location", async ({ page }) => {
   const urlBeforeVisit = page.url()
   await visitLocation(page, "about:blank")
+  await nextBeat()
 
   const urlAfterVisit = page.url()
   assert.notEqual(urlBeforeVisit, urlAfterVisit)
@@ -342,7 +344,7 @@ test("Visit direction attribute on a replace visit", async ({ page }) => {
 test("Turbo history state after a reload", async ({ page }) => {
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:load")
-  await page.reload()
+  await reloadPage(page)
   assert.equal(
     await page.evaluate(() => window.history.state.turbo.restorationIndex),
     1,

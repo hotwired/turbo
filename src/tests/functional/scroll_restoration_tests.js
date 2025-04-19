@@ -1,6 +1,11 @@
 import { test } from "@playwright/test"
 import { assert } from "chai"
-import { nextBeat, scrollPosition, scrollToSelector } from "../helpers/page"
+import {
+  nextBeat,
+  reloadPage,
+  scrollPosition,
+  scrollToSelector
+} from "../helpers/page"
 
 test("landing on an anchor", async ({ page }) => {
   await page.goto("/src/tests/fixtures/scroll_restoration.html#three")
@@ -15,7 +20,7 @@ test("reloading after scrolling", async ({ page }) => {
   const { y: yAfterScrolling } = await scrollPosition(page)
   assert.notEqual(yAfterScrolling, 0)
 
-  await page.reload()
+  await reloadPage(page)
   const { y: yAfterReloading } = await scrollPosition(page)
   assert.notEqual(yAfterReloading, 0)
 })

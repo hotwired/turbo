@@ -90,6 +90,13 @@ export function nextBody(_page, timeout = 500) {
   return sleep(timeout)
 }
 
+export async function reloadPage(page, timeout = 500) {
+  await Promise.all([
+    nextBody(page, timeout),
+    page.evaluate(() => window.location.reload())
+  ])
+}
+
 export async function nextPageRefresh(page, timeout = 500) {
   const pageRefreshDebouncePeriod = await page.evaluate(() => window.Turbo.session.pageRefreshDebouncePeriod)
 
