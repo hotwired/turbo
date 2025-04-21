@@ -71,7 +71,7 @@ export class PageSnapshot extends Snapshot {
   }
 
   get prefersViewTransitions() {
-    return this.headSnapshot.getMetaValue("view-transition") === "same-origin"
+    return this.getSetting("view-transition") === "true" || this.headSnapshot.getMetaValue("view-transition") === "same-origin"
   }
 
   get shouldMorphPage() {
