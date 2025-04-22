@@ -2,6 +2,7 @@ import { Session } from "./session"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
+import { Confirmation } from "./confirmation"
 import { fetch, recentRequests } from "../http/fetch"
 import { config } from "./config"
 
@@ -108,6 +109,7 @@ export function setConfirmMethod(confirmMethod) {
     "Please replace `Turbo.setConfirmMethod(confirmMethod)` with `Turbo.config.forms.confirm = confirmMethod`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
   )
   config.forms.confirm = confirmMethod
+  Confirmation.confirmMethod = confirmMethod
 }
 
 export function setFormMode(mode) {
