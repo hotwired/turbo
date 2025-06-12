@@ -21,6 +21,15 @@ test("navigating triggers the view transition", async ({ page }) => {
   assert.isTrue(called)
 })
 
+test("navigating does not trigger a view transition when prefers reduced motion is reduce", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.locator("#go-right").click()
+  await nextBody(page)
+
+  const called = await page.evaluate(`window.startViewTransitionCalled`)
+  assert.isUndefined(called)
+})
+
 test("navigating does not trigger a view transition when meta tag not present", async ({ page }) => {
   await page.locator("#go-other").click()
   await nextBody(page)
