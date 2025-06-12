@@ -76,8 +76,9 @@ export class FrameRedirector {
   #findFrameElement(element, submitter) {
     const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame")
     if (id && id != "_top") {
-      const frame = this.element.querySelector(`#${id}:not([disabled])`)
-      if (frame instanceof FrameElement) {
+      const frame = FrameElement.getElementById(id)
+
+      if (frame && !frame.disabled && this.element.contains(frame)) {
         return frame
       }
     }

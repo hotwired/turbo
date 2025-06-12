@@ -432,7 +432,7 @@ export class FrameController {
 
   #findFrameElement(element, submitter) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
-    return getFrameElementById(id) ?? this.element
+    return FrameElement.getElementById(id) ?? this.element
   }
 
   async extractForeignFrameElement(container) {
@@ -476,7 +476,7 @@ export class FrameController {
     }
 
     if (id) {
-      const frameElement = getFrameElementById(id)
+      const frameElement = FrameElement.getElementById(id)
       if (frameElement) {
         return !frameElement.disabled
       }
@@ -559,15 +559,6 @@ export class FrameController {
     this.currentNavigationElement = element
     callback()
     delete this.currentNavigationElement
-  }
-}
-
-function getFrameElementById(id) {
-  if (id != null) {
-    const element = document.getElementById(id)
-    if (element instanceof FrameElement) {
-      return element
-    }
   }
 }
 
