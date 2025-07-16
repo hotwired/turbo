@@ -473,6 +473,20 @@ test("ignores links with a [target] attribute that targets an iframe with [name=
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
 })
 
+test("advance visit scroll position is not preserved on subsequent visits", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+
+  await page.click("#advance-link")
+  await nextBody(page)
+
+  await page.click("#advance-link-back")
+  await nextBody(page)
+
+  const scrollY = await page.evaluate(() => window.scrollY)
+  assert.equal(scrollY, 0)
+})
+
 test("ignores forms with a [target=_blank] attribute", async ({ page }) => {
   const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#form-target-blank button")])
 
