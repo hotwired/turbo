@@ -45,6 +45,10 @@ export class PageSnapshot extends Snapshot {
     return this.documentElement.getAttribute("lang")
   }
 
+  get dir() {
+    return this.documentElement.getAttribute("dir")
+  }
+
   get headElement() {
     return this.headSnapshot.element
   }
