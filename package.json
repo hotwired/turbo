@@ -8,6 +8,13 @@
     "dist/*.js",
     "dist/*.js.map"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/turbo.es2017-esm.js",
+      "require": "./dist/turbo.es2017-umd.js"
+    },
+    "./offline": "./dist/turbo-offline.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hotwired/turbo.git"
