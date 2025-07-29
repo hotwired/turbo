@@ -24,5 +24,16 @@ export default [
     watch: {
       include: "src/**"
     }
+  },
+  {
+    input: "src/offline/index.js",
+    output: {
+      file: "dist/turbo-offline.js",
+      format: "es",
+      banner
+    },
+    watch: {
+      include: "src/offline/**"
+    }
   }
 ]
