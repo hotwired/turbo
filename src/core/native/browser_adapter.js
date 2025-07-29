@@ -36,6 +36,10 @@ export class BrowserAdapter {
 
   visitRequestCompleted(visit) {
     visit.loadResponse()
+
+    if(visit.response.redirected) {
+      this.location = visit.redirectedToLocation
+    }
   }
 
   visitRequestFailedWithStatusCode(visit, statusCode) {
