@@ -119,6 +119,27 @@ test("page refreshes cause a reload when assets change", async ({ page }) => {
   await expect(page.locator("#new-stylesheet")).toHaveCount(0)
 })
 
+test("reloading when assets change uses the response URL of a prior redirect", async ({page}) => {
+  const destinations = []
+
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname
+
+    if (path === "/__turbo/redirect") {
+      destinations.push("redirect")
+    } else if (path === "/src/tests/fixtures/link_redirect_target.html") {
+      destinations.push("target")
+    }
+  })
+
+  await page.goto("/src/tests/fixtures/link_redirect.html")
+  await page.click("#indirect")
+
+  await page.waitForURL("/src/tests/fixtures/link_redirect_target.html")
+
+  assert.sameMembers(destinations, ["redirect", "target", "target"], "redirects once")
+})
+
 test("renders a page refresh with morphing when the paths are the same but search params are different", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
