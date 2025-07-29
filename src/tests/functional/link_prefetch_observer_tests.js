@@ -26,6 +26,7 @@ test("it prefetches the page", async ({ page }) => {
 
   expect(url).toEqual(await link.evaluate(a => a.href))
   expect(fetchOptions.headers["X-Sec-Purpose"]).toEqual("prefetch")
+  expect(fetchOptions.priority).toEqual("low")
 
   await link.hover()
   await noNextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
