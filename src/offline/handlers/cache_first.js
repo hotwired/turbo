@@ -1,3 +1,6 @@
+// Cache first: try the cache. If it's a hit, return that. If it's a miss,
+// fall back to network and then cache the response.
+
 import { Handler } from "./handler"
 
 export class CacheFirst extends Handler {
