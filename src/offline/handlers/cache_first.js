@@ -7,12 +7,12 @@ export class CacheFirst extends Handler {
 
     if (response) return { response, afterHandlePromise }
 
-    console.debug(`[TurboOffline] Cache miss for ${request.url}`)
+    console.debug(`Cache miss for ${request.url}`)
 
     try {
       response = await this.fetchFromNetwork(request)
     } catch(error) {
-      console.warn(`[TurboOffline] ${error} fetching from network ${request.url}`)
+      console.warn(`${error} fetching from network ${request.url}`)
     }
 
     if (response) {
