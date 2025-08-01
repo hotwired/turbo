@@ -19,11 +19,11 @@ export const config = new Config({
   enabled: false,
   serviceWorkerPath: "/service-worker.js",
   cacheName: "turbo-offline-cache-v1",
-  offlinePagePath: "/offline",
+  offlinePagePath: null,
   networkTimeout: 3,
   cacheRegistryOptions: {
     databaseName: "turbo-offline-database",
-    storeName: "turbo-offline-cache-metadata",
+    storeName: "cache-registry",
     databaseVersion: 1
   }
 })

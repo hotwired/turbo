@@ -24,4 +24,11 @@ export class CacheFirst extends Handler {
 
     return { response, afterHandlePromise }
   }
+
+  canCacheResponse(response) {
+    // Only cache OK responses, as we don't want to cache a network error
+    // by mistake, which is impossible to distinguish from an opaque
+    // response with status 0
+    return response.status === 200
+  }
 }
