@@ -28,12 +28,13 @@ export class Handler {
   }
 
   async fetchFromNetwork(request) {
+    // Setting the referrer so that it doesn't appear as the service worker
     const referrer = request.referrer
     return await fetch(request, { referrer })
   }
 
   async saveToCache(request, response) {
-    if (response && this.#canCacheResponse(response)) {
+    if (response && this.canCacheResponse(response)) {
       const cacheKeyUrl = buildCacheKey(request, response)
 
       const cache = await caches.open(this.cacheName)
@@ -43,8 +44,8 @@ export class Handler {
     }
   }
 
-  #canCacheResponse(response) {
-    // Opaque responses have a 0 status (and type == 'opaque')
+  canCacheResponse(response) {
+    // OK response and opaque responses (due to CORS), that have a 0 status
     return response.status === 200 || response.status === 0
   }
 }
