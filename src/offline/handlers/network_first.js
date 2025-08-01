@@ -1,4 +1,4 @@
-// Network first: try the network, with an optional time out, and if that fails
+// Network-first: try the network, with an optional time out, and if that fails
 // fallback to the cache
 
 import { Handler } from "./handler"
