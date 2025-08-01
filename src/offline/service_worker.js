@@ -1,5 +1,6 @@
-import { KeyValueStoreWithTimestamp } from "./key_value_store"
+import { CacheRegistry } from "./cache_registry"
 import { config } from "./config"
+
 
 export class ServiceWorker {
   #started = false
@@ -21,7 +22,7 @@ export class ServiceWorker {
   }
 
   fetch = (event) => {
-    if (this.#shouldInterceptRequest(event.request)) {
+    if (this.#canInterceptRequest(event.request)) {
       const responsePromise = this.#handleRequest(event.request)
       if (responsePromise) { event.respondWith(responsePromise) }
     }
@@ -38,11 +39,11 @@ export class ServiceWorker {
     return new URL(url, location.href).href
   }
 
-  get keyValueStore() {
-    return new KeyValueStoreWithTimestamp(config.keyValueStore)
+  get cacheRegistry() {
+    return new CacheRegistry(config.cacheRegistry)
   }
 
-  #shouldInterceptRequest(request) {
+  #canInterceptRequest(request) {
     const url = new URL(request.url, location.href)
     return request.method === "GET" && url.protocol.startsWith('http')
   }
@@ -74,7 +75,7 @@ export class ServiceWorker {
     } else {
       try {
         const response = await this.#forwardRequest(request)
-        this.#cacheOnVisit(request, response.clone())
+        this.#saveToCache(request, response.clone())
 
         return response
       } catch (error) {
@@ -85,13 +86,13 @@ export class ServiceWorker {
     }
   }
 
-  async #cacheOnVisit(request, response) {
+  async #saveToCache(request, response) {
     if (this.#cacheableResponse(response) && this.#shouldCacheResponseOnVisit(request, response)) {
       const cacheKeyUrl = this.#buildCacheKey(request, response)
 
       const cache = await caches.open(config.cacheName)
       await cache.put(cacheKeyUrl, response)
-      await this.keyValueStore.put(cacheKeyUrl)
+      await this.cacheRegistry.put(cacheKeyUrl)
     }
   }
 

@@ -1,4 +1,4 @@
-export class KeyValueStoreWithTimestamp {
+export class CacheRegistry {
   constructor({ databaseName = "key-value-store", storeName = "default-store", databaseVersion = 1 } = {}) {
     this.databaseName = databaseName
     this.storeName = storeName

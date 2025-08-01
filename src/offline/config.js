@@ -4,7 +4,7 @@ export const config = {
   cacheName: "turbo-offline-cache-v1",
   offlinePagePath: "/offline",
   networkTimeoutMs: 3000,
-  keyValueStore: {
+  cacheRegistry: {
     databaseName: "turbo-offline-database",
     storeName: "turbo-offline-cache-metadata",
     databaseVersion: 1
