@@ -32,6 +32,7 @@ export default [
       format: "es",
       banner
     },
+    plugins: [resolve()],
     watch: {
       include: "src/offline/**"
     }
