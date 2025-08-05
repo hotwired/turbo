@@ -32,7 +32,9 @@ export class NetworkFirst extends Handler {
       // with an error, though
       response = await Promise.race(promises)
     } catch(error) {
-      console.warn(`${error} fetching from network ${request.url} with timeout`)
+      console.warn(
+        `${error} fetching from network ${request.url} with timeout`
+      )
     }
 
     if (timeoutId) clearTimeout(timeoutId)
@@ -45,7 +47,9 @@ export class NetworkFirst extends Handler {
         response = await networkPromise
       } catch(error) {
         // This might be the same error we got from the promise race
-        console.warn(`${error} fetching from network ${request.url}`)
+        console.warn(
+          `${error} fetching from network ${request.url}`
+        )
       }
     } else if (!response) {
       // If we didn't get a response and didn't try the cache, try it now
