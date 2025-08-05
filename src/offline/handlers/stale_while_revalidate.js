@@ -19,7 +19,9 @@ export class StaleWhileRevalidate extends Handler {
     try {
       response = await this.fetchFromNetwork(request)
     } catch(error) {
-      console.warn(`${error} fetching from network ${request.url}`)
+      console.warn(
+        `${error} fetching from network ${request.url}`
+      )
     }
 
     if (response) {
