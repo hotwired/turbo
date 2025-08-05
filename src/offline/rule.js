@@ -1,3 +1,5 @@
+import { cacheFirst, networkFirst, staleWhileRevalidate } from "./handlers"
+
 export class Rule {
   constructor({ handler, match = /.*/ } = {}) {
     this.handler = handler
