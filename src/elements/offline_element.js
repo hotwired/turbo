@@ -32,12 +32,13 @@ export class OfflineElement extends HTMLElement {
     const controller = navigator.serviceWorker.controller
     if (controller && !urlsAreEqual(controller.scriptURL, this.serviceWorkerUrl)) {
       console.warn(
-        `Expected service worker script ${this.serviceWorkerUrl} but found ${controller.scriptURL}. ` + `This may indicate multiple service workers or a cached version.`
+        `Expected service worker script ${this.serviceWorkerUrl} but found ${controller.scriptURL}. ` +
+        `This may indicate multiple service workers or a cached version.`
       )
     }
 
     try {
-      const registration = await navigator.serviceWorker.register(this.serviceWorkerUrl, { scope: this.scope, type: this.serviceWorkerType })
+      const registration = await navigator.serviceWorker.register(this.serviceWorkerUrl, this.serviceWorkerOptions)
 
       // Check the registration result for any mismatches
       const registered = registration.active || registration.waiting || registration.installing
@@ -58,12 +59,14 @@ export class OfflineElement extends HTMLElement {
     return this.getAttribute("serviceWorkerUrl")
   }
 
+
+
   get scope() {
-    return this.getAttribute("scope")
+    return this.getAttribute("scope") || "/"
   }
 
   get serviceWorkerType() {
-    return this.getAttribute("serviceWorkerType")
+    return this.getAttribute("serviceWorkerType") || "classic"
   }
 
   get supportsNative() {
