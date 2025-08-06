@@ -20,6 +20,8 @@ export class BrowserAdapter {
 
   visitStarted(visit) {
     this.location = visit.location
+    this.redirectedToLocation = null
+
     visit.loadCachedSnapshot()
     visit.issueRequest()
     visit.goToSamePageAnchor()
@@ -37,8 +39,8 @@ export class BrowserAdapter {
   visitRequestCompleted(visit) {
     visit.loadResponse()
 
-    if(visit.response.redirected) {
-      this.location = visit.redirectedToLocation
+    if (visit.response.redirected) {
+      this.redirectedToLocation = visit.redirectedToLocation
     }
   }
 
@@ -129,7 +131,7 @@ export class BrowserAdapter {
   reload(reason) {
     dispatch("turbo:reload", { detail: reason })
 
-    window.location.href = this.location?.toString() || window.location.href
+    window.location.href = (this.redirectedToLocation || this.location)?.toString() || window.location.href
   }
 
   get navigator() {
