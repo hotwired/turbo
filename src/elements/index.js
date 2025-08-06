@@ -25,4 +25,11 @@ if (customElements.get("turbo-stream-source") === undefined) {
 
 if (customElements.get("turbo-offline") === undefined) {
   customElements.define("turbo-offline", OfflineElement)
+
+  // Upgrade any existing turbo-offline elements that were in the DOM before registration
+  document.querySelectorAll("turbo-offline").forEach(element => {
+    if (!(element instanceof OfflineElement)) {
+      customElements.upgrade(element)
+    }
+  })
 }
