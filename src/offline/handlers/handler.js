@@ -1,12 +1,13 @@
 import { CacheRegistry } from "../cache_registry"
+import { CacheTrimmer } from "../cache_trimmer"
 
 export class Handler {
-  constructor({ cacheName, maxStorage, maxAge, networkTimeout }) {
+  constructor({ cacheName, networkTimeout, maxAge }) {
     this.cacheName = cacheName
-    this.maxStorage = maxStorage
-    this.maxAge = maxAge
     this.networkTimeout = networkTimeout
+
     this.cacheRegistry = new CacheRegistry(cacheName)
+    this.cacheTrimmer = new CacheTrimmer(cacheName, this.cacheRegistry, { maxAge })
   }
 
   async handle(request) {
@@ -38,11 +39,13 @@ export class Handler {
   async saveToCache(request, response) {
     if (response && this.canCacheResponse(response)) {
       const cacheKeyUrl = buildCacheKey(request, response)
-
       const cache = await caches.open(this.cacheName)
+
       const cachePromise = cache.put(cacheKeyUrl, response)
       const registryPromise = this.cacheRegistry.put(cacheKeyUrl)
-      return Promise.all([ cachePromise, registryPromise ])
+      const trimPromise = this.cacheTrimmer.trim()
+
+      return Promise.all([ cachePromise, registryPromise, trimPromise ])
     }
   }
 
