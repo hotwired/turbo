@@ -1,10 +1,10 @@
 export class Handler {
-  constructor({ cacheName, maxStorage, maxAge, networkTimeout, cacheRegistry }) {
+  constructor({ cacheName, maxStorage, maxAge, networkTimeout }) {
     this.cacheName = cacheName
     this.maxStorage = maxStorage
     this.maxAge = maxAge
     this.networkTimeout = networkTimeout
-    this.cacheRegistry = cacheRegistry
+    this.cacheRegistry = new CacheRegistry(cacheName)
   }
 
   async handle(request) {

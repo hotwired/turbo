@@ -1,18 +1,16 @@
-export class CacheRegistry {
-  constructor({ databaseName = "key-value-store", storeName = "default-store", databaseVersion = 1 } = {}) {
-    this.databaseName = databaseName
-    this.storeName = storeName
-    this.databaseVersion = databaseVersion
-  }
+const DATABASE_NAME = "turbo-offline-database"
+const DATABASE_VERSION = 1
+const STORE_NAME = "cache-registry"
 
+export class CacheRegistry {
   get(key) {
     const getOp = (store) => this.#requestToPromise(store.get(key))
-    return this.#performOperation(this.storeName, getOp, "readonly")
+    return this.#performOperation(STORE_NAME, getOp, "readonly")
   }
 
   has(key) {
     const countOp = (store) => this.#requestToPromise(store.count(key))
-    return this.#performOperation(this.storeName, countOp, "readonly").then((result) => result === 1)
+    return this.#performOperation(STORE_NAME, countOp, "readonly").then((result) => result === 1)
   }
 
   put(key, value) {
@@ -22,7 +20,7 @@ export class CacheRegistry {
       return this.#requestToPromise(store.transaction)
     }
 
-    return this.#performOperation(this.storeName, putOp, "readwrite")
+    return this.#performOperation(STORE_NAME, putOp, "readwrite")
   }
 
   getTimestamp(key) {
@@ -37,7 +35,7 @@ export class CacheRegistry {
 
       return this.#cursorRequestToPromise(cursorRequest)
     }
-    return this.#performOperation(this.storeName, getOlderThanOp, "readonly")
+    return this.#performOperation(STORE_NAME, getOlderThanOp, "readonly")
   }
 
   #performOperation(storeName, operation, mode) {
@@ -49,10 +47,10 @@ export class CacheRegistry {
   }
 
   #openDatabase() {
-    const request = indexedDB.open(this.databaseName, this.databaseVersion)
+    const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION)
     request.onupgradeneeded = () => {
       // cached URL store
-      const cacheMetadataStore = request.result.createObjectStore(this.storeName, { keyPath: "key" })
+      const cacheMetadataStore = request.result.createObjectStore(STORE_NAME, { keyPath: "key" })
       cacheMetadataStore.createIndex("timestamp", "timestamp", { unique: false })
     }
 
