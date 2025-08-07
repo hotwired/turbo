@@ -1,3 +1,5 @@
+import { CacheRegistry } from "../cache_registry"
+
 export class Handler {
   constructor({ cacheName, maxStorage, maxAge, networkTimeout }) {
     this.cacheName = cacheName
