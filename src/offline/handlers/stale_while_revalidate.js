@@ -1,7 +1,8 @@
-// Stale-while-revalidate: try the cache. If it's a hit, return that and
-// go to the network to fetch a new response and store it. If it's a miss,
-// just fall back to network and then store the response.
-
+/**
+ * Stale-while-revalidate: try the cache. If it's a hit, return that and
+ * go to the network to fetch a new response and store it. If it's a miss,
+ * just fall back to network and then store the response.
+ */
 import { Handler } from "./handler"
 
 export class StaleWhileRevalidate extends Handler {
