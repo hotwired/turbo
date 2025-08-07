@@ -10,6 +10,8 @@ export class ServiceWorker {
   }
 
   start() {
+    this.#warnIfNoRulesConfigured()
+
     if (!this.#started) {
       self.addEventListener("install", this.installed)
       self.addEventListener("message", this.messageReceived)
@@ -37,6 +39,12 @@ export class ServiceWorker {
 
       const response = rule.handle(event)
       event.respondWith(response)
+    }
+  }
+
+  #warnIfNoRulesConfigured() {
+    if (this.#rules.length === 0) {
+      console.warn("No rules configured for service worker. No requests will be intercepted.")
     }
   }
 
