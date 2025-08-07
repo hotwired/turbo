@@ -18,7 +18,7 @@ class Offline {
     this.#checkExistingController(navigator.serviceWorker.controller, url)
 
     try {
-      const registration = await navigator.serviceWorker.register(this.url, this.registrationOptions)
+      const registration = await navigator.serviceWorker.register(url, { scope, type })
 
       // Check the registration result for any mismatches
       const registered = registration.active || registration.waiting || registration.installing
