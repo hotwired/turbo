@@ -4,7 +4,7 @@ import { setCookie } from "../util"
 class Offline {
   serviceWorker
 
-  async start(url = "/service-worker.js", { scope = "/", type = "script", native = true } = {}) {
+  async start(url = "/service-worker.js", { scope = "/", type = "module", native = true } = {}) {
     if (!("serviceWorker" in navigator)) {
       console.warn("Service Worker not available.")
       return
