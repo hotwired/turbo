@@ -44,6 +44,11 @@ class CacheRegistryDatabase {
     return this.#performOperation(STORE_NAME, getOlderThanOp, "readonly")
   }
 
+  delete(cacheName, key) {
+    const deleteOp = (store) => this.#requestToPromise(store.delete(key))
+    return this.#performOperation(STORE_NAME, deleteOp, "readwrite")
+  }
+
   #performOperation(storeName, operation, mode) {
     return this.#openDatabase().then((database) => {
       const transaction = database.transaction(storeName, mode)
@@ -123,5 +128,9 @@ export class CacheRegistry {
 
   getOlderThan(timestamp) {
     return this.database.getOlderThan(this.cacheName, timestamp)
+  }
+
+  delete(key) {
+    return this.database.delete(this.cacheName, key)
   }
 }
