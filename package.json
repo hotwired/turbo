@@ -13,7 +13,10 @@
       "import": "./dist/turbo.es2017-esm.js",
       "require": "./dist/turbo.es2017-umd.js"
     },
-    "./offline": "./dist/turbo-offline.js"
+    "./offline": {
+      "import": "./dist/turbo-offline.js",
+      "require": "./dist/turbo-offline-umd.js"
+    }
   },
   "repository": {
     "type": "git",
