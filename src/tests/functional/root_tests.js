@@ -25,3 +25,11 @@ test("visiting a location outside the root", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "load")
 })
+
+test("visiting a location outside the root having the root as a prefix", async ({ page }) => {
+  page.goto("/src/tests/fixtures/root/index.html")
+  page.click("#link-page-outside-prefix")
+  await nextBody(page)
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/rootlet.html")
+  assert.equal(await visitAction(page), "load")
+})
