@@ -49,10 +49,10 @@ export async function unregisterServiceWorker(page) {
   })
 }
 
-export async function testFetch(page, url) {
-  return page.evaluate(async (url) => {
+export async function testFetch(page, url, headers = {}) {
+  return page.evaluate(async ({ url, headers }) => {
     try {
-      const response = await fetch(url)
+      const response = await fetch(url, { headers })
       return {
         ok: response.ok,
         status: response.status,
@@ -61,7 +61,7 @@ export async function testFetch(page, url) {
     } catch (error) {
       return { error: error.message }
     }
-  }, url)
+  }, { url, headers })
 }
 
 export async function waitForServiceWorkerToControl(page, timeout = 5000) {

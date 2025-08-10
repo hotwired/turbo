@@ -2,8 +2,7 @@
 importScripts("/dist/turbo-offline-umd.js")
 
 TurboOffline.addRule({
-  // TODO: match requests with `X-Cache: yes`
-  match: (request) => { },
+  match: (request) => request.headers.get("X-Cache") === "yes",
   handler: TurboOffline.handlers.cacheFirst({
     cacheName: "test-cache-first",
     maxAge: 60 * 60 // 1 hour for testing
