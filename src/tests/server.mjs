@@ -238,7 +238,14 @@ function escapeHTML(html) {
 const app = express()
 
 app.use(json({ limit: "1mb" }), urlencoded({ extended: true }))
-app.use(express.static("."))
+app.use(express.static(".", {
+  setHeaders: (res, path) => {
+    // Allow service workers from any subfolder to control the entire domain
+    if (path.endsWith(".js") && path.includes("service_worker")) {
+      res.set("Service-Worker-Allowed", "/")
+    }
+  }
+}))
 app.use(/\/__turbo/, router)
 
 const port = parseInt(process.env.PORT || "9000")
