@@ -6,8 +6,7 @@ addRule({
     /\/dynamic\.txt$/
   ],
   handler: handlers.cacheFirst({
-    cacheName: "test-cache-first",
-    maxAge: 60 * 60 // 1 hour for testing
+    cacheName: "test-cache-first"
   })
 })
 
