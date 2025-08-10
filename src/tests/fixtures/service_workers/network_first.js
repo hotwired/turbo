@@ -7,8 +7,7 @@ TurboOffline.addRule({
   ],
   handler: TurboOffline.handlers.networkFirst({
     cacheName: "test-network-first",
-    networkTimeout: 0.5, // Short timeout for testing
-    maxAge: 60 * 60 // 1 hour for testing
+    networkTimeout: 0.5 // Short timeout for testing
   })
 })
 

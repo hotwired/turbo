@@ -209,3 +209,69 @@ test("network timeout triggers cache fallback for network-first", async ({ page 
   assert.equal(timeoutResponse.ok, true, "Request should succeed from cache even on timeout")
   assert.equal(timeoutResponse.text.trim(), initialContent, "Timeout response should match cached content")
 })
+
+test("deletes cached entries after maxAge per cache", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/cache_trimming.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+  const dynamicJsonUrl = "/__turbo/dynamic.json"
+
+  // Cache in short-lived cache using X-Cache header (0.5 second maxAge)
+  const shortLivedResponse = await testFetch(page, dynamicTxtUrl)
+  assert.equal(shortLivedResponse.ok, true)
+
+  // Cache in long-lived cache (5 minute maxAge)
+  const longLivedResponse = await testFetch(page, dynamicJsonUrl)
+  assert.equal(longLivedResponse.ok, true)
+
+  // Wait for caching to complete
+  await page.waitForTimeout(200)
+
+  // Verify both are cached
+  let shortLivedUrl = "http://localhost:9000" + dynamicTxtUrl
+  let longLivedUrl = "http://localhost:9000" + dynamicJsonUrl
+
+  let shortLivedCached = await getCachedResponse(page, "test-cache-trimming-short", shortLivedUrl)
+  let longLivedCached = await getCachedResponse(page, "test-cache-stable", longLivedUrl)
+
+  assert.isTrue(shortLivedCached.found, "Short-lived cache entry should be cached")
+  assert.isTrue(longLivedCached.found, "Long-lived cache entry should be cached")
+
+  // Wait for the short-lived cache to expire (0.5 seconds + buffer)
+  await page.waitForTimeout(750)
+
+  // Make a request to a different URL to trigger caching (and therefore trimming)
+  const triggerTrimUrl = "/__turbo/dynamic.txt?trigger=trim"
+  const firstTriggerTrimResponse = await testFetch(page, triggerTrimUrl)
+  assert.equal(firstTriggerTrimResponse.ok, true)
+
+  // Wait a bit for trimming to potentially complete
+  await page.waitForTimeout(500)
+
+  // Check cache states after trimming
+  shortLivedCached = await getCachedResponse(page, "test-cache-trimming-short", shortLivedUrl)
+  longLivedCached = await getCachedResponse(page, "test-cache-stable", longLivedUrl)
+
+  // The expired short-lived entry should be removed
+  assert.isFalse(shortLivedCached.found, "Expired short-lived entry should be trimmed")
+
+  // The long-lived cache should be unaffected (different cache, different trimmer, longer maxAge)
+  assert.isTrue(longLivedCached.found, "Long-lived cache should not be affected by short-lived cache trimming")
+  assert.equal(longLivedCached.text.trim(), longLivedResponse.text.trim(), "Long-lived cached content should remain unchanged")
+
+  // And now, request the last cached response in the short-lived cache, which will be expired, yet returned,
+  // to trigger trimming as well
+  // Wait a bit to ensure it has really expired
+  await page.waitForTimeout(200)
+
+  const secondTriggerTrimResponse = await testFetch(page, triggerTrimUrl)
+  assert.equal(secondTriggerTrimResponse.ok, true)
+  assert.equal(secondTriggerTrimResponse.text, firstTriggerTrimResponse.text, "Second request should return identical content from cache")
+
+  // Wait a bit for trimming to potentially complete
+  await page.waitForTimeout(500)
+  // And finally check that it's gone
+  const triggerTrimCached = await getCachedResponse(page, "test-cache-trimming-short", "http://localhost:9000" + triggerTrimUrl)
+  assert.isFalse(triggerTrimCached.found, "Expired short-lived entry should be trimmed")
+})
