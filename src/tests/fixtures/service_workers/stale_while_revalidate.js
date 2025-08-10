@@ -6,8 +6,7 @@ TurboOffline.addRule({
     /\/dynamic\.txt$/
   ],
   handler: TurboOffline.handlers.staleWhileRevalidate({
-    cacheName: "test-stale-while-revalidate",
-    maxAge: 60 * 60 // 1 hour for testing
+    cacheName: "test-stale-while-revalidate"
   })
 })
 

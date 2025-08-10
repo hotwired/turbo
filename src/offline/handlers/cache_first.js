@@ -7,9 +7,15 @@ import { Handler } from "./handler"
 export class CacheFirst extends Handler {
   async handle(request) {
     let response = await this.fetchFromCache(request)
-    let afterHandlePromise = Promise.resolve()
+    let afterHandlePromise
 
-    if (response) return { response, afterHandlePromise }
+    if (response) {
+      // Always trim the cache when using a response in cache-first strategy
+      // because if we are always returning cached content and never saving
+      // any new content, it will all eventually become older than maxAge
+      afterHandlePromise = this.cacheTrimmer.trim()
+      return { response, afterHandlePromise }
+    }
 
     console.debug(`Cache miss for ${request.url}`)
 
