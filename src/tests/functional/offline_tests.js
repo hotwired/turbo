@@ -149,7 +149,50 @@ test("registers service worker as a module and intercepts and caches requests", 
   assert.equal(secondContent, firstContent, "Second request should return identical content from cache")
 })
 
-test("network timeout triggers cache fallback", async ({ page }) => {
+test("applies different handlers to different requests based on different rules", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/mixed_handlers_and_matchers.js")
+  await waitForServiceWorkerToControl(page)
+
+  // Cache-first for responses with X-Cache: yes header, and network-first for dynamic.json requests
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+  const dynamicJsonUrl = "/__turbo/dynamic.json"
+
+  // Request cached with network-first
+  const jsonResponse = await testFetch(page, dynamicJsonUrl)
+  assert.equal(jsonResponse.ok, true)
+
+  let fullUrl = "http://localhost:9000" + dynamicJsonUrl
+  let cachedResponse = await getCachedResponse(page, "test-network-first", fullUrl)
+  assert.isTrue(cachedResponse.found)
+  assert.equal(cachedResponse.text.trim(), jsonResponse.text.trim(), "Cached content should match response")
+
+  // Request without header - should NOT be cached
+  const notCachedTxtResponse = await testFetch(page, dynamicTxtUrl)
+  assert.equal(notCachedTxtResponse.ok, true)
+
+  // Verify it wasn't cached (no matching rule)
+  fullUrl = "http://localhost:9000" + dynamicTxtUrl
+  cachedResponse = await getCachedResponse(page, "test-cache-first", fullUrl)
+  assert.isFalse(cachedResponse.found, "Response for request without X-Cache header should not be cached")
+
+  // Request with header - should be cached
+  const cachedTxtResponse = await testFetch(page, dynamicTxtUrl, { "X-Cache": "yes" })
+  assert.equal(cachedTxtResponse.ok, true)
+
+  // Wait a bit for caching
+  await page.waitForTimeout(200)
+
+  // Verify it was cached
+  cachedResponse = await getCachedResponse(page, "test-cache-first", fullUrl)
+  assert.isTrue(cachedResponse.found, "Response for request with X-Cache header should be cached")
+  assert.equal(cachedResponse.text.trim(), cachedTxtResponse.text.trim(), "Cached content should match response requested with header")
+
+  // Make the same request again - should return cached content
+  const secondCachedTxtResponse = await testFetch(page, dynamicTxtUrl, { "X-Cache": "yes" })
+  assert.equal(secondCachedTxtResponse.text.trim(), cachedTxtResponse.text.trim(), "Second request with header should return cached content")
+})
+
+test("network timeout triggers cache fallback for network-first", async ({ page }) => {
   await registerServiceWorker(page, "/src/tests/fixtures/service_workers/network_first.js")
   await waitForServiceWorkerToControl(page)
 
@@ -166,4 +209,3 @@ test("network timeout triggers cache fallback", async ({ page }) => {
   assert.equal(timeoutResponse.ok, true, "Request should succeed from cache even on timeout")
   assert.equal(timeoutResponse.text.trim(), initialContent, "Timeout response should match cached content")
 })
-

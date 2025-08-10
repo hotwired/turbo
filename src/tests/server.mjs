@@ -199,13 +199,11 @@ router.post("/test-control/set-delay", (request, response) => {
 
 router.get("/dynamic.txt", (request, response) => {
   const delay = networkDelay || 0
-
   const timestamp = Date.now()
   const randomId = Math.random().toString(36).substring(7)
   setTimeout(() => {
     response
       .type("text/plain")
-      .set("X-Cache", "yes")
       .send(`Hello from dynamic test file! Generated at ${timestamp} (ID: ${randomId})`)
   }, delay)
 })
