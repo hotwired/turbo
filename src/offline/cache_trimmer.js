@@ -8,12 +8,10 @@ export class CacheTrimmer {
   }
 
   async trim() {
-    // Skip if already running (simple approach)
     if (this.#isRunning) {
       return
     }
 
-    // Check if we have any trimming options configured
     if (!this.#shouldTrim()) {
       return
     }
