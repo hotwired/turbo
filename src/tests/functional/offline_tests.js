@@ -131,7 +131,7 @@ test("doesn't intercept non-matching requests", async ({ page }) => {
 
 test("registers service worker as a module and intercepts and caches requests", async ({ page, browserName }) => {
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1360870
-  test.skip(browserName === "firefox", "Firefox doesn't support ECMAScript modules in service workers");
+  test.skip(browserName === "firefox", "Firefox doesn't support ECMAScript modules in service workers")
 
   await registerServiceWorker(page, "/src/tests/fixtures/service_workers/module.js", "/", "module")
   await waitForServiceWorkerToControl(page)
@@ -229,8 +229,8 @@ test("deletes cached entries after maxAge per cache", async ({ page }) => {
   await page.waitForTimeout(200)
 
   // Verify both are cached
-  let shortLivedUrl = "http://localhost:9000" + dynamicTxtUrl
-  let longLivedUrl = "http://localhost:9000" + dynamicJsonUrl
+  const shortLivedUrl = "http://localhost:9000" + dynamicTxtUrl
+  const longLivedUrl = "http://localhost:9000" + dynamicJsonUrl
 
   let shortLivedCached = await getCachedResponse(page, "test-cache-trimming-short", shortLivedUrl)
   let longLivedCached = await getCachedResponse(page, "test-cache-stable", longLivedUrl)
