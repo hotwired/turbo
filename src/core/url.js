@@ -25,8 +25,8 @@ export function getExtension(url) {
 }
 
 export function isPrefixedBy(baseURL, url) {
-  const prefix = getPrefix(url)
-  return baseURL.href === expandURL(prefix).href || baseURL.href.startsWith(prefix)
+  const prefix = addTrailingSlash(url.origin + url.pathname)
+  return addTrailingSlash(baseURL.href) === prefix || baseURL.href.startsWith(prefix)
 }
 
 export function locationIsVisitable(location, rootLocation) {
@@ -52,10 +52,6 @@ function getPathComponents(url) {
 
 function getLastPathComponent(url) {
   return getPathComponents(url).slice(-1)[0]
-}
-
-function getPrefix(url) {
-  return addTrailingSlash(url.origin + url.pathname)
 }
 
 function addTrailingSlash(value) {
