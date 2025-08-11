@@ -35,7 +35,7 @@ class CacheRegistryDatabase {
         [cacheName, 0], // start of range
         [cacheName, timestamp], // end of range
         false, // lowerOpen: include lower bound
-        true  // upperOpen: exclude upper bound
+        true // upperOpen: exclude upper bound
       )
       const cursorRequest = index.openCursor(range)
 
@@ -60,7 +60,6 @@ class CacheRegistryDatabase {
   #openDatabase() {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION)
     request.onupgradeneeded = () => {
-      // cached URL store
       const cacheMetadataStore = request.result.createObjectStore(STORE_NAME, { keyPath: "key" })
       cacheMetadataStore.createIndex("cacheNameAndTimestamp", [ "cacheName", "timestamp" ])
     }
@@ -103,7 +102,6 @@ function getDatabase() {
   return cacheRegistryDatabase
 }
 
-// New CacheRegistry wrapper class that delegates to the global database
 export class CacheRegistry {
   constructor(cacheName) {
     this.cacheName = cacheName

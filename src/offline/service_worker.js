@@ -1,5 +1,4 @@
 import { Rule } from "./rule"
-import { config } from "./config"
 
 export class ServiceWorker {
   #started = false
