@@ -5,7 +5,7 @@ importScripts("/dist/turbo-offline-umd.js")
 TurboOffline.addRule({
   match: /\/dynamic\.txt/,
   handler: TurboOffline.handlers.cacheFirst({
-    cacheName: "test-cache-trimming-short",
+    cacheName: "test-cache-short-lived",
     maxAge: 0.5 // Only 500ms for testing
   })
 })
