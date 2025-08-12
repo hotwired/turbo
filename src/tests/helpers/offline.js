@@ -5,19 +5,6 @@ export async function clearAllCaches(page) {
   })
 }
 
-export async function getCacheStatus(page) {
-  return page.evaluate(async () => {
-    const cacheNames = await caches.keys()
-    const status = {}
-    for (const name of cacheNames) {
-      const cache = await caches.open(name)
-      const keys = await cache.keys()
-      status[name] = keys.map(req => req.url)
-    }
-    return status
-  })
-}
-
 export async function getCachedResponse(page, cacheName, url) {
   return page.evaluate(async ({ cacheName, url }) => {
     const cache = await caches.open(cacheName)
