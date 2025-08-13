@@ -247,7 +247,7 @@ export function doesNotTargetIFrame(name) {
 }
 
 export function findLinkFromClickTarget(target) {
-  return findClosestRecursively(target, "a[href]:not([target^=_]):not([download])")
+  return findClosestRecursively(target, 'a[href]:not([download]):not([target^=_]:not([target="_self"]))')
 }
 
 export function getLocationForLink(link) {
