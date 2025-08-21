@@ -265,6 +265,13 @@ test("following a same-origin [target] link", async ({ page }) => {
   assert.equal(await visitAction(popup), "load")
 })
 
+test("following a _self [target] link", async ({ page }) => {
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#self-targeted-link")])
+
+  assert.equal(pathname(popup.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(popup), "load")
+})
+
 test("following a same-origin [download] link", async ({ page }) => {
   assert.notOk(
     await willChangeBody(page, async () => {
@@ -494,9 +501,7 @@ test("ignores forms with a button[formtarget=_blank] attribute", async ({ page }
   expect(pathname(popup.url())).toContain("/src/tests/fixtures/one.html")
 })
 
-test("ignores forms with a button[formtarget] attribute that targets an iframe with [name='']", async ({
-  page
-}) => {
+test("ignores forms with a button[formtarget] attribute that targets an iframe with [name='']", async ({ page }) => {
   await page.click("#form-target-empty-name-iframe button")
   await nextBeat()
   await noNextEventNamed(page, "turbo:load")
