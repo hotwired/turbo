@@ -265,6 +265,14 @@ test("following a same-origin [target] link", async ({ page }) => {
   assert.equal(await visitAction(popup), "load")
 })
 
+test("following a _self [target] link", async ({ page }) => {
+  await page.click("#self-targeted-link")
+  await nextBody(page)
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
+})
+
 test("following a same-origin [download] link", async ({ page }) => {
   assert.notOk(
     await willChangeBody(page, async () => {
@@ -277,14 +285,20 @@ test("following a same-origin [download] link", async ({ page }) => {
 })
 
 test("following a same-origin link inside an SVG element", async ({ page }) => {
-  await page.click("#same-origin-link-inside-svg-element", { force: true })
+  const link = page.locator("#same-origin-link-inside-svg-element")
+  await link.focus()
+  await page.keyboard.press("Enter")
+
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
 })
 
 test("following a cross-origin link inside an SVG element", async ({ page }) => {
-  await page.click("#cross-origin-link-inside-svg-element", { force: true })
+  const link = page.locator("#cross-origin-link-inside-svg-element")
+  await link.focus()
+  await page.keyboard.press("Enter")
+
   await nextBody(page)
   assert.equal(page.url(), "about:blank")
   assert.equal(await visitAction(page), "load")
@@ -494,9 +508,7 @@ test("ignores forms with a button[formtarget=_blank] attribute", async ({ page }
   expect(pathname(popup.url())).toContain("/src/tests/fixtures/one.html")
 })
 
-test("ignores forms with a button[formtarget] attribute that targets an iframe with [name='']", async ({
-  page
-}) => {
+test("ignores forms with a button[formtarget] attribute that targets an iframe with [name='']", async ({ page }) => {
   await page.click("#form-target-empty-name-iframe button")
   await nextBeat()
   await noNextEventNamed(page, "turbo:load")
