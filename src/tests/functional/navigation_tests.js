@@ -266,10 +266,11 @@ test("following a same-origin [target] link", async ({ page }) => {
 })
 
 test("following a _self [target] link", async ({ page }) => {
-  const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#self-targeted-link")])
+  await page.click("#self-targeted-link")
+  await nextBody(page)
 
-  assert.equal(pathname(popup.url()), "/src/tests/fixtures/one.html")
-  assert.equal(await visitAction(popup), "load")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
 })
 
 test("following a same-origin [download] link", async ({ page }) => {
@@ -284,14 +285,20 @@ test("following a same-origin [download] link", async ({ page }) => {
 })
 
 test("following a same-origin link inside an SVG element", async ({ page }) => {
-  await page.click("#same-origin-link-inside-svg-element", { force: true })
+  const link = page.locator("#same-origin-link-inside-svg-element")
+  await link.focus()
+  await page.keyboard.press("Enter")
+
   await nextBody(page)
   assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
   assert.equal(await visitAction(page), "advance")
 })
 
 test("following a cross-origin link inside an SVG element", async ({ page }) => {
-  await page.click("#cross-origin-link-inside-svg-element", { force: true })
+  const link = page.locator("#cross-origin-link-inside-svg-element")
+  await link.focus()
+  await page.keyboard.press("Enter")
+
   await nextBody(page)
   assert.equal(page.url(), "about:blank")
   assert.equal(await visitAction(page), "load")
