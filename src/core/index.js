@@ -4,10 +4,11 @@ import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { fetch, recentRequests } from "../http/fetch"
 import { config } from "./config"
+import { offline } from "./offline"
 
 const session = new Session(recentRequests)
 const { cache, navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
+export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch, config, offline }
 
 /**
  * Starts the main session.
