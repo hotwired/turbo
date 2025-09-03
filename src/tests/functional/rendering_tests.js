@@ -32,7 +32,7 @@ test("triggers before-render and render events", async ({ page }) => {
 
   assert.equal(await page.textContent("h1"), "One")
 
-  await nextEventNamed(page, "turbo:render")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "replace" })
   assert.equal(await newBody, await page.evaluate(() => document.body.outerHTML))
 })
 
