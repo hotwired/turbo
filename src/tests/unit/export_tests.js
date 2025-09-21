@@ -22,6 +22,10 @@ test("Turbo interface", () => {
   assert.equal(typeof Turbo.session.drive, "boolean")
   assert.equal(typeof Turbo.session.formMode, "string")
   assert.equal(typeof Turbo.fetch, "function")
+  assert.equal(typeof Turbo.morphElements, "function")
+  assert.equal(typeof Turbo.morphChildren, "function")
+  assert.equal(typeof Turbo.morphBodyElements, "function")
+  assert.equal(typeof Turbo.morphTurboFrameElements, "function")
 })
 
 test("Session interface", () => {
