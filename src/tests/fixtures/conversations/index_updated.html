@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Conversations Index - Updated</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    </script>
+  </head>
+  <body>
+    <p class="success-message">
+      Name updated successfully! Page refresh should not happen because we exited the Turbo frame and thus the
+      content is already fresh.
+    </p>
+
+    <h1>Conversations Index</h1>
+
+    <div id="content">Conversation 1 - Name D</div>
+
+    <!-- Empty turbo-frame representing a slideout/modal that will be populated when clicking a conversation. -->
+    <turbo-frame id="modal" data-turbo-permanent></turbo-frame>
+    <button id="generate-refresh">Generate Refresh</button>
+  </body>
+</html>

@@ -23,6 +23,11 @@ router.use((request, response, next) => {
   }
 })
 
+router.post("/simple-redirect", (request, response) => {
+  const { path } = request.body
+  response.redirect(303, path)
+})
+
 router.post("/redirect", (request, response) => {
   const { path, sleep, ...query } = request.body
   const { pathname, query: searchParams } = url.parse(

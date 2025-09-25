@@ -221,31 +221,56 @@ test("action=before", async () => {
   assert.isNull(element.parentElement)
 })
 
-test("test action=refresh", async () => {
-  document.body.setAttribute("data-modified", "")
-  assert.ok(document.body.hasAttribute("data-modified"))
-
-  const element = createStreamElement("refresh")
-  subject.append(element)
-
-  await sleep(250)
-
-  assert.notOk(document.body.hasAttribute("data-modified"))
+test("test action=refresh processed when no request id", async () => {
+  await assertRefreshProcessed(() => {
+    triggerRefresh()
+  })
 })
 
-test("test action=refresh discarded when matching request id", async () => {
-  Turbo.session.recentRequests.add("123")
+test("test action=refresh discarded when matching request id for same URL", async () => {
+  await assertRefreshNotProcessed(() => {
+    const currentUrl = document.baseURI
+    Turbo.session.recentRequests.markUrlAsRefreshed("123", currentUrl)
+    triggerRefresh("123")
+  })
+})
 
-  document.body.setAttribute("data-modified", "")
-  assert.ok(document.body.hasAttribute("data-modified"))
+test("test action=refresh for current URL processed for different request id", async () => {
+  const currentUrl = document.baseURI
 
-  const element = createStreamElement("refresh")
-  element.setAttribute("request-id", "123")
-  subject.append(element)
+  await assertRefreshProcessed(() => {
+    Turbo.session.recentRequests.markUrlAsRefreshed("789", currentUrl)
+    triggerRefresh("999")
+  })
 
-  await sleep(250)
+  await assertRefreshNotProcessed(() => {
+    triggerRefresh("999")
+  })
+})
 
-  assert.ok(document.body.hasAttribute("data-modified"))
+test("test action=refresh for current URL processed when no request id", async () => {
+  await assertRefreshProcessed(() => {
+    const currentUrl = document.baseURI
+    Turbo.session.recentRequests.markUrlAsRefreshed("123", currentUrl)
+    triggerRefresh()
+  })
+})
+
+test("test action=refresh processed when request id has not refreshed current URL", async () => {
+  await assertRefreshProcessed(() => {
+    Turbo.session.recentRequests.markUrlAsRefreshed("456", "http://example.com/other-page")
+    triggerRefresh("456")
+  })
+})
+
+test("test action=refresh discards multiple refreshes for same URL and request id", async () => {
+  await assertRefreshProcessed(() => {
+    triggerRefresh("duplicate-test")
+  })
+
+  await assertRefreshNotProcessed(() => {
+    triggerRefresh("duplicate-test")
+  })
 })
 
 test("action=replace method=morph", async () => {
@@ -289,3 +314,31 @@ test("action=update method=morph", async () => {
   assert.ok(subject.find("div#hello > h1#hello-child-element"))
   assert.equal(subject.find("div#hello > h1#hello-child-element").textContent, "Hello Turbo Morphed")
 })
+
+const assertRefreshProcessed = async (callback) => {
+  document.body.setAttribute("data-modified", "")
+  assert.ok(document.body.hasAttribute("data-modified"))
+
+  callback()
+
+  await sleep(250)
+  assert.notOk(document.body.hasAttribute("data-modified"))
+}
+
+const assertRefreshNotProcessed = async (callback) => {
+  document.body.setAttribute("data-modified", "")
+  assert.ok(document.body.hasAttribute("data-modified"))
+
+  callback()
+
+  await sleep(250)
+  assert.ok(document.body.hasAttribute("data-modified"))
+}
+
+const triggerRefresh = (requestId) => {
+  const element1 = createStreamElement("refresh")
+  if (requestId) {
+    element1.setAttribute("request-id", requestId)
+  }
+  subject.append(element1)
+}
