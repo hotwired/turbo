@@ -1,6 +1,6 @@
 {
   "name": "@hotwired/turbo",
-  "version": "8.0.13",
+  "version": "8.0.14",
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
   "main": "dist/turbo.es2017-umd.js",
@@ -59,7 +59,7 @@
     "test:browser": "playwright test",
     "test:unit": "NODE_OPTIONS=--inspect web-test-runner",
     "test:unit:win": "SET NODE_OPTIONS=--inspect & web-test-runner",
-    "release": "yarn build && npm publish",
+    "release": "yarn build && yarn publish",
     "lint": "eslint . --ext .js"
   },
   "engines": {
