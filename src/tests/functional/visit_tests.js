@@ -186,6 +186,13 @@ test("turbo:before-fetch-request event.detail encodes searchParams", async ({ pa
   assert.ok(url.includes("/src/tests/fixtures/one.html?key=value"))
 })
 
+test("turbo:before-fetch-request encodes the action", async ({ page }) => {
+  await page.click("#same-origin-replace-link")
+  const { fetchOptions: { headers } } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  assert.equal(headers["Turbo-Action"], "replace", "encodes the action into Turbo-Action")
+})
+
 test("turbo:before-fetch-response open new site", async ({ page }) => {
   page.evaluate(() =>
     addEventListener(
@@ -336,8 +343,10 @@ test("Visit direction attribute when navigating forward", async ({ page }) => {
 })
 
 test("Visit direction attribute on a replace visit", async ({ page }) => {
-  page.click("#same-origin-replace-link")
+  await page.click("#same-origin-replace-link")
+  const { fetchOptions: { headers } } = await nextEventNamed(page, "turbo:before-fetch-request")
 
+  assert.equal(headers["Turbo-Action"], "replace", "encodes the action into Turbo-Action")
   await assertVisitDirectionAttribute(page, "none")
 })
 
