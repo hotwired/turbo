@@ -75,6 +75,7 @@ test("from conversations Index, opening a Turbo frame slideout/modal to conversa
   await page.click("#conversation-1")
   await page.click("#submit-button-to-update-conversation-and-redirect-to-conversations-show-inside-modal-frame")
   const requestIdThatTriggersRefreshes = await getLastRequestId(page)
+  await assert.ok(requestIdThatTriggersRefreshes)
 
   await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: true})
   await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: false})
@@ -86,6 +87,7 @@ test("from conversations Index, opening a Turbo frame slideout/modal to conversa
   await page.click("#conversation-1")
   await page.click("#submit-button-to-update-conversation-and-redirect-to-conversations-show-outside-modal-frame")
   const requestIdThatTriggersRefreshes = await getLastRequestId(page)
+  await assert.ok(requestIdThatTriggersRefreshes)
 
   await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: false})
   await assertPageRefresh(page, "another-request-id", {shouldOccur: true})
@@ -96,6 +98,7 @@ test("from conversations Index, opening a Turbo frame slideout/modal to conversa
   await page.click("#conversation-1")
   await page.click("#submit-button-to-update-conversation-and-redirect-to-conversations-index-inside-modal-frame")
   const requestIdThatTriggersRefreshes = await getLastRequestId(page)
+  await assert.ok(requestIdThatTriggersRefreshes)
 
   await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: true})
   await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: false})
@@ -107,10 +110,46 @@ test("from conversations Index, opening a Turbo frame slideout/modal to conversa
   await page.click("#conversation-1")
   await page.click("#submit-button-to-update-conversation-and-redirect-to-conversations-index-outside-modal-frame")
   const requestIdThatTriggersRefreshes = await getLastRequestId(page)
+  await assert.ok(requestIdThatTriggersRefreshes)
 
   await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: false})
   await assertPageRefresh(page, "another-request-id", {shouldOccur: true})
 })
+
+test("from conversations Index, opening a Turbo frame slideout/modal to conversation Show, submitting a form inside the slideout/modal that renders 422 status code, should not refresh the page because the content is already fresh.", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/conversations/index.html")
+  await page.click("#conversation-1")
+  await page.click("#submit-button-to-update-conversation-and-render-422-status-code-inside-modal-frame")
+  const requestIdThatTriggersRefreshes = await getLastRequestId(page)
+  await assert.ok(requestIdThatTriggersRefreshes)
+
+  await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: false})
+  await assertPageRefresh(page, "another-request-id", {shouldOccur: true})
+})
+
+test("from conversations Index, opening a Turbo frame slideout/modal to conversation Show, submitting a form outside the slideout/modal that renders 422 status code still inside the Turbo frame, should not refresh the page because the content inside the Turbo frame is already fresh, and even though the content outside the Turbo frame is stale, it hasn't really been processed by the server yet.", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/conversations/index.html")
+  await page.click("#conversation-1")
+  await page.click("#submit-button-to-update-conversation-and-render-422-status-code-inside-modal-frame")
+  const requestIdThatTriggersRefreshes = await getLastRequestId(page)
+  await assert.ok(requestIdThatTriggersRefreshes)
+
+  await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: false})
+  await assertPageRefresh(page, "another-request-id", {shouldOccur: true})
+})
+
+
+test("from conversations Index, opening a Turbo frame slideout/modal to conversation Show, submitting a form outside the slideout/modal that renders 422 status code outside the Turbo frame, should not refresh the page because the content is already fresh, and even though the content inside the Turbo frame is stale, it hasn't really been processed by the server yet.", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/conversations/index.html")
+  await page.click("#conversation-1")
+  await page.click("#submit-button-to-update-conversation-and-render-422-status-code-outside-modal-frame")
+  const requestIdThatTriggersRefreshes = await getLastRequestId(page)
+  await assert.ok(requestIdThatTriggersRefreshes)
+
+  await assertPageRefresh(page, requestIdThatTriggersRefreshes, {shouldOccur: false})
+  await assertPageRefresh(page, "another-request-id", {shouldOccur: true})
+})
+
 
 async function getLastRequestIds(page) {
   await page.waitForLoadState("networkidle")

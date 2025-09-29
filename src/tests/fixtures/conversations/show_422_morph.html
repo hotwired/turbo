@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Conversation Show - 422 Morph</title>
+    <meta name="turbo-refresh-method" content="morph" />
+    <meta name="turbo-refresh-scroll" content="preserve" />
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <turbo-frame id="modal">
+      <div class="modal">
+        <h2>Conversation 1 Details</h2>
+        <p>Current Name: D</p>
+        <p class="error-message">
+          Name could not be updated! (We should NOT get a page refresh because the server couldn't process the request
+          and whatever we're rendering back is already fresh. Even though the content outside the Turbo frame is stale,
+          refreshing the page would just show the same content again.)
+        </p>
+        <button id="generate-refresh">Generate Refresh</button>
+      </div>
+    </turbo-frame>
+  </body>
+</html>
