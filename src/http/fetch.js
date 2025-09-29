@@ -14,6 +14,12 @@ async function fetchWithTurboHeaders(url, options = {}) {
     headers: modifiedHeaders
   })
 
+  tryMarkingAsRefreshed(requestUID, response, options)
+
+  return response
+}
+
+function tryMarkingAsRefreshed(requestUID, response, options) {
   if (successfulNonTurboFrameRedirect(response, options)) {
     // Mark the redirected URL as refreshed for this request ID when it's not
     // a Turbo frame request (normal navigation or escaping one via
@@ -30,8 +36,6 @@ async function fetchWithTurboHeaders(url, options = {}) {
     // request, refreshing the page would just show the same content.
     recentRequests.markUrlAsRefreshed(requestUID, document.baseURI)
   }
-
-  return response
 }
 
 function successfulNonTurboFrameRedirect(response, options) {
