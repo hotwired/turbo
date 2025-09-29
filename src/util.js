@@ -269,3 +269,34 @@ export function debounce(fn, delay) {
     timeoutId = setTimeout(callback, delay)
   }
 }
+
+export class LimitedMap extends Map {
+  constructor(maxSize) {
+    super()
+    this.maxSize = maxSize
+  }
+
+  set(key, value) {
+    if (!this.has(key) && this.size >= this.maxSize) {
+      const firstKey = this.keys().next().value
+      this.delete(firstKey)
+    }
+    return super.set(key, value)
+  }
+}
+
+export class LimitedSet extends Set {
+  constructor(maxSize) {
+    super()
+    this.maxSize = maxSize
+  }
+
+  add(value) {
+    if (this.size >= this.maxSize) {
+      const iterator = this.values()
+      const oldestValue = iterator.next().value
+      this.delete(oldestValue)
+    }
+    super.add(value)
+  }
+}

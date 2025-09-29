@@ -1,5 +1,4 @@
-import { LimitedSet } from "./limited_set"
-import { LimitedMap } from "./limited_map"
+import { LimitedSet, LimitedMap } from "../../util"
 
 export class RecentRequestsTracker {
   constructor(limit = 20) {

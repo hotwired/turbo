@@ -1,5 +1,5 @@
 import { assert } from "@open-wc/testing"
-import { LimitedMap } from "../../core/drive/limited_map"
+import { LimitedMap } from "../../util"
 
 test("add a limited number of elements", () => {
   const map = new LimitedMap(3)
