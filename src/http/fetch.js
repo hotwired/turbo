@@ -14,6 +14,14 @@ async function fetchWithTurboHeaders(url, options = {}) {
     headers: modifiedHeaders
   })
 
+  if (shouldMarkUrlAsRefreshed(response, options)) {
+    recentRequests.markUrlAsRefreshed(requestUID, response.url)
+  }
+
+  return response
+}
+
+function shouldMarkUrlAsRefreshed(response, options) {
   // Mark the redirected URL as refreshed for this request ID when it's not
   // a Turbo frame request (normal navigation or escaping one via
   // data-turbo-frame="_top"), since it's where the user will be sent to and
@@ -21,11 +29,7 @@ async function fetchWithTurboHeaders(url, options = {}) {
   //
   // If it's within a Turbo frame, we don't consider it refreshed because the
   // content outside the frame will be discarded.
-  if (response.ok && response.redirected && !options?.headers?.["Turbo-Frame"]) {
-    recentRequests.markUrlAsRefreshed(requestUID, response.url)
-  }
-
-  return response
+  return response.ok && response.redirected && !options?.headers?.["Turbo-Frame"]
 }
 
 export { fetchWithTurboHeaders as fetch }
