@@ -110,6 +110,15 @@ export class FrameController {
     }
   }
 
+  headlessChanged() {
+    // No action needed on attribute change. This method is required because
+    // "headless" is in FrameElement.observedAttributes, which triggers
+    // attributeChangedCallback, which calls this delegate method.
+    //
+    // The headless attribute is evaluated while extractForeignFrameElement
+    // processes the response.
+  }
+
   async #loadSourceURL() {
     if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
       this.element.loaded = this.#visit(expandURL(this.sourceURL))
@@ -440,6 +449,14 @@ export class FrameController {
     const id = CSS.escape(this.id)
 
     try {
+      // If headless mode is enabled, wrap the entire response body in a synthetic frame
+      if (this.element.headless) {
+        const syntheticFrame = document.createElement("turbo-frame")
+        syntheticFrame.setAttribute("id", this.id)
+        syntheticFrame.append(...container.cloneNode(true).childNodes)
+        return syntheticFrame
+      }
+
       element = activateElement(container.querySelector(`turbo-frame#${id}`), this.sourceURL)
       if (element) {
         return element

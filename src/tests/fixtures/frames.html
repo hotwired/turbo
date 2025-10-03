@@ -153,5 +153,14 @@
     <a id="below-the-fold-link-frame-action" data-turbo-action="advance" data-turbo-frame="frame" href="/src/tests/fixtures/frames/frame.html">Navigate #frame</a>
 
     <a id="link-to-eager-loaded-frame" href="/__turbo/redirect?path=/src/tests/fixtures/page_with_eager_frame.html">Eager-loaded frame after GET redirect</a>
+
+    <turbo-frame id="headless" headless>
+      <h2>Frames: #headless</h2>
+      <p>This is a headless frame that accepts any response</p>
+      <a id="link-headless" href="/src/tests/fixtures/frames/headless_response.html">Load headless response</a>
+      <a id="link-headless-with-scripts" href="/src/tests/fixtures/frames/headless_response_with_scripts.html">Load headless with scripts</a>
+    </turbo-frame>
+
+    <a id="outside-headless-link" href="/src/tests/fixtures/frames/headless_response.html" data-turbo-frame="headless">Navigate headless from outside</a>
   </body>
 </html>

@@ -1065,3 +1065,47 @@ async function withoutChangingEventListenersCount(page, callback) {
 function frameScriptEvaluationCount(page) {
   return page.evaluate(() => window.frameScriptEvaluationCount)
 }
+
+// Headless frame tests
+test("headless frame accepts response without matching turbo-frame", async ({ page }) => {
+  await page.click("#link-headless")
+  await nextEventOnTarget(page, "headless", "turbo:frame-load")
+
+  const content = await page.textContent("#headless #headless-content")
+  assert.equal(content, "This content has no turbo-frame wrapper")
+
+  const hasAdditionalData = await hasSelector(page, "#headless #additional-data")
+  assert.ok(hasAdditionalData, "headless frame should contain all response body content")
+})
+
+test("headless frame does not dispatch turbo:frame-missing event", async ({ page }) => {
+  await page.click("#link-headless")
+
+  assert.ok(await noNextEventNamed(page, "turbo:frame-missing"), "should not dispatch frame-missing event")
+
+  await nextEventOnTarget(page, "headless", "turbo:frame-load")
+  const content = await page.textContent("#headless #headless-content")
+  assert.equal(content, "This content has no turbo-frame wrapper")
+})
+
+test("headless frame executes scripts from response", async ({ page }) => {
+  await page.click("#link-headless-with-scripts")
+  await nextEventOnTarget(page, "headless", "turbo:frame-load")
+
+  const scriptExecuted = await page.getAttribute("#headless #headless-script-content", "data-script-executed")
+  assert.equal(scriptExecuted, "true", "scripts in headless frame response should be executed")
+})
+
+test("headless frame replaces all previous content with response body", async ({ page }) => {
+  const originalContent = await page.textContent("#headless h2")
+  assert.equal(originalContent, "Frames: #headless")
+
+  await page.click("#link-headless")
+  await nextEventOnTarget(page, "headless", "turbo:frame-load")
+
+  const hasOriginalH2 = await hasSelector(page, "#headless h2")
+  assert.notOk(hasOriginalH2, "original content should be replaced")
+
+  const newHeading = await page.textContent("#headless h1")
+  assert.equal(newHeading, "Plain Response Without Frame")
+})

@@ -25,7 +25,7 @@ export class FrameElement extends HTMLElement {
   loaded = Promise.resolve()
 
   static get observedAttributes() {
-    return ["disabled", "loading", "src"]
+    return ["disabled", "loading", "src", "headless"]
   }
 
   constructor() {
@@ -52,6 +52,8 @@ export class FrameElement extends HTMLElement {
       this.delegate.sourceURLChanged()
     } else if (name == "disabled") {
       this.delegate.disabledChanged()
+    } else if (name == "headless") {
+      this.delegate.headlessChanged()
     }
   }
 
@@ -154,6 +156,30 @@ export class FrameElement extends HTMLElement {
       this.setAttribute("autoscroll", "")
     } else {
       this.removeAttribute("autoscroll")
+    }
+  }
+
+  /**
+   * Gets the headless state of the frame.
+   *
+   * If true, the frame will accept any response content without requiring
+   * a matching turbo-frame element in the response.
+   */
+  get headless() {
+    return this.hasAttribute("headless")
+  }
+
+  /**
+   * Sets the headless state of the frame.
+   *
+   * If true, the frame will accept any response content without requiring
+   * a matching turbo-frame element in the response.
+   */
+  set headless(value) {
+    if (value) {
+      this.setAttribute("headless", "")
+    } else {
+      this.removeAttribute("headless")
     }
   }
 
