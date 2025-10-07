@@ -95,7 +95,10 @@
         <button id="change-frame-id-to-different-nested-child" type="button">Change id to different-nested-child</button>
         <a href="/src/tests/fixtures/frames/frame.html">Load #nested-child</a>
         <a href="/src/tests/fixtures/one.html" data-turbo-frame="_top">Visit one.html</a>
-
+        <a id="link-parent" href="/src/tests/fixtures/frames/parent.html" data-turbo-frame="_parent">Navigate parent</a>
+        <form action="/src/tests/fixtures/frames/parent.html" data-turbo-frame="_parent">
+          <button id="form-submit-parent">Submit to parent</button>
+        </form>
         <form method="get" action="/src/tests/fixtures/one.html" data-turbo-frame="_top">
           <input id="nested-child-navigate-form-top-submit" type="submit" value="Nested Child form submit">
         </form>

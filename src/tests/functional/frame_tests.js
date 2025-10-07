@@ -441,6 +441,69 @@ test("following a link that declares data-turbo-frame='_self' within a frame wit
   assert.equalIgnoringWhitespace(frame, "Replaced only the frame")
 })
 
+test("following a link with data-turbo-frame='_parent' within a nested frame navigates the parent frame", async ({
+  page
+}) => {
+  assert.ok(await hasSelector(page, "#nested-child"), "child frame exists before navigation")
+  assert.equal(await page.textContent("#nested-root h2"), "Frames: #nested-root")
+
+  await page.click("#nested-child #link-parent")
+  await nextBeat()
+
+  const nestedRootContent = await page.textContent("#nested-root h2")
+  assert.equal(nestedRootContent, "Parent: Loaded", "parent frame content updated")
+
+  assert.notOk(await hasSelector(page, "#nested-child"), "child frame removed when parent navigates")
+
+  const nestedRootSrc = await attributeForSelector(page, "#nested-root", "src")
+  assert.ok(nestedRootSrc?.includes("/src/tests/fixtures/frames/parent.html"), "parent frame src updated")
+})
+
+test("submitting a form with data-turbo-frame='_parent' within a nested frame navigates the parent frame", async ({
+  page
+}) => {
+  await page.click("#nested-child #form-submit-parent")
+  await nextBeat()
+
+  const nestedRootContent = await page.textContent("#nested-root h2")
+  assert.equal(nestedRootContent, "Parent: Loaded", "parent frame content updated via form")
+
+  assert.notOk(await hasSelector(page, "#nested-child"), "child frame removed after form submission to parent")
+
+  const nestedRootSrc = await attributeForSelector(page, "#nested-root", "src")
+  assert.ok(nestedRootSrc?.includes("/src/tests/fixtures/frames/parent.html"), "parent frame src updated via form")
+})
+
+test("following a link with data-turbo-frame='_parent' in a top-level frame navigates the page", async ({ page }) => {
+  await page.locator("#frame").evaluate((frame) => {
+    const link = document.createElement("a")
+    link.id = "top-level-parent-link"
+    link.href = "/src/tests/fixtures/one.html"
+    link.setAttribute("data-turbo-frame", "_parent")
+    link.textContent = "Navigate parent (no parent exists)"
+    frame.appendChild(link)
+  })
+
+  await page.click("#top-level-parent-link")
+  await nextBeat()
+
+  const pageTitle = await page.textContent("body > h1")
+  assert.equal(pageTitle, "One", "navigates the page when no parent frame exists (like _top)")
+  assert.notOk(await hasSelector(page, "#frame"), "frame no longer exists after page navigation")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+})
+
+test("following a link with data-turbo-frame='_parent' when parent frame is disabled navigates the page", async ({ page }) => {
+  await page.locator("#nested-root").evaluate((frame) => frame.setAttribute("disabled", ""))
+
+  await page.click("#nested-child #link-parent")
+  await nextBeat()
+
+  const pageTitle = await page.textContent("body > h1")
+  assert.equal(pageTitle, "Nested Root: Parent", "navigates the page when parent frame is disabled")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/parent.html")
+})
+
 test("following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
   page
 }) => {
