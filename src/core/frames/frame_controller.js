@@ -10,7 +10,8 @@ import {
   markAsBusy,
   uuid,
   getHistoryMethodForAction,
-  getVisitAction
+  getVisitAction,
+  findClosestRecursively
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
@@ -432,6 +433,12 @@ export class FrameController {
 
   #findFrameElement(element, submitter) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
+    if (id === "_parent") {
+      const parentFrame = findClosestRecursively(this.element.parentElement, "turbo-frame")
+      if (parentFrame) {
+        return parentFrame
+      }
+    }
     return getFrameElementById(id) ?? this.element
   }
 
