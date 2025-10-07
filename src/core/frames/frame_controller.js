@@ -482,6 +482,13 @@ export class FrameController {
       return false
     }
 
+    if (id === "_parent") {
+      const parentFrame = findClosestRecursively(this.element.parentElement, "turbo-frame")
+      if (!parentFrame || parentFrame.disabled) {
+        return false
+      }
+    }
+
     if (id) {
       const frameElement = getFrameElementById(id)
       if (frameElement) {
