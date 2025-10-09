@@ -36,8 +36,9 @@ export class FrameController {
   #shouldMorphFrame = false
   action = null
 
-  constructor(element) {
+  constructor(element, delegate = session) {
     this.element = element
+    this.delegate = delegate
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
     this.formLinkClickObserver = new FormLinkClickObserver(this, this.element)
@@ -278,7 +279,7 @@ export class FrameController {
   viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
 
   preloadOnLoadLinksForView(element) {
-    session.preloadOnLoadLinksForView(element)
+    this.delegate.preloadOnLoadLinksForView(element)
   }
 
   viewInvalidated() {}
@@ -313,12 +314,25 @@ export class FrameController {
 
       await this.view.render(renderer)
       this.complete = true
-      session.frameRendered(fetchResponse, this.element)
-      session.frameLoaded(this.element)
+      this.frameRendered(this.element, fetchResponse)
+      this.frameLoaded(this.element)
+
       await this.fetchResponseLoaded(fetchResponse)
     } else if (this.#willHandleFrameMissingFromResponse(fetchResponse)) {
       this.#handleFrameMissingFromResponse(fetchResponse)
     }
+  }
+
+  frameLoaded(frame) {
+    return dispatch("turbo:frame-load", { target: frame })
+  }
+
+  frameRendered(frame, fetchResponse) {
+    return dispatch("turbo:frame-render", {
+      detail: { fetchResponse },
+      target: frame,
+      cancelable: true
+    })
   }
 
   async #visit(url) {
@@ -370,7 +384,7 @@ export class FrameController {
 
           if (this.action) options.action = this.action
 
-          session.visit(frame.src, options)
+          this.delegate.visit(frame.src, options)
         }
       }
     }
@@ -379,7 +393,7 @@ export class FrameController {
   changeHistory() {
     if (this.action) {
       const method = getHistoryMethodForAction(this.action)
-      session.history.update(method, expandURL(this.element.src || ""), this.restorationIdentifier)
+      this.delegate.history.update(method, expandURL(this.element.src || ""), this.restorationIdentifier)
     }
   }
 
@@ -427,7 +441,7 @@ export class FrameController {
     const responseHTML = await wrapped.responseHTML
     const { location, redirected, statusCode } = wrapped
 
-    return session.visit(location, { response: { redirected, statusCode, responseHTML } })
+    return this.delegate.visit(location, { response: { redirected, statusCode, responseHTML } })
   }
 
   #findFrameElement(element, submitter) {
@@ -482,11 +496,11 @@ export class FrameController {
       }
     }
 
-    if (!session.elementIsNavigatable(element)) {
+    if (!this.delegate.elementIsNavigatable(element)) {
       return false
     }
 
-    if (submitter && !session.elementIsNavigatable(submitter)) {
+    if (submitter && !this.delegate.elementIsNavigatable(submitter)) {
       return false
     }
 

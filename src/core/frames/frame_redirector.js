@@ -4,8 +4,8 @@ import { LinkInterceptor } from "./link_interceptor"
 import { expandURL, getAction, locationIsVisitable } from "../url"
 
 export class FrameRedirector {
-  constructor(session, element) {
-    this.session = session
+  constructor(delegate, element) {
+    this.delegate = delegate
     this.element = element
     this.linkInterceptor = new LinkInterceptor(this, element)
     this.formSubmitObserver = new FormSubmitObserver(this, element)
@@ -62,8 +62,8 @@ export class FrameRedirector {
   #shouldRedirect(element, submitter) {
     const isNavigatable =
       element instanceof HTMLFormElement
-        ? this.session.submissionIsNavigatable(element, submitter)
-        : this.session.elementIsNavigatable(element)
+        ? this.delegate.submissionIsNavigatable(element, submitter)
+        : this.delegate.elementIsNavigatable(element)
 
     if (isNavigatable) {
       const frame = this.#findFrameElement(element, submitter)
