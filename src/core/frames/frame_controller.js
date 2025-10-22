@@ -351,27 +351,7 @@ export class FrameController {
     this.action = action
 
     if (this.action) {
-      const pageSnapshot = PageSnapshot.fromElement(frame).clone()
-      const { visitCachedSnapshot } = frame.delegate
-
       frame.delegate.fetchResponseLoaded = async (fetchResponse) => {
-        if (frame.src) {
-          const { statusCode, redirected } = fetchResponse
-          const responseHTML = await fetchResponse.responseHTML
-          const response = { statusCode, redirected, responseHTML }
-          const options = {
-            response,
-            visitCachedSnapshot,
-            willRender: false,
-            updateHistory: false,
-            restorationIdentifier: this.restorationIdentifier,
-            snapshot: pageSnapshot
-          }
-
-          if (this.action) options.action = this.action
-
-          session.visit(frame.src, options)
-        }
       }
     }
   }
