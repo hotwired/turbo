@@ -98,7 +98,7 @@ export function uuid() {
       } else if (i == 19) {
         return (Math.floor(Math.random() * 4) + 8).toString(16)
       } else {
-        return Math.floor(Math.random() * 15).toString(16)
+        return Math.floor(Math.random() * 16).toString(16)
       }
     })
     .join("")
