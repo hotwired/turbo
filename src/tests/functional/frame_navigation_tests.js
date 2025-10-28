@@ -63,6 +63,17 @@ test("lazy-loaded frame promotes navigation", async ({ page }) => {
   assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame_for_eager.html")
 })
 
+test("lazy-loading frame with root margin", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation_lazy.html")
+
+  assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Not Loaded")
+
+  await page.locator("#load-frame-trigger").evaluate(el => el.scrollIntoView(false))
+  await nextEventOnTarget(page, "eager-loaded-frame", "turbo:frame-load")
+
+  assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Loaded")
+})
+
 test("promoted frame navigation updates the URL before rendering", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
 
