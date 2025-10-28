@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Conversation Show</title>
+  </head>
+  <body>
+    <turbo-frame id="modal">
+      <div class="modal">
+        <h2>Conversation 1 Details</h2>
+        <p>Current Name: A</p>
+
+        <div class="forms-container">
+          <!-- Form to simulate updating the conversation and redirect to conversation show page within modal Turbo frame -->
+          <form
+            id="form-to-update-conversation-and-redirect-to-conversations-show-inside-modal-frame"
+            method="post"
+            action="/__turbo/simple-redirect"
+          >
+            <h3>Update conversation and redirect to conversation show page inside modal Turbo frame</h3>
+            <input type="hidden" name="path" value="/src/tests/fixtures/conversations/show_updated.html" />
+            <button
+              type="submit"
+              id="submit-button-to-update-conversation-and-redirect-to-conversations-show-inside-modal-frame"
+            >
+              Update name to D redirecting to conversation show updated inside modal frame
+            </button>
+            <details>
+              <summary>Explanation</summary>
+              <p>
+                On the next page, a refesh should happen because only the content inside the Turbo frame will be updated
+                and thus, the content outside it is stale. Only one refresh should be processed.
+              </p>
+              <p>
+                This is the recommended approach is you want to update the conversation on both the modal and the
+                conversations index.
+              </p>
+            </details>
+          </form>
+
+          <!-- Form to simulate updating the conversation and redirect to conversation show page outside modal Turbo frame -->
+          <form
+            id="form-to-update-conversation-and-redirect-to-conversations-show-outside-modal-frame"
+            method="post"
+            action="/__turbo/simple-redirect"
+            data-turbo-frame="_top"
+          >
+            <h3>Update conversation and redirect to conversation show page outside modal Turbo frame</h3>
+            <input type="hidden" name="path" value="/src/tests/fixtures/conversations/show_updated.html" />
+            <button
+              type="submit"
+              id="submit-button-to-update-conversation-and-redirect-to-conversations-show-outside-modal-frame"
+            >
+              Update name to D redirecting to conversation show updated outside modal frame
+            </button>
+            <details>
+              <summary>Explanation</summary>
+              <p>
+                On the next page, a refesh should NOT happen because we're exiting the Turbo frame and thus the content
+                is already fresh.
+              </p>
+              <p>This approach would take you to the conversation show page, outside the modal's Turbo frame.</p>
+            </details>
+          </form>
+        </div>
+        <div class="forms-container">
+          <!-- Form to simulate updating the conversation and redirect to conversations index inside modal Turbo frame -->
+          <form
+            id="form-to-update-conversation-and-redirect-to-conversations-index-inside-modal-frame"
+            method="post"
+            action="/__turbo/simple-redirect"
+          >
+            <h3>Update conversation and redirect to conversations index inside modal Turbo frame</h3>
+            <input type="hidden" name="path" value="/src/tests/fixtures/conversations/index_updated.html" />
+            <button
+              type="submit"
+              id="submit-button-to-update-conversation-and-redirect-to-conversations-index-inside-modal-frame"
+            >
+              Update name to D redirecting to conversations index updated inside modal frame
+            </button>
+            <details>
+              <summary>Explanation</summary>
+              <p>
+                On the next page, a refresh should happen because, since we're still inside the Turbo frame, the
+                incoming updated conversation's index page only has an empty Turbo frame and since the updated content
+                is outside it, it will be discarded. Only one refresh should be processed.
+              </p>
+              <p>This approach would only update the conversations index, not the modal.</p>
+              <p>
+                It will also "close" the slideout/modal because the incoming HTML has an empty Turbo frame and we're not
+                exiting the Turbo frame, so the slideout/modal content will be replaced by empty HTML.
+              </p>
+            </details>
+          </form>
+
+          <!-- Form to simulate updating the conversation and redirect to conversations index outside modal Turbo frame -->
+          <form
+            id="form-to-update-conversation-and-redirect-to-conversations-index-outside-modal-frame"
+            method="post"
+            action="/__turbo/simple-redirect"
+            data-turbo-frame="_top"
+          >
+            <h3>Update conversation and redirect to conversations index outside modal Turbo frame</h3>
+            <input type="hidden" name="path" value="/src/tests/fixtures/conversations/index_updated.html" />
+            <button
+              type="submit"
+              id="submit-button-to-update-conversation-and-redirect-to-conversations-index-outside-modal-frame"
+            >
+              Update name to D redirecting to conversations index updated outside modal frame
+            </button>
+            <details>
+              <summary>Explanation</summary>
+              <p>
+                On the next page, a refresh should NOT happen, because we exited the Turbo frame and thus the content is
+                already fresh.
+              </p>
+              <p>This approach would only update the conversations index, not the modal.</p>
+              <p>
+                It will not "close" the slideout/modal because we're exiting the Turbo frame, and even though the
+                incoming HTML has an empty Turbo frame, the data-turbo-permanent attribute will prevent its content from
+                being replaced by empty HTML.
+              </p>
+            </details>
+          </form>
+        </div>
+        <div class="forms-container">
+          <!-- Form to simulate updating the conversation and rendering 422 status code inside modal Turbo frame -->
+          <form
+            id="form-to-update-conversation-and-render-422-status-code-inside-modal-frame"
+            method="post"
+            action="/__turbo/reject/morph"
+          >
+            <h3>Update conversation and render 422 status code inside modal Turbo frame</h3>
+            <input type="hidden" name="status" value="422" />
+            <input type="hidden" name="path" value="/src/tests/fixtures/conversations/show_422_morph.html" />
+            <button
+              type="submit"
+              id="submit-button-to-update-conversation-and-render-422-status-code-inside-modal-frame"
+            >
+              Update name to D rendering 422 status code inside modal frame
+            </button>
+            <details>
+              <summary>Explanation</summary>
+              <p>
+                On the next page, a refresh should NOT happen, because the server couldn't process the request and
+                whatever we're rendering back is already fresh. Even though the content outside the Turbo frame is
+                stale, refreshing the page would just show the same content again.
+              </p>
+            </details>
+          </form>
+
+          <!-- Form to simulate updating the conversation and rendering 422 status code outside modal Turbo frame -->
+          <form
+            id="form-to-update-conversation-and-render-422-status-code-outside-modal-frame"
+            method="post"
+            action="/__turbo/reject/morph"
+            data-turbo-frame="_top"
+          >
+            <h3>Update conversation and render 422 status code outside modal Turbo frame</h3>
+            <input type="hidden" name="status" value="422" />
+            <input type="hidden" name="path" value="/src/tests/fixtures/conversations/show_422_morph.html" />
+            <button
+              type="submit"
+              id="submit-button-to-update-conversation-and-render-422-status-code-outside-modal-frame"
+            >
+              Update name to D rendering 422 status code outside modal frame
+            </button>
+            <details>
+              <summary>Explanation</summary>
+              <p>
+                On the next page, a refresh should NOT happen, because the server couldn't process the request and
+                whatever we're rendering back is already fresh. Even though the content outside the Turbo frame is
+                stale, refreshing the page would just show the same content again.
+              </p>
+            </details>
+          </form>
+        </div>
+      </div>
+    </turbo-frame>
+  </body>
+</html>

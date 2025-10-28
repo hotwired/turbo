@@ -106,9 +106,13 @@ export class Session {
   }
 
   refresh(url, requestId) {
-    const isRecentRequest = requestId && this.recentRequests.has(requestId)
+    const hasAlreadyRefreshedThisUrl = requestId && this.recentRequests.hasRefreshedUrl(requestId, url)
     const isCurrentUrl = url === document.baseURI
-    if (!isRecentRequest && !this.navigator.currentVisit && isCurrentUrl) {
+
+    if (!hasAlreadyRefreshedThisUrl && !this.navigator.currentVisit && isCurrentUrl) {
+      if (requestId) {
+        this.recentRequests.markUrlAsRefreshed(requestId, url)
+      }
       this.visit(url, { action: "replace", shouldCacheSnapshot: false })
     }
   }

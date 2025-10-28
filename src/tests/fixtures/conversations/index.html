@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Conversations Index</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+
+    <style>
+      form {
+        border: 1px solid;
+        margin: 15px;
+        padding: 10px;
+      }
+
+      .modal {
+        position: fixed;
+        top: 3%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border: 1px solid #ccc;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        z-index: 10;
+        max-width: 80vw;
+        width: 100%;
+        height: 60rem;
+        overflow-y: scroll;
+      }
+
+      .forms-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .forms-container form {
+        flex: 1;
+        min-width: 200px;
+        margin: 5px;
+      }
+    </style>
+
+    <script>
+      let lastRequestId
+
+      document.addEventListener("turbo:load", () => {
+        document.addEventListener("click", (event) => {
+          if (event.target.id === "generate-refresh") {
+            if (!lastRequestId) {
+              // Simulate the server preserving the request ID and sending as
+              // many refreshes as it would send. e.g. for Rails: a manual
+              // broadcast_refresh_later, a manual broadcast_refresh and/or an
+              // automatic one via broadcasts_refreshes.
+
+              const requestIds = Array.from(window.Turbo.session.recentRequests.requestIds)
+              lastRequestId = requestIds[requestIds.length - 1]
+            }
+            const html = `<turbo-stream action="refresh"${
+              lastRequestId ? ` request-id="${lastRequestId}"` : ""
+            }></turbo-stream>`
+            document.body.insertAdjacentHTML("beforeend", html)
+          }
+        })
+      })
+    </script>
+  </head>
+  <body>
+    <h1>Conversations Index</h1>
+
+    <div id="content">
+      <a href="/src/tests/fixtures/conversations/show.html" data-turbo-frame="modal" id="conversation-1">
+        Conversation 1 - Name A
+      </a>
+    </div>
+
+    <!-- Empty turbo-frame representing a slideout/modal that will be populated when clicking a conversation. -->
+    <!-- data-turbo-permanent allows you to keep it open to see its contents change -->
+    <turbo-frame id="modal" data-turbo-permanent></turbo-frame>
+
+    <button id="generate-refresh">Generate Refresh</button>
+
+    <ul>
+      <li>
+        If this page loaded for the first time, clicking the button is like receiving a refresh from the server without
+        a request ID, the first one will be processed and any subsequent refreshes will be discarded.
+      </li>
+      <li>
+        If the page comes from a redirect, such as a form submission that redirects to this page, clicking the button is
+        like receiving a refresh from the server with a request ID, the first one will be processed and any subsequent
+        refreshes will be discarded.
+      </li>
+    </ul>
+  </body>
+</html>

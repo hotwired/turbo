@@ -1,5 +1,5 @@
 import { assert } from "@open-wc/testing"
-import { LimitedSet } from "../../core/drive/limited_set"
+import { LimitedSet } from "../../util"
 
 test("add a limited number of elements", () => {
   const set = new LimitedSet(3)

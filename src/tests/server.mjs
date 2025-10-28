@@ -23,6 +23,11 @@ router.use((request, response, next) => {
   }
 })
 
+router.post("/simple-redirect", (request, response) => {
+  const { path } = request.body
+  response.redirect(303, path)
+})
+
 router.post("/redirect", (request, response) => {
   const { path, sleep, ...query } = request.body
   const { pathname, query: searchParams } = url.parse(
@@ -62,8 +67,9 @@ router.post("/reject/tall", (request, response) => {
 })
 
 router.post("/reject/morph", (request, response) => {
-  const { status } = request.body
-  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_morph.html`)
+  const { status, path: requestPath } = request.body
+  const { pathname } = url.parse(requestPath ?? "/src/tests/fixtures/422_morph.html", true)
+  const fixture = path.join(__dirname, `../../${pathname}`)
 
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
