@@ -253,6 +253,21 @@ test("navigated frames without refresh attribute are reset after morphing", asyn
   )
 })
 
+test("frames with refresh='morph' are preserved when missing from new content", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => {
+    const frame = document.getElementById("refresh-morph")
+    frame.id = "missing-frame" // Change ID so to simulate a removed frame
+  })
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBeat()
+
+  assert.ok(await hasSelector(page, "#missing-frame"), "the frame is preserved")
+})
+
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
