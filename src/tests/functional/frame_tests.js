@@ -426,6 +426,80 @@ test("following a link that declares data-turbo-frame='_self' within a frame wit
   assert.equalIgnoringWhitespace(frame, "Replaced only the frame")
 })
 
+test("following a link with data-turbo-frame='_parent' within a nested frame navigates the parent frame", async ({
+  page
+}) => {
+  assert.ok(await hasSelector(page, "#nested-child"), "child frame exists before navigation")
+  assert.equal(await page.textContent("#nested-root h2"), "Frames: #nested-root")
+
+  await page.click("#nested-child #link-parent")
+  await nextBeat()
+
+  const nestedRootContent = await page.textContent("#nested-root h2")
+  assert.equal(nestedRootContent, "Parent: Loaded", "parent frame content updated")
+
+  assert.notOk(await hasSelector(page, "#nested-child"), "child frame removed when parent navigates")
+
+  const nestedRootSrc = await attributeForSelector(page, "#nested-root", "src")
+  assert.ok(nestedRootSrc?.includes("/src/tests/fixtures/frames/parent.html"), "parent frame src updated")
+})
+
+test("submitting a form with data-turbo-frame='_parent' within a nested frame navigates the parent frame", async ({
+  page
+}) => {
+  await page.click("#nested-child #form-submit-parent")
+  await nextBeat()
+
+  const nestedRootContent = await page.textContent("#nested-root h2")
+  assert.equal(nestedRootContent, "Parent: Loaded", "parent frame content updated via form")
+
+  assert.notOk(await hasSelector(page, "#nested-child"), "child frame removed after form submission to parent")
+
+  const nestedRootSrc = await attributeForSelector(page, "#nested-root", "src")
+  assert.ok(nestedRootSrc?.includes("/src/tests/fixtures/frames/parent.html"), "parent frame src updated via form")
+})
+
+test("following a link with data-turbo-frame='_parent' navigates only the immediate parent frame", async ({ page }) => {
+  assert.ok(await hasSelector(page, "#nested-grandchild"), "grandchild frame exists before navigation")
+  assert.equal(await page.textContent("#nested-child h2"), "Frames: #nested-child")
+  assert.equal(await page.textContent("#nested-root h2"), "Frames: #nested-root")
+
+  await page.click("#nested-grandchild #grandchild-link-parent")
+  await nextBeat()
+
+  const nestedChildContent = await page.textContent("#nested-child h2")
+  assert.equal(nestedChildContent, "Frame: Loaded", "immediate parent frame (#nested-child) was updated")
+
+  const nestedRootContent = await page.textContent("#nested-root h2")
+  assert.equal(nestedRootContent, "Frames: #nested-root", "grandparent frame (#nested-root) was NOT updated")
+
+  assert.notOk(await hasSelector(page, "#nested-grandchild"), "grandchild frame removed when parent navigates")
+})
+
+test("following a link with data-turbo-frame='_parent' in a top-level frame navigates the page", async ({ page }) => {
+  assert.equal(await attributeForSelector(page, "#top-level-parent", "src"), null)
+
+  await page.click("#top-level-parent a")
+  await nextBeat()
+
+  const frameText = await page.textContent("body > h1")
+  assert.equal(frameText, "One")
+  assert.notOk(await hasSelector(page, "#top-level-parent a"))
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await searchParams(page.url()).get("key"), "value")
+})
+
+test("following a link with data-turbo-frame='_parent' when parent frame is disabled navigates the page", async ({ page }) => {
+  await page.locator("#nested-root").evaluate((frame) => frame.setAttribute("disabled", ""))
+
+  await page.click("#nested-child #link-parent")
+  await nextBeat()
+
+  const pageTitle = await page.textContent("body > h1")
+  assert.equal(pageTitle, "Nested Root: Parent", "navigates the page when parent frame is disabled")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/parent.html")
+})
+
 test("following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
   page
 }) => {
