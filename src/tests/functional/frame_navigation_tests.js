@@ -36,12 +36,19 @@ test("frame navigation with data-turbo-action", async ({ page }) => {
   await nextBeat()
 
   await nextEventOnTarget(page, "empty-head", "turbo:frame-load")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/empty_head.html")
 
-  const frameText = await page.textContent("#empty-head h2")
+  let frameText = await page.textContent("#empty-head h2")
   assert.equal(frameText, "Frame updated")
 
   const titleText = await page.textContent("h1")
   assert.equal(titleText, "Frame navigation tests")
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/frame_navigation.html")
+  frameText = await page.textContent("#empty-head #link-to-frame-with-empty-head")
+  assert.equal(frameText, 'About (a link with data-turbo-action="advance")')
 })
 
 test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {
