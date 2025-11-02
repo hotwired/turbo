@@ -1,5 +1,3 @@
-import { expandURL } from "./core/url"
-
 export function activateScriptElement(element) {
   if (element.getAttribute("data-turbo-eval") == "false") {
     return element
@@ -254,10 +252,6 @@ export function findLinkFromClickTarget(target) {
   if (link.hasAttribute("target") && link.target !== "_self") return null
 
   return link
-}
-
-export function getLocationForLink(link) {
-  return expandURL(link.getAttribute("href") || "")
 }
 
 export function debounce(fn, delay) {

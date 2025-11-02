@@ -1,4 +1,5 @@
-import { doesNotTargetIFrame, findLinkFromClickTarget, getLocationForLink } from "../util"
+import { getLocationForLink } from "../core/url"
+import { doesNotTargetIFrame, findLinkFromClickTarget } from "../util"
 
 export class LinkClickObserver {
   started = false
