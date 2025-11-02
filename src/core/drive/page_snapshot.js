@@ -75,12 +75,12 @@ export class PageSnapshot extends Snapshot {
     return viewTransitionEnabled && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }
 
-  get shouldMorphPage() {
-    return this.getSetting("refresh-method") === "morph"
+  get refreshMethod() {
+    return this.getSetting("refresh-method")
   }
 
-  get shouldPreserveScrollPosition() {
-    return this.getSetting("refresh-scroll") === "preserve"
+  get refreshScroll() {
+    return this.getSetting("refresh-scroll")
   }
 
   // Private
