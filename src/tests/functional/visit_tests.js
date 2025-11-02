@@ -173,15 +173,15 @@ test("navigation by history is not cancelable", async ({ page }) => {
 
 test("turbo:before-fetch-request event.detail", async ({ page }) => {
   await page.click("#same-origin-link")
-  const { url, fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+  const { request: { url, method } } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.equal(fetchOptions.method, "GET")
+  assert.equal(method, "GET")
   assert.ok(url.includes("/src/tests/fixtures/one.html"))
 })
 
 test("turbo:before-fetch-request event.detail encodes searchParams", async ({ page }) => {
   await page.click("#same-origin-link-search-params")
-  const { url } = await nextEventNamed(page, "turbo:before-fetch-request")
+  const { request: { url } } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   assert.ok(url.includes("/src/tests/fixtures/one.html?key=value"))
 })
@@ -212,10 +212,10 @@ test("turbo:before-fetch-response open new site", async ({ page }) => {
 
 test("visits with data-turbo-stream include MIME type & search params", async ({ page }) => {
   await page.click("#stream-link")
-  const { fetchOptions, url } = await nextEventNamed(page, "turbo:before-fetch-request")
+  const { request } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
-  assert.equal(getSearchParam(url, "key"), "value")
+  assert.ok(request.headers["accept"].includes("text/vnd.turbo-stream.html"))
+  assert.equal(getSearchParam(request.url, "key"), "value")
 })
 
 test("visits with data-turbo-stream do not set aria-busy", async ({ page }) => {

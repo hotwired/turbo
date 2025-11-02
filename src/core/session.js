@@ -440,7 +440,15 @@ export class Session {
 
   notifyApplicationAfterFrameRender(fetchResponse, frame) {
     return dispatch("turbo:frame-render", {
-      detail: { fetchResponse },
+      detail: {
+        response: fetchResponse.response,
+
+        get fetchResponse() {
+          console.warn("`event.detail.fetchResponse` is deprecated. Use `event.detail.response` instead")
+
+          return fetchResponse
+        }
+      },
       target: frame,
       cancelable: true
     })

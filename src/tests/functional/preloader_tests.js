@@ -18,12 +18,12 @@ test("preloading dispatch turbo:before-fetch-{request,response} events", async (
   const link = await page.locator("#preload_anchor")
   const href = await link.evaluate((link) => link.href)
 
-  const { url, fetchOptions } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-request")
-  const { fetchResponse } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-response")
+  const { request } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-request")
+  const { response } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-response")
 
-  assert.equal(href, url, "dispatches request during preloading")
-  assert.equal(fetchOptions.headers.Accept, "text/html, application/xhtml+xml")
-  assert.equal(fetchResponse.response.url, href)
+  assert.equal(href, request.url, "dispatches request during preloading")
+  assert.equal(request.headers.accept, "text/html, application/xhtml+xml")
+  assert.equal(response.url, href)
 })
 
 test("preloads snapshot on page visit", async ({ page }) => {

@@ -6,22 +6,22 @@ class PrefetchCache {
 
   get(url) {
     if (this.#prefetched && this.#prefetched.url === url && this.#prefetched.expire > Date.now()) {
-      return this.#prefetched.request
+      return this.#prefetched.fetchRequest
     }
   }
 
-  setLater(url, request, ttl) {
+  setLater(url, fetchRequest, ttl) {
     this.clear()
 
     this.#prefetchTimeout = setTimeout(() => {
-      request.perform()
-      this.set(url, request, ttl)
+      fetchRequest.perform()
+      this.set(url, fetchRequest, ttl)
       this.#prefetchTimeout = null
     }, PREFETCH_DELAY)
   }
 
-  set(url, request, ttl) {
-    this.#prefetched = { url, request, expire: new Date(new Date().getTime() + ttl) }
+  set(url, fetchRequest, ttl) {
+    this.#prefetched = { url, fetchRequest, expire: new Date(new Date().getTime() + ttl) }
   }
 
   clear() {
