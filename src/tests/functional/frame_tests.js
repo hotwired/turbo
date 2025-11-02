@@ -507,7 +507,7 @@ test("'turbo:frame-render' is triggered after frame has finished rendering", asy
   await page.click("#frame-part")
 
   await nextEventNamed(page, "turbo:frame-render") // recursive
-  const { fetchResponse } = await nextEventNamed(page, "turbo:frame-render")
+  const { fetchResponse } = await nextEventNamed(page, "turbo:frame-render", { renderMethod: "replace" })
 
   assert.include(fetchResponse.response.url, "/src/tests/fixtures/frames/part.html")
 })
