@@ -33,6 +33,10 @@ export function locationIsVisitable(location, rootLocation) {
   return isPrefixedBy(location, rootLocation) && !config.drive.unvisitableExtensions.has(getExtension(location))
 }
 
+export function getLocationForLink(link) {
+  return expandURL(link.getAttribute("href") || "")
+}
+
 export function getRequestURL(url) {
   const anchor = getAnchor(url)
   return anchor != null ? url.href.slice(0, -(anchor.length + 1)) : url.href

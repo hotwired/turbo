@@ -1,6 +1,6 @@
+import { getLocationForLink } from "../core/url"
 import {
   dispatch,
-  getLocationForLink,
   getMetaContent,
   findClosestRecursively
 } from "../util"
