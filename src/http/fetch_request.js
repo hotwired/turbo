@@ -101,10 +101,17 @@ export class FetchRequest {
       credentials: this.request.credentials,
       redirect: this.request.redirect,
       method: this.method,
-      headers: Object.fromEntries(this.request.headers.entries()),
       body: this.body,
       signal: this.request.signal,
-      referrer: this.request.referrer
+      referrer: this.request.referrer,
+      headers: new Proxy(this.headers, {
+        get(object, property, receiver) {
+          return receiver.get(property)
+        },
+        set(object, property, value, receiver) {
+          receiver.set(property, value)
+        }
+      })
     }
   }
 
@@ -140,19 +147,17 @@ export class FetchRequest {
   }
 
   async receive(response) {
-    const { request } = this
     const fetchResponse = new FetchResponse(response)
     const event = dispatch("turbo:before-fetch-response", {
       cancelable: true,
       detail: {
-        request,
-        response,
-
         get fetchResponse() {
           console.warn("`event.detail.fetchResponse` is deprecated. Use `event.detail.response` instead")
 
           return fetchResponse
-        }
+        },
+        request: this.request,
+        response: response
       },
       target: this.target
     })

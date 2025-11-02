@@ -104,10 +104,10 @@ export class LinkPrefetchObserver {
           get fetchRequest() {
             console.warn("`event.detail.fetchRequest` is deprecated. Use `event.detail.request` instead")
 
-            return cached.fetchRequest
+            return cached
           },
 
-          request: cached.request.request
+          request: cached.request
         })
       }
 
