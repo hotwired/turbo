@@ -204,6 +204,20 @@ export function pathname(url) {
   return pathname
 }
 
+export function withPathname(value) {
+  return ({ pathname }) => pathname === value
+}
+
+export function withSearch(value) {
+  return ({ search }) => search === value
+}
+
+export function withSearchParam(name, value) {
+  return ({ searchParams }) => Array.isArray(value) ?
+    JSON.stringify(searchParams.getAll(name)) === JSON.stringify(value) :
+    searchParams.get(name) === value
+}
+
 export async function pathnameForIFrame(page, name) {
   const locator = await page.locator(`[name="${name}"]`)
   const location = await locator.evaluate((iframe) => iframe.contentWindow?.location)

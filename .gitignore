@@ -1,4 +1,5 @@
 /dist
 /node_modules
+/test-results
 *.log
 package-lock.json
