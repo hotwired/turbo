@@ -1,6 +1,16 @@
-import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js"
+import { Idiomorph } from "idiomorph"
+import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
+import { urlsAreEqual } from "./url"
 
+/**
+ * Morph the state of the currentElement based on the attributes and contents of
+ * the newElement. Morphing may dispatch turbo:before-morph-element,
+ * turbo:before-morph-attribute, and turbo:morph-element events.
+ *
+ * @param currentElement Element destination of morphing changes
+ * @param newElement Element source of morphing changes
+ */
 export function morphElements(currentElement, newElement, { callbacks, ...options } = {}) {
   Idiomorph.morph(currentElement, newElement, {
     ...options,
@@ -8,10 +18,37 @@ export function morphElements(currentElement, newElement, { callbacks, ...option
   })
 }
 
-export function morphChildren(currentElement, newElement) {
-  morphElements(currentElement, newElement.children, {
+/**
+ * Morph the child elements of the currentElement based on the child elements of
+ * the newElement. Morphing children may dispatch turbo:before-morph-element,
+ * turbo:before-morph-attribute, and turbo:morph-element events.
+ *
+ * @param currentElement Element destination of morphing children changes
+ * @param newElement Element source of morphing children changes
+ */
+export function morphChildren(currentElement, newElement, options = {}) {
+  morphElements(currentElement, newElement.childNodes, {
+    ...options,
     morphStyle: "innerHTML"
   })
+}
+
+export function shouldRefreshFrameWithMorphing(currentFrame, newFrame) {
+  return currentFrame instanceof FrameElement &&
+    currentFrame.shouldReloadWithMorph && (!newFrame || areFramesCompatibleForRefreshing(currentFrame, newFrame)) &&
+    !currentFrame.closest("[data-turbo-permanent]")
+}
+
+function areFramesCompatibleForRefreshing(currentFrame, newFrame) {
+  // newFrame cannot yet be an instance of FrameElement because custom
+  // elements don't get initialized until they're attached to the DOM, so
+  // test its Element#nodeName instead
+  return newFrame instanceof Element && newFrame.nodeName === "TURBO-FRAME" && currentFrame.id === newFrame.id &&
+  (!newFrame.getAttribute("src") || urlsAreEqual(currentFrame.src, newFrame.getAttribute("src")))
+}
+
+export function closestFrameReloadableWithMorphing(node) {
+  return node.parentElement.closest("turbo-frame[src][refresh=morph]")
 }
 
 class DefaultIdiomorphCallbacks {

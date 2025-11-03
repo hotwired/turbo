@@ -119,6 +119,27 @@ test("page refreshes cause a reload when assets change", async ({ page }) => {
   await expect(page.locator("#new-stylesheet")).toHaveCount(0)
 })
 
+test("reloading when assets change uses the response URL of a prior redirect", async ({page}) => {
+  const destinations = []
+
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname
+
+    if (path === "/__turbo/redirect") {
+      destinations.push("redirect")
+    } else if (path === "/src/tests/fixtures/link_redirect_target.html") {
+      destinations.push("target")
+    }
+  })
+
+  await page.goto("/src/tests/fixtures/link_redirect.html")
+  await page.click("#indirect")
+
+  await page.waitForURL("/src/tests/fixtures/link_redirect_target.html")
+
+  assert.sameMembers(destinations, ["redirect", "target", "target"], "redirects once")
+})
+
 test("renders a page refresh with morphing when the paths are the same but search params are different", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
@@ -232,6 +253,21 @@ test("navigated frames without refresh attribute are reset after morphing", asyn
   )
 })
 
+test("frames with refresh='morph' are preserved when missing from new content", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => {
+    const frame = document.getElementById("refresh-morph")
+    frame.id = "missing-frame" // Change ID so to simulate a removed frame
+  })
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextBeat()
+
+  assert.ok(await hasSelector(page, "#missing-frame"), "the frame is preserved")
+})
+
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
@@ -331,15 +367,37 @@ test("it preserves data-turbo-permanent elements that don't match when their ids
   await expect(page.locator("#preserve-me")).toHaveText("Preserve me, I have a family!")
 })
 
-test("renders unprocessable entity responses with morphing", async ({ page }) => {
+test("it preserves data-turbo-permanent children", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/permanent_children.html")
+
+  await page.evaluate(() => {
+    // simulate result of client-side drag-and-drop reordering
+    document.getElementById("first-li").before(document.getElementById("second-li"))
+
+    // set state of data-turbo-permanent checkbox
+    document.getElementById("second-checkbox").checked = true
+  })
+
+  // morph page back to original li ordering
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  // data-turbo-permanent checkbox should still be checked
+  assert.ok(
+    await hasSelector(page, "#second-checkbox:checked"),
+    "retains state of data-turbo-permanent child"
+  )
+})
+
+test("renders unprocessable content responses with morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
-  await page.click("#reject form.unprocessable_entity input[type=submit]")
+  await page.click("#reject form.unprocessable_content input[type=submit]")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextBody(page)
 
   const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
+  assert.equal(await title.textContent(), "Unprocessable Content", "renders the response HTML")
   assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
 })
 

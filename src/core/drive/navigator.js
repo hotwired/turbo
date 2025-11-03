@@ -117,6 +117,17 @@ export class Navigator {
     }
   }
 
+  // Link prefetching
+
+  linkPrefetchingIsEnabledForLocation(location) {
+    // Not all adapters implement linkPrefetchingIsEnabledForLocation
+    if (typeof this.adapter.linkPrefetchingIsEnabledForLocation === "function") {
+      return this.adapter.linkPrefetchingIsEnabledForLocation(location)
+    }
+
+    return true
+  }
+
   // Visit delegate
 
   visitStarted(visit) {

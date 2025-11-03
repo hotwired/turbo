@@ -69,10 +69,10 @@ export class StreamElement extends HTMLElement {
    * Gets the list of duplicate children (i.e. those with the same ID)
    */
   get duplicateChildren() {
-    const existingChildren = this.targetElements.flatMap((e) => [...e.children]).filter((c) => !!c.id)
-    const newChildrenIds = [...(this.templateContent?.children || [])].filter((c) => !!c.id).map((c) => c.id)
+    const existingChildren = this.targetElements.flatMap((e) => [...e.children]).filter((c) => !!c.getAttribute("id"))
+    const newChildrenIds = [...(this.templateContent?.children || [])].filter((c) => !!c.getAttribute("id")).map((c) => c.getAttribute("id"))
 
-    return existingChildren.filter((c) => newChildrenIds.includes(c.id))
+    return existingChildren.filter((c) => newChildrenIds.includes(c.getAttribute("id")))
   }
 
   /**

@@ -78,6 +78,8 @@ export class LinkPrefetchObserver {
           target
         )
 
+        fetchRequest.fetchOptions.priority = "low"
+
         prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
       }
     }

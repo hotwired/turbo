@@ -386,16 +386,6 @@ export class Visit {
 
   // Private
 
-  getHistoryMethodForAction(action) {
-    switch (action) {
-      case "replace":
-        return history.replaceState
-      case "advance":
-      case "restore":
-        return history.pushState
-    }
-  }
-
   hasPreloadedResponse() {
     return typeof this.response == "object"
   }

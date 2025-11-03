@@ -107,7 +107,8 @@ export class Session {
 
   refresh(url, requestId) {
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
-    if (!isRecentRequest && !this.navigator.currentVisit) {
+    const isCurrentUrl = url === document.baseURI
+    if (!isRecentRequest && !this.navigator.currentVisit && isCurrentUrl) {
       this.visit(url, { action: "replace", shouldCacheSnapshot: false })
     }
   }
@@ -231,7 +232,8 @@ export class Session {
   canPrefetchRequestToLocation(link, location) {
     return (
       this.elementIsNavigatable(link) &&
-        locationIsVisitable(location, this.snapshot.rootLocation)
+      locationIsVisitable(location, this.snapshot.rootLocation) &&
+      this.navigator.linkPrefetchingIsEnabledForLocation(location)
     )
   }
 
