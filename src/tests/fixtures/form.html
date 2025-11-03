@@ -337,6 +337,8 @@
       <button id="submit-external">POST to https://httpbin.org/post</button>
     </form>
      <a href="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fframes%2Fhello.html" data-turbo-method="post" data-turbo-frame="hello" id="turbo-method-post-to-targeted-frame">Turbo method post to targeted frame</a>
+     <a href="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fframes%2Fhello.html" data-turbo-method="post" data-turbo-frame="hello" target="" id="turbo-method-post-empty-target">Turbo method post with empty target</a>
+     <a href="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fframes%2Fhello.html" data-turbo-method="post" data-turbo-frame="hello" target id="turbo-method-post-bare-target">Turbo method post with bare target</a>
     <turbo-frame id="hello"></turbo-frame>
     <hr>
 

@@ -273,6 +273,22 @@ test("following a _self [target] link", async ({ page }) => {
   assert.equal(await visitAction(page), "advance")
 })
 
+test("following a link with empty target attribute", async ({ page }) => {
+  await page.click("#empty-target-link")
+  await nextBody(page)
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
+})
+
+test("following a link with bare target attribute", async ({ page }) => {
+  await page.click("#bare-target-link")
+  await nextBody(page)
+
+  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  assert.equal(await visitAction(page), "advance")
+})
+
 test("following a same-origin [download] link", async ({ page }) => {
   assert.notOk(
     await willChangeBody(page, async () => {
