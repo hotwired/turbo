@@ -12,7 +12,8 @@ const defaultOptions = {
   willRender: true,
   updateHistory: true,
   shouldCacheSnapshot: true,
-  acceptsStreamResponse: false
+  acceptsStreamResponse: false,
+  refresh: {}
 }
 
 export const TimingMetric = {
@@ -72,7 +73,8 @@ export class Visit {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
-      direction
+      direction,
+      refresh
     } = {
       ...defaultOptions,
       ...options
@@ -92,6 +94,7 @@ export class Visit {
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
     this.direction = direction || Direction[action]
+    this.refresh = refresh
   }
 
   get adapter() {

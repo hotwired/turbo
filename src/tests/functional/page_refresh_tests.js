@@ -198,6 +198,13 @@ test("uses morphing to only update remote frames marked with refresh='morph'", a
   await expect(page.locator("#refresh-reload")).toHaveText("Loaded reloadable frame")
 })
 
+test("overrides the meta value to render with replace when the Turbo Stream has [method=replace] attribute", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh" method="replace"></turbo-stream>`))
+  await nextEventNamed(page, "turbo:render", { renderMethod: "replace" })
+})
+
 test("don't refresh frames contained in [data-turbo-permanent] elements", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
@@ -279,6 +286,18 @@ test("it preserves the scroll position when the turbo-refresh-scroll meta tag is
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await assertPageScroll(page, 10, 10)
+})
+
+test("overrides the meta value to reset the scroll position when the Turbo Stream has [scroll=reset] attribute", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh" scroll="reset"></turbo-stream>`))
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await assertPageScroll(page, 0, 0)
 })
 
 test("it does not preserve the scroll position on regular 'advance' navigations, despite of using a 'preserve' option", async ({ page }) => {
