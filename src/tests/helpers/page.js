@@ -204,6 +204,10 @@ export function pathname(url) {
   return pathname
 }
 
+export function withHash(value) {
+  return ({ hash }) => hash === value
+}
+
 export function withPathname(value) {
   return ({ pathname }) => pathname === value
 }
