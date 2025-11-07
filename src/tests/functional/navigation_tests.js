@@ -273,7 +273,7 @@ test("following a _self [target] link", async ({ page }) => {
   assert.equal(await visitAction(page), "advance")
 })
 
-test("following a link with empty target attribute", async ({ page }) => {
+test("following an empty [target] link", async ({ page }) => {
   await page.click("#empty-target-link")
   await nextBody(page)
 
@@ -281,7 +281,7 @@ test("following a link with empty target attribute", async ({ page }) => {
   assert.equal(await visitAction(page), "advance")
 })
 
-test("following a link with bare target attribute", async ({ page }) => {
+test("following a bare [target] link", async ({ page }) => {
   await page.click("#bare-target-link")
   await nextBody(page)
 

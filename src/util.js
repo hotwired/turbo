@@ -251,6 +251,7 @@ export function findLinkFromClickTarget(target) {
 
   if (!link) return null
   if (link.hasAttribute("download")) return null
+
   const linkTarget = link.getAttribute("target")
   if (linkTarget && linkTarget !== "_self") return null
 

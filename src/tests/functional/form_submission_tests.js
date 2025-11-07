@@ -1102,13 +1102,13 @@ test("following a link with [data-turbo-method] set and a target set navigates t
   await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
 })
 
-test("following a link with [data-turbo-method] and empty target attribute", async ({ page }) => {
+test("following a link with [data-turbo-method] and empty [target]", async ({ page }) => {
   await page.click("#turbo-method-post-empty-target")
 
   await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
 })
 
-test("following a link with [data-turbo-method] and bare target attribute", async ({ page }) => {
+test("following a link with [data-turbo-method] and bare [target]", async ({ page }) => {
   await page.click("#turbo-method-post-bare-target")
 
   await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
