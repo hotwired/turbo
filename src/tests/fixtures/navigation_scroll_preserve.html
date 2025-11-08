@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html id="html">
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-refresh-scroll" content="preserve">
+
+    <title>Navigation with Scroll Preserve</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+
+        /* Ensure the page is large enough to scroll */
+        width: 150vw;
+        height: 150vh;
+      }
+
+      .links {
+        position: absolute;
+        top: 120px;
+        left: 100px;
+      }
+
+      .links a {
+        display: block;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Navigation with Scroll Preserve</h1>
+
+    <div class="links">
+      <a id="link-404" href="/__turbo/error?status=404">Link that returns 404</a>
+      <a id="link-500" href="/__turbo/error?status=500">Link that returns 500</a>
+    </div>
+  </body>
+</html>

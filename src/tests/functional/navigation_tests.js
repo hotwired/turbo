@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import {
   clickWithoutScrolling,
   isScrolledToSelector,
+  isScrolledToTop,
   nextAttributeMutationNamed,
   nextBeat,
   nextBody,
@@ -537,4 +538,55 @@ test("ignores forms with a [target] attribute that target an iframe with [name='
   await noNextEventNamed(page, "turbo:load")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+})
+
+test("resets scroll position on 404 error with turbo-refresh-scroll=reset", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation_scroll_reset.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
+
+  await page.click("#link-404")
+  await nextBody(page)
+  await nextBeat()
+
+  assert.ok(await isScrolledToTop(page), "page is scrolled to the top after 404 error")
+  assert.equal(await page.locator("h1").textContent(), "Not Found")
+})
+
+test("resets scroll position on 500 error with turbo-refresh-scroll=reset", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation_scroll_reset.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
+
+  await page.click("#link-500")
+  await nextBody(page)
+
+  assert.ok(await isScrolledToTop(page), "page is scrolled to the top after 500 error")
+  assert.equal(await page.locator("h1").textContent(), "Internal Server Error")
+})
+
+test("resets scroll position on success with turbo-refresh-scroll=reset", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation_scroll_reset.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
+
+  await page.click("#link-success")
+  await nextBody(page)
+
+  assert.ok(await isScrolledToTop(page), "page is scrolled to the top after success")
+  assert.equal(await page.locator("h1").textContent(), "One")
+})
+
+test("preserves scroll position on 404 error with turbo-refresh-scroll=preserve", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation_scroll_preserve.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  const scrollY = await page.evaluate(() => window.scrollY)
+  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
+
+  await page.click("#link-404")
+  await nextBody(page)
+
+  const newScrollY = await page.evaluate(() => window.scrollY)
+  assert.equal(newScrollY, scrollY, "scroll position should be preserved after 404 error")
+  assert.equal(await page.locator("h1").textContent(), "Not Found")
 })

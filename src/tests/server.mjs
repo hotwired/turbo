@@ -89,6 +89,14 @@ router.get("/delayed_response", (request, response) => {
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
 })
 
+router.get("/error", (request, response) => {
+  const { status } = request.query
+  const statusCode = parseInt(status || "404", 10)
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/${statusCode}.html`)
+
+  response.status(statusCode).sendFile(fixture)
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, id, status, type, target, targets } = params
