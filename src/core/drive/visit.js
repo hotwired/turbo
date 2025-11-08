@@ -214,7 +214,20 @@ export class Visit {
           this.adapter.visitRendered(this)
           this.complete()
         } else {
+          const currentSnapshot = this.view.snapshot
+          const preserveScroll = currentSnapshot.refreshScroll === "preserve"
+          const scrollPosition = preserveScroll ? { x: window.scrollX, y: window.scrollY } : null
+
           await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML), this)
+
+          // Handle scroll position after error rendering
+          if (preserveScroll && scrollPosition) {
+            this.view.scrollToPosition(scrollPosition)
+          } else if (!this.scrollToAnchor()) {
+            this.view.scrollToTop()
+          }
+          this.scrolled = true
+
           this.adapter.visitRendered(this)
           this.fail()
         }
