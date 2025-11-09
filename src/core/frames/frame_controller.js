@@ -10,8 +10,7 @@ import {
   markAsBusy,
   uuid,
   getHistoryMethodForAction,
-  getVisitAction,
-  findClosestRecursively
+  getVisitAction
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
@@ -433,13 +432,9 @@ export class FrameController {
 
   #findFrameElement(element, submitter) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
-    if (id === "_parent") {
-      const parentFrame = findClosestRecursively(this.element.parentElement, "turbo-frame")
-      if (parentFrame) {
-        return parentFrame
-      }
-    }
-    return getFrameElementById(id) ?? this.element
+    const target = this.#getFrameElementById(id)
+
+    return target instanceof FrameElement ? target : this.element
   }
 
   async extractForeignFrameElement(container) {
@@ -482,17 +477,12 @@ export class FrameController {
       return false
     }
 
-    if (id === "_parent") {
-      const parentFrame = findClosestRecursively(this.element.parentElement, "turbo-frame")
-      if (!parentFrame || parentFrame.disabled) {
-        return false
-      }
-    }
-
     if (id) {
-      const frameElement = getFrameElementById(id)
+      const frameElement = this.#getFrameElementById(id)
       if (frameElement) {
         return !frameElement.disabled
+      } else if (id == "_parent") {
+        return false
       }
     }
 
@@ -574,13 +564,15 @@ export class FrameController {
     callback()
     delete this.currentNavigationElement
   }
-}
 
-function getFrameElementById(id) {
-  if (id != null) {
-    const element = document.getElementById(id)
-    if (element instanceof FrameElement) {
-      return element
+  #getFrameElementById(id) {
+    if (id != null) {
+      const element = id === "_parent" ?
+        this.element.parentElement.closest("turbo-frame") :
+        document.getElementById(id)
+      if (element instanceof FrameElement) {
+        return element
+      }
     }
   }
 }
