@@ -408,6 +408,28 @@ test("renders unprocessable content responses with morphing", async ({ page }) =
   await expect(page.locator("#frame form.reject"), "replaces entire page").not.toBeAttached()
 })
 
+test("preserves scroll position when form submission returns 422 error with turbo-refresh-scroll=preserve", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  await assertPageScroll(page, 100, 0)
+
+  await page.evaluate(() => document.querySelector("#reject form.unprocessable_content input[type=submit]")?.click())
+
+  await expect(page.locator("h1")).toHaveText("Unprocessable Content")
+  await assertPageScroll(page, 100, 0)
+})
+
+test("resets scroll position when form submission returns 422 error with turbo-refresh-scroll=reset", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  await assertPageScroll(page, 100, 0)
+
+  await page.evaluate(() => document.querySelector("#reject form.unprocessable_content_reset input[type=submit]")?.click())
+
+  await expect(page.locator("h1")).toHaveText("Unprocessable Content")
+  await assertPageScroll(page, 0, 0)
+})
+
 test("doesn't render previews when morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 

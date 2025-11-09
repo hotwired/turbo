@@ -540,53 +540,35 @@ test("ignores forms with a [target] attribute that target an iframe with [name='
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
 })
 
-test("resets scroll position on 404 error with turbo-refresh-scroll=reset", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/navigation_scroll_reset.html")
+test("resets scroll position when navigating to a 404 error page", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation_error.html")
   await page.evaluate(() => window.scrollTo(0, 100))
-  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
+  expect(await isScrolledToTop(page), "page is scrolled down").toEqual(false)
 
   await page.click("#link-404")
-  await nextBody(page)
-  await nextBeat()
 
-  assert.ok(await isScrolledToTop(page), "page is scrolled to the top after 404 error")
-  assert.equal(await page.locator("h1").textContent(), "Not Found")
+  await expect(page.locator("h1")).toHaveText("Not Found")
+  expect(await isScrolledToTop(page)).toEqual(true)
 })
 
-test("resets scroll position on 500 error with turbo-refresh-scroll=reset", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/navigation_scroll_reset.html")
+test("resets scroll position when navigating to a 500 error page", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation_error.html")
   await page.evaluate(() => window.scrollTo(0, 100))
-  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
+  expect(await isScrolledToTop(page), "page is scrolled down").toEqual(false)
 
   await page.click("#link-500")
-  await nextBody(page)
 
-  assert.ok(await isScrolledToTop(page), "page is scrolled to the top after 500 error")
-  assert.equal(await page.locator("h1").textContent(), "Internal Server Error")
+  await expect(page.locator("h1")).toHaveText("Internal Server Error")
+  expect(await isScrolledToTop(page)).toEqual(true)
 })
 
-test("resets scroll position on success with turbo-refresh-scroll=reset", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/navigation_scroll_reset.html")
+test("resets scroll position when navigating to a success page", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/navigation_error.html")
   await page.evaluate(() => window.scrollTo(0, 100))
-  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
+  expect(await isScrolledToTop(page), "page is scrolled down").toEqual(false)
 
   await page.click("#link-success")
-  await nextBody(page)
 
-  assert.ok(await isScrolledToTop(page), "page is scrolled to the top after success")
-  assert.equal(await page.locator("h1").textContent(), "One")
-})
-
-test("preserves scroll position on 404 error with turbo-refresh-scroll=preserve", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/navigation_scroll_preserve.html")
-  await page.evaluate(() => window.scrollTo(0, 100))
-  const scrollY = await page.evaluate(() => window.scrollY)
-  assert.notOk(await isScrolledToTop(page), "page is scrolled down")
-
-  await page.click("#link-404")
-  await nextBody(page)
-
-  const newScrollY = await page.evaluate(() => window.scrollY)
-  assert.equal(newScrollY, scrollY, "scroll position should be preserved after 404 error")
-  assert.equal(await page.locator("h1").textContent(), "Not Found")
+  await expect(page.locator("h1")).toHaveText("One")
+  expect(await isScrolledToTop(page)).toEqual(true)
 })
