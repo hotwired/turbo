@@ -358,10 +358,6 @@ export class Session {
     this.notifyApplicationAfterRender(renderMethod)
   }
 
-  preloadOnLoadLinksForView(element) {
-    this.preloader.preloadOnLoadLinksForView(element)
-  }
-
   viewInvalidated(reason) {
     this.adapter.pageInvalidated(reason)
   }
