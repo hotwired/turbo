@@ -30,7 +30,6 @@ export class PageRenderer extends Renderer {
 
   async prepareToRender() {
     this.#setLanguage()
-    this.#setDirection()
     await this.mergeHead()
   }
 
@@ -61,19 +60,13 @@ export class PageRenderer extends Renderer {
 
   #setLanguage() {
     const { documentElement } = this.currentSnapshot
-    const { lang } = this.newSnapshot
+    const { dir, lang } = this.newSnapshot
 
     if (lang) {
       documentElement.setAttribute("lang", lang)
     } else {
       documentElement.removeAttribute("lang")
     }
-  }
-
-  #setDirection() {
-    const { documentElement } = this.currentSnapshot
-    const { dir } = this.newSnapshot
-
     if (dir) {
       documentElement.setAttribute("dir", dir)
     } else {
