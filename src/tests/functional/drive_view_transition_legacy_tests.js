@@ -1,5 +1,4 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 import { nextBody } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -17,14 +16,12 @@ test("navigating triggers the view transition", async ({ page }) => {
   await page.locator("#go-right").click()
   await nextBody(page)
 
-  const called = await page.evaluate(`window.startViewTransitionCalled`)
-  assert.isTrue(called)
+  expect(await page.evaluate(`window.startViewTransitionCalled`)).toEqual(true)
 })
 
 test("navigating does not trigger a view transition when meta tag not present", async ({ page }) => {
   await page.locator("#go-other").click()
   await nextBody(page)
 
-  const called = await page.evaluate(`window.startViewTransitionCalled`)
-  assert.isUndefined(called)
+  expect(await page.evaluate(`window.startViewTransitionCalled`)).toEqual(undefined)
 })
