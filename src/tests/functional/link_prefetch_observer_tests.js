@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test"
-import { assert } from "chai"
 import { nextBeat, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
 import fs from "fs"
 import path from "path"
@@ -24,7 +23,7 @@ test("it prefetches the page", async ({ page }) => {
   await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-prefetch")
   const { url, fetchOptions } = await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
 
-  expect(url).toEqual(await link.evaluate(a => a.href))
+  await expect(link).toHaveJSProperty("href", url)
   expect(fetchOptions.headers["X-Sec-Purpose"]).toEqual("prefetch")
   expect(fetchOptions.priority).toEqual("low")
 
@@ -40,7 +39,7 @@ test("it doesn't follow the link", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await hoverSelector({ page, selector: "#anchor_for_prefetch" })
 
-  assert.equal(await page.title(), "Hover to Prefetch")
+  await expect(page).toHaveTitle("Hover to Prefetch")
 })
 
 test("prefetches the page when link has a whole valid url as a href", async ({ page }) => {
@@ -84,7 +83,6 @@ test("allows to cancel prefetch requests with custom logic", async ({ page }) =>
   const link = page.locator("#anchor_for_prefetch")
   await link.evaluate(a => a.addEventListener("turbo:before-prefetch", event => event.preventDefault()))
 
-  await page.pause()
   await link.hover()
   await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-prefetch")
   await noNextEventNamed(page, "turbo:before-fetch-request")
@@ -193,7 +191,7 @@ test("it prefetches links inside a turbo frame", async ({ page }) => {
 
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_in_frame", callback: (request) => {
     const turboFrameHeader = request.headers()["turbo-frame"]
-    assert.equal(turboFrameHeader, "frame_for_prefetch")
+    expect(turboFrameHeader).toEqual("frame_for_prefetch")
   }})
 })
 
@@ -203,7 +201,7 @@ test("doesn't include a turbo-frame header when the link is inside a turbo frame
 
   await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_in_frame_target_top", callback: (request) => {
     const turboFrameHeader = request.headers()["turbo-frame"]
-    assert.equal(undefined, turboFrameHeader)
+    expect(turboFrameHeader).toEqual(undefined)
   }})
 })
 
@@ -243,13 +241,13 @@ test("it resets the cache when a link is hovered", async ({ page }) => {
   await page.hover("#anchor_for_prefetch")
   await sleep(200)
 
-  assert.equal(requestCount, 1)
+  expect(requestCount).toEqual(1)
   await page.mouse.move(0, 0)
 
   await page.hover("#anchor_for_prefetch")
   await sleep(200)
 
-  assert.equal(requestCount, 2)
+  expect(requestCount).toEqual(2)
 })
 
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
@@ -265,7 +263,7 @@ test("it follows the link using the cached response when clicking on a link that
   await hoverSelector({ page, selector: "#anchor_for_prefetch" })
 
   await clickSelector({ page, selector: "#anchor_for_prefetch" })
-  assert.equal(await page.title(), "Prefetched Page")
+  await expect(page).toHaveTitle("Prefetched Page")
 })
 
 const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
@@ -296,7 +294,7 @@ const assertRequestMade = async (page, action, callback) => {
 
   await action()
 
-  assert.equal(!!requestMade, true, "Network request wasn't made when it should have been.")
+  expect(!!requestMade, "Network request wasn't made when it should have been.").toEqual(true)
 
   if (callback) {
     await callback(requestMade)
@@ -309,7 +307,7 @@ const assertRequestNotMade = async (page, action, callback) => {
 
   await action()
 
-  assert.equal(!!requestMade, false, "Network request was made when it should not have been.")
+  expect(!!requestMade, "Network request was made when it should not have been.").toEqual(false)
 
   if (callback) {
     await callback(requestMade)

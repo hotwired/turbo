@@ -1,6 +1,4 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
-import { nextBeat } from "../helpers/page"
+import { expect, test } from "@playwright/test"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/pausable_rendering.html")
@@ -8,43 +6,41 @@ test.beforeEach(async ({ page }) => {
 
 test("pauses and resumes rendering", async ({ page }) => {
   page.on("dialog", (dialog) => {
-    assert.strictEqual(dialog.message(), "Continue rendering?")
+    expect(dialog.message()).toEqual("Continue rendering?")
     dialog.accept()
   })
 
   await page.click("#link")
-  await nextBeat()
 
-  assert.equal(await page.textContent("h1"), "One")
+  await expect(page.locator("h1")).toHaveText("One")
 })
 
 test("aborts rendering", async ({ page }) => {
   const [firstDialog] = await Promise.all([page.waitForEvent("dialog"), page.click("#link")])
 
-  assert.strictEqual(firstDialog.message(), "Continue rendering?")
+  expect(firstDialog.message()).toEqual("Continue rendering?")
 
   firstDialog.dismiss()
 
-  assert.equal(await page.textContent("h1"), "Pausable Rendering")
+  await expect(page.locator("h1")).toHaveText("Pausable Rendering")
 })
 
 test("pauses and resumes rendering a Frame", async ({ page }) => {
   page.on("dialog", (dialog) => {
-    assert.strictEqual(dialog.message(), "Continue rendering?")
+    expect(dialog.message()).toEqual("Continue rendering?")
     dialog.accept()
   })
 
   await page.click("#frame-link")
-  await nextBeat()
 
-  assert.equal(await page.textContent("#hello h2"), "Hello from a frame")
+  await expect(page.locator("#hello h2")).toHaveText("Hello from a frame")
 })
 
 test("aborts rendering a Frame", async ({ page }) => {
   page.on("dialog", (dialog) => {
-    assert.strictEqual(dialog.message(), "Continue rendering?")
+    expect(dialog.message()).toEqual("Continue rendering?")
     dialog.dismiss()
   })
 
-  assert.equal(await page.textContent("#hello h2"), "Pausable Frame Rendering")
+  await expect(page.locator("#hello h2")).toHaveText("Pausable Frame Rendering")
 })
