@@ -404,6 +404,66 @@ test("following a link that declares data-turbo-frame='_self' within a frame wit
   await expect(page.locator("#navigate-top")).toHaveText("Replaced only the frame")
 })
 
+test("following a link with data-turbo-frame='_parent' within a nested frame navigates the parent frame", async ({
+  page
+}) => {
+  await expect(page.locator("#nested-child"), "child frame exists before navigation").toBeAttached()
+  await expect(page.locator("#nested-root > h2")).toHaveText("Frames: #nested-root")
+
+  await page.click("#nested-child #link-parent")
+
+  await expect(page.locator("#nested-root > h2"), "parent frame content updated").toHaveText("Parent: Loaded")
+  await expect(page.locator("#nested-child"), "child frame removed when parent navigates").not.toBeAttached()
+
+  const nestedRootSrc = await attributeForSelector(page, "#nested-root", "src")
+  expect(nestedRootSrc, "parent frame src updated").toContain("/src/tests/fixtures/frames/parent.html")
+})
+
+test("submitting a form with data-turbo-frame='_parent' within a nested frame navigates the parent frame", async ({
+  page
+}) => {
+  await page.click("#nested-child #form-submit-parent")
+
+  await expect(page.locator("#nested-root > h2"), "parent frame content updated via form").toHaveText("Parent: Loaded")
+  await expect(page.locator("#nested-child", "child frame removed after form submission to parent")).not.toBeAttached()
+
+  const nestedRootSrc = await attributeForSelector(page, "#nested-root", "src")
+  expect(nestedRootSrc, "parent frame src updated via form").toContain("/src/tests/fixtures/frames/parent.html")
+})
+
+test("following a link with data-turbo-frame='_parent' navigates only the immediate parent frame", async ({ page }) => {
+  await expect(page.locator("#nested-grandchild", "grandchild frame exists before navigation")).toBeAttached()
+  await expect(page.locator("#nested-child > h2")).toHaveText("Frames: #nested-child")
+  await expect(page.locator("#nested-root > h2")).toHaveText("Frames: #nested-root")
+
+  await page.click("#nested-grandchild #grandchild-link-parent")
+
+  await expect(page.locator("#nested-child > h2"), "immediate parent frame (#nested-child) was updated").toHaveText("Frame: Loaded")
+  await expect(page.locator("#nested-root > h2"), "grandparent frame (#nested-root) was NOT updated").toHaveText("Frames: #nested-root")
+
+  await expect(page.locator("#nested-grandchild", "grandchild frame removed when parent navigates")).not.toBeAttached()
+})
+
+test("following a link with data-turbo-frame='_parent' in a top-level frame navigates the page", async ({ page }) => {
+  await expect(page.locator("#top-level-parent")).not.toHaveAttribute("src")
+
+  await page.click("#top-level-parent a")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  await expect(page).toHaveURL(withSearchParam("key", "value"))
+  await expect(page.locator("body > h1")).toHaveText("One")
+  await expect(page.locator("#top-level-parent a")).not.toBeAttached()
+})
+
+test("following a link with data-turbo-frame='_parent' when parent frame is disabled navigates the page", async ({ page }) => {
+  await page.locator("#nested-root").evaluate((frame) => frame.setAttribute("disabled", ""))
+
+  await page.click("#nested-child #link-parent")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/parent.html"))
+  await expect(page.locator("body > h1"), "navigates the page when parent frame is disabled").toHaveText("Nested Root: Parent")
+})
+
 test("following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
   page
 }) => {

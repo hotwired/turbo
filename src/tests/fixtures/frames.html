@@ -95,10 +95,17 @@
         <button id="change-frame-id-to-different-nested-child" type="button">Change id to different-nested-child</button>
         <a href="/src/tests/fixtures/frames/frame.html">Load #nested-child</a>
         <a href="/src/tests/fixtures/one.html" data-turbo-frame="_top">Visit one.html</a>
-
+        <a id="link-parent" href="/src/tests/fixtures/frames/parent.html" data-turbo-frame="_parent">Navigate parent</a>
+        <form action="/src/tests/fixtures/frames/parent.html" data-turbo-frame="_parent">
+          <button id="form-submit-parent">Submit to parent</button>
+        </form>
         <form method="get" action="/src/tests/fixtures/one.html" data-turbo-frame="_top">
           <input id="nested-child-navigate-form-top-submit" type="submit" value="Nested Child form submit">
         </form>
+
+        <turbo-frame id="nested-grandchild">
+          <a id="grandchild-link-parent" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="_parent">Navigate immediate parent only</a>
+        </turbo-frame>
       </turbo-frame>
 
       <turbo-frame id="nested-child-navigate-top" target="_top">
@@ -114,6 +121,10 @@
       <a href="/src/tests/fixtures/one.html" data-turbo-frame="_self">Visit self</a>
     </turbo-frame>
     <a id="outside-navigate-top-link" href="/src/tests/fixtures/one.html">Visit one.html from outside #navigate-top</a>
+
+    <turbo-frame id="top-level-parent">
+      <a href="/src/tests/fixtures/one.html?key=value" data-turbo-frame="_parent">Visit one.html?key=value with _parent</a>
+    </turbo-frame>
 
     <turbo-frame id="missing">
       <a id="missing-frame-link" href="/src/tests/fixtures/frames/frame.html">Missing frame</a>
