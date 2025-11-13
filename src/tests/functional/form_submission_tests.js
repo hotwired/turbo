@@ -951,11 +951,27 @@ test("form submission targets disabled frame", async ({ page }) => {
 })
 
 test("form submission targeting a frame submits the Turbo-Frame header", async ({ page }) => {
-  await page.click('#targets-frame [type="submit"]')
+  await page.click("#targets-frame [type=submit]")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
   expect(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header").toBeTruthy()
+})
+
+test("form submission targeting another frame submits the Turbo-Frame header", async ({ page }) => {
+  await page.click("#frame form[method=get][data-turbo-frame=hello] [type=submit]")
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  expect(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header").toEqual("hello")
+})
+
+test("form submission with submitter referencing another frame submits the Turbo-Frame header", async ({ page }) => {
+  await page.click("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  expect(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header").toEqual("hello")
 })
 
 test("link method form submission dispatches events from a connected <form> element", async ({ page }) => {
