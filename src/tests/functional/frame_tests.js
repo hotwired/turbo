@@ -263,7 +263,7 @@ test("following a link to a page with a matching frame does not dispatch a turbo
   )
 })
 
-test("following a link within a frame which has a target set navigates the target frame without morphing even when frame[refresh=morph]", async ({ page }) => {
+test("following a link within a frame which has a target set navigates the target frame without morphing even when frame[refresh=morph] if the url changes", async ({ page }) => {
   await page.click("#add-refresh-morph-to-frame")
   await page.click("#hello a")
   await nextBeat()
@@ -273,7 +273,7 @@ test("following a link within a frame which has a target set navigates the targe
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
 })
 
-test("navigating from within replaces the contents even with turbo-frame[refresh=morph]", async ({ page }) => {
+test("navigating from within replaces the contents even with turbo-frame[refresh=morph] if the url changes", async ({ page }) => {
   await page.click("#add-refresh-morph-to-frame")
   await page.click("#link-frame")
   await nextBeat()
@@ -281,6 +281,38 @@ test("navigating from within replaces the contents even with turbo-frame[refresh
   expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
   expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+})
+
+test("following a link that targets a frame with refresh morph morphs the page if the url doesn't change", async ({ page }) => {
+  await page.click("#add-refresh-morph-to-frame")
+  await page.click("#outside-frame-form")
+  await nextBeat()
+
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+
+  await page.click("#outside-frame-form")
+  await nextBeat()
+
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+})
+
+test("submitting a form that targets a frame with refresh morph morphs the page if the url doesn't change", async ({ page }) => {
+  test.setTimeout(3000)
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+  await page.click("#add-refresh-morph-to-frame")
+  await page.click("#button-frame-action-advance")
+  await nextBeat()
+
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+
+  await page.click("#button-frame-action-advance")
+  await nextBeat()
+
+  expect(await nextEventOnTarget(page, "frame", "turbo:before-frame-morph")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-frame-render")).toBeTruthy()
 })
 
 test("calling reload on a frame replaces the contents", async ({ page }) => {
