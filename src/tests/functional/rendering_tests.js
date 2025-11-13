@@ -201,6 +201,12 @@ test("changes the html[lang] attribute", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("lang", "es")
 })
 
+test("changes the html[dir] attribute", async ({ page }) => {
+  await page.click("#dir-rtl")
+
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl")
+})
+
 test("accumulates script elements in head", async ({ page }) => {
   const assetElements = () => page.$$('script')
   const originalElements = await assetElements()

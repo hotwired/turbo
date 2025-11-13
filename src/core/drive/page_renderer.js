@@ -60,12 +60,17 @@ export class PageRenderer extends Renderer {
 
   #setLanguage() {
     const { documentElement } = this.currentSnapshot
-    const { lang } = this.newSnapshot
+    const { dir, lang } = this.newSnapshot
 
     if (lang) {
       documentElement.setAttribute("lang", lang)
     } else {
       documentElement.removeAttribute("lang")
+    }
+    if (dir) {
+      documentElement.setAttribute("dir", dir)
+    } else {
+      documentElement.removeAttribute("dir")
     }
   }
 
