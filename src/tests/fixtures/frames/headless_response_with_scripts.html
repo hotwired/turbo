@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Headless Response With Scripts</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Response With Script</h1>
+    <p id="headless-script-content">Content with inline script</p>
+    <script type="text/javascript">
+      document.getElementById("headless-script-content").setAttribute("data-script-executed", "true")
+    </script>
+  </body>
+</html>
