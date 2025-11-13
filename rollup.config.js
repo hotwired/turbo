@@ -16,7 +16,7 @@ export default [
       },
       {
         file: "dist/turbo.es2017-esm.js",
-        format: "es",
+        format: "esm",
         banner
       }
     ],
