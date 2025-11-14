@@ -78,10 +78,11 @@ export class History {
   // Event handlers
 
   onPopState = (event) => {
+    const { turbo } = event.state || {}
     this.location = new URL(window.location.href)
 
-    if (event.state?.turbo) {
-      const { restorationIdentifier, restorationIndex } = event.state.turbo
+    if (turbo) {
+      const { restorationIdentifier, restorationIndex } = turbo
       this.restorationIdentifier = restorationIdentifier
       const direction = restorationIndex > this.currentIndex ? "forward" : "back"
       this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(this.location, restorationIdentifier, direction)
