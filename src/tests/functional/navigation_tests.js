@@ -299,7 +299,7 @@ test("following a same-origin link inside an SVG element", async ({ page }) => {
   await page.keyboard.press("Enter")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
-  expect(await visitAction(page)).toEqual("advance")
+  expect(await visitAction(page)).toEqual("load")
 })
 
 test("following a cross-origin link inside an SVG element", async ({ page }) => {

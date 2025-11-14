@@ -216,6 +216,12 @@ export class Session {
     }
   }
 
+  historyPoppedWithEmptyState(location) {
+    this.history.replace(location)
+    this.view.lastRenderedLocation = location
+    this.view.cacheSnapshot()
+  }
+
   // Scroll observer delegate
 
   scrollPositionChanged(position) {
@@ -260,7 +266,7 @@ export class Session {
   // Navigator delegate
 
   allowsVisitingLocationWithAction(location, action) {
-    return this.locationWithActionIsSamePage(location, action) || this.applicationAllowsVisitingLocation(location)
+    return this.applicationAllowsVisitingLocation(location)
   }
 
   visitProposedToLocation(location, options) {
@@ -276,23 +282,13 @@ export class Session {
       this.view.markVisitDirection(visit.direction)
     }
     extendURLWithDeprecatedProperties(visit.location)
-    if (!visit.silent) {
-      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
-    }
+    this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
   }
 
   visitCompleted(visit) {
     this.view.unmarkVisitDirection()
     clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
-  }
-
-  locationWithActionIsSamePage(location, action) {
-    return this.navigator.locationWithActionIsSamePage(location, action)
-  }
-
-  visitScrolledToSamePageLocation(oldURL, newURL) {
-    this.notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL)
   }
 
   // Form submit observer delegate
@@ -334,9 +330,7 @@ export class Session {
   // Page view delegate
 
   viewWillCacheSnapshot() {
-    if (!this.navigator.currentVisit?.silent) {
-      this.notifyApplicationBeforeCachingSnapshot()
-    }
+    this.notifyApplicationBeforeCachingSnapshot()
   }
 
   allowsImmediateRender({ element }, options) {
@@ -426,15 +420,6 @@ export class Session {
     return dispatch("turbo:load", {
       detail: { url: this.location.href, timing }
     })
-  }
-
-  notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL) {
-    dispatchEvent(
-      new HashChangeEvent("hashchange", {
-        oldURL: oldURL.toString(),
-        newURL: newURL.toString()
-      })
-    )
   }
 
   notifyApplicationAfterFrameLoad(frame) {

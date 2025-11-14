@@ -24,7 +24,6 @@ export class BrowserAdapter {
 
     visit.loadCachedSnapshot()
     visit.issueRequest()
-    visit.goToSamePageAnchor()
   }
 
   visitRequestStarted(visit) {
