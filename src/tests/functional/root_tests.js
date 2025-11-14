@@ -1,35 +1,34 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
-import { nextBody, pathname, visitAction } from "../helpers/page"
+import { expect, test } from "@playwright/test"
+import { visitAction, withPathname } from "../helpers/page"
 
 test("visiting a location inside the root", async ({ page }) => {
-  page.goto("/src/tests/fixtures/root/index.html")
-  page.click("#link-page-inside")
-  await nextBody(page)
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/root/page.html")
-  assert.notEqual(await visitAction(page), "load")
+  await page.goto("/src/tests/fixtures/root/index.html")
+  await page.click("#link-page-inside")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/root/page.html"))
+  expect(await visitAction(page)).not.toEqual("load")
 })
 
 test("visiting the root itself", async ({ page }) => {
-  page.goto("/src/tests/fixtures/root/page.html")
-  page.click("#link-root")
-  await nextBody(page)
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/root/")
-  assert.notEqual(await visitAction(page), "load")
+  await page.goto("/src/tests/fixtures/root/page.html")
+  await page.click("#link-root")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/root/"))
+  expect(await visitAction(page)).not.toEqual("load")
 })
 
 test("visiting a location outside the root", async ({ page }) => {
-  page.goto("/src/tests/fixtures/root/index.html")
-  page.click("#link-page-outside")
-  await nextBody(page)
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
-  assert.equal(await visitAction(page), "load")
+  await page.goto("/src/tests/fixtures/root/index.html")
+  await page.click("#link-page-outside")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  expect(await visitAction(page)).toEqual("load")
 })
 
 test("visiting a location outside the root having the root as a prefix", async ({ page }) => {
-  page.goto("/src/tests/fixtures/root/index.html")
-  page.click("#link-page-outside-prefix")
-  await nextBody(page)
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/rootlet.html")
-  assert.equal(await visitAction(page), "load")
+  await page.goto("/src/tests/fixtures/root/index.html")
+  await page.click("#link-page-outside-prefix")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/rootlet.html"))
+  expect(await visitAction(page)).toEqual("load")
 })
