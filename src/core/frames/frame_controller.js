@@ -280,6 +280,8 @@ export class FrameController {
 
   viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
 
+  setLastRenderedLocation() {}
+
   preloadOnLoadLinksForView(element) {
     session.preloadOnLoadLinksForView(element)
   }
