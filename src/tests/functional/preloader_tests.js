@@ -1,5 +1,4 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 import { nextEventOnTarget } from "../helpers/page"
 
 test("preloads snapshot on initial load", async ({ page }) => {
@@ -9,7 +8,7 @@ test("preloads snapshot on initial load", async ({ page }) => {
   const preloadLink = await page.locator("#preload_anchor")
   const href = await preloadLink.evaluate((link) => link.href)
 
-  assert.ok(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(true)
 })
 
 test("preloading dispatch turbo:before-fetch-{request,response} events", async ({ page }) => {
@@ -21,9 +20,9 @@ test("preloading dispatch turbo:before-fetch-{request,response} events", async (
   const { url, fetchOptions } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-request")
   const { fetchResponse } = await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-response")
 
-  assert.equal(href, url, "dispatches request during preloading")
-  assert.equal(fetchOptions.headers.Accept, "text/html, application/xhtml+xml")
-  assert.equal(fetchResponse.response.url, href)
+  expect(href, "dispatches request during preloading").toEqual(url)
+  expect(fetchOptions.headers.Accept).toEqual("text/html, application/xhtml+xml")
+  expect(fetchResponse.response.url).toEqual(href)
 })
 
 test("preloads snapshot on page visit", async ({ page }) => {
@@ -34,7 +33,7 @@ test("preloads snapshot on page visit", async ({ page }) => {
   const preloadLink = await page.locator("#preload_anchor")
   const href = await preloadLink.evaluate((link) => link.href)
 
-  assert.ok(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(true)
 })
 
 test("preloads anchor from frame that will drive the page", async ({ page }) => {
@@ -44,7 +43,7 @@ test("preloads anchor from frame that will drive the page", async ({ page }) => 
   const preloadLink = await page.locator("#menu a[data-turbo-frame=_top]")
   const href = await preloadLink.evaluate((link) => link.href)
 
-  assert.ok(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(true)
 })
 
 test("does not preload anchor off-site", async ({ page }) => {
@@ -53,7 +52,7 @@ test("does not preload anchor off-site", async ({ page }) => {
   const link = await page.locator("a[href*=https]")
   const href = await link.evaluate((link) => link.href)
 
-  assert.notOk(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(false)
 })
 
 test("does not preload anchor that will drive an ancestor frame", async ({ page }) => {
@@ -62,7 +61,7 @@ test("does not preload anchor that will drive an ancestor frame", async ({ page 
   const preloadLink = await page.locator("#hello a[data-turbo-preload]")
   const href = await preloadLink.evaluate((link) => link.href)
 
-  assert.notOk(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(false)
 })
 
 test("does not preload anchor that will drive a target frame", async ({ page }) => {
@@ -71,7 +70,7 @@ test("does not preload anchor that will drive a target frame", async ({ page }) 
   const link = await page.locator("a[data-turbo-frame=hello]")
   const href = await link.evaluate((link) => link.href)
 
-  assert.notOk(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(false)
 })
 
 test("does not preload a link with [data-turbo=false]", async ({ page }) => {
@@ -80,7 +79,7 @@ test("does not preload a link with [data-turbo=false]", async ({ page }) => {
   const link = await page.locator("[data-turbo=false] a")
   const href = await link.evaluate((link) => link.href)
 
-  assert.notOk(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(false)
 })
 
 test("does not preload a link with [data-turbo-method]", async ({ page }) => {
@@ -89,7 +88,7 @@ test("does not preload a link with [data-turbo-method]", async ({ page }) => {
   const preloadLink = await page.locator("a[data-turbo-method]")
   const href = await preloadLink.evaluate((link) => link.href)
 
-  assert.notOk(await urlInSnapshotCache(page, href))
+  expect(await urlInSnapshotCache(page, href)).toEqual(false)
 })
 
 function urlInSnapshotCache(page, href) {
