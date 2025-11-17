@@ -80,7 +80,7 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
+        prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
       }
     }
   }
@@ -96,7 +96,7 @@ export class LinkPrefetchObserver {
 
   #tryToUsePrefetchedRequest = (event) => {
     if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
-      const cached = prefetchCache.get(event.detail.url.toString())
+      const cached = prefetchCache.get(event.detail.url)
 
       if (cached) {
         // User clicked link, use cache response
