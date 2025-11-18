@@ -85,7 +85,6 @@ export class Visit {
     this.snapshot = snapshot
     this.snapshotHTML = snapshotHTML
     this.response = response
-    this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
     this.isPageRefresh = this.view.isPageRefresh(this)
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
@@ -111,10 +110,6 @@ export class Visit {
 
   get restorationData() {
     return this.history.getRestorationDataForIdentifier(this.restorationIdentifier)
-  }
-
-  get silent() {
-    return this.isSamePage
   }
 
   start() {
@@ -253,7 +248,7 @@ export class Visit {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        if (this.isSamePage || this.isPageRefresh) {
+        if (this.isPageRefresh) {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
@@ -278,17 +273,6 @@ export class Visit {
         willRender: false
       })
       this.followedRedirect = true
-    }
-  }
-
-  goToSamePageAnchor() {
-    if (this.isSamePage) {
-      this.render(async () => {
-        this.cacheSnapshot()
-        this.performScroll()
-        this.changeHistory()
-        this.adapter.visitRendered(this)
-      })
     }
   }
 
@@ -353,9 +337,6 @@ export class Visit {
       } else {
         this.scrollToAnchor() || this.view.scrollToTop()
       }
-      if (this.isSamePage) {
-        this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
-      }
 
       this.scrolled = true
     }
@@ -394,9 +375,7 @@ export class Visit {
   }
 
   shouldIssueRequest() {
-    if (this.isSamePage) {
-      return false
-    } else if (this.action == "restore") {
+    if (this.action == "restore") {
       return !this.hasCachedSnapshot()
     } else {
       return this.willRender
