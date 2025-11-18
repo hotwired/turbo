@@ -1,24 +1,21 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
-import { hasSelector, nextBody } from "../helpers/page"
+import { expect, test } from "@playwright/test"
+import { nextEventNamed } from "../helpers/page"
 
 test("removes temporary elements", async ({ page }) => {
   await page.goto("/src/tests/fixtures/cache_observer.html")
 
-  assert.equal(await page.textContent("#temporary"), "data-turbo-temporary")
+  await expect(page.locator("#temporary")).toHaveText("data-turbo-temporary")
 
   await page.click("#link")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
   await page.goBack()
-  await nextBody(page)
 
-  assert.notOk(await hasSelector(page, "#temporary"))
+  await expect(page.locator("#temporary")).not.toBeAttached()
 })
 
 test("following a redirect renders [data-turbo-temporary] elements before the cache removes", async ({ page }) => {
   await page.goto("/src/tests/fixtures/navigation.html")
   await page.click("#redirect-to-cache-observer")
-  await nextBody(page)
 
-  assert.equal(await page.textContent("#temporary"), "data-turbo-temporary")
+  await expect(page.locator("#temporary")).toHaveText("data-turbo-temporary")
 })
