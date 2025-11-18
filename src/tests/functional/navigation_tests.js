@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test"
-import { assert } from "chai"
 import {
   clickWithoutScrolling,
   isScrolledToSelector,
@@ -270,16 +269,16 @@ test("following an empty [target] link", async ({ page }) => {
   await page.click("#empty-target-link")
   await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
-  assert.equal(await visitAction(page), "advance")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  expect(await visitAction(page)).toEqual("advance")
 })
 
 test("following a bare [target] link", async ({ page }) => {
   await page.click("#bare-target-link")
   await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
-  assert.equal(await visitAction(page), "advance")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  expect(await visitAction(page)).toEqual("advance")
 })
 
 test("following a same-origin [download] link", async ({ page }) => {
@@ -347,11 +346,11 @@ test("link targeting a disabled turbo-frame navigates the page", async ({ page }
 })
 
 test("skip link with hash-only path scrolls to the anchor without a visit", async ({ page }) => {
-  assert.notOk(
+  expect(
     await willChangeBody(page, async () => {
       await page.click('a[href="#main"]')
     })
-  )
+  ).not.toBeTruthy()
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/navigation.html"))
   await expect(page).toHaveURL(withHash("#main"))

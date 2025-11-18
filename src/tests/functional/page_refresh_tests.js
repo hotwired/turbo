@@ -1,9 +1,5 @@
 import { test, expect } from "@playwright/test"
-import { assert } from "chai"
 import {
-  hasSelector,
-  nextBeat,
-  nextBody,
   nextEventNamed,
   nextEventOnTarget,
   noNextEventOnTarget,
@@ -137,7 +133,7 @@ test("reloading when assets change uses the response URL of a prior redirect", a
 
   await page.waitForURL("/src/tests/fixtures/link_redirect_target.html")
 
-  assert.sameMembers(destinations, ["redirect", "target", "target"], "redirects once")
+  expect(destinations, "redirects once").toEqual(expect.arrayContaining(["redirect", "target", "target"]))
 })
 
 test("renders a page refresh with morphing when the paths are the same but search params are different", async ({ page }) => {
@@ -186,7 +182,6 @@ test("uses morphing to only update remote frames marked with refresh='morph'", a
 
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await nextBeat()
 
   // Only the frame marked with refresh="morph" uses morphing
   expect(await nextEventOnTarget(page, "refresh-morph", "turbo:before-frame-morph")).toBeTruthy()
@@ -214,7 +209,6 @@ test("don't refresh frames contained in [data-turbo-permanent] elements", async 
 
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await nextBeat()
 
   await expect(page.locator("#remote-permanent-frame")).toHaveText("Frame to be preserved")
 })
@@ -226,7 +220,6 @@ test("frames marked with refresh='morph' are excluded from full page morphing", 
 
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await nextBeat()
 
   await expect(page.locator("#refresh-morph")).toHaveAttribute("data-modified", "true")
   await expect(page.locator("#refresh-morph")).toHaveText("Loaded morphed frame")
@@ -237,27 +230,24 @@ test("navigated frames without refresh attribute are reset after morphing", asyn
 
   await page.click("#refresh-after-navigation-link")
 
-  await nextBeat()
-
-  assert.ok(
-    await hasSelector(page, "#refresh-after-navigation-content"),
+  await expect(
+    page.locator("#refresh-after-navigation-content"),
     "navigates theframe"
-  )
+  ).toBeAttached()
 
   await page.click("#form-submit")
 
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await nextBeat()
 
-  assert.ok(
-    await hasSelector(page, "#refresh-after-navigation-link"),
+  await expect(
+    page.locator("#refresh-after-navigation-link"),
     "resets the frame"
-  )
+  ).toBeAttached()
 
-  assert.notOk(
-    await hasSelector(page, "#refresh-after-navigation-content"),
+  await expect(
+    page.locator("#refresh-after-navigation-content"),
     "does not reload the frame"
-  )
+  ).not.toBeAttached()
 })
 
 test("frames with refresh='morph' are preserved when missing from new content", async ({ page }) => {
@@ -270,9 +260,8 @@ test("frames with refresh='morph' are preserved when missing from new content", 
 
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await nextBeat()
 
-  assert.ok(await hasSelector(page, "#missing-frame"), "the frame is preserved")
+  await expect(page.locator("#missing-frame"), "the frame is preserved").toBeAttached()
 })
 
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {
@@ -402,10 +391,10 @@ test("it preserves data-turbo-permanent children", async ({ page }) => {
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   // data-turbo-permanent checkbox should still be checked
-  assert.ok(
-    await hasSelector(page, "#second-checkbox:checked"),
+  await expect(
+    page.locator("#second-checkbox:checked"),
     "retains state of data-turbo-permanent child"
-  )
+  ).toBeAttached()
 })
 
 test("renders unprocessable content responses with morphing", async ({ page }) => {
@@ -413,11 +402,10 @@ test("renders unprocessable content responses with morphing", async ({ page }) =
 
   await page.click("#reject form.unprocessable_content input[type=submit]")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await nextBody(page)
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Unprocessable Content", "renders the response HTML")
-  assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
+  const title = page.locator("h1")
+  await expect(title, "renders the response HTML").toHaveText("Unprocessable Content")
+  await expect(page.locator("#frame form.reject"), "replaces entire page").not.toBeAttached()
 })
 
 test("doesn't render previews when morphing", async ({ page }) => {
@@ -428,10 +416,9 @@ test("doesn't render previews when morphing", async ({ page }) => {
   await page.click("#refresh-link")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await nextBody(page)
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Page to be refreshed")
+  const title = page.locator("h1")
+  await expect(title).toHaveText("Page to be refreshed")
 })
 
 async function assertPageScroll(page, top, left) {
