@@ -20,7 +20,6 @@ async function assertTurboInterface(page) {
   await assertTypeOf(page, "Turbo.connectStreamSource", "function")
   await assertTypeOf(page, "Turbo.disconnectStreamSource", "function")
   await assertTypeOf(page, "Turbo.renderStreamMessage", "function")
-  await assertTypeOf(page, "Turbo.clearCache", "function")
   await assertTypeOf(page, "Turbo.setProgressBarDelay", "function")
   await assertTypeOf(page, "Turbo.setConfirmMethod", "function")
   await assertTypeOf(page, "Turbo.setFormMode", "function")

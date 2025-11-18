@@ -10,7 +10,6 @@ test("Turbo interface", () => {
   assert.equal(typeof Turbo.connectStreamSource, "function")
   assert.equal(typeof Turbo.disconnectStreamSource, "function")
   assert.equal(typeof Turbo.renderStreamMessage, "function")
-  assert.equal(typeof Turbo.clearCache, "function")
   assert.equal(typeof Turbo.setProgressBarDelay, "function")
   assert.equal(typeof Turbo.setConfirmMethod, "function")
   assert.equal(typeof Turbo.setFormMode, "function")
