@@ -15,19 +15,6 @@ test("removes temporary elements", async ({ page }) => {
   assert.notOk(await hasSelector(page, "#temporary"))
 })
 
-test("removes temporary elements with deprecated turbo-cache=false selector", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/cache_observer.html")
-
-  assert.equal(await page.textContent("#temporary-with-deprecated-selector"), "data-turbo-cache=false")
-
-  await page.click("#link")
-  await nextBody(page)
-  await page.goBack()
-  await nextBody(page)
-
-  assert.notOk(await hasSelector(page, "#temporary-with-deprecated-selector"))
-})
-
 test("following a redirect renders [data-turbo-temporary] elements before the cache removes", async ({ page }) => {
   await page.goto("/src/tests/fixtures/navigation.html")
   await page.click("#redirect-to-cache-observer")
