@@ -348,8 +348,12 @@ export class Session {
   }
 
   viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
-    this.view.lastRenderedLocation = this.history.location
+    this.setLastRenderedLocation()
     this.notifyApplicationAfterRender(renderMethod)
+  }
+
+  setLastRenderedLocation() {
+    this.view.lastRenderedLocation = this.history.location
   }
 
   preloadOnLoadLinksForView(element) {
