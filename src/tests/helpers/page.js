@@ -53,18 +53,8 @@ export function getSearchParam(url, key) {
   return searchParams(url).get(key)
 }
 
-export function hash(url) {
-  const { hash } = new URL(url)
-
-  return hash
-}
-
 export async function hasSelector(page, selector) {
   return !!(await page.locator(selector).count())
-}
-
-export function innerHTMLForSelector(page, selector) {
-  return page.locator(selector).innerHTML()
 }
 
 export async function isScrolledToSelector(page, selector) {
@@ -273,20 +263,10 @@ export function refreshWithStream(page) {
   return page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh"></turbo-stream>`))
 }
 
-export function search(url) {
-  const { search } = new URL(url)
-
-  return search
-}
-
 export function searchParams(url) {
   const { searchParams } = new URL(url)
 
   return searchParams
-}
-
-export function selectorHasFocus(page, selector) {
-  return page.locator(selector).evaluate((element) => element === document.activeElement)
 }
 
 export function setLocalStorageFromEvent(page, eventName, storageKey, storageValue) {
@@ -338,22 +318,6 @@ export function visitAction(page) {
       return "load"
     }
   })
-}
-
-export function waitForPathname(page, pathname) {
-  return page.waitForURL((url) => url.pathname == pathname)
-}
-
-export function waitUntilText(page, text, state = "visible") {
-  return page.waitForSelector(`text='${text}'`, { state })
-}
-
-export function waitUntilSelector(page, selector, state = "visible") {
-  return page.waitForSelector(selector, { state })
-}
-
-export function waitUntilNoSelector(page, selector, state = "hidden") {
-  return page.waitForSelector(selector, { state })
 }
 
 export async function willChangeBody(page, callback) {

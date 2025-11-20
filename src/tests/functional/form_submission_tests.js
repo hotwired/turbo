@@ -14,7 +14,6 @@ import {
   scrollToSelector,
   setLocalStorageFromEvent,
   visitAction,
-  waitUntilSelector,
   withPathname,
   withSearch,
   withSearchParam
@@ -31,7 +30,6 @@ test("standard form submission renders a progress bar", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
   await page.click("#standard form.sleep input[type=submit]")
 
-  await waitUntilSelector(page, ".turbo-progress-bar")
   await expect(page.locator(".turbo-progress-bar"), "displays progress bar").toBeAttached()
 
   await nextEventNamed(page, "turbo:load")

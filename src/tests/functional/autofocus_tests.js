@@ -48,7 +48,7 @@ test("receiving a Turbo Stream message with an [autofocus] element when the acti
       </turbo-stream>
     `)
   })
-  await expect(page.locator("#autofocus-from-stream")).toBeFocused()
+  await expect(page.locator("#autofocus-from-stream")).toBeFocused({ timeout: 200 })
 })
 
 test("autofocus from a Turbo Stream message does not leak a placeholder [id]", async ({ page }) => {
@@ -61,7 +61,7 @@ test("autofocus from a Turbo Stream message does not leak a placeholder [id]", a
     `)
   })
 
-  await expect(page.locator("#container-from-stream input")).toBeFocused()
+  await expect(page.locator("#container-from-stream input")).toBeFocused({ timeout: 200 })
 
 })
 

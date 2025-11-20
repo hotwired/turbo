@@ -14,7 +14,6 @@ import {
   resetMutationLogs,
   scrollToSelector,
   visitAction,
-  waitUntilNoSelector,
   willChangeBody,
   withPathname
 } from "../helpers/page"
@@ -347,5 +346,5 @@ async function visitLocation(page, location) {
 
 async function assertVisitDirectionAttribute(page, direction) {
   expect(await nextAttributeMutationNamed(page, "html", "data-turbo-visit-direction")).toEqual(direction)
-  await waitUntilNoSelector(page, "[data-turbo-visit-direction]")
+  await expect(page.locator("[data-turbo-visit-direction]")).not.toBeAttached()
 }
