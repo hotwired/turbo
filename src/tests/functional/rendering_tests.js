@@ -369,15 +369,39 @@ test("does not evaluate data-turbo-eval=false scripts", async ({ page }) => {
 test("preserves permanent elements", async ({ page }) => {
   const permanentElement = await page.locator("#permanent")
   await expect(permanentElement).toHaveText("Rendering")
+  await expect(permanentElement).not.toHaveAttribute("class")
 
   await page.click("#permanent-element-link")
   await nextEventNamed(page, "turbo:render")
   expect(await strictElementEquals(permanentElement, await page.locator("#permanent"))).toEqual(true)
   await expect(permanentElement).toHaveText("Rendering")
+  await expect(permanentElement).not.toHaveAttribute("class")
 
   await page.goBack()
   await nextEventNamed(page, "turbo:render")
   expect(await strictElementEquals(permanentElement, await page.locator("#permanent"))).toEqual(true)
+  await expect(permanentElement).not.toHaveAttribute("class")
+})
+
+test("test dispatches a turbo:before-permanent-element-render event while preserving permanent elements", async ({ page }) => {
+  await page.evaluate(() => {
+    addEventListener("turbo:before-permanent-element-render", (event) => {
+      event.detail.render = (currentElement, newElement) => {
+        currentElement.classList.add(...newElement.classList.values())
+      }
+    })
+  })
+
+  const permanentElement = page.locator("#permanent")
+
+  await expect(permanentElement).toHaveText("Rendering")
+  await expect(permanentElement).not.toHaveAttribute("class")
+
+  await page.click("#permanent-element-link")
+  await nextEventNamed(page, "turbo:before-permanent-element-render")
+
+  await expect(permanentElement).toHaveText("Rendering")
+  await expect(permanentElement).toHaveAttribute("class", "loaded")
 })
 
 test("restores focus during page rendering when transposing the activeElement", async ({ page }) => {
