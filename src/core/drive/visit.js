@@ -215,6 +215,7 @@ export class Visit {
           this.complete()
         } else {
           await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML), this)
+          this.performScroll()
           this.adapter.visitRendered(this)
           this.fail()
         }
