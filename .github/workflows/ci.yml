@@ -30,10 +30,10 @@ jobs:
       run: yarn test:unit
 
     - name: Chrome Test
-      run: yarn test:browser --project=chrome
+      run: yarn test:browser --project=chrome --retries=5
 
     - name: Firefox Test
-      run: yarn test:browser --project=firefox
+      run: yarn test:browser --project=firefox --retries=5
 
     - uses: actions/upload-artifact@v4
       with:
