@@ -69,6 +69,9 @@ export class FrameController {
       this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
+      if (!this.element.hasAttribute('recurse')) {
+        this.#currentFetchRequest?.cancel()
+      }
     }
   }
 
