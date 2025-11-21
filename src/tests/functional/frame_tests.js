@@ -541,12 +541,21 @@ test("redirecting in a form is still navigatable after redirect", async ({ page 
   await expect(page.locator("turbo-frame#form-redirect h2")).toHaveText("Form Redirect")
 })
 
+test("test 'turbo:frame-render' is triggered when a frame is connected to the document", async ({ page }) => {
+  await page.locator("#frame").evaluate((frame) => document.body.replaceChildren(frame))
+
+  const { fetchResponse } = await nextEventOnTarget(page, "frame", "turbo:frame-render")
+
+  expect(fetchResponse, "dispatches turbo:frame-render without fetchResponse").not.toBeTruthy()
+})
+
 test("'turbo:frame-render' is triggered after frame has finished rendering", async ({ page }) => {
   await page.click("#frame-part")
 
-  await nextEventNamed(page, "turbo:frame-render") // recursive
-  const { fetchResponse } = await nextEventNamed(page, "turbo:frame-render")
+  const { fetchResponse: deprecatedFetchResponse } = await nextEventOnTarget(page, "part", "turbo:frame-render")
+  const { fetchResponse } = await nextEventOnTarget(page, "part", "turbo:frame-load")
 
+  expect(deprecatedFetchResponse.response.url).toContain("/src/tests/fixtures/frames/part.html")
   expect(fetchResponse.response.url).toContain("/src/tests/fixtures/frames/part.html")
 })
 
@@ -627,7 +636,7 @@ test("navigating a frame targeting _top from an outer link fires events", async 
 test("invoking .reload() re-fetches the frame's content", async ({ page }) => {
   await page.click("#link-frame")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
-  await page.evaluate(() => document.getElementById("frame").reload())
+  await page.locator("#frame").evaluate((frame) => frame.reload())
 
   const dispatchedEvents = await readEventLogs(page)
 
