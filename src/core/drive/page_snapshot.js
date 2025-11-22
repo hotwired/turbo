@@ -38,6 +38,10 @@ export class PageSnapshot extends Snapshot {
       clonedPasswordInput.value = ""
     }
 
+    for (const clonedNoscriptElement of clonedElement.querySelectorAll("noscript")) {
+      clonedNoscriptElement.textContent = clonedNoscriptElement.innerHTML
+    }
+
     return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)
   }
 

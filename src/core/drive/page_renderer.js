@@ -172,8 +172,15 @@ export class PageRenderer extends Renderer {
   }
 
   activateNewBody() {
+    this.deactivateNoscriptElements()
     document.adoptNode(this.newElement)
     this.activateNewBodyScriptElements()
+  }
+
+  deactivateNoscriptElements() {
+    for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
+      noscriptElement.textContent = noscriptElement.innerHTML
+    }
   }
 
   activateNewBodyScriptElements() {
