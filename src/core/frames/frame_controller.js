@@ -69,17 +69,28 @@ export class FrameController {
       this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
+      if (!this.element.hasAttribute('recurse')) {
+        this.#currentFetchRequest?.cancel()
+      }
     }
   }
 
   disabledChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
-      this.#loadSourceURL()
+    if (this.enabled) {
+      if (this.loadingStyle == FrameLoadingStyle.eager) {
+        this.#loadSourceURL()
+      }
+    } else {
+      this.#currentFetchRequest?.cancel()
     }
   }
 
   sourceURLChanged() {
     if (this.#isIgnoringChangesTo("src")) return
+
+    if (!this.sourceURL) {
+      this.#currentFetchRequest?.cancel()
+    }
 
     if (this.element.isConnected) {
       this.complete = false
