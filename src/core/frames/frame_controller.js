@@ -76,8 +76,12 @@ export class FrameController {
   }
 
   disabledChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
-      this.#loadSourceURL()
+    if (this.enabled) {
+      if (this.loadingStyle == FrameLoadingStyle.eager) {
+        this.#loadSourceURL()
+      }
+    } else {
+      this.#currentFetchRequest?.cancel()
     }
   }
 
