@@ -88,6 +88,10 @@ export class FrameController {
   sourceURLChanged() {
     if (this.#isIgnoringChangesTo("src")) return
 
+    if (!this.sourceURL) {
+      this.#currentFetchRequest?.cancel()
+    }
+
     if (this.element.isConnected) {
       this.complete = false
     }
