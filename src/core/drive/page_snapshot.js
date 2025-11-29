@@ -39,7 +39,7 @@ export class PageSnapshot extends Snapshot {
     }
 
     for (const clonedNoscriptElement of clonedElement.querySelectorAll("noscript")) {
-      clonedNoscriptElement.textContent = clonedNoscriptElement.innerHTML
+      clonedNoscriptElement.remove()
     }
 
     return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)

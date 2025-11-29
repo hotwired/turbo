@@ -172,14 +172,14 @@ export class PageRenderer extends Renderer {
   }
 
   activateNewBody() {
-    this.deactivateNoscriptElements()
+    this.removeNoscriptElements()
     document.adoptNode(this.newElement)
     this.activateNewBodyScriptElements()
   }
 
-  deactivateNoscriptElements() {
+  removeNoscriptElements() {
     for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
-      noscriptElement.textContent = noscriptElement.innerHTML
+      noscriptElement.remove()
     }
   }
 
