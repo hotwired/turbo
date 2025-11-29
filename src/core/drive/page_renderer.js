@@ -172,8 +172,8 @@ export class PageRenderer extends Renderer {
   }
 
   activateNewBody() {
-    this.removeNoscriptElements()
     document.adoptNode(this.newElement)
+    this.removeNoscriptElements()
     this.activateNewBodyScriptElements()
   }
 
