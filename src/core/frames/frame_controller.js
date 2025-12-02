@@ -77,12 +77,10 @@ export class FrameController {
   }
 
   disabledChanged() {
-    if (this.enabled) {
-      if (this.loadingStyle == FrameLoadingStyle.eager) {
-        this.#loadSourceURL()
-      }
-    } else {
+    if (this.disabled) {
       this.#currentFetchRequest?.cancel()
+    } else if (this.loadingStyle == FrameLoadingStyle.eager) {
+      this.#loadSourceURL()
     }
   }
 
@@ -511,8 +509,12 @@ export class FrameController {
     return this.element.id
   }
 
+  get disabled() {
+    return this.element.disabled
+  }
+
   get enabled() {
-    return !this.element.disabled
+    return !this.disabled
   }
 
   get sourceURL() {
