@@ -59,6 +59,10 @@ export class FrameController {
       this.formLinkClickObserver.start()
       this.linkInterceptor.start()
       this.formSubmitObserver.start()
+
+      if (this.element.isConnected) {
+        session.frameRendered(this.element)
+      }
     }
   }
 
@@ -326,8 +330,8 @@ export class FrameController {
 
       await this.view.render(renderer)
       this.complete = true
-      session.frameRendered(fetchResponse, this.element)
-      session.frameLoaded(this.element)
+      session.frameRendered(this.element, fetchResponse)
+      session.frameLoaded(this.element, fetchResponse)
       await this.fetchResponseLoaded(fetchResponse)
     } else if (this.#willHandleFrameMissingFromResponse(fetchResponse)) {
       this.#handleFrameMissingFromResponse(fetchResponse)
