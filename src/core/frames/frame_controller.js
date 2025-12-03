@@ -69,17 +69,27 @@ export class FrameController {
       this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
+
+      if (!this.element.hasAttribute("recurse")) {
+        this.#currentFetchRequest?.cancel()
+      }
     }
   }
 
   disabledChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
+    if (this.disabled) {
+      this.#currentFetchRequest?.cancel()
+    } else if (this.loadingStyle == FrameLoadingStyle.eager) {
       this.#loadSourceURL()
     }
   }
 
   sourceURLChanged() {
     if (this.#isIgnoringChangesTo("src")) return
+
+    if (!this.sourceURL) {
+      this.#currentFetchRequest?.cancel()
+    }
 
     if (this.element.isConnected) {
       this.complete = false
@@ -506,8 +516,12 @@ export class FrameController {
     return this.element.id
   }
 
+  get disabled() {
+    return this.element.disabled
+  }
+
   get enabled() {
-    return !this.element.disabled
+    return !this.disabled
   }
 
   get sourceURL() {
