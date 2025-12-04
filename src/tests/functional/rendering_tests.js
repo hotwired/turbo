@@ -259,6 +259,14 @@ test("does not evaluate head stylesheet elements inside noscript elements", asyn
   expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
 })
 
+test("does not evaluate body stylesheet elements inside noscript elements", async ({ page }) => {
+  expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
+
+  await page.click("#body-noscript-link")
+  await nextEventNamed(page, "turbo:render")
+  expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
+})
+
 test("waits for CSS to be loaded before rendering", async ({ page }) => {
   let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
