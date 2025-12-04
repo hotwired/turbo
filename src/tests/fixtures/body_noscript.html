@@ -9,13 +9,8 @@
   <body>
     <h1>Body noscript test</h1>
     <p><a id="back-link" href="/src/tests/fixtures/rendering.html">Go back</a></p>
-    <div id="visible-content">This content should be visible</div>
     <noscript>
-      <style>
-        #visible-content {
-          display: none;
-        }
-      </style>
+      <link rel="stylesheet" type="text/css" href="/src/tests/fixtures/noscript.css">
     </noscript>
   </body>
 </html>

@@ -260,11 +260,11 @@ test("does not evaluate head stylesheet elements inside noscript elements", asyn
 })
 
 test("does not evaluate body stylesheet elements inside noscript elements", async ({ page }) => {
+  expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
+
   await page.click("#body-noscript-link")
   await nextEventNamed(page, "turbo:render")
-
-  const isVisible = await page.locator("#visible-content").isVisible()
-  expect(isVisible).toEqual(true)
+  expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
 })
 
 test("waits for CSS to be loaded before rendering", async ({ page }) => {
