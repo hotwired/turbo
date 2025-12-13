@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test"
 import {
   clickWithoutScrolling,
   isScrolledToSelector,
-  isScrolledToTop,
   nextAttributeMutationNamed,
   nextBeat,
   nextBody,
@@ -538,37 +537,4 @@ test("ignores forms with a [target] attribute that target an iframe with [name='
   await noNextEventNamed(page, "turbo:load")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
-})
-
-test("resets scroll position when navigating to a 404 error page", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/navigation_error.html")
-  await page.evaluate(() => window.scrollTo(0, 100))
-  expect(await isScrolledToTop(page), "page is scrolled down").toEqual(false)
-
-  await page.click("#link-404")
-
-  await expect(page.locator("h1")).toHaveText("Not Found")
-  expect(await isScrolledToTop(page)).toEqual(true)
-})
-
-test("resets scroll position when navigating to a 500 error page", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/navigation_error.html")
-  await page.evaluate(() => window.scrollTo(0, 100))
-  expect(await isScrolledToTop(page), "page is scrolled down").toEqual(false)
-
-  await page.click("#link-500")
-
-  await expect(page.locator("h1")).toHaveText("Internal Server Error")
-  expect(await isScrolledToTop(page)).toEqual(true)
-})
-
-test("resets scroll position when navigating to a success page", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/navigation_error.html")
-  await page.evaluate(() => window.scrollTo(0, 100))
-  expect(await isScrolledToTop(page), "page is scrolled down").toEqual(false)
-
-  await page.click("#link-success")
-
-  await expect(page.locator("h1")).toHaveText("One")
-  expect(await isScrolledToTop(page)).toEqual(true)
 })

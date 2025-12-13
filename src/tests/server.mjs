@@ -75,6 +75,14 @@ router.post("/reject/morph/reset", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.post("/reject/reset", (request, response) => {
+  const { status } = request.body
+  const statusCode = parseInt(status || "404", 10)
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/${statusCode}_reset.html`)
+
+  response.status(statusCode).sendFile(fixture)
+})
+
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
@@ -94,14 +102,6 @@ router.get("/delayed_response", (request, response) => {
   const { status } = request.query
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
-})
-
-router.get("/error", (request, response) => {
-  const { status } = request.query
-  const statusCode = parseInt(status || "404", 10)
-  const fixture = path.join(__dirname, `../../src/tests/fixtures/${statusCode}.html`)
-
-  response.status(statusCode).sendFile(fixture)
 })
 
 router.post("/messages", (request, response) => {

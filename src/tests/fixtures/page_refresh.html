@@ -140,6 +140,14 @@
         <input type="hidden" name="status" value="422">
         <input type="submit">
       </form>
+      <form class="not_found_reset" action="/__turbo/reject/reset" method="post" style="margin-top:100vh">
+        <input type="hidden" name="status" value="404">
+        <input type="submit">
+      </form>
+      <form class="server_error_reset" action="/__turbo/reject/reset" method="post" style="margin-top:100vh">
+        <input type="hidden" name="status" value="500">
+        <input type="submit">
+      </form>
     </div>
 
     <div id="container">

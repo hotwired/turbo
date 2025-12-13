@@ -430,6 +430,28 @@ test("resets scroll position when form submission returns 422 error with turbo-r
   await assertPageScroll(page, 0, 0)
 })
 
+test("resets scroll position when form submission returns 404 error with turbo-refresh-scroll=reset", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  await assertPageScroll(page, 100, 0)
+
+  await page.evaluate(() => document.querySelector("#reject form.not_found_reset input[type=submit]")?.click())
+
+  await expect(page.locator("h1")).toHaveText("Not Found")
+  await assertPageScroll(page, 0, 0)
+})
+
+test("resets scroll position when form submission returns 500 error with turbo-refresh-scroll=reset", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  await page.evaluate(() => window.scrollTo(0, 100))
+  await assertPageScroll(page, 100, 0)
+
+  await page.evaluate(() => document.querySelector("#reject form.server_error_reset input[type=submit]")?.click())
+
+  await expect(page.locator("h1")).toHaveText("Internal Server Error")
+  await assertPageScroll(page, 0, 0)
+})
+
 test("doesn't render previews when morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
