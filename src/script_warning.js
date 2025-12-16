@@ -1,10 +1,10 @@
 import { unindent } from "./util"
 ;(() => {
-  let element = document.currentScript
-  if (!element) return
-  if (element.hasAttribute("data-turbo-suppress-warning")) return
+  const scriptElement = document.currentScript
+  if (!scriptElement) return
+  if (scriptElement.hasAttribute("data-turbo-suppress-warning")) return
 
-  element = element.parentElement
+  let element = scriptElement.parentElement
   while (element) {
     if (element == document.body) {
       return console.warn(
@@ -18,7 +18,7 @@ import { unindent } from "./util"
         ——
         Suppress this warning by adding a "data-turbo-suppress-warning" attribute to: %s
       `,
-        element.outerHTML
+        scriptElement.outerHTML
       )
     }
 
