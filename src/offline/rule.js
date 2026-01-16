@@ -1,13 +1,19 @@
 export class Rule {
-  constructor({ handler, match = /.*/ } = {}) {
+  constructor({ handler, match = /.*/, except } = {}) {
     this.handler = handler
     this.match = match
+    this.except = except
   }
 
   matches(request) {
-    if (typeof this.match === 'function') return this.match(request)
+    return this.#matchesCondition(request, this.match) && !this.#matchesCondition(request, this.except)
+  }
 
-    const regexes = Array.isArray(this.match) ? this.match : [this.match]
+  #matchesCondition(request, condition) {
+    if (!condition) return false
+    if (typeof condition === 'function') return condition(request)
+
+    const regexes = Array.isArray(condition) ? condition : [condition]
     return regexes.some(regex => regex.test(request.url))
   }
 

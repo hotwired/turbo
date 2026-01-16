@@ -102,6 +102,35 @@ test("doesn't intercept non-matching requests", async ({ page }) => {
   await assertNotCached(page, "test-cache-first", dynamicJsonUrl)
 })
 
+test("doesn't intercept requests matching the except pattern", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/cache_first_with_exceptions.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+  const dynamicJsonUrl = "/__turbo/dynamic.json"
+
+  // .txt matches /\/dynamic\./ but not /\.json$/, so it should be cached
+  const firstTxtContent = await fetchContent(page, dynamicTxtUrl)
+  await page.waitForTimeout(200)
+  await assertCachedContent(page, "test-cache-first-with-exceptions", dynamicTxtUrl, firstTxtContent)
+
+  const secondTxtContent = await fetchContent(page, dynamicTxtUrl)
+  expect(secondTxtContent).toBe(firstTxtContent)
+
+  // .json matches /\/dynamic\./ but also matches /\.json$/ (except), so it should NOT be cached
+  const firstJsonResponse = await testFetch(page, dynamicJsonUrl)
+  expect(firstJsonResponse.ok).toBe(true)
+  const firstJsonData = JSON.parse(firstJsonResponse.text)
+
+  await page.waitForTimeout(200)
+  await assertNotCached(page, "test-cache-first-with-exceptions", dynamicJsonUrl)
+
+  const secondJsonResponse = await testFetch(page, dynamicJsonUrl)
+  const secondJsonData = JSON.parse(secondJsonResponse.text)
+
+  expect(secondJsonData.timestamp).not.toBe(firstJsonData.timestamp)
+})
+
 test("registers service worker as a module and intercepts and caches requests", async ({ page, browserName }) => {
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1360870
   test.skip(browserName === "firefox", "Firefox doesn't support ECMAScript modules in service workers")
