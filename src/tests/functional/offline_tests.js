@@ -1,5 +1,4 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 import { clearAllCaches, registerServiceWorker, unregisterServiceWorker, testFetch, waitForServiceWorkerToControl, getCachedResponse, setNetworkDelay } from "../helpers/offline"
 
 test.beforeEach(async ({ page }) => {
@@ -30,7 +29,7 @@ test("registers service worker and intercepts and caches requests with cache-fir
 
   const secondContent = await fetchContent(page, dynamicTxtUrl)
 
-  assert.equal(secondContent, firstContent, "Second request should return identical content from cache")
+  expect(secondContent).toBe(firstContent)
 })
 
 test("registers service worker and intercepts and caches requests with network-first strategy", async ({ page }) => {
@@ -49,11 +48,11 @@ test("registers service worker and intercepts and caches requests with network-f
   // Second request - should hit the network again
   const secondContent = await fetchContent(page, dynamicTxtUrl)
 
-  assert.notEqual(secondContent, firstContent, "Second request should return different content from network")
+  expect(secondContent).not.toBe(firstContent)
 
   // The cached content should have been refreshed as well
   const cachedContentAfterSecondRequest = await getCachedContent(page, "test-network-first", dynamicTxtUrl)
-  assert.notEqual(cachedContentAfterSecondRequest, firstContent, "Cached content should have changed")
+  expect(cachedContentAfterSecondRequest).not.toBe(firstContent)
 })
 
 test("registers service worker and intercepts and caches requests with stale-while-revalidate strategy", async ({ page }) => {
@@ -71,12 +70,12 @@ test("registers service worker and intercepts and caches requests with stale-whi
 
   // Second request - should return the cached response but refresh it in the background
   const secondContent = await fetchContent(page, dynamicTxtUrl)
-  assert.equal(secondContent, firstContent, "Second request should return identical content from cache")
+  expect(secondContent).toBe(firstContent)
 
   // Now check that the cached content was refreshed
   await page.waitForTimeout(200)
   const cachedContentAfterSecondRequest = await getCachedContent(page, "test-stale-while-revalidate", dynamicTxtUrl)
-  assert.notEqual(cachedContentAfterSecondRequest, firstContent, "Cached content should have changed")
+  expect(cachedContentAfterSecondRequest).not.toBe(firstContent)
 })
 
 test("doesn't intercept non-matching requests", async ({ page }) => {
@@ -87,18 +86,18 @@ test("doesn't intercept non-matching requests", async ({ page }) => {
 
   // JSON endpoint doesn't match so it won't be cached
   const firstJsonResponse = await testFetch(page, dynamicJsonUrl)
-  assert.equal(firstJsonResponse.ok, true)
+  expect(firstJsonResponse.ok).toBe(true)
 
   const firstJsonData = JSON.parse(firstJsonResponse.text)
 
   // Second request, not cached, would hit the network and get different content
   const secondJsonResponse = await testFetch(page, dynamicJsonUrl)
-  assert.equal(secondJsonResponse.ok, true)
+  expect(secondJsonResponse.ok).toBe(true)
 
   const secondJsonData = JSON.parse(secondJsonResponse.text)
 
-  assert.notEqual(secondJsonData.timestamp, firstJsonData.timestamp, "Timestamps should have changed")
-  assert.notEqual(secondJsonData.requestId, firstJsonData.requestId, "Request IDs should be different")
+  expect(secondJsonData.timestamp).not.toBe(firstJsonData.timestamp)
+  expect(secondJsonData.requestId).not.toBe(firstJsonData.requestId)
 
   await assertNotCached(page, "test-cache-first", dynamicJsonUrl)
 })
@@ -115,7 +114,7 @@ test("registers service worker as a module and intercepts and caches requests", 
   const firstContent = await fetchContent(page, dynamicTxtUrl)
   const secondContent = await fetchContent(page, dynamicTxtUrl)
 
-  assert.equal(secondContent, firstContent, "Second request should return identical content from cache")
+  expect(secondContent).toBe(firstContent)
 })
 
 test("applies different handlers to different requests based on different rules", async ({ page }) => {
@@ -132,7 +131,7 @@ test("applies different handlers to different requests based on different rules"
 
   // Request without header - should NOT be cached
   const notCachedTxtResponse = await testFetch(page, dynamicTxtUrl)
-  assert.equal(notCachedTxtResponse.ok, true)
+  expect(notCachedTxtResponse.ok).toBe(true)
   await assertNotCached(page, "test-cache-first", dynamicTxtUrl)
 
 
@@ -142,7 +141,7 @@ test("applies different handlers to different requests based on different rules"
 
   // Make the same request again - should return cached content
   const secondCachedTxtContent = await fetchContent(page, dynamicTxtUrl, { "X-Cache": "yes" })
-  assert.equal(secondCachedTxtContent, cachedTxtContent, "Second request with header should return cached content")
+  expect(secondCachedTxtContent).toBe(cachedTxtContent)
 })
 
 test("network timeout triggers cache fallback for network-first", async ({ page }) => {
@@ -157,8 +156,8 @@ test("network timeout triggers cache fallback for network-first", async ({ page 
   await setNetworkDelay(page, 5000)
 
   const timeoutResponse = await testFetch(page, dynamicTxtUrl)
-  assert.equal(timeoutResponse.ok, true, "Request should succeed from cache even on timeout")
-  assert.equal(timeoutResponse.text.trim(), initialContent, "Timeout response should match cached content")
+  expect(timeoutResponse.ok).toBe(true)
+  expect(timeoutResponse.text.trim()).toBe(initialContent)
 })
 
 test("deletes cached entries after maxAge per cache", async ({ page }) => {
@@ -203,7 +202,7 @@ test("deletes cached entries after maxAge per cache", async ({ page }) => {
   await page.waitForTimeout(200)
 
   const secondTriggerTrimContent = await fetchContent(page, triggerTrimUrl)
-  assert.equal(secondTriggerTrimContent, firstTriggerTrimContent, "Second request should return identical content from cache")
+  expect(secondTriggerTrimContent).toBe(firstTriggerTrimContent)
 
   // Wait a bit for trimming to potentially complete
   await page.waitForTimeout(500)
@@ -213,25 +212,25 @@ test("deletes cached entries after maxAge per cache", async ({ page }) => {
 
 async function fetchContent(page, url, headers = {}) {
   const response = await testFetch(page, url, headers)
-  assert.equal(response.ok, true)
+  expect(response.ok).toBe(true)
   return response.text.trim()
 }
 
 async function getCachedContent(page, cacheName, url) {
   const fullUrl = "http://localhost:9000" + url
   const cachedResponse = await getCachedResponse(page, cacheName, fullUrl)
-  assert.isTrue(cachedResponse.found)
+  expect(cachedResponse.found).toBe(true)
 
   return cachedResponse.text.trim()
 }
 
 async function assertCachedContent(page, cacheName, url, expectedContent) {
   const cachedContent = await getCachedContent(page, cacheName, url)
-  assert.equal(cachedContent, expectedContent, "Cached content should match expected content")
+  expect(cachedContent).toBe(expectedContent)
 }
 
 async function assertNotCached(page, cacheName, url) {
   const fullUrl = "http://localhost:9000" + url
   const cachedResponse = await getCachedResponse(page, cacheName, fullUrl)
-  assert.isFalse(cachedResponse.found)
+  expect(cachedResponse.found).toBe(false)
 }
