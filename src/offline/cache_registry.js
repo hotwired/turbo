@@ -2,6 +2,16 @@ const DATABASE_NAME = "turbo-offline-database"
 const DATABASE_VERSION = 1
 const STORE_NAME = "cache-registry"
 
+export function deleteCacheRegistries() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(DATABASE_NAME)
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+  }).then(() => {
+    cacheRegistryDatabase = null
+  })
+}
+
 class CacheRegistryDatabase {
   get(key) {
     const getOp = (store) => this.#requestToPromise(store.get(key))

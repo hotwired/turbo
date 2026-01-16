@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { clearAllCaches, registerServiceWorker, unregisterServiceWorker, testFetch, waitForServiceWorkerToControl, getCachedResponse, setNetworkDelay } from "../helpers/offline"
+import { clearAllCaches, registerServiceWorker, unregisterServiceWorker, testFetch, waitForServiceWorkerToControl, getCachedResponse, setNetworkDelay, setSimulateQuotaError, getIndexedDBEntryCount } from "../helpers/offline"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/bare.html")
@@ -237,6 +237,40 @@ test("deletes cached entries after maxAge per cache", async ({ page }) => {
   await page.waitForTimeout(500)
   // And finally check that it's gone
   await assertNotCached(page, "test-cache-short-lived", triggerTrimUrl)
+})
+
+test("clears all caches and IndexedDB when QuotaExceededError occurs", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/quota_error_simulation.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+
+  // First, cache something successfully
+  await fetchContent(page, dynamicTxtUrl)
+  await page.waitForTimeout(200)
+
+  // Verify it's cached and IndexedDB has entries
+  await assertCachedContent(page, "test-quota-error", dynamicTxtUrl, await fetchContent(page, dynamicTxtUrl))
+  const entriesBefore = await getIndexedDBEntryCount(page)
+  expect(entriesBefore).toBeGreaterThan(0)
+
+  // Enable quota error simulation
+  await setSimulateQuotaError(page, true)
+
+  // Make another request that will trigger the quota error during caching
+  const anotherUrl = "/__turbo/dynamic.txt?trigger=quota"
+  await testFetch(page, anotherUrl)
+
+  // Wait for error handling to complete
+  await page.waitForTimeout(500)
+
+  // Verify all caches are cleared
+  const cacheNames = await page.evaluate(() => caches.keys())
+  expect(cacheNames.length).toBe(0)
+
+  // Verify IndexedDB is cleared
+  const entriesAfter = await getIndexedDBEntryCount(page)
+  expect(entriesAfter).toBe(0)
 })
 
 async function fetchContent(page, url, headers = {}) {
