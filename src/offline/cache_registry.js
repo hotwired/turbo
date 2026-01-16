@@ -3,12 +3,12 @@ const DATABASE_VERSION = 1
 const STORE_NAME = "cache-registry"
 
 class CacheRegistryDatabase {
-  get(cacheName, key) {
+  get(key) {
     const getOp = (store) => this.#requestToPromise(store.get(key))
     return this.#performOperation(STORE_NAME, getOp, "readonly")
   }
 
-  has(cacheName, key) {
+  has(key) {
     const countOp = (store) => this.#requestToPromise(store.count(key))
     return this.#performOperation(STORE_NAME, countOp, "readonly").then((result) => result === 1)
   }
@@ -23,8 +23,8 @@ class CacheRegistryDatabase {
     return this.#performOperation(STORE_NAME, putOp, "readwrite")
   }
 
-  getTimestamp(cacheName, key) {
-    return this.get(cacheName, key).then((result) => result?.timestamp)
+  getTimestamp(key) {
+    return this.get(key).then((result) => result?.timestamp)
   }
 
   getOlderThan(cacheName, timestamp) {
@@ -44,7 +44,7 @@ class CacheRegistryDatabase {
     return this.#performOperation(STORE_NAME, getOlderThanOp, "readonly")
   }
 
-  delete(cacheName, key) {
+  delete(key) {
     const deleteOp = (store) => this.#requestToPromise(store.delete(key))
     return this.#performOperation(STORE_NAME, deleteOp, "readwrite")
   }
@@ -109,11 +109,11 @@ export class CacheRegistry {
   }
 
   get(key) {
-    return this.database.get(this.cacheName, key)
+    return this.database.get(key)
   }
 
   has(key) {
-    return this.database.has(this.cacheName, key)
+    return this.database.has(key)
   }
 
   put(key, value = {}) {
@@ -121,7 +121,7 @@ export class CacheRegistry {
   }
 
   getTimestamp(key) {
-    return this.database.getTimestamp(this.cacheName, key)
+    return this.database.getTimestamp(key)
   }
 
   getOlderThan(timestamp) {
@@ -129,6 +129,6 @@ export class CacheRegistry {
   }
 
   delete(key) {
-    return this.database.delete(this.cacheName, key)
+    return this.database.delete(key)
   }
 }
