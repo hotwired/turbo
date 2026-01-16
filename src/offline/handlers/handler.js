@@ -1,4 +1,4 @@
-import { CacheRegistry } from "../cache_registry"
+import { CacheRegistry, deleteCacheRegistries } from "../cache_registry"
 import { CacheTrimmer } from "../cache_trimmer"
 
 export class Handler {
@@ -45,13 +45,33 @@ export class Handler {
       const registryPromise = this.cacheRegistry.put(cacheKeyUrl)
       const trimPromise = this.cacheTrimmer.trim()
 
-      return Promise.all([ cachePromise, registryPromise, trimPromise ])
+      return Promise.all([ cachePromise, registryPromise, trimPromise ]).catch(async (error) => {
+        if (this.#isQuotaExceededError(error)) {
+          await this.#clearAllStorage()
+        }
+        throw error
+      })
     }
   }
 
   canCacheResponse(response) {
     // OK response and opaque responses (due to CORS), that have a 0 status
     return response.status === 200 || response.status === 0
+  }
+
+  #isQuotaExceededError(error) {
+    return error?.name === "QuotaExceededError" ||
+      (error?.inner && error.inner.name === "QuotaExceededError")
+  }
+
+  async #clearAllStorage() {
+    const cacheNames = await caches.keys()
+
+    for (const cacheName of cacheNames) {
+      await caches.delete(cacheName)
+    }
+
+    await deleteCacheRegistries()
   }
 }
 

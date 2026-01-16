@@ -81,3 +81,46 @@ export async function setNetworkDelay(page, delayMs) {
     data: { delay: delayMs }
   })
 }
+
+export async function setSimulateQuotaError(page, enabled) {
+  return page.evaluate(async (enabled) => {
+    const registration = await navigator.serviceWorker.ready
+    const messageChannel = new MessageChannel()
+
+    return new Promise((resolve) => {
+      messageChannel.port1.onmessage = (event) => resolve(event.data)
+      registration.active.postMessage(
+        { type: "SIMULATE_QUOTA_ERROR", enabled },
+        [messageChannel.port2]
+      )
+    })
+  }, enabled)
+}
+
+export async function getIndexedDBEntryCount(page, databaseName = "turbo-offline-database") {
+  return page.evaluate(async (databaseName) => {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(databaseName)
+      request.onerror = () => resolve(0)
+      request.onsuccess = () => {
+        const db = request.result
+        if (!db.objectStoreNames.contains("cache-registry")) {
+          db.close()
+          resolve(0)
+          return
+        }
+        const transaction = db.transaction("cache-registry", "readonly")
+        const store = transaction.objectStore("cache-registry")
+        const countRequest = store.count()
+        countRequest.onsuccess = () => {
+          db.close()
+          resolve(countRequest.result)
+        }
+        countRequest.onerror = () => {
+          db.close()
+          resolve(0)
+        }
+      }
+    })
+  }, databaseName)
+}
