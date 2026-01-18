@@ -33,6 +33,65 @@ export function morphChildren(currentElement, newElement, options = {}) {
   })
 }
 
+/**
+ * Morph the state of the currentBody based on the attributes and contents of
+ * the newBody. Morphing body elements may dispatch turbo:morph,
+ * turbo:before-morph-element, turbo:before-morph-attribute, and
+ * turbo:morph-element events.
+ *
+ * @param currentBody HTMLBodyElement destination of morphing changes
+ * @param newBody HTMLBodyElement source of morphing changes
+ */
+export function morphBodyElements(currentElement, newElement) {
+  morphElements(currentElement, newElement, {
+    callbacks: {
+      beforeNodeMorphed: (node, newNode) => {
+        if (
+          shouldRefreshFrameWithMorphing(node, newNode) &&
+          !closestFrameReloadableWithMorphing(node)
+        ) {
+          node.reload()
+          return false
+        }
+        return true
+      }
+    }
+  })
+
+  dispatch("turbo:morph", { detail: { currentElement, newElement } })
+}
+
+/**
+ * Morph the child elements of the currentFrame based on the child elements of
+ * the newFrame. Morphing turbo-frame elements may dispatch turbo:before-frame-morph,
+ * turbo:before-morph-element, turbo:before-morph-attribute, and
+ * turbo:morph-element events.
+ *
+ * @param currentFrame FrameElement destination of morphing children changes
+ * @param newFrame FrameElement source of morphing children changes
+ */
+export function morphTurboFrameElements(currentElement, newElement) {
+  dispatch("turbo:before-frame-morph", {
+    target: currentElement,
+    detail: { currentElement, newElement }
+  })
+
+  morphChildren(currentElement, newElement, {
+    callbacks: {
+      beforeNodeMorphed: (node, newNode) => {
+        if (
+          shouldRefreshFrameWithMorphing(node, newNode) &&
+          closestFrameReloadableWithMorphing(node) === currentElement
+        ) {
+          node.reload()
+          return false
+        }
+        return true
+      }
+    }
+  })
+}
+
 export function shouldRefreshFrameWithMorphing(currentFrame, newFrame) {
   return currentFrame instanceof FrameElement &&
     currentFrame.shouldReloadWithMorph && (!newFrame || areFramesCompatibleForRefreshing(currentFrame, newFrame)) &&
