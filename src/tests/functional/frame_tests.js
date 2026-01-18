@@ -152,10 +152,10 @@ test("successfully following a link to a page without a matching frame dispatche
 test("successfully following a link to a page without a matching frame shows an error and throws an exception", async ({
   page
 }) => {
-  let error = undefined
-  page.once("pageerror", (e) => (error = e))
-
-  await page.click("#missing-frame-link")
+  const [error] = await Promise.all([
+    page.waitForEvent("pageerror"),
+    page.click("#missing-frame-link")
+  ])
 
   await expect(page.locator("#missing")).toHaveText("Content missing")
 
@@ -184,10 +184,10 @@ test("failing to follow a link to a page without a matching frame dispatches a t
 test("failing to follow a link to a page without a matching frame shows an error and throws an exception", async ({
   page
 }) => {
-  let error = undefined
-  page.once("pageerror", (e) => (error = e))
-
-  await page.click("#missing-page-link")
+  const [error] = await Promise.all([
+    page.waitForEvent("pageerror"),
+    page.click("#missing-page-link")
+  ])
 
   await expect(page.locator("#missing")).toHaveText("Content missing")
 
