@@ -449,15 +449,21 @@ test("double-clicking on a link", async ({ page }) => {
 })
 
 test("does not fire turbo:load twice after following a redirect", async ({ page }) => {
+  await page.evaluate(() => {
+    window.turboLoadCount = 0
+    addEventListener("turbo:load", () => window.turboLoadCount++)
+  })
+
   page.click("#redirection-link")
 
   await nextBeat() // 301 redirect response
 
-  expect(await noNextEventNamed(page, "turbo:load")).toEqual(true)
-
   await nextBeat() // 200 response
   await nextBody(page)
   await nextEventNamed(page, "turbo:load")
+  await nextBeat()
+
+  expect(await page.evaluate(() => window.turboLoadCount)).toEqual(1)
 })
 
 test("navigating back whilst a visit is in-flight", async ({ page }) => {
