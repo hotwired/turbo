@@ -232,6 +232,42 @@ test("it cancels the prefetch request if the link is no longer hovered", async (
   })
 })
 
+test("it cancels pending prefetch requests if a new request is made", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  // Prefetch a request, that takes a long time to load
+  await hoverSelector({ page, selector: "#anchor_for_slow_prefetch" })
+  await page.click("#anchor_for_slow_prefetch", {noWaitAfter: true})
+
+  // Issue a new request to a secondary resource, that loads fast
+  await page.click("#anchor_for_prefetch")
+
+  // Allow for the slow request to be processed if it wasn't canceled
+  await sleep(1100)
+
+  // The page should show the secondary resource
+  await expect(page).toHaveTitle("Prefetched Page")
+  await expect(page).toHaveURL("src/tests/fixtures/prefetched.html")
+})
+
+test("it cancels pending prefetch requests if a new prefetch request is made", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  // Prefetch a request, that takes a long time to load
+  await hoverSelector({ page, selector: "#anchor_for_slow_prefetch" })
+  await page.click("#anchor_for_slow_prefetch", {noWaitAfter: true})
+
+  // Issue a new request including prefetch to a secondary resource, that loads fast
+  await hoverSelector({ page, selector: "#anchor_for_prefetch" })
+  await page.click("#anchor_for_prefetch")
+
+  await sleep(1100)
+
+  // The page should show the secondary resource
+  await expect(page).toHaveTitle("Prefetched Page")
+  await expect(page).toHaveURL("src/tests/fixtures/prefetched.html")
+})
+
 test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 

@@ -11,6 +11,7 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 export class LinkPrefetchObserver {
   started = false
   #prefetchedLink = null
+  #pendingFetchRequests = new Map()
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -40,6 +41,7 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
+    this.eventTarget.removeEventListener("turbo:before-visit", this.#cancelPendingFetchRequests, true)
     this.started = false
   }
 
@@ -54,6 +56,7 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
+    this.eventTarget.addEventListener("turbo:before-visit", this.#cancelPendingFetchRequests, true)
     this.started = true
   }
 
@@ -80,8 +83,29 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
+        // Track pending fetch requests belonging to the current URL
+        const url = location.href
+        if (!this.#pendingFetchRequests.has(url)) {
+          this.#pendingFetchRequests.set(url, [])
+        }
+        this.#pendingFetchRequests.get(url).push(fetchRequest)
+
         prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
       }
+    }
+  }
+
+  #cancelPendingFetchRequests = (event) => {
+    if (event.detail.fetchRequest) return
+
+    for (const [url, fetchRequests] of this.#pendingFetchRequests.entries()) {
+      const isSameUrl = url === event.detail.url
+
+      for (const fetchRequest of isSameUrl ? fetchRequests.slice(0, -1) : fetchRequests) {
+        fetchRequest.cancel()
+      }
+
+      this.#pendingFetchRequests.set(url, isSameUrl ? [fetchRequests[fetchRequests.length - 1]] : [])
     }
   }
 
@@ -128,7 +152,13 @@ export class LinkPrefetchObserver {
 
   requestErrored(fetchRequest) {}
 
-  requestFinished(fetchRequest) {}
+  requestFinished(fetchRequest) {
+    const pendingFetchRequests = this.#pendingFetchRequests.get(fetchRequest.url.href)
+    if (!pendingFetchRequests?.length) return
+
+    const index = pendingFetchRequests.indexOf(fetchRequest)
+    if (index !== -1) pendingFetchRequests.splice(index, 1)
+  }
 
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
 
