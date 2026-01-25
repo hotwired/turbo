@@ -268,6 +268,23 @@ test("it cancels pending prefetch requests if a new prefetch request is made", a
   await expect(page).toHaveURL("src/tests/fixtures/prefetched.html")
 })
 
+test("it cancels the pending prefetch request if the same link is hovered again", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let finishedRequestCount = 0
+  page.on("requestfinished", async () => (finishedRequestCount++))
+
+  await page.hover("#anchor_for_slow_prefetch")
+  await sleep(150)
+  await page.mouse.move(0, 0)
+
+  // Prefetching the same URL again while the last request is still not finished should abort the latter
+  await page.hover("#anchor_for_slow_prefetch")
+
+  await sleep(1200)
+  expect(finishedRequestCount).toEqual(1)
+})
+
 test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 

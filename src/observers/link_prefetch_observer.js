@@ -83,12 +83,12 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        // Track pending fetch requests belonging to the current URL
+        // Memorize fetch request and cancel previous one to the same URL
         const url = location.href
-        if (!this.#pendingFetchRequests.has(url)) {
-          this.#pendingFetchRequests.set(url, [])
-        }
-        this.#pendingFetchRequests.get(url).push(fetchRequest)
+        const lastFetchRequest = this.#pendingFetchRequests.get(url)
+
+        if(lastFetchRequest) lastFetchRequest.cancel()
+        this.#pendingFetchRequests.set(url, fetchRequest)
 
         prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
       }
@@ -98,14 +98,11 @@ export class LinkPrefetchObserver {
   #cancelPendingFetchRequests = (event) => {
     if (event.detail.fetchRequest) return
 
-    for (const [url, fetchRequests] of this.#pendingFetchRequests.entries()) {
-      const isSameUrl = url === event.detail.url
-
-      for (const fetchRequest of isSameUrl ? fetchRequests.slice(0, -1) : fetchRequests) {
+    for (const [url, fetchRequest] of this.#pendingFetchRequests.entries()) {
+      if (url !== event.detail.url) {
         fetchRequest.cancel()
+        this.#pendingFetchRequests.delete(url)
       }
-
-      this.#pendingFetchRequests.set(url, isSameUrl ? [fetchRequests[fetchRequests.length - 1]] : [])
     }
   }
 
@@ -153,11 +150,11 @@ export class LinkPrefetchObserver {
   requestErrored(fetchRequest) {}
 
   requestFinished(fetchRequest) {
-    const pendingFetchRequests = this.#pendingFetchRequests.get(fetchRequest.url.href)
-    if (!pendingFetchRequests?.length) return
+    const url = fetchRequest.url.href
 
-    const index = pendingFetchRequests.indexOf(fetchRequest)
-    if (index !== -1) pendingFetchRequests.splice(index, 1)
+    if(this.#pendingFetchRequests.get(url) === fetchRequest) {
+      this.#pendingFetchRequests.delete(url)
+    }
   }
 
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
