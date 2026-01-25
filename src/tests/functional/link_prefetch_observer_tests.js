@@ -285,6 +285,21 @@ test("it cancels the pending prefetch request if the same link is hovered again"
   expect(finishedRequestCount).toEqual(1)
 })
 
+test("it keeps the running prefetch request when clicking a link", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestCount = 0
+  page.on("request", async () => (requestCount++))
+
+  await hoverSelector({ page, selector: "#anchor_for_slow_prefetch" })
+  await sleep(150)
+  await page.click("#anchor_for_slow_prefetch")
+
+  // The prefetch request should be used for the visit
+  await expect(page).toHaveTitle("One")
+  expect(requestCount).toEqual(1)
+})
+
 test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
