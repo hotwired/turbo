@@ -1,4 +1,5 @@
 import { Rule } from "./rule"
+import { deleteCacheRegistries } from "./cache_registry"
 
 export class ServiceWorker {
   #started = false
@@ -39,6 +40,12 @@ export class ServiceWorker {
       const response = rule.handle(event)
       event.respondWith(response)
     }
+  }
+
+  async clearCache() {
+    const cacheNames = await caches.keys()
+    await Promise.all(cacheNames.map((name) => caches.delete(name)))
+    await deleteCacheRegistries()
   }
 
   #warnIfNoRulesConfigured() {
