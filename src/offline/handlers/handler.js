@@ -2,9 +2,10 @@ import { CacheRegistry, deleteCacheRegistries } from "../cache_registry"
 import { CacheTrimmer } from "../cache_trimmer"
 
 export class Handler {
-  constructor({ cacheName, networkTimeout, maxAge }) {
+  constructor({ cacheName, networkTimeout, maxAge, fetchOptions }) {
     this.cacheName = cacheName
     this.networkTimeout = networkTimeout
+    this.fetchOptions = fetchOptions || {}
 
     this.cacheRegistry = new CacheRegistry(cacheName)
     this.cacheTrimmer = new CacheTrimmer(cacheName, this.cacheRegistry, { maxAge })
@@ -33,7 +34,7 @@ export class Handler {
   async fetchFromNetwork(request) {
     // Setting the referrer so that it doesn't appear as the service worker
     const referrer = request.referrer
-    return await fetch(request, { referrer })
+    return await fetch(request, { referrer, ...this.fetchOptions })
   }
 
   async saveToCache(request, response) {
