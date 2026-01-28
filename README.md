@@ -15,4 +15,4 @@ Read more on [turbo.hotwired.dev](https://turbo.hotwired.dev).
 
 Please read [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-© 2024 37signals LLC.
+© 2026 37signals LLC.
