@@ -99,9 +99,15 @@ export async function setSimulateQuotaError(page, enabled) {
 
 export async function getIndexedDBEntryCount(page, databaseName = "turbo-offline-database") {
   return page.evaluate(async (databaseName) => {
-    return new Promise((resolve, reject) => {
+    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(0), 2000))
+
+    const countPromise = new Promise((resolve) => {
       const request = indexedDB.open(databaseName)
       request.onerror = () => resolve(0)
+      request.onupgradeneeded = (event) => {
+        event.target.transaction.abort()
+        resolve(0)
+      }
       request.onsuccess = () => {
         const db = request.result
         if (!db.objectStoreNames.contains("cache-registry")) {
@@ -122,5 +128,7 @@ export async function getIndexedDBEntryCount(page, databaseName = "turbo-offline
         }
       }
     })
+
+    return Promise.race([countPromise, timeoutPromise])
   }, databaseName)
 }
