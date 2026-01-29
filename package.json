@@ -50,8 +50,8 @@
   "scripts": {
     "clean": "rm -fr dist",
     "clean:win": "rmdir /s /q dist",
-    "build": "rollup -c",
-    "build:win": "rollup -c",
+    "build": "yarn install && rollup -c",
+    "build:win": "yarn install && rollup -c",
     "watch": "rollup -wc",
     "start": "node src/tests/server.mjs",
     "test": "yarn test:unit && yarn test:browser",
