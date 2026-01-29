@@ -18,6 +18,12 @@ export async function buildPartialResponse(request, response) {
     return response
   }
 
+  // Can't handle Range requests for opaque responses (cross-origin)
+  // since we can't read their body
+  if (response.type === "opaque" || response.type === "opaqueredirect") {
+    return response
+  }
+
   try {
     const { start, end } = parseRangeHeader(rangeHeader)
     const blob = await response.blob()
