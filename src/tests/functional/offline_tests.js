@@ -297,3 +297,96 @@ async function assertNotCached(page, cacheName, url) {
   const cachedResponse = await getCachedResponse(page, cacheName, fullUrl)
   expect(cachedResponse.found).toBe(false)
 }
+
+// Range request tests for audio/video streaming support
+
+test("returns 206 Partial Content for Range requests on cached responses", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/cache_first.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+
+  // First, cache the content
+  const fullContent = await fetchContent(page, dynamicTxtUrl)
+  await page.waitForTimeout(200)
+
+  // Now make a Range request for the first 5 bytes
+  const rangeResponse = await testFetch(page, dynamicTxtUrl, { "Range": "bytes=0-4" })
+
+  expect(rangeResponse.status).toBe(206)
+  expect(rangeResponse.statusText).toBe("Partial Content")
+  expect(rangeResponse.headers["content-range"]).toMatch(/^bytes 0-4\/\d+$/)
+  expect(rangeResponse.headers["content-length"]).toBe("5")
+  expect(rangeResponse.text).toBe(fullContent.substring(0, 5))
+})
+
+test("returns 206 for suffix Range requests (bytes=-N)", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/cache_first.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+
+  // Cache the content
+  const fullContent = await fetchContent(page, dynamicTxtUrl)
+  await page.waitForTimeout(200)
+
+  // Request last 5 bytes
+  const rangeResponse = await testFetch(page, dynamicTxtUrl, { "Range": "bytes=-5" })
+
+  expect(rangeResponse.status).toBe(206)
+  expect(rangeResponse.text).toBe(fullContent.slice(-5))
+})
+
+test("returns 206 for open-ended Range requests (bytes=N-)", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/cache_first.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+
+  // Cache the content
+  const fullContent = await fetchContent(page, dynamicTxtUrl)
+  await page.waitForTimeout(200)
+
+  // Request from byte 5 to end
+  const rangeResponse = await testFetch(page, dynamicTxtUrl, { "Range": "bytes=5-" })
+
+  expect(rangeResponse.status).toBe(206)
+  expect(rangeResponse.text).toBe(fullContent.substring(5))
+})
+
+test("returns 416 Range Not Satisfiable for invalid ranges", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/cache_first.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+
+  // Cache the content (small content)
+  await fetchContent(page, dynamicTxtUrl)
+  await page.waitForTimeout(200)
+
+  // Request a range way beyond the content size
+  const rangeResponse = await testFetch(page, dynamicTxtUrl, { "Range": "bytes=99999-100000" })
+
+  expect(rangeResponse.status).toBe(416)
+  expect(rangeResponse.statusText).toBe("Range Not Satisfiable")
+})
+
+test("Range requests work with network-first strategy when falling back to cache", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/network_first.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+
+  // Cache content via network-first
+  const fullContent = await fetchContent(page, dynamicTxtUrl)
+  await page.waitForTimeout(200)
+
+  // Set a long delay to force cache fallback
+  await setNetworkDelay(page, 5000)
+
+  // Make a Range request - should fall back to cache and return partial content
+  const rangeResponse = await testFetch(page, dynamicTxtUrl, { "Range": "bytes=0-4" })
+
+  expect(rangeResponse.status).toBe(206)
+  expect(rangeResponse.text).toBe(fullContent.substring(0, 5))
+})

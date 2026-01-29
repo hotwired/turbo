@@ -1,5 +1,6 @@
 import { CacheRegistry, deleteCacheRegistries } from "../cache_registry"
 import { CacheTrimmer } from "../cache_trimmer"
+import { buildPartialResponse } from "../range_request"
 
 export class Handler {
   constructor({ cacheName, networkTimeout, maxAge, fetchOptions }) {
@@ -18,6 +19,11 @@ export class Handler {
   async fetchFromCache(request) {
     const cacheKeyUrl = buildCacheKey(request)
     let response = await caches.match(cacheKeyUrl, { ignoreVary: true })
+
+    // Handle Range requests for cached responses (audio/video streaming)
+    if (response !== undefined && request.headers.has("range")) {
+      response = await buildPartialResponse(request, response)
+    }
 
     if (response !== undefined && request.redirect === "manual" && response.redirected) {
       // Can't respond with a redirected response to a request

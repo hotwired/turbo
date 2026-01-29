@@ -43,6 +43,8 @@ export async function testFetch(page, url, headers = {}) {
       return {
         ok: response.ok,
         status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
         text: await response.text()
       }
     } catch (error) {
