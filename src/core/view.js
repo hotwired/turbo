@@ -42,7 +42,7 @@ export class View {
   }
 
   scrollToPosition({ x, y }) {
-    this.scrollRoot.scrollTo(x, y)
+    this.scrollRoot.scrollTo({ left: x, top: y, behavior: "instant" })
   }
 
   scrollToTop() {
