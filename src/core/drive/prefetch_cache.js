@@ -1,15 +1,17 @@
 import { LRUCache } from "../lru_cache"
 import { toCacheKey } from "../url"
-
-const PREFETCH_DELAY = 100
+import { config } from "../config"
 
 class PrefetchCache extends LRUCache {
   #prefetchTimeout = null
   #maxAges = {}
 
-  constructor(size = 1, prefetchDelay = PREFETCH_DELAY) {
+  constructor(size = 1) {
     super(size, toCacheKey)
-    this.prefetchDelay = prefetchDelay
+  }
+
+  get prefetchDelay() {
+    return config.drive.prefetchDelay
   }
 
   putLater(url, request, ttl) {
