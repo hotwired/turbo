@@ -59,7 +59,30 @@ class DefaultIdiomorphCallbacks {
   }
 
   beforeNodeAdded = (node) => {
-    return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
+    if (node instanceof Element) {
+      if (node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id)) {
+        return false
+      }
+
+      const event = dispatch("turbo:before-morph-element-added", {
+        cancelable: true,
+        target: node.parentElement || document,
+        detail: { newElement: node }
+      })
+
+      return !event.defaultPrevented
+    }
+
+    return true
+  }
+
+  afterNodeAdded = (node) => {
+    if (node instanceof Element) {
+      dispatch("turbo:morph-element-added", {
+        target: node,
+        detail: { newElement: node }
+      })
+    }
   }
 
   beforeNodeMorphed = (currentElement, newElement) => {
@@ -89,7 +112,32 @@ class DefaultIdiomorphCallbacks {
   }
 
   beforeNodeRemoved = (node) => {
-    return this.beforeNodeMorphed(node)
+    // Delegate to beforeNodeMorphed to preserve the existing behavior
+    // (data-turbo-permanent check and custom callbacks)
+    if (!this.beforeNodeMorphed(node)) {
+      return false
+    }
+
+    if (node instanceof Element) {
+      const event = dispatch("turbo:before-morph-element-removed", {
+        cancelable: true,
+        target: node,
+        detail: { currentElement: node }
+      })
+
+      return !event.defaultPrevented
+    }
+
+    return true
+  }
+
+  afterNodeRemoved = (node) => {
+    if (node instanceof Element) {
+      dispatch("turbo:morph-element-removed", {
+        target: node.parentElement || document,
+        detail: { currentElement: node }
+      })
+    }
   }
 
   afterNodeMorphed = (currentElement, newElement) => {
