@@ -39,7 +39,6 @@ export class PageObserver {
 
   interpretReadyState = () => {
     const { readyState } = this
-    
     if (readyState == "interactive") {
       this.pageIsInteractive()
     } else if (readyState == "complete") {
@@ -68,15 +67,5 @@ export class PageObserver {
 
   get readyState() {
     return document.readyState
-  }
-
-  getStageLabel(stage) {
-    const labels = {
-      [PageStage.initial]: 'initial',
-      [PageStage.loading]: 'loading',
-      [PageStage.interactive]: 'interactive',
-      [PageStage.complete]: 'complete'
-    }
-    return labels[stage] || 'unknown'
   }
 }
