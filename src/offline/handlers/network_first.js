@@ -10,6 +10,7 @@ export class NetworkFirst extends Handler {
     let afterHandlePromise
     let timeoutId
     let cacheAttemptedOnTimeout = false
+    let responseFromNetwork = false
 
     const networkPromise = this.fetchFromNetwork(request)
     const promises = [networkPromise]
@@ -32,6 +33,10 @@ export class NetworkFirst extends Handler {
       // Either the network wins or the timeout wins. The network might win
       // with an error, though
       response = await Promise.race(promises)
+      // If we got here without timeout, response is from network
+      if (!cacheAttemptedOnTimeout) {
+        responseFromNetwork = true
+      }
     } catch(error) {
       console.warn(
         `${error} fetching from network ${request.url} with timeout`
@@ -46,6 +51,7 @@ export class NetworkFirst extends Handler {
       // anything to lose, knowing that we don't have the cache as fallback
       try {
         response = await networkPromise
+        responseFromNetwork = true
       } catch(error) {
         // This might be the same error we got from the promise race
         console.warn(
@@ -58,7 +64,8 @@ export class NetworkFirst extends Handler {
       response = await this.fetchFromCache(request)
     }
 
-    if (response) {
+    // Only cache responses that came from the network, not from cache
+    if (response && responseFromNetwork) {
       afterHandlePromise = this.saveToCache(request, response.clone())
     } else {
       afterHandlePromise = Promise.resolve()
