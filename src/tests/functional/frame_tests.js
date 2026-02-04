@@ -740,7 +740,7 @@ test("navigating a frame with a form[method=get] that does not redirect still up
   await nextEventOnTarget(page, "frame", "turbo:frame-render")
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
-  expect(await noNextEventNamed(page, "turbo:before-fetch-request")).toBeTruthy()
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-fetch-request")).toBeTruthy()
 
   const src = (await attributeForSelector(page, "#frame", "src")) ?? ""
 

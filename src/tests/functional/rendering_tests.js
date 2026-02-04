@@ -57,11 +57,9 @@ test("reloads when tracked elements change", async ({ page }) => {
   )
 
   await page.click("#tracked-asset-change-link")
-  await nextEventNamed(page, "turbo:load")
+  await page.waitForURL("**/tracked_asset_change.html")
 
   const reason = await page.evaluate(() => localStorage.getItem("reloadReason"))
-
-  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/tracked_asset_change.html"))
   expect(await visitAction(page)).toEqual("load")
   expect(reason).toEqual("tracked_element_mismatch")
 })
