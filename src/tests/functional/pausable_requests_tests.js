@@ -17,20 +17,22 @@ test("pauses and resumes request", async ({ page }) => {
 })
 
 test("aborts request", async ({ page }) => {
-  page.once("dialog", (dialog) => {
-    expect(dialog.message()).toEqual("Continue request?")
-    dialog.dismiss()
+  const dialogMessages = []
+
+  page.on("dialog", async (dialog) => {
+    dialogMessages.push(dialog.message())
+    if (dialog.message() === "Continue request?") {
+      await dialog.dismiss()
+    } else {
+      await dialog.accept()
+    }
   })
 
   await page.click("#link")
   await nextBeat()
-
-  page.once("dialog", (dialog) => {
-    expect(dialog.message()).toEqual("Request aborted")
-    dialog.accept()
-  })
-
   await nextBeat()
 
+  expect(dialogMessages).toContain("Continue request?")
+  expect(dialogMessages).toContain("Request aborted")
   await expect(page.locator("h1")).toHaveText("Pausable Requests")
 })
