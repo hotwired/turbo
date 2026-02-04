@@ -390,3 +390,85 @@ test("Range requests work with network-first strategy when falling back to cache
   expect(rangeResponse.status).toBe(206)
   expect(rangeResponse.text).toBe(fullContent.substring(0, 5))
 })
+
+// Cache limiting tests
+
+test("trims oldest entries when maxEntries is exceeded", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/max_entries.js")
+  await waitForServiceWorkerToControl(page)
+
+  // Cache 5 different URLs with maxEntries: 3
+  const urls = [
+    "/__turbo/dynamic.txt?id=1",
+    "/__turbo/dynamic.txt?id=2",
+    "/__turbo/dynamic.txt?id=3",
+    "/__turbo/dynamic.txt?id=4",
+    "/__turbo/dynamic.txt?id=5"
+  ]
+
+  const contents = []
+  for (const url of urls) {
+    contents.push(await fetchContent(page, url))
+    // Wait between requests to ensure distinct timestamps
+    await page.waitForTimeout(100)
+  }
+
+  // Wait for trimming to complete
+  await page.waitForTimeout(300)
+
+  // The oldest 2 entries should be removed, leaving only the 3 newest
+  await assertNotCached(page, "test-max-entries", urls[0])
+  await assertNotCached(page, "test-max-entries", urls[1])
+  await assertCachedContent(page, "test-max-entries", urls[2], contents[2])
+  await assertCachedContent(page, "test-max-entries", urls[3], contents[3])
+  await assertCachedContent(page, "test-max-entries", urls[4], contents[4])
+})
+
+test("trims oldest entries when maxSize is exceeded", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/max_size.js")
+  await waitForServiceWorkerToControl(page)
+
+  // Cache multiple URLs - each response is ~60-70 bytes, maxSize is 150 bytes
+  const urls = [
+    "/__turbo/dynamic.txt?id=1",
+    "/__turbo/dynamic.txt?id=2",
+    "/__turbo/dynamic.txt?id=3"
+  ]
+
+  const contents = []
+  for (const url of urls) {
+    contents.push(await fetchContent(page, url))
+    // Wait between requests to ensure distinct timestamps
+    await page.waitForTimeout(100)
+  }
+
+  // Wait for trimming to complete
+  await page.waitForTimeout(300)
+
+  // With maxSize: 150 and ~70 byte responses, only ~2 should fit
+  // The oldest entry should be removed
+  await assertNotCached(page, "test-max-size", urls[0])
+
+  // At least the newest entry should remain
+  await assertCachedContent(page, "test-max-size", urls[2], contents[2])
+})
+
+test("rejects entries exceeding maxEntrySize", async ({ page }) => {
+  await registerServiceWorker(page, "/src/tests/fixtures/service_workers/max_entry_size.js")
+  await waitForServiceWorkerToControl(page)
+
+  const dynamicTxtUrl = "/__turbo/dynamic.txt"
+  const dynamicJsonUrl = "/__turbo/dynamic.json"
+
+  // Fetch both URLs - txt responses are ~70 bytes, json are smaller
+  const txtContent = await fetchContent(page, dynamicTxtUrl)
+  const jsonContent = await fetchContent(page, dynamicJsonUrl)
+
+  await page.waitForTimeout(200)
+
+  // txt response (~70 bytes) exceeds maxEntrySize (50), should NOT be cached
+  await assertNotCached(page, "test-max-entry-size", dynamicTxtUrl)
+
+  // json response has larger maxEntrySize (500), should be cached
+  await assertCachedContent(page, "test-max-entry-size-allowed", dynamicJsonUrl, jsonContent)
+})
