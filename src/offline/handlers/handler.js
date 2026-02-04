@@ -3,14 +3,14 @@ import { CacheTrimmer } from "../cache_trimmer"
 import { buildPartialResponse } from "../range_request"
 
 export class Handler {
-  constructor({ cacheName, networkTimeout, maxAge, maxEntries, maxSize, maxEntrySize, fetchOptions }) {
+  constructor({ cacheName, networkTimeout, maxAge, maxEntries, maxEntrySize, fetchOptions }) {
     this.cacheName = cacheName
     this.networkTimeout = networkTimeout
     this.fetchOptions = fetchOptions || {}
     this.maxEntrySize = maxEntrySize
 
     this.cacheRegistry = new CacheRegistry(cacheName)
-    this.cacheTrimmer = new CacheTrimmer(cacheName, this.cacheRegistry, { maxAge, maxEntries, maxSize })
+    this.cacheTrimmer = new CacheTrimmer(cacheName, this.cacheRegistry, { maxAge, maxEntries })
   }
 
   async handle(request) {
@@ -46,9 +46,9 @@ export class Handler {
 
   async saveToCache(request, response) {
     if (response && this.canCacheResponse(response)) {
-      const size = await this.#getResponseSize(response)
-
       if (this.maxEntrySize && this.maxEntrySize > 0) {
+        const size = await this.#getResponseSize(response)
+
         if (size === null) {
           console.warn(`Cannot determine size for opaque response to "${request.url}". maxEntrySize check skipped.`)
         } else if (size > this.maxEntrySize) {
@@ -61,7 +61,7 @@ export class Handler {
       const cache = await caches.open(this.cacheName)
 
       const cachePromise = cache.put(cacheKeyUrl, response)
-      const registryPromise = this.cacheRegistry.put(cacheKeyUrl, { size })
+      const registryPromise = this.cacheRegistry.put(cacheKeyUrl)
       const trimPromise = this.cacheTrimmer.trim()
 
       return Promise.all([ cachePromise, registryPromise, trimPromise ]).catch(async (error) => {

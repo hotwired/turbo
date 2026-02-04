@@ -26,22 +26,17 @@ export class CacheTrimmer {
   }
 
   #shouldTrim() {
-    const { maxAge, maxEntries, maxSize } = this.options
-    return (maxAge && maxAge > 0) ||
-           (maxEntries && maxEntries > 0) ||
-           (maxSize && maxSize > 0)
+    const { maxAge, maxEntries } = this.options
+    return (maxAge && maxAge > 0) || (maxEntries && maxEntries > 0)
   }
 
   async deleteEntries() {
-    // Order: age first → count → size (each reduces the set for subsequent operations)
+    // Order: age first, then count (age reduces the set for count trimming)
     if (this.options.maxAge) {
       await this.deleteEntriesByAge()
     }
     if (this.options.maxEntries) {
       await this.deleteEntriesByCount()
-    }
-    if (this.options.maxSize) {
-      await this.deleteEntriesBySize()
     }
   }
 
@@ -75,25 +70,6 @@ export class CacheTrimmer {
     }
 
     console.debug(`Trimming ${entriesToDelete.length} entries (count limit) from cache "${this.cacheName}"`)
-    await this.#deleteEntryList(entriesToDelete)
-    console.debug(`Successfully trimmed ${entriesToDelete.length} entries from cache "${this.cacheName}"`)
-  }
-
-  async deleteEntriesBySize() {
-    const currentSize = await this.cacheRegistry.getTotalSize()
-    const excess = currentSize - this.options.maxSize
-
-    if (excess <= 0) {
-      return
-    }
-
-    const entriesToDelete = await this.cacheRegistry.getEntriesForSizeReduction(excess)
-
-    if (entriesToDelete.length === 0) {
-      return
-    }
-
-    console.debug(`Trimming ${entriesToDelete.length} entries (size limit) from cache "${this.cacheName}"`)
     await this.#deleteEntryList(entriesToDelete)
     console.debug(`Successfully trimmed ${entriesToDelete.length} entries from cache "${this.cacheName}"`)
   }

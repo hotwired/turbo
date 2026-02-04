@@ -66,20 +66,6 @@ class CacheRegistryDatabase {
     return this.#performOperation(STORE_NAME, countOp, "readonly")
   }
 
-  getTotalSize(cacheName) {
-    const sumOp = (store) => {
-      const index = store.index("cacheNameAndTimestamp")
-      const range = IDBKeyRange.bound(
-        [cacheName, 0],
-        [cacheName, Infinity]
-      )
-      const cursorRequest = index.openCursor(range)
-
-      return this.#sumSizesFromCursor(cursorRequest)
-    }
-    return this.#performOperation(STORE_NAME, sumOp, "readonly")
-  }
-
   getOldestEntries(cacheName, limit) {
     const getOldestOp = (store) => {
       const index = store.index("cacheNameAndTimestamp")
@@ -92,20 +78,6 @@ class CacheRegistryDatabase {
       return this.#cursorRequestToPromiseWithLimit(cursorRequest, limit)
     }
     return this.#performOperation(STORE_NAME, getOldestOp, "readonly")
-  }
-
-  getEntriesForSizeReduction(cacheName, targetReduction) {
-    const getEntriesOp = (store) => {
-      const index = store.index("cacheNameAndTimestamp")
-      const range = IDBKeyRange.bound(
-        [cacheName, 0],
-        [cacheName, Infinity]
-      )
-      const cursorRequest = index.openCursor(range)
-
-      return this.#getEntriesUntilSizeReached(cursorRequest, targetReduction)
-    }
-    return this.#performOperation(STORE_NAME, getEntriesOp, "readonly")
   }
 
   delete(key) {
@@ -173,44 +145,6 @@ class CacheRegistryDatabase {
       request.onerror = () => reject(request.error)
     })
   }
-
-  #sumSizesFromCursor(request) {
-    return new Promise((resolve, reject) => {
-      let total = 0
-
-      request.onsuccess = (event) => {
-        const cursor = event.target.result
-        if (cursor) {
-          total += cursor.value.size ?? 0
-          cursor.continue()
-        } else {
-          resolve(total)
-        }
-      }
-
-      request.onerror = () => reject(request.error)
-    })
-  }
-
-  #getEntriesUntilSizeReached(request, targetSize) {
-    return new Promise((resolve, reject) => {
-      const results = []
-      let accumulated = 0
-
-      request.onsuccess = (event) => {
-        const cursor = event.target.result
-        if (cursor && accumulated < targetSize) {
-          results.push(cursor.value)
-          accumulated += cursor.value.size ?? 0
-          cursor.continue()
-        } else {
-          resolve(results)
-        }
-      }
-
-      request.onerror = () => reject(request.error)
-    })
-  }
 }
 
 let cacheRegistryDatabase = null
@@ -252,16 +186,8 @@ export class CacheRegistry {
     return this.database.getEntryCount(this.cacheName)
   }
 
-  getTotalSize() {
-    return this.database.getTotalSize(this.cacheName)
-  }
-
   getOldestEntries(limit) {
     return this.database.getOldestEntries(this.cacheName, limit)
-  }
-
-  getEntriesForSizeReduction(targetReduction) {
-    return this.database.getEntriesForSizeReduction(this.cacheName, targetReduction)
   }
 
   delete(key) {
