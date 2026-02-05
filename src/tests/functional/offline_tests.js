@@ -432,7 +432,7 @@ test("rejects entries exceeding maxEntrySize", async ({ page }) => {
   const dynamicJsonUrl = "/__turbo/dynamic.json"
 
   // Fetch both URLs - txt responses are ~70 bytes, json are smaller
-  const txtContent = await fetchContent(page, dynamicTxtUrl)
+  await fetchContent(page, dynamicTxtUrl)
   const jsonContent = await fetchContent(page, dynamicJsonUrl)
 
   await page.waitForTimeout(200)

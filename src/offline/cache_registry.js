@@ -40,14 +40,7 @@ class CacheRegistryDatabase {
   getOlderThan(cacheName, timestamp) {
     const getOlderThanOp = (store) => {
       const index = store.index("cacheNameAndTimestamp")
-      // Use compound key range: [cacheName, timestamp]
-      const range = IDBKeyRange.bound(
-        [cacheName, 0], // start of range
-        [cacheName, timestamp], // end of range
-        false, // lowerOpen: include lower bound
-        true // upperOpen: exclude upper bound
-      )
-      const cursorRequest = index.openCursor(range)
+      const cursorRequest = index.openCursor(this.#getTimestampRange(cacheName, timestamp))
 
       return this.#cursorRequestToPromise(cursorRequest)
     }
@@ -57,10 +50,8 @@ class CacheRegistryDatabase {
   getEntryCount(cacheName) {
     const countOp = (store) => {
       const index = store.index("cacheNameAndTimestamp")
-      const range = IDBKeyRange.bound(
-        [cacheName, 0],
-        [cacheName, Infinity]
-      )
+      const range = this.#getTimestampRange(cacheName)
+
       return this.#requestToPromise(index.count(range))
     }
     return this.#performOperation(STORE_NAME, countOp, "readonly")
@@ -69,13 +60,9 @@ class CacheRegistryDatabase {
   getOldestEntries(cacheName, limit) {
     const getOldestOp = (store) => {
       const index = store.index("cacheNameAndTimestamp")
-      const range = IDBKeyRange.bound(
-        [cacheName, 0],
-        [cacheName, Infinity]
-      )
-      const cursorRequest = index.openCursor(range)
+      const cursorRequest = index.openCursor(this.#getTimestampRange(cacheName))
 
-      return this.#cursorRequestToPromiseWithLimit(cursorRequest, limit)
+      return this.#cursorRequestToPromise(cursorRequest, limit)
     }
     return this.#performOperation(STORE_NAME, getOldestOp, "readonly")
   }
@@ -110,25 +97,7 @@ class CacheRegistryDatabase {
     })
   }
 
-  #cursorRequestToPromise(request) {
-    return new Promise((resolve, reject) => {
-      const results = []
-
-      request.onsuccess = (event) => {
-        const cursor = event.target.result
-        if (cursor) {
-          results.push(cursor.value)
-          cursor.continue()
-        } else {
-          resolve(results)
-        }
-      }
-
-      request.onerror = () => reject(request.error)
-    })
-  }
-
-  #cursorRequestToPromiseWithLimit(request, limit) {
+  #cursorRequestToPromise(request, limit = Infinity) {
     return new Promise((resolve, reject) => {
       const results = []
 
@@ -144,6 +113,16 @@ class CacheRegistryDatabase {
 
       request.onerror = () => reject(request.error)
     })
+  }
+
+  #getTimestampRange(cacheName, upperBound = Infinity) {
+    // Use compound key range: [cacheName, timestamp]
+    return IDBKeyRange.bound(
+      [cacheName, 0], // start of range
+      [cacheName, upperBound], // end of range
+      false, // lowerOpen: include lower bound
+      true // upperOpen: exclude upper bound
+    )
   }
 }
 
