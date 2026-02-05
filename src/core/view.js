@@ -65,20 +65,19 @@ export class View {
     if (shouldRender) {
       try {
         this.renderPromise = new Promise((resolve) => (this.#resolveRenderPromise = resolve))
-        this.renderer = renderer
         await this.prepareToRenderSnapshot(renderer)
 
         const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
-        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement, renderMethod: this.renderer.renderMethod }
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
+        const options = { resume: this.#resolveInterceptionPromise, render: renderer.renderElement, renderMethod: renderer.renderMethod }
+        const { immediateRender, render } = this.delegate.allowsImmediateRender(snapshot, options)
+        if (render) renderer.renderElement = render
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
-        this.delegate.viewRenderedSnapshot(snapshot, isPreview, this.renderer.renderMethod)
+        this.delegate.viewRenderedSnapshot(snapshot, isPreview, options.renderMethod)
         this.delegate.preloadOnLoadLinksForView(this.element)
         this.finishRenderingSnapshot(renderer)
       } finally {
-        delete this.renderer
         this.#resolveRenderPromise(undefined)
         delete this.renderPromise
       }
