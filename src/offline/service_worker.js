@@ -42,6 +42,21 @@ export class ServiceWorker {
     }
   }
 
+  async preloadResources({ urls }) {
+    for (const url of urls) {
+      const request = new Request(url)
+      const rule = this.#findMatchingRule(request)
+      if (!rule) continue
+
+      try {
+        const response = await fetch(url)
+        await rule.handler.saveToCache(request, response)
+      } catch (error) {
+        console.debug(`Preloading failed for ${url}:`, error)
+      }
+    }
+  }
+
   async clearCache() {
     const cacheNames = await caches.keys()
     await Promise.all(cacheNames.map((name) => caches.delete(name)))

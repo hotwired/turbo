@@ -4,7 +4,7 @@ import { setCookie } from "../util"
 class Offline {
   serviceWorker
 
-  async start(url = "/service-worker.js", { scope = "/", type = "classic", native = true } = {}) {
+  async start(url = "/service-worker.js", { scope = "/", type = "classic", native = true, preload } = {}) {
     if (!("serviceWorker" in navigator)) {
       console.warn("Service Worker not available.")
       return
@@ -13,6 +13,11 @@ class Offline {
     if (native) this.#setUserAgentCookie()
 
     await this.#domReady()
+
+    // Preload resources loaded into the page before the service worker controls it
+    // as they might not go through the service worker later because they might be
+    // cached by the browser
+    const needsPreloading = preload && !navigator.serviceWorker.controller
 
      // Check if there's already a service worker registered for a different location
     this.#checkExistingController(navigator.serviceWorker.controller, url)
@@ -25,6 +30,11 @@ class Offline {
       this.#checkExistingController(registered, url)
 
       this.serviceWorker = registered
+
+      if (needsPreloading) {
+        this.#preloadWhenReady(preload)
+      }
+
       return registration
     } catch(error) {
       console.error(error)
@@ -44,6 +54,23 @@ class Offline {
         `This may indicate multiple service workers or a cached version.`
       )
     }
+  }
+
+  #preloadWhenReady(pattern) {
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      this.#preloadResources(pattern)
+    }, { once: true })
+  }
+
+  #preloadResources(pattern) {
+    const urls = performance.getEntriesByType("resource")
+      .map(entry => entry.name)
+      .filter(url => pattern.test(url))
+
+    navigator.serviceWorker.controller.postMessage({
+      action: "preloadResources",
+      params: { urls }
+    })
   }
 
   #domReady() {

@@ -443,3 +443,59 @@ test("rejects entries exceeding maxEntrySize", async ({ page }) => {
   // json response has larger maxEntrySize (500), should be cached
   await assertCachedContent(page, "test-max-entry-size-allowed", dynamicJsonUrl, jsonContent)
 })
+
+// Preloading tests
+
+test("preloads resources loaded before service worker was active", async ({ page }) => {
+  // Go to a page that loads scripts before calling Turbo.offline.start()
+  await page.goto("/src/tests/fixtures/offline_preloading.html")
+
+  // At this point, the scripts have been loaded but no SW is active
+  // The scripts are in the performance API entries
+
+  // Start offline with preload pattern - this should:
+  // 1. Register the SW
+  // 2. Wait for controllerchange
+  // 3. Send preloadResources message with URLs matching the pattern
+  await page.evaluate(async () => {
+    await window.startOfflineWithPreload(/\/__turbo\/preload\//)
+  })
+
+  // Wait for the service worker to take control and preloading to complete
+  await waitForServiceWorkerToControl(page)
+  await page.waitForTimeout(500)
+
+  // Verify the scripts that were loaded before SW activation are now cached
+  const script1Url = "http://localhost:9000/__turbo/preload/script1.js"
+  const script2Url = "http://localhost:9000/__turbo/preload/script2.js"
+
+  const cached1 = await getCachedResponse(page, "test-preload", script1Url)
+  const cached2 = await getCachedResponse(page, "test-preload", script2Url)
+
+  expect(cached1.found).toBe(true)
+  expect(cached2.found).toBe(true)
+  expect(cached1.text).toContain("Preload test file: script1.js")
+  expect(cached2.text).toContain("Preload test file: script2.js")
+})
+
+test("only preloads resources matching the pattern", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/offline_preloading.html")
+
+  // Start with a pattern that only matches script1
+  await page.evaluate(async () => {
+    await window.startOfflineWithPreload(/script1\.js$/)
+  })
+
+  await waitForServiceWorkerToControl(page)
+  await page.waitForTimeout(500)
+
+  // Only script1 should be cached, not script2
+  const script1Url = "http://localhost:9000/__turbo/preload/script1.js"
+  const script2Url = "http://localhost:9000/__turbo/preload/script2.js"
+
+  const cached1 = await getCachedResponse(page, "test-preload", script1Url)
+  const cached2 = await getCachedResponse(page, "test-preload", script2Url)
+
+  expect(cached1.found).toBe(true)
+  expect(cached2.found).toBe(false)
+})

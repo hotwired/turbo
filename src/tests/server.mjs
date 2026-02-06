@@ -220,6 +220,15 @@ router.get("/dynamic.json", (request, response) => {
     })
 })
 
+router.get("/preload/:filename", (request, response) => {
+  const { filename } = request.params
+  const timestamp = Date.now()
+  const randomId = Math.random().toString(36).substring(7)
+  response
+    .type("application/javascript")
+    .send(`// Preload test file: ${filename}\n// Generated at ${timestamp} (ID: ${randomId})\nwindow.preloaded_${filename.replace('.js', '')} = "${randomId}";`)
+})
+
 function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
