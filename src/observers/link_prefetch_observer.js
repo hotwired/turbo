@@ -113,7 +113,11 @@ export class LinkPrefetchObserver {
     request.headers["X-Sec-Purpose"] = "prefetch"
 
     const turboFrame = link.closest("turbo-frame")
-    const turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+    let turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+
+    if (turboFrameTarget === "_self") {
+      turboFrameTarget = turboFrame?.id
+    }
 
     if (turboFrameTarget && turboFrameTarget !== "_top") {
       request.headers["Turbo-Frame"] = turboFrameTarget
