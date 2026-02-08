@@ -56,5 +56,10 @@
     <turbo-frame id="frame_for_prefetch_top" target="_top">
       <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame_target_top">Hover to prefetch me</a>
     </turbo-frame>
+
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_out_of_frame_target_self" data-turbo-frame="_self">Hover to prefetch me</a>
+    <turbo-frame id="frame_for_prefetch_self">
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame_target_self" data-turbo-frame="_self">Hover to prefetch me</a>
+    </turbo-frame>
   </body>
 </html>

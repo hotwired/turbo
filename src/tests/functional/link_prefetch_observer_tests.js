@@ -205,6 +205,24 @@ test("doesn't include a turbo-frame header when the link is inside a turbo frame
   }})
 })
 
+test("includes turbo-frame header when the link with a data-turbo-frame=_self is inside a turbo frame", async ({ page}) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_in_frame_target_self", callback: (request) => {
+    const turboFrameHeader = request.headers()["turbo-frame"]
+    expect(turboFrameHeader).toEqual("frame_for_prefetch_self")
+  }})
+})
+
+test("doesn't include turbo-frame header when the link with a data-turbo-frame=_self is outside of a turbo frame", async ({ page}) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_out_of_frame_target_self", callback: (request) => {
+    const turboFrameHeader = request.headers()["turbo-frame"]
+    expect(turboFrameHeader).toEqual(undefined)
+  }})
+})
+
 test("it prefetches links with a delay", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
