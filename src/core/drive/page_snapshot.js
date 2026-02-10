@@ -39,7 +39,11 @@ export class PageSnapshot extends Snapshot {
     }
 
     for (const clonedNoscriptElement of clonedElement.querySelectorAll("noscript")) {
-      clonedNoscriptElement.remove()
+      for (const child of [...clonedNoscriptElement.children]) {
+        if (child.localName === "style" || (child.localName === "link" && child.getAttribute("rel") === "stylesheet")) {
+          child.remove()
+        }
+      }
     }
 
     return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)

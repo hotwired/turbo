@@ -173,13 +173,17 @@ export class PageRenderer extends Renderer {
 
   activateNewBody() {
     document.adoptNode(this.newElement)
-    this.removeNoscriptElements()
+    this.deactivateNoscriptStylesheetElements()
     this.activateNewBodyScriptElements()
   }
 
-  removeNoscriptElements() {
+  deactivateNoscriptStylesheetElements() {
     for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
-      noscriptElement.remove()
+      for (const child of [...noscriptElement.children]) {
+        if (child.localName === "style" || (child.localName === "link" && child.getAttribute("rel") === "stylesheet")) {
+          child.remove()
+        }
+      }
     }
   }
 

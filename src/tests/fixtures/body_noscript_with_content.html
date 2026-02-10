@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Body noscript with content</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Body noscript with content</h1>
+    <p><a id="back-link" href="/src/tests/fixtures/rendering.html">Go back</a></p>
+    <noscript id="lazy-load-noscript">
+      <img src="/src/tests/fixtures/logo.png" alt="Lazy loaded image">
+    </noscript>
+    <noscript id="mixed-noscript">
+      <img src="/src/tests/fixtures/logo.png" alt="Another image">
+      <link rel="stylesheet" type="text/css" href="/src/tests/fixtures/noscript.css">
+    </noscript>
+  </body>
+</html>
