@@ -265,6 +265,34 @@ test("does not evaluate body stylesheet elements inside noscript elements", asyn
   expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
 })
 
+test("preserves noscript elements with non-style content after navigation", async ({ page }) => {
+  await page.click("#body-noscript-content-link")
+  await nextEventNamed(page, "turbo:render")
+
+  const noscriptCount = await page.locator("#lazy-load-noscript").count()
+  expect(noscriptCount).toEqual(1)
+})
+
+test("removes only stylesheet elements from noscript with mixed content", async ({ page }) => {
+  await page.click("#body-noscript-content-link")
+  await nextEventNamed(page, "turbo:render")
+
+  const mixedNoscriptExists = await page.locator("#mixed-noscript").count()
+  expect(mixedNoscriptExists).toEqual(1)
+
+  expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
+})
+
+test("removes alternate stylesheet elements from noscript", async ({ page }) => {
+  await page.click("#body-noscript-content-link")
+  await nextEventNamed(page, "turbo:render")
+
+  const noscriptExists = await page.locator("#alternate-stylesheet-noscript").count()
+  expect(noscriptExists).toEqual(1)
+
+  expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
+})
+
 test("waits for CSS to be loaded before rendering", async ({ page }) => {
   let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
