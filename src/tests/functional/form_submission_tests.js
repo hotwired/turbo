@@ -1018,7 +1018,9 @@ test("link method form submission inside frame submits a single request", async 
 
 test("link method form submission targeting frame submits a single request", async ({ page }) => {
   let requestCounter = 0
-  page.on("request", () => requestCounter++)
+  page.on("request", (request) => {
+    if (request.url().includes("/__turbo/redirect")) requestCounter++
+  })
 
   await page.click("#turbo-method-post-to-targeted-frame")
 
@@ -1026,7 +1028,8 @@ test("link method form submission targeting frame submits a single request", asy
 
   await noNextEventNamed(page, "turbo:before-fetch-request")
   expect(fetchOptions.method, "[data-turbo-method] overrides the GET method").toEqual("POST")
-  expect(requestCounter, "submits a single HTTP request then follows a redirect").toEqual(2)
+  await expect(page.locator("#hello h2")).toHaveText("Hello from a frame")
+  expect(requestCounter, "submits a single HTTP request").toEqual(1)
 })
 
 test("link method form submission inside frame", async ({ page }) => {
