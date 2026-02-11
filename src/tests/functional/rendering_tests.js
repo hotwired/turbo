@@ -283,6 +283,16 @@ test("removes only stylesheet elements from noscript with mixed content", async 
   expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
 })
 
+test("removes alternate stylesheet elements from noscript", async ({ page }) => {
+  await page.click("#body-noscript-content-link")
+  await nextEventNamed(page, "turbo:render")
+
+  const noscriptExists = await page.locator("#alternate-stylesheet-noscript").count()
+  expect(noscriptExists).toEqual(1)
+
+  expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
+})
+
 test("waits for CSS to be loaded before rendering", async ({ page }) => {
   let finishLoadingCSS = (_value) => {}
   const promise = new Promise((resolve) => {
