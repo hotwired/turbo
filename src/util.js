@@ -208,6 +208,11 @@ export function findClosestRecursively(element, selector) {
   }
 }
 
+export function elementIsStylesheet(element) {
+  return element.localName === "style" ||
+    (element.localName === "link" && element.relList.contains("stylesheet"))
+}
+
 export function elementIsFocusable(element) {
   const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
 

@@ -1,4 +1,4 @@
-import { parseHTMLDocument } from "../../util"
+import { elementIsStylesheet, parseHTMLDocument } from "../../util"
 import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
@@ -40,7 +40,7 @@ export class PageSnapshot extends Snapshot {
 
     for (const clonedNoscriptElement of clonedElement.querySelectorAll("noscript")) {
       for (const child of [...clonedNoscriptElement.children]) {
-        if (child.localName === "style" || (child.localName === "link" && child.getAttribute("rel") === "stylesheet")) {
+        if (elementIsStylesheet(child)) {
           child.remove()
         }
       }

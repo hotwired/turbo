@@ -1,4 +1,4 @@
-import { activateScriptElement, waitForLoad } from "../../util"
+import { activateScriptElement, elementIsStylesheet, waitForLoad } from "../../util"
 import { Renderer } from "../renderer"
 
 export class PageRenderer extends Renderer {
@@ -180,7 +180,7 @@ export class PageRenderer extends Renderer {
   deactivateNoscriptStylesheetElements() {
     for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
       for (const child of [...noscriptElement.children]) {
-        if (child.localName === "style" || (child.localName === "link" && child.getAttribute("rel") === "stylesheet")) {
+        if (elementIsStylesheet(child)) {
           child.remove()
         }
       }

@@ -1,3 +1,4 @@
+import { elementIsStylesheet } from "../../util"
 import { Snapshot } from "../snapshot"
 
 export class HeadSnapshot extends Snapshot {
@@ -93,11 +94,6 @@ function elementIsScript(element) {
 function elementIsNoscript(element) {
   const tagName = element.localName
   return tagName == "noscript"
-}
-
-function elementIsStylesheet(element) {
-  const tagName = element.localName
-  return tagName == "style" || (tagName == "link" && element.getAttribute("rel") == "stylesheet")
 }
 
 function elementIsMetaElementWithName(element, name) {
