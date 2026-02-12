@@ -21,6 +21,11 @@ export class PageObserver {
       document.addEventListener("readystatechange", this.interpretReadyState, false)
       addEventListener("pagehide", this.pageWillUnload, false)
       this.started = true
+      if (document.readyState === "interactive") {
+        document.addEventListener("DOMContentLoaded", () => {
+          this.interpretReadyState()
+        }, { once: true })
+      }
     }
   }
 
