@@ -1,6 +1,7 @@
 export const drive = {
   enabled: true,
   progressBarDelay: 500,
+  prefetchDelay: 100,
   unvisitableExtensions: new Set(
     [
       ".7z", ".aac", ".apk", ".avi", ".bmp", ".bz2", ".css", ".csv", ".deb", ".dmg", ".doc",
