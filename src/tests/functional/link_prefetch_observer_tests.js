@@ -195,6 +195,35 @@ test("it prefetches links inside a turbo frame", async ({ page }) => {
   }})
 })
 
+test("prefetching a page-wide request does not affect frame requests", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const pageLink = page.locator("#anchor_for_prefetch_in_frame_target_top")
+  const frameLink = page.locator("#anchor_for_prefetch_in_frame")
+
+  await pageLink.hover()
+  await sleep(25)
+  await frameLink.click()
+
+  const { fetchOptions } = await nextEventOnTarget(page, "frame_for_prefetch", "turbo:before-fetch-request")
+
+  expect(fetchOptions.headers["Turbo-Frame"]).toEqual("frame_for_prefetch")
+})
+
+test("prefetching a frame request does not affect page-wide requests", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const pageLink = page.locator("#anchor_for_prefetch_in_frame_target_top")
+  const frameLink = page.locator("#anchor_for_prefetch_in_frame")
+
+  await frameLink.hover()
+  await sleep(25)
+  await pageLink.click()
+
+  const { fetchOptions } = await nextEventOnTarget(page, "html", "turbo:before-fetch-request")
+
+  expect(fetchOptions.headers["Turbo-Frame"]).toEqual(undefined)
+})
 
 test("doesn't include a turbo-frame header when the link is inside a turbo frame with a target=_top", async ({ page}) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
