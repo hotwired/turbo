@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Turbo</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      // Simulates a Stimulus controller that uses MutationObserver to detect
+      // when its element is removed from the DOM and cleans up accordingly.
+      // This matches how Stimulus actually works internally.
+      (function() {
+        let paragraph = null
+        let observer = null
+
+        function connect() {
+          const container = document.getElementById("component-container")
+          if (!container || paragraph) return
+
+          paragraph = document.createElement("p")
+          paragraph.id = "component-output"
+          paragraph.textContent = "Hello from component"
+          container.appendChild(paragraph)
+
+          // Watch for when our container is removed from the DOM (like Stimulus does)
+          observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+              for (const node of mutation.removedNodes) {
+                if (node === container || node.contains?.(container)) {
+                  disconnect()
+                  return
+                }
+              }
+            }
+          })
+          // Must observe documentElement, not body, because Turbo replaces the entire body
+          observer.observe(document.documentElement, { childList: true, subtree: true })
+        }
+
+        function disconnect() {
+          if (paragraph) {
+            paragraph.remove()
+            paragraph = null
+          }
+          if (observer) {
+            observer.disconnect()
+            observer = null
+          }
+        }
+
+        addEventListener("turbo:load", connect)
+      })()
+    </script>
+  </head>
+  <body>
+    <h1>Cache Racing Test</h1>
+    <div id="component-container"></div>
+    <p><a id="link-to-page-with-different-head" href="/src/tests/fixtures/cache_racing_target.html">Page with different head</a></p>
+  </body>
+</html>
