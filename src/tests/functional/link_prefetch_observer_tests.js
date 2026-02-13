@@ -232,6 +232,74 @@ test("it cancels the prefetch request if the link is no longer hovered", async (
   })
 })
 
+test("it cancels pending prefetch requests if a new request is made", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  // Prefetch a request, that takes a long time to load
+  await hoverSelector({ page, selector: "#anchor_for_slow_prefetch" })
+  await page.click("#anchor_for_slow_prefetch", {noWaitAfter: true})
+
+  // Issue a new request to a secondary resource, that loads fast
+  await page.click("#anchor_for_prefetch")
+
+  // Allow for the slow request to be processed if it wasn't canceled
+  await sleep(1100)
+
+  // The page should show the secondary resource
+  await expect(page).toHaveTitle("Prefetched Page")
+  await expect(page).toHaveURL("src/tests/fixtures/prefetched.html")
+})
+
+test("it cancels pending prefetch requests if a new prefetch request is made", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  // Prefetch a request, that takes a long time to load
+  await hoverSelector({ page, selector: "#anchor_for_slow_prefetch" })
+  await page.click("#anchor_for_slow_prefetch", {noWaitAfter: true})
+
+  // Issue a new request including prefetch to a secondary resource, that loads fast
+  await hoverSelector({ page, selector: "#anchor_for_prefetch" })
+  await page.click("#anchor_for_prefetch")
+
+  await sleep(1100)
+
+  // The page should show the secondary resource
+  await expect(page).toHaveTitle("Prefetched Page")
+  await expect(page).toHaveURL("src/tests/fixtures/prefetched.html")
+})
+
+test("it cancels the pending prefetch request if the same link is hovered again", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let finishedRequestCount = 0
+  page.on("requestfinished", async () => (finishedRequestCount++))
+
+  await page.hover("#anchor_for_slow_prefetch")
+  await sleep(150)
+  await page.mouse.move(0, 0)
+
+  // Prefetching the same URL again while the last request is still not finished should abort the latter
+  await page.hover("#anchor_for_slow_prefetch")
+
+  await sleep(1200)
+  expect(finishedRequestCount).toEqual(1)
+})
+
+test("it keeps the running prefetch request when clicking a link", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  let requestCount = 0
+  page.on("request", async () => (requestCount++))
+
+  await hoverSelector({ page, selector: "#anchor_for_slow_prefetch" })
+  await sleep(150)
+  await page.click("#anchor_for_slow_prefetch")
+
+  // The prefetch request should be used for the visit
+  await expect(page).toHaveTitle("One")
+  expect(requestCount).toEqual(1)
+})
+
 test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
