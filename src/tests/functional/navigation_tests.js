@@ -258,6 +258,18 @@ test("following a same-origin [target] link", async ({ page }) => {
   expect(await visitAction(page)).toEqual("load")
 })
 
+test("following a same-origin [target] link inside an SVG", async ({ page }) => {
+  const errors = []
+  await page.on("pageerror", e => errors.push(e))
+  const link = page.locator("#same-origin-targeted-link-inside-svg-element")
+  await link.focus()
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.keyboard.press("Enter")])
+
+  expect(pathname(popup.url())).toEqual("/src/tests/fixtures/one.html")
+  expect(await visitAction(page)).toEqual("load")
+  expect(errors, "raised an error").toHaveLength(0)
+})
+
 test("following a _self [target] link", async ({ page }) => {
   await page.click("#self-targeted-link")
 
@@ -298,7 +310,19 @@ test("following a same-origin link inside an SVG element", async ({ page }) => {
   await page.keyboard.press("Enter")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
-  expect(await visitAction(page)).toEqual("load")
+  expect(await visitAction(page)).toEqual("advance")
+})
+
+test("following a same-page link inside an SVG element", async ({ page }) => {
+  const errors = []
+  await page.on("pageerror", e => errors.push(e))
+  const link = page.locator("#same-page-link-inside-svg-element")
+  await link.focus()
+  await page.keyboard.press("Enter")
+
+  await expect(page).toHaveURL(withHash("#main"))
+  expect(await isScrolledToSelector(page, "#main"), "scrolled to #main").toEqual(true)
+  expect(errors, "raised an error").toHaveLength(0)
 })
 
 test("following a cross-origin link inside an SVG element", async ({ page }) => {
@@ -421,6 +445,25 @@ test("same-page anchor visits do not trigger visit events", async ({ page }) => 
   for (const eventName in events) {
     await page.goto("/src/tests/fixtures/navigation.html")
     await page.click('a[href="#main"]')
+    expect(await noNextEventNamed(page, eventName), `same-page links do not trigger ${eventName} events`).toEqual(true)
+  }
+})
+
+test("same-page anchor visits within SVG elements do not trigger visit events", async ({ page }) => {
+  const events = [
+    "turbo:before-visit",
+    "turbo:visit",
+    "turbo:before-cache",
+    "turbo:before-render",
+    "turbo:render",
+    "turbo:load"
+  ]
+
+  for (const eventName in events) {
+    await page.goto("/src/tests/fixtures/navigation.html")
+    const link = page.locator("#same-origin-link-inside-svg-element")
+    await link.focus()
+    await page.keyboard.press("Enter")
     expect(await noNextEventNamed(page, eventName), `same-page links do not trigger ${eventName} events`).toEqual(true)
   }
 })
