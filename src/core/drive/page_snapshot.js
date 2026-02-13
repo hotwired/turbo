@@ -95,6 +95,10 @@ export class PageSnapshot extends Snapshot {
     return this.getSetting("refresh-scroll")
   }
 
+  get visitScroll() {
+    return this.getSetting("visit-scroll")
+  }
+
   // Private
 
   getSetting(name) {
