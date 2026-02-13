@@ -3,6 +3,7 @@ import { FormSubmission } from "./form_submission"
 import { expandURL } from "../url"
 import { Visit } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
+import { ViewTransitioner } from "./view_transitioner"
 
 export class Navigator {
   constructor(delegate) {
@@ -94,14 +95,19 @@ export class Navigator {
 
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
-      if (fetchResponse.serverError) {
-        await this.view.renderError(snapshot, this.currentVisit)
-      } else {
-        await this.view.renderPage(snapshot, false, true, this.currentVisit)
-      }
-      if (snapshot.refreshScroll !== "preserve") {
-        this.view.scrollToTop()
-      }
+      await new ViewTransitioner().renderChange(
+        this.view.shouldTransitionTo(snapshot),
+        async () => {
+          if (fetchResponse.serverError) {
+            await this.view.renderError(snapshot, this.currentVisit)
+          } else {
+            await this.view.renderPage(snapshot, false, true, this.currentVisit)
+          }
+          if (snapshot.refreshScroll !== "preserve") {
+            this.view.scrollToTop()
+          }
+        }
+      )
       this.view.clearSnapshotCache()
     }
   }
