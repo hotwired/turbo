@@ -408,6 +408,42 @@ test("clicking the back button after redirection", async ({ page }) => {
   expect(await visitAction(page)).toEqual("restore")
 })
 
+test("hash-only navigation does not trigger a visit via popstate", async ({ page }) => {
+  await page.click('a[href="#main"]')
+  await nextBeat()
+
+  expect(
+    await noNextEventNamed(page, "turbo:before-visit"),
+    "hash-only click does not trigger turbo:before-visit"
+  ).toEqual(true)
+
+  expect(
+    await noNextEventNamed(page, "turbo:load"),
+    "hash-only click does not trigger turbo:load"
+  ).toEqual(true)
+
+  await expect(page).toHaveURL(withHash("#main"))
+})
+
+test("navigating back after hash-only change does not replace the body", async ({ page }) => {
+  await page.click('a[href="#main"]')
+  await nextBeat()
+
+  await page.click('a[href="#ignored-link"]')
+  await nextBeat()
+
+  await expect(page).toHaveURL(withHash("#ignored-link"))
+
+  expect(
+    await willChangeBody(page, async () => {
+      await page.goBack()
+      await nextBeat()
+    })
+  ).not.toBeTruthy()
+
+  await expect(page).toHaveURL(withHash("#main"))
+})
+
 test("same-page anchor visits do not trigger visit events", async ({ page }) => {
   const events = [
     "turbo:before-visit",

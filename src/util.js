@@ -209,8 +209,7 @@ export function findClosestRecursively(element, selector) {
 }
 
 export function elementIsStylesheet(element) {
-  return element.localName === "style" ||
-    (element.localName === "link" && element.relList.contains("stylesheet"))
+  return element.localName === "style" || (element.localName === "link" && element.relList.contains("stylesheet"))
 }
 
 export function elementIsFocusable(element) {
@@ -253,7 +252,7 @@ export function findLinkFromClickTarget(target) {
   const link = findClosestRecursively(target, "a[href], a[xlink\\:href]")
 
   if (!link) return null
-  if (link.href.startsWith("#")) return null
+  if (link.getAttribute("href")?.startsWith("#")) return null
   if (link.hasAttribute("download")) return null
 
   const linkTarget = link.getAttribute("target")
