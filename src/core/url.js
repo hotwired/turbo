@@ -37,6 +37,10 @@ export function getLocationForLink(link) {
   return expandURL(link.getAttribute("href") || "")
 }
 
+export function isHashLink(element) {
+  return element.getAttribute("href")?.startsWith("#") ?? false
+}
+
 export function getRequestURL(url) {
   const anchor = getAnchor(url)
   return anchor != null ? url.href.slice(0, -(anchor.length + 1)) : url.href
