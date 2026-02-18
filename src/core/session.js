@@ -6,7 +6,7 @@ import { History } from "./drive/history"
 import { LinkPrefetchObserver } from "../observers/link_prefetch_observer"
 import { LinkClickObserver } from "../observers/link_click_observer"
 import { FormLinkClickObserver } from "../observers/form_link_click_observer"
-import { getAction, expandURL, locationIsVisitable } from "./url"
+import { getAction, expandURL, locationIsVisitable, isHashLink } from "./url"
 import { Navigator } from "./drive/navigator"
 import { PageObserver } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
@@ -252,6 +252,7 @@ export class Session {
     return (
       this.elementIsNavigatable(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
+      !isHashLink(link) &&
       this.applicationAllowsFollowingLinkToLocation(link, location, event)
     )
   }

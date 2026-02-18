@@ -14,7 +14,7 @@ import {
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { getAction, expandURL, urlsAreEqual, locationIsVisitable, isHashLink } from "../url"
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
@@ -480,6 +480,10 @@ export class FrameController {
   }
 
   #shouldInterceptNavigation(element, submitter) {
+    if (isHashLink(element)) {
+      return false
+    }
+
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
 
     if (element instanceof HTMLFormElement && !this.#formActionIsVisitable(element, submitter)) {
