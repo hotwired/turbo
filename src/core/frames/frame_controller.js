@@ -131,7 +131,7 @@ export class FrameController {
 
   async loadResponse(fetchResponse) {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
-      this.sourceURL = fetchResponse.response.url
+      this.sourceURL = fetchResponse.response.url + this.#hashFromSourceURL
     }
 
     try {
@@ -528,6 +528,13 @@ export class FrameController {
     if (this.element.src) {
       return this.element.src
     }
+  }
+
+  get #hashFromSourceURL() {
+    if (this.sourceURL) {
+      return expandURL(this.sourceURL).hash
+    }
+    return ""
   }
 
   set sourceURL(sourceURL) {
