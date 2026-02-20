@@ -56,6 +56,11 @@ class Offline {
     }
   }
 
+  async clearCache() {
+    const registration = await navigator.serviceWorker?.ready
+    registration?.active?.postMessage({ action: "clearCache" })
+  }
+
   #preloadWhenReady(pattern) {
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       this.#preloadResources(pattern)
