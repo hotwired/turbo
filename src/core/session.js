@@ -439,6 +439,8 @@ export class Session {
   submissionIsNavigatable(form, submitter) {
     if (config.forms.mode == "off") {
       return false
+    } else if (this.submitterReferencesNavigatable(form, submitter)) {
+      return true
     } else {
       const submitterIsNavigatable = submitter ? this.elementIsNavigatable(submitter) : true
 
@@ -448,6 +450,13 @@ export class Session {
         return submitterIsNavigatable && this.elementIsNavigatable(form)
       }
     }
+  }
+
+  submitterReferencesNavigatable(form, submitter) {
+    const formReference = submitter.hasAttribute("form")
+    const optedOut = submitter.getAttribute("data-turbo") == "false"
+
+    return formReference && !optedOut && this.elementIsNavigatable(form)
   }
 
   elementIsNavigatable(element) {
