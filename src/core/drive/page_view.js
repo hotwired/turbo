@@ -19,6 +19,8 @@ export class PageView extends View {
     const shouldMorphPage = this.isPageRefresh(visit) && (visit?.refresh?.method || this.snapshot.refreshMethod) === "morph"
     const rendererClass = shouldMorphPage ? MorphingPageRenderer : PageRenderer
 
+    if (isPreview) snapshot = snapshot.clone()
+
     const renderer = new rendererClass(this.snapshot, snapshot, isPreview, willRender)
 
     if (!renderer.shouldRender) {
