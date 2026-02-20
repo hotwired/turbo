@@ -271,3 +271,21 @@ export function debounce(fn, delay) {
     timeoutId = setTimeout(callback, delay)
   }
 }
+
+export function setCookie(name, value, expiry) {
+  const body = [ name, value ].map(encodeURIComponent).join("=")
+  const expires = new Date(Date.now() + expiry).toUTCString()
+  const cookie = `${body}; path=/; expires=${expires}`
+  document.cookie = cookie
+}
+
+export function getCookie(cookieName) {
+  if (cookieName != null) {
+    const cookies = document.cookie ? document.cookie.split("; ") : []
+    const cookie = cookies.find((cookie) => cookie.startsWith(cookieName))
+    if (cookie) {
+      const value = cookie.split("=").slice(1).join("=")
+      return value ? decodeURIComponent(value) : undefined
+    }
+  }
+}

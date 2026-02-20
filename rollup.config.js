@@ -24,5 +24,25 @@ export default [
     watch: {
       include: "src/**"
     }
+  },
+  {
+    input: "src/offline/index.js",
+    output: [
+      {
+        file: "dist/turbo-offline.js",
+        format: "es",
+        banner
+      },
+      {
+        name: "TurboOffline",
+        file: "dist/turbo-offline-umd.js",
+        format: "umd",
+        banner
+      }
+    ],
+    plugins: [resolve()],
+    watch: {
+      include: "src/offline/**"
+    }
   }
 ]
