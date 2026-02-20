@@ -50,7 +50,7 @@ export class Handler {
         const size = await this.#getResponseSize(response)
 
         if (size === null) {
-          console.warn(`Cannot determine size for opaque response to "${request.url}". maxEntrySize check skipped.`)
+          console.warn(`Cannot determine size for opaque response to "${request.url}". Consider using fetchOptions: { mode: "cors" } if the server supports CORS. maxEntrySize check skipped.`)
         } else if (size > this.maxEntrySize) {
           console.debug(`Skipping cache for "${request.url}": response size ${size} exceeds maxEntrySize ${this.maxEntrySize}`)
           return
