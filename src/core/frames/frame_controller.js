@@ -14,7 +14,7 @@ import {
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { getAction, expandURL, urlsAreEqual, pathnamesAreEqual, locationIsVisitable } from "../url"
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
@@ -101,10 +101,9 @@ export class FrameController {
   }
 
   sourceURLReloaded() {
-    const { refresh, src } = this.element
+    const { src } = this.element
 
-    this.#shouldMorphFrame = src && refresh === "morph"
-
+    this.#shouldMorphFrame = this.element.shouldReloadWithMorph
     this.element.removeAttribute("complete")
     this.element.src = null
     this.element.src = src
@@ -247,6 +246,7 @@ export class FrameController {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
+    frame.delegate.decideOnMorphingTo(response.response.url)
     frame.delegate.loadResponse(response)
 
     if (!formSubmission.isSafe) {
@@ -356,8 +356,15 @@ export class FrameController {
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(submitter, element, frame))
 
     this.#withCurrentNavigationElement(element, () => {
+      frame.delegate.decideOnMorphingTo(url)
       frame.src = url
     })
+  }
+
+  decideOnMorphingTo(url) {
+    if (this.element.src && pathnamesAreEqual(this.element.src, url) && this.element.shouldReloadWithMorph) {
+      this.#shouldMorphFrame = true
+    }
   }
 
   proposeVisitIfNavigatedWithAction(frame, action = null) {
