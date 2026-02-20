@@ -41,7 +41,7 @@ export class Handler {
   async fetchFromNetwork(request) {
     // Setting the referrer so that it doesn't appear as the service worker
     const referrer = request.referrer
-    return await fetch(request, { referrer, ...this.fetchOptions })
+    return await fetch(request.url, { referrer, ...this.fetchOptions })
   }
 
   async saveToCache(request, response) {
