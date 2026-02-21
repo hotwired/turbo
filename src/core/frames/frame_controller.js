@@ -52,7 +52,11 @@ export class FrameController {
     if (!this.#connected) {
       this.#connected = true
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
-        this.appearanceObserver.start()
+        if (this.complete) {
+          this.#hasBeenLoaded = true
+        } else {
+          this.appearanceObserver.start()
+        }
       } else {
         this.#loadSourceURL()
       }
