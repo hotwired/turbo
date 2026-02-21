@@ -328,6 +328,16 @@ export class Visit {
     this.finishRequest()
   }
 
+  // Progress bar
+
+  hideProgressBar() {
+    return this.view.shouldHideProgressBar()
+  }
+
+  showProgressBarAfterDelay() {
+    return this.hasCachedSnapshot() || this.action !== "restore"
+  }
+
   // Scrolling
 
   performScroll() {

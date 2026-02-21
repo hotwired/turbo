@@ -421,6 +421,17 @@ test("doesn't render previews when morphing", async ({ page }) => {
   await expect(title).toHaveText("Page to be refreshed")
 })
 
+test("doesn't show progress bar when morphing", async({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh_progress_bar.html")
+
+  await page.click("#link")
+  await page.click("#page-refresh-link")
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar")
+
+  await page.click("#refresh-link")
+  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar")
+})
+
 async function assertPageScroll(page, top, left) {
   const [scrollTop, scrollLeft] = await page.evaluate(() => {
     return [
