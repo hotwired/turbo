@@ -205,6 +205,25 @@ test("doesn't include a turbo-frame header when the link is inside a turbo frame
   }})
 })
 
+test("it doesn't cause an unhandled rejection when a prefetch request fails", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await page.evaluate(() => {
+    window.__unhandledRejections = []
+    window.addEventListener("unhandledrejection", (event) => {
+      window.__unhandledRejections.push(event.reason?.message ?? String(event.reason))
+    })
+  })
+
+  await page.route("**/prefetched.html", (route) => route.abort("failed"))
+
+  await page.hover("#anchor_for_prefetch")
+  await sleep(200)
+
+  const unhandledRejections = await page.evaluate(() => window.__unhandledRejections)
+  expect(unhandledRejections).toHaveLength(0)
+})
+
 test("it prefetches links with a delay", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 

@@ -14,7 +14,7 @@ class PrefetchCache extends LRUCache {
 
   putLater(url, request, ttl) {
     this.#prefetchTimeout = setTimeout(() => {
-      request.perform()
+      request.perform().catch(() => this.evict(toCacheKey(url)))
       this.put(url, request, ttl)
       this.#prefetchTimeout = null
     }, this.prefetchDelay)
