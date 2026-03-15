@@ -425,6 +425,25 @@ test("same-page anchor visits do not trigger visit events", async ({ page }) => 
   }
 })
 
+test("history.back on data-turbo=false page with hash routing does not trigger restore visit", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/data_turbo_false_hash_routing.html")
+  await readEventLogs(page)
+
+  await page.click("#link-step1")
+  await page.click("#link-step2")
+  await page.click("#link-step3")
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/data_turbo_false_hash_routing.html"))
+  await expect(page).toHaveURL(withHash("#step2"))
+  expect(await noNextEventNamed(page, "turbo:visit")).toEqual(true)
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/data_turbo_false_hash_routing.html"))
+  await expect(page).toHaveURL(withHash("#step1"))
+  expect(await noNextEventNamed(page, "turbo:visit")).toEqual(true)
+})
+
 test("correct referrer header", async ({ page }) => {
   page.click("#headers-link")
   await nextEventNamed(page, "turbo:load")
