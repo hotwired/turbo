@@ -249,13 +249,19 @@ export function doesNotTargetIFrame(name) {
   }
 }
 
+/**
+ * Returns href as string for both HTMLAnchorElement and SVGAElement.
+ * SVGAElement exposes href as SVGAnimatedString which has no startsWith().
+ */
+export function getLinkHrefString(link) {
+  return link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""
+}
+
 export function findLinkFromClickTarget(target) {
   const link = findClosestRecursively(target, "a[href], a[xlink\\:href]")
 
   if (!link) return null
-  // Use getAttribute for href check: SVGAElement exposes href as SVGAnimatedString (no startsWith)
-  const href = link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""
-  if (href.startsWith("#")) return null
+  if (getLinkHrefString(link).startsWith("#")) return null
   if (link.hasAttribute("download")) return null
 
   const linkTarget = link.getAttribute("target")

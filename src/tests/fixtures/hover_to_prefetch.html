@@ -42,6 +42,12 @@
     <a href="http://localhost:9000/src/tests/fixtures/prefetched.html" id="anchor_with_whole_url"
       >Hover to prefetch me</a>
     <a href="#some_anchor" id="anchor_with_hash">Won't prefetch when hovering me</a>
+    <svg width="200" height="40" style="display: block">
+      <a href="#svg_anchor" id="anchor_with_hash_inside_svg">
+        <rect width="200" height="40" fill="#e0e0e0"/>
+        <text x="10" y="25" fill="black">SVG hash link</text>
+      </a>
+    </svg>
     <a href="ftp://example.com" id="anchor_with_ftp_protocol">Won't prefetch when hovering me</a>
     <a href="/src/tests/fixtures/prefetched.html" target="prefetch_iframe" id="anchor_with_iframe_target"
       >Won't prefetch when hovering me</a>

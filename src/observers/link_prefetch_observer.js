@@ -2,7 +2,8 @@ import { getLocationForLink } from "../core/url"
 import {
   dispatch,
   getMetaContent,
-  findClosestRecursively
+  findClosestRecursively,
+  getLinkHrefString
 } from "../util"
 
 import { FetchMethod, FetchRequest } from "../http/fetch_request"
@@ -158,7 +159,7 @@ const unfetchableLink = (link) => {
 }
 
 const linkToTheSamePage = (link) => {
-  return (link.pathname + link.search === document.location.pathname + document.location.search) || link.href.startsWith("#")
+  return (link.pathname + link.search === document.location.pathname + document.location.search) || getLinkHrefString(link).startsWith("#")
 }
 
 const linkOptsOut = (link) => {
