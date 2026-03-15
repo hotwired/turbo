@@ -253,7 +253,9 @@ export function findLinkFromClickTarget(target) {
   const link = findClosestRecursively(target, "a[href], a[xlink\\:href]")
 
   if (!link) return null
-  if (link.href.startsWith("#")) return null
+  // Use getAttribute for href check: SVGAElement exposes href as SVGAnimatedString (no startsWith)
+  const href = link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""
+  if (href.startsWith("#")) return null
   if (link.hasAttribute("download")) return null
 
   const linkTarget = link.getAttribute("target")
