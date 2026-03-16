@@ -250,8 +250,10 @@ export function doesNotTargetIFrame(name) {
 }
 
 /**
- * Returns href as string for both HTMLAnchorElement and SVGAElement.
- * SVGAElement exposes href as SVGAnimatedString which has no startsWith().
+ * Returns consistently the href attribute value as a string for both HTMLAnchorElement and SVGAElement.
+ * HTMLAnchorElement href property returns an absolute URL if the attribute contains a valid relative URL.
+ * SVGAElement exposes href as SVGAnimatedString which does not implement String methods.
+ * getAttribute() will return the proper value of the attribute in both cases.
  */
 export function getLinkHrefString(link) {
   return link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""

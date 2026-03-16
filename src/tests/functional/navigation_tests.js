@@ -310,22 +310,19 @@ test("following a cross-origin link inside an SVG element", async ({ page }) => 
   expect(await visitAction(page)).toEqual("load")
 })
 
-test("clicking a same-origin link inside an SVG element", async ({ page }) => {
+test("following a same-origin SVG link", async ({ page }) => {
   await page.click("#same-origin-link-inside-svg-element")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
   expect(await visitAction(page)).toEqual("load")
 })
 
-test("clicking an SVG link with hash-only href scrolls to anchor without a visit", async ({ page }) => {
-  expect(
-    await willChangeBody(page, async () => {
-      await page.click("#svg-hash-link")
-    })
-  ).not.toBeTruthy()
+test("following a same-origin SVG anchored link", async ({ page }) => {
+  await page.click("#same-origin-anchored-svg-link")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/navigation.html"))
   await expect(page).toHaveURL(withHash("#main"))
+  expect(await visitAction(page)).toEqual("load")
   expect(await isScrolledToSelector(page, "#main"), "scrolled to #main").toEqual(true)
 })
 

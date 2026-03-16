@@ -121,7 +121,7 @@ test("it doesn't prefetch the page when link has a hash as a href", async ({ pag
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_hash" })
 })
 
-test("it doesn't prefetch when hovering SVG link with hash href", async ({ page }) => {
+test("it doesn't prefetch the page when SVG link has a hash as a href", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_hash_inside_svg" })
 })
