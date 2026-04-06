@@ -418,8 +418,9 @@ test("same-page anchor visits do not trigger visit events", async ({ page }) => 
     "turbo:load"
   ]
 
-  for (const eventName in events) {
+  for (const eventName of events) {
     await page.goto("/src/tests/fixtures/navigation.html")
+    await readEventLogs(page)
     await page.click('a[href="#main"]')
     expect(await noNextEventNamed(page, eventName), `same-page links do not trigger ${eventName} events`).toEqual(true)
   }

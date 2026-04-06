@@ -219,7 +219,6 @@ export class Session {
   historyPoppedWithEmptyState(location) {
     this.history.replace(location)
     this.view.lastRenderedLocation = location
-    this.view.cacheSnapshot()
   }
 
   // Scroll observer delegate
