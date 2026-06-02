@@ -18,7 +18,10 @@ export class Snapshot {
   }
 
   getElementForAnchor(anchor) {
-    return anchor ? this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`) : null
+    if (!anchor) return null
+
+    const id = CSS.escape(anchor)
+    return this.element.querySelector(`[id=${id}], a[name=${id}]`)
   }
 
   get isConnected() {
