@@ -6,7 +6,9 @@ export class ViewTransitioner {
     if (useViewTransition && this.viewTransitionsAvailable && !this.#viewTransitionStarted) {
       this.#viewTransitionStarted = true
       this.#lastOperation = this.#lastOperation.then(async () => {
-        await document.startViewTransition(render).finished
+        const transition = document.startViewTransition(render)
+        transition.ready.catch(() => {})
+        await transition.finished
       })
     } else {
       this.#lastOperation = this.#lastOperation.then(render)
