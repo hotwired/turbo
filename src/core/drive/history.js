@@ -78,18 +78,38 @@ export class History {
   // Event handlers
 
   onPopState = (event) => {
+    const newLocation = new URL(window.location.href)
+
+    // Ignore popstate events triggered by hash-only changes not managed by Turbo
+    if (!event.state?.turbo && this.location && this.#onlyHashChanged(newLocation)) {
+      this.location = newLocation
+      return
+    }
+
     const { turbo } = event.state || {}
-    this.location = new URL(window.location.href)
+    this.location = newLocation
 
     if (turbo) {
       const { restorationIdentifier, restorationIndex } = turbo
       this.restorationIdentifier = restorationIdentifier
       const direction = restorationIndex > this.currentIndex ? "forward" : "back"
-      this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(this.location, restorationIdentifier, direction)
+      this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(
+        this.location,
+        restorationIdentifier,
+        direction
+      )
       this.currentIndex = restorationIndex
     } else {
       this.currentIndex++
       this.delegate.historyPoppedWithEmptyState(this.location)
     }
+  }
+
+  #onlyHashChanged(newLocation) {
+    return (
+      this.location.origin === newLocation.origin &&
+      this.location.pathname === newLocation.pathname &&
+      this.location.search === newLocation.search
+    )
   }
 }
