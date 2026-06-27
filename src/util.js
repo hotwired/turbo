@@ -253,7 +253,8 @@ export function findLinkFromClickTarget(target) {
   const link = findClosestRecursively(target, "a[href], a[xlink\\:href]")
 
   if (!link) return null
-  if (link.href.startsWith("#")) return null
+  if (link.getAttribute("href")?.startsWith("#")) return null
+  if (!(link instanceof HTMLAnchorElement)) return null
   if (link.hasAttribute("download")) return null
 
   const linkTarget = link.getAttribute("target")
