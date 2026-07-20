@@ -1,3 +1,5 @@
+import { getScrollPosition } from "../../util"
+
 export function attributeForSelector(page, selector, attributeName) {
   return page.locator(selector).getAttribute(attributeName)
 }
@@ -278,14 +280,17 @@ export function setLocalStorageFromEvent(page, eventName, storageKey, storageVal
   )
 }
 
-export function scrollPosition(page, scrollRootSelector = null) {
-  return page.evaluate(selector => {
+export async function scrollPosition(page, scrollRootSelector = null) {
+  const root = await page.evaluate(selector => {
     const scrollRoot = selector ? document.querySelector(selector) : window
     if (!scrollRoot) {
       throw new Error(`scrollPosition: no element matches ${selector}`)
     }
-    return { x: scrollRoot.scrollX ?? scrollRoot.scrollLeft, y: scrollRoot.scrollY ?? scrollRoot.scrollTop }
+    const { scrollX, scrollY, scrollLeft, scrollTop } = scrollRoot
+    return { scrollX, scrollY, scrollLeft, scrollTop }
   }, scrollRootSelector)
+
+  return getScrollPosition(root)
 }
 
 export async function isScrolledToTop(page, selector = null) {

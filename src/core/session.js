@@ -318,6 +318,7 @@ export class Session {
   // Page observer delegate
 
   pageBecameInteractive() {
+    this.scrollObserver.refresh()
     this.view.lastRenderedLocation = this.location
     this.notifyApplicationAfterPageLoad()
   }
@@ -357,6 +358,7 @@ export class Session {
   }
 
   viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
+    this.scrollObserver.refresh()
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender(renderMethod)
   }

@@ -311,6 +311,23 @@ test("can scroll to element after history-initiated turbo:visit", async ({ page 
   expect(await isScrolledToSelector(page, "#" + id), "scrolls after history-initiated turbo:load").toBeTruthy()
 })
 
+test("can scroll to element in custom scroll root after history-initiated turbo:visit", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_root.html")
+  await readEventLogs(page)
+  const id = "below-the-fold-link"
+  await page.evaluate((id) => {
+    addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
+  }, id)
+
+  await scrollToSelector(page, "#" + id)
+  await page.click("#" + id)
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  expect(await isScrolledToSelector(page, "#" + id, "[data-turbo-scroll-root]"), "scrolls after history-initiated turbo:load").toBeTruthy()
+})
+
 test("Visit with network error", async ({ page }) => {
   await page.evaluate(() => {
     addEventListener("turbo:fetch-request-error", (event) => event.preventDefault())
