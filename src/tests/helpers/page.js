@@ -57,13 +57,13 @@ export async function hasSelector(page, selector) {
   return !!(await page.locator(selector).count())
 }
 
-export async function isScrolledToSelector(page, selector) {
+export async function isScrolledToSelector(page, selector, scrollRootSelector = null) {
   const boundingBox = await page
     .locator(selector)
     .evaluate((element) => (element instanceof HTMLElement ? { x: element.offsetLeft, y: element.offsetTop } : null))
 
   if (boundingBox) {
-    const { y: pageY } = await scrollPosition(page)
+    const { y: pageY } = await scrollPosition(page, scrollRootSelector)
     const { y: elementY } = boundingBox
     const offset = pageY - elementY
     return Math.abs(offset) <= 2
@@ -278,12 +278,18 @@ export function setLocalStorageFromEvent(page, eventName, storageKey, storageVal
   )
 }
 
-export function scrollPosition(page) {
-  return page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))
+export function scrollPosition(page, scrollRootSelector = null) {
+  return page.evaluate(selector => {
+    const scrollRoot = selector ? document.querySelector(selector) : window
+    if (!scrollRoot) {
+      throw new Error(`scrollPosition: no element matches ${selector}`)
+    }
+    return { x: scrollRoot.scrollX ?? scrollRoot.scrollLeft, y: scrollRoot.scrollY ?? scrollRoot.scrollTop }
+  }, scrollRootSelector)
 }
 
-export async function isScrolledToTop(page) {
-  const { y: pageY } = await scrollPosition(page)
+export async function isScrolledToTop(page, selector = null) {
+  const { y: pageY } = await scrollPosition(page, selector)
   return pageY === 0
 }
 
