@@ -5,6 +5,10 @@ export class ScrollObserver {
     this.delegate = delegate
   }
 
+  get scrollRoot() {
+    return window
+  }
+
   start() {
     if (!this.started) {
       addEventListener("scroll", this.onScroll, false)
@@ -21,7 +25,8 @@ export class ScrollObserver {
   }
 
   onScroll = () => {
-    this.updatePosition({ x: window.pageXOffset, y: window.pageYOffset })
+    const root = this.scrollRoot
+    this.updatePosition({ x: root.pageXOffset, y: root.pageYOffset })
   }
 
   // Private

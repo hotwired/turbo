@@ -50,7 +50,7 @@ export class View {
   }
 
   get scrollRoot() {
-    return window
+    return this.delegate.scrollObserver?.scrollRoot ?? window
   }
 
   // Rendering
