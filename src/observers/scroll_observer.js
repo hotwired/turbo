@@ -1,5 +1,6 @@
 export class ScrollObserver {
   started = false
+  #paused = false
 
   constructor(delegate) {
     this.delegate = delegate
@@ -11,7 +12,8 @@ export class ScrollObserver {
 
   start() {
     if (!this.started) {
-      addEventListener("scroll", this.onScroll, false)
+      this.#paused = false
+      this.#addListener()
       this.onScroll()
       this.started = true
     }
@@ -19,12 +21,21 @@ export class ScrollObserver {
 
   stop() {
     if (this.started) {
-      removeEventListener("scroll", this.onScroll, false)
+      this.#removeListener()
       this.started = false
     }
   }
 
+  pause() {
+    this.#paused = true
+  }
+
+  resume() {
+    this.#paused = false
+  }
+
   onScroll = () => {
+    if (this.#paused) return
     const root = this.scrollRoot
     this.updatePosition({ x: root.pageXOffset, y: root.pageYOffset })
   }
@@ -33,5 +44,13 @@ export class ScrollObserver {
 
   updatePosition(position) {
     this.delegate.scrollPositionChanged(position)
+  }
+
+  #addListener() {
+    addEventListener("scroll", this.onScroll, false)
+  }
+
+  #removeListener() {
+    removeEventListener("scroll", this.onScroll, false)
   }
 }

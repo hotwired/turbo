@@ -12,6 +12,7 @@ import {
   readEventLogs,
   reloadPage,
   resetMutationLogs,
+  scrollPosition,
   scrollToSelector,
   visitAction,
   willChangeBody,
@@ -158,6 +159,30 @@ test("navigation by history is not cancelable", async ({ page }) => {
   await nextEventNamed(page, "turbo:load")
 
   await expect(page.locator("h1")).toHaveText("Visit")
+})
+
+test("resumes scroll tracking after a visit is canceled without a successor", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_restoration.html")
+
+  await page.evaluate(() => {
+    window.Turbo.visit("/src/tests/fixtures/one.html")
+    window.Turbo.session.navigator.stop()
+  })
+  await nextBeat()
+
+  await scrollToSelector(page, "#three")
+  await nextBeat()
+  const { y: yAfterScrolling } = await scrollPosition(page)
+  expect(yAfterScrolling).not.toEqual(0)
+
+  await readEventLogs(page)
+  await page.evaluate(() => window.Turbo.visit("/src/tests/fixtures/one.html"))
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  const { y: yAfterReturning } = await scrollPosition(page)
+  expect(yAfterReturning, "scroll recorded after the canceled visit is restored on return").toEqual(yAfterScrolling)
 })
 
 test("turbo:before-fetch-request event.detail", async ({ page }) => {
