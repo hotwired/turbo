@@ -1,7 +1,7 @@
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
-import { getHistoryMethodForAction, uuid } from "../../util"
+import { getHistoryMethodForAction, removeTemporaryElementsFrom, uuid } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
 
@@ -384,7 +384,18 @@ export class Visit {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      // Cache notifications prepare the live document. They cannot affect a supplied
+      // snapshot and would instead mutate the page that remains visible.
+      const shouldNotifyApplication = !this.snapshot
+      this.view.cacheSnapshot(this.snapshot, shouldNotifyApplication).then((snapshot) => {
+        if (snapshot) {
+          this.visitCachedSnapshot(snapshot)
+
+          // The callback can restore temporary elements with the previous frame contents,
+          // so remove them only after the cached snapshot has been prepared.
+          removeTemporaryElementsFrom(snapshot.element)
+        }
+      })
       this.snapshotCached = true
     }
   }

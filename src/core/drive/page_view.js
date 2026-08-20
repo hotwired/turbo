@@ -40,9 +40,9 @@ export class PageView extends View {
     this.snapshotCache.clear()
   }
 
-  async cacheSnapshot(snapshot = this.snapshot) {
+  async cacheSnapshot(snapshot = this.snapshot, shouldNotifyApplication = true) {
     if (snapshot.isCacheable) {
-      this.delegate.viewWillCacheSnapshot()
+      if (shouldNotifyApplication) this.delegate.viewWillCacheSnapshot()
       const { lastRenderedLocation: location } = this
       await nextEventLoopTick()
       const cachedSnapshot = snapshot.clone()
