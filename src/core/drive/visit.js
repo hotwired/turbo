@@ -400,7 +400,7 @@ export class Visit {
   }
 
   async renderPageSnapshot(snapshot, isPreview) {
-    await this.viewTransitioner.renderChange(this.view.shouldTransitionTo(snapshot), async () => {
+    await this.viewTransitioner.renderChange(this.willRender && this.view.shouldTransitionTo(snapshot), async () => {
       await this.view.renderPage(snapshot, isPreview, this.willRender, this)
       this.performScroll()
     })
