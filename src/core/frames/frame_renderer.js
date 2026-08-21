@@ -3,16 +3,7 @@ import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
-    const destinationRange = document.createRange()
-    destinationRange.selectNodeContents(currentElement)
-    destinationRange.deleteContents()
-
-    const frameElement = newElement
-    const sourceRange = frameElement.ownerDocument?.createRange()
-    if (sourceRange) {
-      sourceRange.selectNodeContents(frameElement)
-      currentElement.appendChild(sourceRange.extractContents())
-    }
+    currentElement.replaceChildren(...newElement.childNodes)
   }
 
   constructor(delegate, currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {

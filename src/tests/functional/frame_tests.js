@@ -550,6 +550,62 @@ test("'turbo:frame-render' is triggered after frame has finished rendering", asy
   expect(fetchResponse.response.url).toContain("/src/tests/fixtures/frames/part.html")
 })
 
+// This only fails on Chrome 149 and 151, where emptying the frame clamps the window scroll;
+// the native selects just supply the page height it needs. On the pinned CI browser it passes
+// with or without the fix; the mutation test below is the actual guard.
+test("replacing a frame below native selects preserves scroll when its focused link is removed", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_scroll.html")
+  await page.locator("#results").evaluate((frame) => {
+    frame.addEventListener(
+      "turbo:before-frame-render",
+      () => {
+        window.scrollYBeforeFrameRender = window.scrollY
+        window.activeElementBeforeFrameRender = document.activeElement?.id
+      },
+      { once: true }
+    )
+    frame.addEventListener("turbo:frame-render", () => (window.scrollYAfterFrameRender = window.scrollY), { once: true })
+  })
+  await page.locator("#next-page").scrollIntoViewIfNeeded()
+  await page.waitForFunction(() => window.scrollY > 0)
+  const frameRendered = nextEventOnTarget(page, "results", "turbo:frame-render")
+  await page.click("#next-page")
+  await frameRendered
+  await expect(page.locator("#page-marker")).toHaveText("Page 2")
+
+  const { activeElementBeforeRender, beforeRender, afterRender } = await page.evaluate(() => ({
+    activeElementBeforeRender: window.activeElementBeforeFrameRender,
+    beforeRender: window.scrollYBeforeFrameRender,
+    afterRender: window.scrollYAfterFrameRender
+  }))
+
+  expect(activeElementBeforeRender, "removes the focused link during rendering").toEqual("next-page")
+  expect(beforeRender, "starts with the frame scrolled into view").toBeGreaterThan(0)
+  expect(afterRender, "preserves Y scroll position").toEqual(beforeRender)
+})
+
+test("replacing frame contents replaces children in a single mutation", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_scroll.html")
+  await page.locator("#results").evaluate((frame) => {
+    window.frameMutations = []
+    new MutationObserver((records) => {
+      for (const { removedNodes, addedNodes } of records) {
+        window.frameMutations.push({ removed: removedNodes.length, added: addedNodes.length })
+      }
+    }).observe(frame, { childList: true })
+  })
+
+  const frameRendered = nextEventOnTarget(page, "results", "turbo:frame-render")
+  await page.click("#next-page")
+  await frameRendered
+  await page.waitForFunction(() => window.frameMutations.length > 0)
+
+  const [mutation, ...remainingMutations] = await page.evaluate(() => window.frameMutations)
+  expect(remainingMutations, "never empties the frame before inserting").toHaveLength(0)
+  expect(mutation.removed, "removes the previous children").toBeGreaterThan(0)
+  expect(mutation.added, "inserts the new children in the same mutation").toBeGreaterThan(0)
+})
+
 test("navigating a frame from an outer link with a turbo-frame child fires events", async ({ page }) => {
   await page.click("#outside-frame-link-with-frame-child")
 
