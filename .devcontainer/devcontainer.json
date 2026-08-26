@@ -9,8 +9,6 @@
     // IMPORTANT: The playwright image version must match @playwright/test version from package.json.
     // Otherwise it will not work, the test version will look for the browser versions which it won't
     // find on the image.
-    //
-    // pick '...-arm64' version if running on Apple Silicon.
     "args": {
       "PLAYWRIGHT_TAG": "v1.51.1-jammy"
     }
