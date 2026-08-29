@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Turbo</title>
+    <link rel="icon" href="data:image/x-icon;base64,AA">
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <h1>Frame lazy test</h1>
+
+      <div style="height: calc(100vh*2);"></div>
+      <div id="load-frame-trigger"></div>
+      <div style="height: 100px;"></div>
+
+      <turbo-frame id="eager-loaded-frame" src="/src/tests/fixtures/frames/frame_for_eager.html" loading="lazy"
+                 data-turbo-lazy-root-margin="100px">
+        <h2 style="margin: 0">Eager-loaded frame: Not Loaded</h2>
+      </turbo-frame>
+    </div>
+  </body>
+</html>
