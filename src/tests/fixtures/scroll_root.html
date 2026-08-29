@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Scroll Root</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <style>
+      body {
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        min-height: 25vh;
+      }
+      main {
+        overflow-y: auto;
+        position: relative;
+      }
+      section {
+        min-height: 50vh;
+      }
+      .push-below-fold {
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Scroll Root</h1>
+      <p><a id="leave-link" href="/src/tests/fixtures/scroll_root_entry.html">Leave to document-root page</a></p>
+    </header>
+    <main id="scroll-container" data-turbo-scroll-root>
+      <section id="one">One</section>
+      <section id="two">Two</section>
+      <section id="three">Three</section>
+      <section id="four">Four</section>
+      <section id="five">Five</section>
+      <hr class="push-below-fold">
+      <p><a id="below-the-fold-link" href="/src/tests/fixtures/one.html">one.html</a></p>
+      <hr class="push-below-fold">
+    </main>
+  </body>
+</html>

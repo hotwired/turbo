@@ -139,6 +139,10 @@ export class Navigator {
     delete this.currentVisit
   }
 
+  visitCanceled(visit) {
+    this.delegate.visitCanceled(visit)
+  }
+
   // Same-page links are no longer handled with a Visit.
   // This method is still needed for Turbo Native adapters.
   locationWithActionIsSamePage(location, action) {

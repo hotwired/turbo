@@ -281,3 +281,10 @@ export function debounce(fn, delay) {
     timeoutId = setTimeout(callback, delay)
   }
 }
+
+export function getScrollPosition(root) {
+  return {
+    x: root.scrollX ?? root.scrollLeft,
+    y: root.scrollY ?? root.scrollTop
+  }
+}

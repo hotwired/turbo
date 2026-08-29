@@ -12,6 +12,7 @@ import {
   readEventLogs,
   reloadPage,
   resetMutationLogs,
+  scrollPosition,
   scrollToSelector,
   visitAction,
   willChangeBody,
@@ -160,6 +161,30 @@ test("navigation by history is not cancelable", async ({ page }) => {
   await expect(page.locator("h1")).toHaveText("Visit")
 })
 
+test("resumes scroll tracking after a visit is canceled without a successor", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_restoration.html")
+
+  await page.evaluate(() => {
+    window.Turbo.visit("/src/tests/fixtures/one.html")
+    window.Turbo.session.navigator.stop()
+  })
+  await nextBeat()
+
+  await scrollToSelector(page, "#three")
+  await nextBeat()
+  const { y: yAfterScrolling } = await scrollPosition(page)
+  expect(yAfterScrolling).not.toEqual(0)
+
+  await readEventLogs(page)
+  await page.evaluate(() => window.Turbo.visit("/src/tests/fixtures/one.html"))
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  const { y: yAfterReturning } = await scrollPosition(page)
+  expect(yAfterReturning, "scroll recorded after the canceled visit is restored on return").toEqual(yAfterScrolling)
+})
+
 test("turbo:before-fetch-request event.detail", async ({ page }) => {
   await page.click("#same-origin-link")
   const { url, fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
@@ -284,6 +309,23 @@ test("can scroll to element after history-initiated turbo:visit", async ({ page 
   await nextEventNamed(page, "turbo:load")
 
   expect(await isScrolledToSelector(page, "#" + id), "scrolls after history-initiated turbo:load").toBeTruthy()
+})
+
+test("can scroll to element in custom scroll root after history-initiated turbo:visit", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_root.html")
+  await readEventLogs(page)
+  const id = "below-the-fold-link"
+  await page.evaluate((id) => {
+    addEventListener("turbo:load", () => document.getElementById(id)?.scrollIntoView())
+  }, id)
+
+  await scrollToSelector(page, "#" + id)
+  await page.click("#" + id)
+  await nextEventNamed(page, "turbo:load")
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  expect(await isScrolledToSelector(page, "#" + id, "[data-turbo-scroll-root]"), "scrolls after history-initiated turbo:load").toBeTruthy()
 })
 
 test("Visit with network error", async ({ page }) => {
