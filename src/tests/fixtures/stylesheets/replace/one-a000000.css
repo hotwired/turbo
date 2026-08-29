@@ -1,0 +1,7 @@
+#one-a::after {
+  content: " Yes"
+}
+
+#validation::after {
+  content: "One and two got out of order, this is a bug!"
+}
