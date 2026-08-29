@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html id="html" data-skip-event-details="turbo:submit-start turbo:submit-end turbo:fetch-request-error">
+<head>
+  <meta charset="utf-8">
+  <meta name="turbo-refresh-method" content="morph">
+  <meta name="turbo-refresh-progress-bar" content="hide">
+
+  <title>Turbo</title>
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+  <script src="/src/tests/fixtures/test.js"></script>
+  <script type="module">
+    import { Application, Controller } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js"
+
+    const application = Application.start()
+
+    addEventListener("focusin", ({ target }) => {
+      if (target instanceof HTMLInputElement && !target.hasAttribute("data-turbo-permanent")) {
+        target.toggleAttribute("data-turbo-permanent", true)
+
+        target.addEventListener("focusout", () => target.toggleAttribute("data-turbo-permanent", false), { once: true })
+      }
+    })
+
+    addEventListener("turbo:morph-element", ({ target }) => {
+      for (const { element, context } of application.controllers) {
+        if (element === target) {
+          context.disconnect()
+          context.connect()
+        }
+      }
+    })
+
+    addEventListener("turbo:before-morph-attribute", (event) => {
+      const { target, detail: { attributeName, mutationType } } = event
+
+      for (const { element, context } of application.controllers) {
+        const pattern = new RegExp(`data-${context.identifier}-\\w+-value`)
+
+        if (element === target) {
+          event.preventDefault()
+        }
+      }
+    })
+
+    application.register("test", class extends Controller {
+      static targets = ["output"]
+      static values = { state: String }
+
+      capture({ target }) {
+        this.stateValue = target.value
+      }
+
+      outputTargetConnected(target) {
+        target.textContent = "connected"
+      }
+    })
+
+    document.getElementById("add-new-assets").addEventListener("click", () => {
+      const stylesheet = document.createElement("link")
+      stylesheet.id = "new-stylesheet"
+      stylesheet.rel = "stylesheet"
+      stylesheet.href = "/src/tests/fixtures/stylesheets/common.css"
+      stylesheet.dataset.turboTrack = "reload"
+      document.head.appendChild(stylesheet)
+    })
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+
+      /* Ensure the page is large enough to scroll */
+      width: 150vw;
+      height: 150vh;
+    }
+  </style>
+</head>
+<body>
+<h1 id="title">Page to be refreshed</h1>
+
+<a href="/src/tests/fixtures/page_refresh.html" id="reload-link">Reload</a>
+
+<turbo-frame id="refresh-morph" src="/src/tests/fixtures/frame_refresh_morph.html" refresh="morph">
+  <h2>Frame to be morphed</h2>
+</turbo-frame>
+
+<turbo-frame id="refresh-reload" src="/src/tests/fixtures/frame_refresh_reload.html" refresh="reload">
+  <h2>Frame to be reloaded</h2>
+</turbo-frame>
+
+<turbo-frame id="refresh-after-navigation">
+  <h2>Frame to be navigated then reset to its initial state after reload</h2>
+  <a id="refresh-after-navigation-link" href="/src/tests/fixtures/frame_refresh_after_navigation.html">Navigate</a>
+</turbo-frame>
+
+<div id="preserve-me" data-turbo-permanent>
+  Preserve me!
+
+  <turbo-frame id="remote-permanent-frame" src="/src/tests/fixtures/remote_permanent_frame.html">
+    <h2>Frame to be preserved</h2>
+  </turbo-frame>
+</div>
+
+<div id="stimulus-controller" data-controller="test" data-action="input->test#capture">
+  <h3>Element with Stimulus controller</h3>
+
+  <div id="test-output" data-test-target="output">reset</div>
+  <input>
+</div>
+
+<form method="get" data-turbo-action="replace" oninput="this.requestSubmit()">
+  <label>
+    Search
+    <input name="query">
+  </label>
+  <button>Form with params to refresh the page</button>
+</form>
+<p><a id="replace-link" data-turbo-action="replace" href="/src/tests/fixtures/page_refresh.html?param=something">Link with params to refresh the page</a></p>
+<p><a id="refresh-link" data-turbo-action="replace" href="/src/tests/fixtures/page_refresh.html">Link to the same page</a></p>
+<p><a id="link" href="/src/tests/fixtures/one.html">Link to another page</a></p>
+
+<form id="form" action="/__turbo/refresh" method="post" class="redirect">
+  <input id="form-text" type="text" name="text" value="">
+  <input type="hidden" name="path" value="/src/tests/fixtures/page_refresh.html">
+  <input type="hidden" name="sleep" value="50">
+  <input id="form-submit" type="submit" value="form[method=post]">
+</form>
+
+<button id="add-new-assets">Add new assets</button>
+
+<div id="reject">
+  <form class="unprocessable_entity" action="/__turbo/reject/morph" method="post" style="margin-top:100vh">
+    <input type="hidden" name="status" value="422">
+    <input type="submit">
+  </form>
+</div>
+
+<div id="container">
+</div>
+</body>
+</html>
