@@ -65,7 +65,7 @@ export class FormLinkClickObserver {
     this.delegate.submittedFormLinkToLocation(link, location, form)
 
     document.body.appendChild(form)
-    form.addEventListener("turbo:submit-end", () => form.remove(), { once: true })
+    form.addEventListener("turbo:submit-end", () => requestAnimationFrame(() => form.remove()), { once: true })
     requestAnimationFrame(() => form.requestSubmit())
   }
 }

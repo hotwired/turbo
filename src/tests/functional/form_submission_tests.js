@@ -1195,6 +1195,26 @@ test("stream link method form submission within form outside frame", async ({ pa
   await expect(page.locator("#frame div.message")).toHaveText("Link!")
 })
 
+test("link with [data-turbo-method] propagates turbo:submit-end beyond the form", async ({ page }) => {
+  await page.evaluate(() => {
+    let eventPropagatedPastForm = false
+
+    // Listen on document to verify event propagates beyond the form element
+    document.addEventListener("turbo:submit-end", (event) => {
+      if (event.target.tagName === "FORM") {
+        eventPropagatedPastForm = true
+      }
+    })
+
+    window.eventPropagatedPastForm = () => eventPropagatedPastForm
+  })
+
+  await page.click("#turbo-method-post-to-targeted-frame")
+  await nextEventNamed(page, "turbo:submit-end")
+
+  assert.ok(await page.evaluate(() => window.eventPropagatedPastForm()), "turbo:submit-end propagated past the form element")
+})
+
 test("turbo:before-fetch-request fires on the form element", async ({ page }) => {
   await page.click('#targets-frame form.one [type="submit"]')
   expect(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-request")).toBeTruthy()
