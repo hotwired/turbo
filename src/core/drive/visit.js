@@ -331,9 +331,11 @@ export class Visit {
   // Scrolling
 
   performScroll() {
-    if (!this.scrolled && !this.view.forceReloaded && !this.view.shouldPreserveScrollPosition(this)) {
+    if (!this.scrolled && !this.view.forceReloaded) {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
+      } else if (this.view.shouldPreserveScrollPosition(this)) {
+        this.scrollToRestoredPosition()
       } else {
         this.scrollToAnchor() || this.view.scrollToTop()
       }

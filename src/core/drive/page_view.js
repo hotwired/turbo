@@ -60,7 +60,13 @@ export class PageView extends View {
   }
 
   shouldPreserveScrollPosition(visit) {
-    return this.isPageRefresh(visit) && (visit?.refresh?.scroll || this.snapshot.refreshScroll) === "preserve"
+    const { refreshScroll, visitScroll } = this.snapshot
+
+    const scrollDirective = this.isPageRefresh(visit) ?
+      visit.refresh?.scroll || refreshScroll || visitScroll :
+      visitScroll
+
+    return scrollDirective === "preserve"
   }
 
   get snapshot() {
