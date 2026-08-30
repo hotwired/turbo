@@ -34,6 +34,9 @@ export class FrameController {
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
   #shouldMorphFrame = false
+  #currentRequestIsMorphRefresh = false
+  #pendingMorphRefresh = false
+  #performingMorphRefresh = false
   action = null
 
   constructor(element) {
@@ -70,15 +73,18 @@ export class FrameController {
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
 
+      this.#pendingMorphRefresh = false
+
       if (!this.element.hasAttribute("recurse")) {
-        this.#currentFetchRequest?.cancel()
+        this.#cancelFetchRequest()
       }
     }
   }
 
   disabledChanged() {
     if (this.disabled) {
-      this.#currentFetchRequest?.cancel()
+      this.#pendingMorphRefresh = false
+      this.#cancelFetchRequest()
     } else if (this.loadingStyle == FrameLoadingStyle.eager) {
       this.#loadSourceURL()
     }
@@ -87,8 +93,12 @@ export class FrameController {
   sourceURLChanged() {
     if (this.#isIgnoringChangesTo("src")) return
 
+    // An explicit src change (external navigation, or an explicit reload()'s
+    // null-then-set toggle) supersedes any queued morph refresh.
+    this.#pendingMorphRefresh = false
+
     if (!this.sourceURL) {
-      this.#currentFetchRequest?.cancel()
+      this.#cancelFetchRequest()
     }
 
     if (this.element.isConnected) {
@@ -109,6 +119,35 @@ export class FrameController {
     this.element.src = null
     this.element.src = src
     return this.element.loaded
+  }
+
+  // Refresh the frame's contents as part of a page or ancestor-frame morph.
+  //
+  // Unlike reload(), this does not unconditionally abort and re-issue the
+  // frame's fetch. If a morph-driven refresh is already in flight, the new
+  // morph is coalesced into a single queued follow-up that runs once the
+  // in-flight request settles. Without this, a burst of morphs (e.g. repeated
+  // refresh broadcasts) would each abort the request the previous morph
+  // started, starving the fetch so its content never lands.
+  refreshForMorph() {
+    if (this.#currentRequestIsMorphRefresh) {
+      this.#pendingMorphRefresh = true
+    } else {
+      this.#performMorphRefresh()
+    }
+  }
+
+  // Reuse reload()'s exact refresh semantics (complete/src handling, lazy and
+  // disabled gating, morph-render selection), tagging the resulting request as
+  // a morph refresh so the scheduler can coalesce subsequent morphs against it.
+  #performMorphRefresh() {
+    this.#pendingMorphRefresh = false
+    this.#performingMorphRefresh = true
+    try {
+      this.sourceURLReloaded()
+    } finally {
+      this.#performingMorphRefresh = false
+    }
   }
 
   loadingStyleChanged() {
@@ -214,23 +253,29 @@ export class FrameController {
     markAsBusy(this.element)
   }
 
-  requestPreventedHandlingResponse(_request, _response) {
-    this.#resolveVisitPromise()
+  requestPreventedHandlingResponse(request, _response) {
+    this.#finishRequest(request)
   }
 
   async requestSucceededWithResponse(request, response) {
-    await this.loadResponse(response)
-    this.#resolveVisitPromise()
+    try {
+      await this.loadResponse(response)
+    } finally {
+      this.#finishRequest(request)
+    }
   }
 
   async requestFailedWithResponse(request, response) {
-    await this.loadResponse(response)
-    this.#resolveVisitPromise()
+    try {
+      await this.loadResponse(response)
+    } finally {
+      this.#finishRequest(request)
+    }
   }
 
   requestErrored(request, error) {
     console.error(error)
-    this.#resolveVisitPromise()
+    this.#finishRequest(request)
   }
 
   requestFinished(_request) {
@@ -348,14 +393,50 @@ export class FrameController {
     this.#currentFetchRequest?.cancel()
     this.#currentFetchRequest = request
 
+    // Consume the morph-refresh tag exactly once, before perform() dispatches
+    // turbo:before-fetch-request — a listener that synchronously starts another
+    // visit must not inherit this request's morph-refresh classification.
+    this.#currentRequestIsMorphRefresh = this.#performingMorphRefresh
+    this.#performingMorphRefresh = false
+
     return new Promise((resolve) => {
       this.#resolveVisitPromise = () => {
         this.#resolveVisitPromise = () => {}
         this.#currentFetchRequest = null
+        this.#currentRequestIsMorphRefresh = false
         resolve()
       }
       request.perform()
     })
+  }
+
+  // Settle the request that just completed. A stale settlement — from a request
+  // that was already superseded (e.g. an ordinary fetch whose render finished
+  // after a morph started its replacement) — is ignored so it can't resolve or
+  // clear the newer in-flight request's state. When the current morph refresh
+  // settles and a morph arrived while it was in flight, start a single coalesced
+  // follow-up. #performMorphRefresh reuses reload()'s gating, so a disconnected
+  // or disabled frame never issues a deferred fetch.
+  #finishRequest(request) {
+    if (request !== this.#currentFetchRequest) return
+
+    const wasMorphRefresh = this.#currentRequestIsMorphRefresh
+    this.#resolveVisitPromise()
+
+    if (wasMorphRefresh && this.#pendingMorphRefresh) {
+      this.#performMorphRefresh()
+    }
+  }
+
+  // Cancel the in-flight request without installing a replacement. An aborted
+  // request never reaches #finishRequest (perform() swallows the AbortError), so
+  // its identity and morph-refresh marker must be retired here — otherwise the
+  // marker would keep pointing at a dead request and every later morph would
+  // coalesce behind it forever.
+  #cancelFetchRequest() {
+    this.#currentFetchRequest?.cancel()
+    this.#currentFetchRequest = null
+    this.#currentRequestIsMorphRefresh = false
   }
 
   #navigateFrame(element, url, submitter) {
