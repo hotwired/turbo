@@ -1,0 +1,55 @@
+src/core/frames/morphing_frame_renderer.js
+  s_964922bad4d340::t_6a522135485ead 2-7,20-22
+src/tests/fixtures/frame_manual.html
+  s_964922bad4d340::t_68bbabf9e07c2c 1-3
+src/tests/fixtures/test.js
+  s_964922bad4d340::t_f4cf56af7aa774 88
+src/elements/frame_element.js
+  s_964922bad4d340::t_c562c71bb40cb1 97-98
+  s_964922bad4d340::t_6f37809375b83c 99-106
+src/core/index.js
+  s_964922bad4d340::t_55707c016886df 130-131
+  s_964922bad4d340::t_838d86a738399f 117-118
+src/tests/functional/frame_refresh_policy_tests.js
+  s_964922bad4d340::t_e1affe8a79a1ac 102-103
+  s_964922bad4d340::t_156b10c86fa840 1,15,20-35,37-42,49-50,52-91,112-115,117-119,122-123,125-126,128,138-139,144,148
+  s_964922bad4d340::t_a1982e557cfbb1 11
+  s_964922bad4d340::t_aa064a36d183bb 2-10,12-14,16-19,36,43-48,51,116,120-121,124,127,129-137,140-143,145-147
+  s_964922bad4d340::t_eca8f72394af83 93-101,104-111
+  s_964922bad4d340::t_576486d7a62bff 92
+src/tests/fixtures/frame_morph_manual_inner.html
+  s_964922bad4d340::t_915540720050c1 1-17
+src/tests/fixtures/frame_auto.html
+  s_964922bad4d340::t_9d3f328fc7e095 1-3
+src/tests/fixtures/frame_outer_morph.html
+  s_964922bad4d340::t_a12ae3066aafe5 1-9
+src/core/morphing.js
+  s_964922bad4d340::t_bf8d252427387b 50-52,60
+  s_964922bad4d340::t_79c7b8357f1e37 42-49,53-59,61-65
+src/tests/fixtures/page_refresh_manual_frame.html
+  s_964922bad4d340::t_b39caa461083c4 1-29
+src/tests/fixtures/frame_inner_manual.html
+  s_964922bad4d340::t_fc505a060410b4 1-3
+src/core/drive/morphing_page_renderer.js
+  s_964922bad4d340::t_59286531b4f04d 3-8,15-17
+src/tests/fixtures/frame_inner_auto.html
+  s_964922bad4d340::t_30eb255ca619b1 1-3
+src/tests/fixtures/frame_manual_changed.html
+  s_964922bad4d340::t_f91df8bafaa37d 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "703397ddf6e4e28b4ea7ebf1737282dff2998504",
+  "prompts": {},
+  "sessions": {
+    "s_964922bad4d340": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b315b378-55b7-45e0-911e-b964de3ac103",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": null
+    }
+  }
+}
