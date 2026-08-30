@@ -264,6 +264,90 @@ test("frames with refresh='morph' are preserved when missing from new content", 
   await expect(page.locator("#missing-frame"), "the frame is preserved").toBeAttached()
 })
 
+// Holds every fetch for the frame's src so it stays in flight while the page is
+// morphed, and counts how many requests Turbo issues. Each response is tagged
+// with the ordinal of the request that produced it, so the rendered text proves
+// exactly which request settled. Returns a `release` that serves the held
+// requests (and any later ones) so the frame can settle.
+async function holdFrameRequests(page, { url }) {
+  const state = { requestCount: 0 }
+  const held = []
+  let holding = true
+  const bodyFor = (n) => `<turbo-frame id="morph-frame"><h2>Loaded frame ${n}</h2></turbo-frame>`
+
+  await page.route(url, async (route) => {
+    const n = ++state.requestCount
+    if (holding) {
+      held.push({ route, n })
+    } else {
+      await route.fulfill({ contentType: "text/html", body: bodyFor(n) }).catch(() => {})
+    }
+  })
+
+  state.release = async () => {
+    holding = false
+    for (const { route, n } of held) {
+      await route.fulfill({ contentType: "text/html", body: bodyFor(n) }).catch(() => {})
+    }
+  }
+
+  return state
+}
+
+test("a refresh='morph' frame with a single in-flight morph refreshes its content", async ({ page }) => {
+  const frame = await holdFrameRequests(page, { url: "**/frame_morph_in_flight.html" })
+
+  await page.goto("/src/tests/fixtures/page_refresh_morph_in_flight_frame.html")
+  await expect.poll(() => frame.requestCount, "issues the initial frame fetch").toBe(1)
+
+  // A single morph while the initial fetch is in flight cancels and restarts it
+  // as a morph refresh — the existing reload contract for one morph is preserved.
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await expect.poll(() => frame.requestCount, "restarts the fetch as a morph refresh").toBe(2)
+
+  // With no further morphs, releasing the in-flight request settles the frame
+  // and no follow-up is scheduled: the count stays at 2.
+  await frame.release()
+  await expect(page.locator("#morph-frame")).toHaveText("Loaded frame 2")
+  await expect.poll(() => frame.requestCount).toBe(2)
+})
+
+test("a refresh='morph' frame with an in-flight fetch is not aborted and refetched by subsequent morphs", async ({ page }) => {
+  const frame = await holdFrameRequests(page, { url: "**/frame_morph_in_flight.html" })
+
+  await page.goto("/src/tests/fixtures/page_refresh_morph_in_flight_frame.html")
+  await expect.poll(() => frame.requestCount).toBe(1)
+
+  // First morph cancels the in-flight ordinary request and restarts it as a
+  // morph refresh (request #2).
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await expect.poll(() => frame.requestCount).toBe(2)
+
+  // Further morphs arriving while that morph refresh is still in flight must
+  // coalesce into a single queued follow-up instead of aborting and refetching.
+  // Before the fix each morph issued node.reload(), aborting the in-flight
+  // request and starting a new one, so the count would climb to 4.
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  expect(frame.requestCount, "subsequent morphs coalesce rather than abort-and-refetch").toBe(2)
+
+  // Releasing the in-flight request (#2) settles it, then exactly one coalesced
+  // follow-up (#3) runs and renders. The rendered "frame 3" text proves the
+  // queued request — not merely the original in-flight one (#2) — landed.
+  await frame.release()
+  await expect(page.locator("#morph-frame")).toHaveText("Loaded frame 3")
+  await expect.poll(() => frame.requestCount, "exactly one coalesced follow-up runs").toBe(3)
+
+  // The two coalesced morphs produce a single follow-up, not one request each.
+  await page.waitForTimeout(200)
+  expect(frame.requestCount, "no extra requests beyond the single follow-up").toBe(3)
+})
+
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
