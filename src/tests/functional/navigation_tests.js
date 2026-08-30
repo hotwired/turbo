@@ -298,7 +298,8 @@ test("following a same-origin link inside an SVG element", async ({ page }) => {
   await page.keyboard.press("Enter")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
-  expect(await visitAction(page)).toEqual("load")
+  // A same-origin SVG link is visitable, so Turbo drives it like any other link.
+  expect(await visitAction(page)).toEqual("advance")
 })
 
 test("following a cross-origin link inside an SVG element", async ({ page }) => {
@@ -314,7 +315,8 @@ test("following a same-origin SVG link", async ({ page }) => {
   await page.click("#same-origin-link-inside-svg-element")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
-  expect(await visitAction(page)).toEqual("load")
+  // A same-origin SVG link is visitable, so Turbo drives it like any other link.
+  expect(await visitAction(page)).toEqual("advance")
 })
 
 test("following a same-origin SVG anchored link", async ({ page }) => {
