@@ -848,6 +848,15 @@ test("a turbo-frame that has been driven by a[data-turbo-action] can be navigate
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/hello.html"))
 })
 
+test("clicking a hash-only anchor link inside a frame does not navigate the frame", async ({ page }) => {
+  await page.click("#link-hash-only")
+
+  expect(await noNextEventOnTarget(page, "frame", "turbo:before-fetch-request")).toBeTruthy()
+  expect(await noNextEventNamed(page, "turbo:load")).toBeTruthy()
+  await expect(page).toHaveURL(/#anchor-target$/)
+  await expect(page.locator("#frame h2")).toHaveText("Frames: #frame")
+})
+
 test("navigating turbo-frame from within with a[data-turbo-action=advance] pushes URL state", async ({ page }) => {
   await page.click("#link-nested-frame-action-advance")
   await nextEventNamed(page, "turbo:load")
