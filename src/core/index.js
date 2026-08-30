@@ -114,8 +114,8 @@ export function setFormMode(mode) {
 /**
  * Morph the state of the currentBody based on the attributes and contents of
  * the newBody. Morphing body elements may dispatch turbo:morph,
- * turbo:before-morph-element, turbo:before-morph-attribute, and
- * turbo:morph-element events.
+ * turbo:before-morph-element, turbo:before-morph-attribute, turbo:morph-element,
+ * and turbo:before-frame-refresh events.
  *
  * @param currentBody HTMLBodyElement destination of morphing changes
  * @param newBody HTMLBodyElement source of morphing changes
@@ -127,8 +127,8 @@ export function morphBodyElements(currentBody, newBody) {
 /**
  * Morph the child elements of the currentFrame based on the child elements of
  * the newFrame. Morphing turbo-frame elements may dispatch turbo:before-frame-morph,
- * turbo:before-morph-element, turbo:before-morph-attribute, and
- * turbo:morph-element events.
+ * turbo:before-morph-element, turbo:before-morph-attribute, turbo:morph-element,
+ * and turbo:before-frame-refresh events.
  *
  * @param currentFrame FrameElement destination of morphing children changes
  * @param newFrame FrameElement source of morphing children changes
