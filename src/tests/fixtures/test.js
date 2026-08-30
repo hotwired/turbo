@@ -85,6 +85,7 @@
   "turbo:frame-render",
   "turbo:frame-missing",
   "turbo:before-frame-morph",
+  "turbo:before-frame-refresh",
   "turbo:morph",
   "turbo:before-morph-element",
   "turbo:morph-element",
