@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Offline Preloading Test</title>
+    <script src="/dist/turbo.es2017-umd.js"></script>
+    <!-- These scripts will be loaded before the service worker is active -->
+    <script src="/__turbo/preload/script1.js"></script>
+    <script src="/__turbo/preload/script2.js"></script>
+  </head>
+  <body>
+    <h1>Offline Preloading Test</h1>
+    <script>
+      // Expose a function to start offline with preloading from tests
+      window.startOfflineWithPreload = async function(preloadPattern) {
+        return await Turbo.offline.start(
+          "/src/tests/fixtures/service_workers/preloading.js",
+          { preload: preloadPattern }
+        )
+      }
+
+      // Expose a function to start offline without preloading (for comparison)
+      window.startOfflineWithoutPreload = async function() {
+        return await Turbo.offline.start(
+          "/src/tests/fixtures/service_workers/preloading.js"
+        )
+      }
+    </script>
+  </body>
+</html>
