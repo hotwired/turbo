@@ -251,6 +251,17 @@ export function readBodyMutationLogs(page, length) {
   return readArray(page, "bodyMutationLogs", length)
 }
 
+export async function readCspViolations(page) {
+  return await page.evaluate(() => {
+    // eslint-disable-next-line no-undef
+    const observer = new ReportingObserver(() => { }, { types: ["csp-violation"], buffered: true })
+    observer.observe()
+    const records = observer.takeRecords()
+    observer.disconnect()
+    return records
+  })
+}
+
 export function readEventLogs(page, length) {
   return readArray(page, "eventLogs", length)
 }
