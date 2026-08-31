@@ -30,6 +30,7 @@ import { VisitState } from "../drive/visit"
 
 export class FrameController {
   #currentFetchRequest = null
+  #busyRequest = null
   #fetchRequests = new WeakMap()
   #proposedVisit = null
   #pendingMorphRefresh = false
@@ -269,8 +270,8 @@ export class FrameController {
     }
   }
 
-  requestStarted(_request) {
-    markAsBusy(this.element)
+  requestStarted(request) {
+    this.#markAsBusy(request)
   }
 
   requestPreventedHandlingResponse(request, _response) {
@@ -309,7 +310,7 @@ export class FrameController {
   }
 
   requestFinished(request) {
-    if (!this.#currentFetchRequest || this.#currentFetchRequest === request) clearBusyState(this.element)
+    this.#clearBusyState(request)
   }
 
   // Form submission delegate
@@ -321,7 +322,7 @@ export class FrameController {
 
   formSubmissionStarted(formSubmission) {
     const frame = this.#formSubmissionContexts.get(formSubmission)?.frame
-    markAsBusy(formSubmission.formElement, frame || this.#findFrameElement(formSubmission.formElement))
+    frame?.delegate.#markAsBusy(formSubmission.fetchRequest)
   }
 
   formSubmissionSucceededWithResponse(formSubmission, response) {
@@ -355,7 +356,7 @@ export class FrameController {
 
   formSubmissionFinished(formSubmission) {
     const frame = this.#formSubmissionContexts.get(formSubmission)?.frame
-    clearBusyState(formSubmission.formElement, frame || this.#findFrameElement(formSubmission.formElement))
+    frame?.delegate.#clearBusyState(formSubmission.fetchRequest)
   }
 
   // View delegate
@@ -388,6 +389,18 @@ export class FrameController {
   viewInvalidated() {}
 
   // Private
+
+  #markAsBusy(request) {
+    this.#busyRequest = request
+    markAsBusy(this.element)
+  }
+
+  #clearBusyState(request) {
+    if (request == this.#busyRequest) {
+      this.#busyRequest = null
+      clearBusyState(this.element)
+    }
+  }
 
   #observeLazyLoad() {
     if (this.isActive) {

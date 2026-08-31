@@ -41,6 +41,22 @@ test("does not render a response whose body fails to load", async () => {
   assert.deepEqual(messages, [])
 })
 
+test("does not render a response after the observer stops", async () => {
+  let finishRequest
+  const requestFinished = new Promise((resolve) => (finishRequest = resolve))
+  const receivingResponse = observer.receiveMessageResponse({
+    responseHTML: Promise.resolve("<div></div>"),
+    requestFinished
+  })
+
+  await nextMicrotask()
+  observer.stop()
+  finishRequest()
+  await receivingResponse
+
+  assert.deepEqual(messages, [])
+})
+
 test("propagates stream rendering errors", async () => {
   const error = new Error("stream rendering failed")
   observer.delegate.receivedMessageFromStream = () => {

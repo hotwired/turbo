@@ -130,7 +130,7 @@ export class FetchRequest {
     this.delegate.prepareRequest(this)
     const event = await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
-      this.delegate.requestStarted(this)
+      if (!this.abortSignal.aborted) this.delegate.requestStarted(this)
 
       if (event.detail.fetchRequest) {
         this.#adoptedRequest = event.detail.fetchRequest

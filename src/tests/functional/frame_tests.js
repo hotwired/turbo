@@ -117,6 +117,71 @@ test("following a link driving a frame toggles the [aria-busy=true] attribute", 
   )
 })
 
+test("a Turbo Stream frame response clears the frame's busy state", async ({ page }) => {
+  await page.route("**/busy-stream", (route) => route.fulfill({
+    contentType: "text/vnd.turbo-stream.html",
+    body: '<turbo-stream action="append" target="frame"><template><p id="stream-result">Loaded</p></template></turbo-stream>'
+  }))
+
+  await page.evaluate(() => window.Turbo.visit("/busy-stream", { frame: "frame" }))
+
+  await expect(page.locator("#stream-result")).toHaveText("Loaded")
+  await expect(page.locator("#frame")).not.toHaveAttribute("busy")
+  await expect(page.locator("#frame")).not.toHaveAttribute("aria-busy")
+})
+
+test("a failed frame request clears the frame's busy state", async ({ page }) => {
+  await page.route("**/busy-error", (route) => route.abort("failed"))
+
+  await page.evaluate(async () => {
+    window.Turbo.visit("/busy-error", { frame: "frame" })
+    await document.getElementById("frame").loaded
+  })
+
+  await expect(page.locator("#frame")).not.toHaveAttribute("busy")
+  await expect(page.locator("#frame")).not.toHaveAttribute("aria-busy")
+})
+
+for (const target of ["frame", "missing"]) {
+  test(`superseding a form submission targeting #${target} clears only the owned frame`, async ({ page }) => {
+    let releaseResponses
+    const responses = new Promise((resolve) => releaseResponses = resolve)
+
+    await page.route("**/__turbo/messages?content={First,Second}&type=stream", async (route) => {
+      await responses
+      await route.fulfill({ contentType: "text/vnd.turbo-stream.html", body: "" })
+    })
+    await page.locator("#second-busy-form button").evaluate((button, target) => {
+      button.setAttribute("data-turbo-frame", target)
+    }, target)
+
+    try {
+      await page.click("#first-busy-form button")
+      await expect(page.locator("#frame")).toHaveAttribute("aria-busy", "true")
+
+      await page.click("#second-busy-form button")
+      await nextEventOnTarget(page, "first-busy-form", "turbo:submit-end")
+      await expect(page.locator(`#${target}`)).toHaveAttribute("aria-busy", "true")
+      if (target != "frame") {
+        await expect(page.locator("#frame")).not.toHaveAttribute("busy")
+        await expect(page.locator("#frame")).not.toHaveAttribute("aria-busy")
+      }
+
+      await page.locator("#second-busy-form button").evaluate((button) => {
+        button.setAttribute("data-turbo-frame", "hello")
+      })
+      releaseResponses()
+
+      await nextEventOnTarget(page, "second-busy-form", "turbo:submit-end")
+      await expect(page.locator(`#${target}`)).not.toHaveAttribute("busy")
+      await expect(page.locator(`#${target}`)).not.toHaveAttribute("aria-busy")
+      await expect(page.locator("#hello")).not.toHaveAttribute("aria-busy")
+    } finally {
+      releaseResponses()
+    }
+  })
+}
+
 test("following an a[data-turbo-frame=_top] does not toggle the frame's [aria-busy=true] attribute", async ({
   page
 }) => {

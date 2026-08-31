@@ -65,7 +65,7 @@ export class StreamObserver {
       return
     }
 
-    if (html) this.receiveMessageHTML(html)
+    if (this.#started && html) this.receiveMessageHTML(html)
   }
 
   receiveMessageHTML(html) {

@@ -61,12 +61,39 @@ test("canceling a consumer cancels its adopted in-flight request", async () => {
 
 test("an already canceled consumer cancels the request it adopts", async () => {
   adopted.response = Promise.resolve(new Response("Stale"))
+  let requestStarted = false
+  started = () => requestStarted = true
   consumer.cancel()
   await consumer.perform()
 
+  assert.isFalse(requestStarted)
   assert.isTrue(adopted.abortSignal.aborted)
   assert.lengthOf(delivered, 0)
   assert.deepEqual(finished, [consumer])
+})
+
+test("resuming a canceled request finishes cleanup without starting it", async () => {
+  const request = new FetchRequest(consumer.delegate, FetchMethod.get, new URL("/paused", document.baseURI), new URLSearchParams(), target)
+  let resume, requestStarted = false
+  started = () => requestStarted = true
+  const intercepted = new Promise(resolve => {
+    target.addEventListener("turbo:before-fetch-request", event => {
+      event.preventDefault()
+      resume = event.detail.resume
+      resolve()
+    }, { once: true })
+  })
+  window.fetch = () => Promise.reject(new DOMException("Aborted", "AbortError"))
+  const performed = request.perform()
+  await intercepted
+
+  request.cancel()
+  resume()
+  await performed
+
+  assert.isFalse(requestStarted)
+  assert.deepEqual(finished, [request])
+  assert.lengthOf(errors, 0)
 })
 
 test("an adopted response resolving after cancellation is not delivered even if fetch ignores abort", async () => {
