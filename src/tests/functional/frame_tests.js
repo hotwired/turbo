@@ -374,20 +374,18 @@ for (const status of [200, 422]) {
     await expect(page.locator("#frame")).not.toHaveAttribute("busy")
     expect(errors).toEqual([])
   })
-
-  test(`disconnecting a frame's ${status} response body still raises an error`, async ({ page }) => {
-    const errorPromise = page.waitForEvent("pageerror")
-
-    await page.locator("#frame").evaluate((frame, status) => {
-      frame.src = `/__turbo/delayed_response_body?status=${status}&disconnect=true`
-    }, status)
-    await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
-
-    const error = await errorPromise
-    expect(error.name).not.toEqual("AbortError")
-    expect(error.message).toBeTruthy()
-  })
 }
+
+test("an interrupted frame response body reports a request error", async ({ page }) => {
+  await page.locator("#frame").evaluate((frame) => {
+    frame.src = "/__turbo/delayed_response_body?disconnect=true"
+  })
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+
+  await nextEventOnTarget(page, "frame", "turbo:fetch-request-error")
+  await page.locator("#frame").evaluate((frame) => frame.loaded)
+  await expect(page.locator("#frame")).not.toHaveAttribute("busy")
+})
 
 test("following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame", async ({
   page

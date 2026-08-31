@@ -146,7 +146,12 @@ export class LinkPrefetchObserver {
 
   requestStarted(fetchRequest) {}
 
-  requestErrored(fetchRequest) {}
+  requestErrored(fetchRequest) {
+    const location = this.#pendingFetchRequests.get(fetchRequest)
+    if (location && prefetchCache.get(location) == fetchRequest) {
+      prefetchCache.evict(toCacheKey(location))
+    }
+  }
 
   requestFinished(fetchRequest) {
     this.#pendingFetchRequests.delete(fetchRequest)

@@ -162,6 +162,21 @@ test("finishing a request with a rewritten URL releases its original pending ent
   assert.isFalse(finished.abortSignal.aborted)
 })
 
+for (const replaced of [false, true]) {
+  test(`a failed prefetch ${replaced ? "preserves its replacement" : "is removed from the cache"}`, async () => {
+    await hover()
+    const replacement = {}
+    const url = new URL(link.href)
+    if (replaced) prefetchCache.put(url, replacement)
+    const response = new Response("", { headers: { "Content-Type": "text/html" } })
+    response.clone = () => ({ text: () => Promise.reject(new TypeError("Body interrupted")) })
+    requests[0].resolve(response)
+    await requests[0].finished
+
+    assert.strictEqual(prefetchCache.get(url), replaced ? replacement : undefined)
+  })
+}
+
 test("GET forms do not adopt or clear cached prefetches", async () => {
   const pending = await hover()
   const form = document.createElement("form")
@@ -349,8 +364,8 @@ test("stopping cancels a scheduled prefetch before it starts", () => {
   }
 })
 
-test("a completed prefetch remains reusable while its response body is pending", async () => {
-  const completed = await hover()
+test("a prefetch remains reusable while its response body is pending", async () => {
+  const pending = await hover()
   let bodyController
   const body = new ReadableStream({
     start(controller) {
@@ -358,17 +373,25 @@ test("a completed prefetch remains reusable while its response body is pending",
     }
   })
   requests[0].resolve(new Response(body, { headers: { "Content-Type": "text/html" } }))
-  await requests[0].finished
-  const navigation = new FetchRequest(observer, FetchMethod.get, new URL(link.href), new URLSearchParams(), link)
-  const response = await navigation.perform()
-  const text = response.responseHTML
+  const delegate = {
+    prepareRequest() {},
+    requestStarted() {},
+    requestSucceededWithResponse() {},
+    requestFailedWithResponse() {},
+    requestPreventedHandlingResponse() {},
+    requestErrored() {},
+    requestFinished() {}
+  }
+  const navigation = new FetchRequest(delegate, FetchMethod.get, new URL(link.href), new URLSearchParams(), link)
+  const performed = navigation.perform()
   observer.stop()
   bodyController.enqueue(new TextEncoder().encode("Prefetched"))
   bodyController.close()
 
-  assert.equal(await text, "Prefetched")
+  const response = await performed
+  assert.equal(await response.responseHTML, "Prefetched")
   assert.lengthOf(requests, 1)
-  assert.isFalse(completed.abortSignal.aborted)
+  assert.isFalse(pending.abortSignal.aborted)
 })
 
 async function hover(target = link) {

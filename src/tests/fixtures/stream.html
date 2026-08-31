@@ -21,6 +21,11 @@
       <button>Replace</button>
     </form>
 
+    <form id="delayed-stream-form" method="post" action="/__turbo/delayed-stream">
+      <input type="hidden" name="delay" value="500">
+      <button>Load delayed stream</button>
+    </form>
+
     <form id="async" method="post" action="/__turbo/messages">
       <input type="hidden" name="content" value="Hello world!">
       <button>Receive Message</button>
