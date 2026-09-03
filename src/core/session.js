@@ -217,9 +217,19 @@ export class Session {
   }
 
   historyPoppedWithEmptyState(location) {
+    // Don't inject Turbo state on pages with data-turbo="false" — it would cause
+    // restore visits on subsequent back/forward, replacing the DOM despite Turbo being disabled
+    if (this.pageHasTurboDisabled()) return
+
     this.history.replace(location)
     this.view.lastRenderedLocation = location
     this.view.cacheSnapshot()
+  }
+
+  pageHasTurboDisabled() {
+    const body = document.body?.getAttribute("data-turbo")
+    const html = document.documentElement?.getAttribute("data-turbo")
+    return body === "false" || html === "false"
   }
 
   // Scroll observer delegate

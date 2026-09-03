@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>data-turbo=false hash routing</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body data-turbo="false">
+    <h1>Hash routing with data-turbo="false"</h1>
+    <p>Current hash: <strong id="current-hash"></strong></p>
+    <nav>
+      <a href="#step1" id="link-step1">Step 1</a>
+      <a href="#step2" id="link-step2">Step 2</a>
+      <a href="#step3" id="link-step3">Step 3</a>
+    </nav>
+    <div id="content"></div>
+    <script>
+      function updateHash() {
+        const el = document.getElementById("current-hash")
+        if (el) el.textContent = location.hash || "(none)"
+      }
+      window.addEventListener("hashchange", updateHash)
+      updateHash()
+    </script>
+  </body>
+</html>
