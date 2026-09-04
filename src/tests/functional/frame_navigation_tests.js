@@ -43,6 +43,53 @@ test("frame navigation with data-turbo-action", async ({ page }) => {
   await expect(titleText).toHaveText("Frame navigation tests")
 })
 
+test("navigating back after promoting frame navigation with mismatched head restores previous frame contents", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#link-to-frame-with-empty-head")
+  await nextEventOnTarget(page, "empty-head", "turbo:frame-load")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("#empty-head h2")).toHaveText("Frame updated")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/empty_head.html"))
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frame_navigation.html"))
+  await expect(page.locator("#empty-head h2")).not.toBeVisible()
+  await expect(page.locator("#empty-head #link-to-frame-with-empty-head")).toBeVisible()
+})
+
+test("navigating back after promoting frame navigation with frame-fragment response restores previous frame contents", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#link-to-frame-fragment")
+  await nextEventOnTarget(page, "empty-head", "turbo:frame-load")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("#empty-head h2")).toHaveText("Frame updated")
+  await expect(page).toHaveURL(withPathname("/__turbo/frame-navigation/empty-head-fragment"))
+
+  // Navigate to an intermediate page so the snapshot cache for the advanced URL
+  // is exercised on the way back through history. Without the fix, the cache key
+  // for lastRenderedLocation stays at the *source* URL (frame_navigation.html)
+  // instead of the *advanced* URL, which overwrites the source's snapshot with
+  // the new frame content. The second back navigation then renders stale content.
+  await page.evaluate(() => window.Turbo.visit("/src/tests/fixtures/one.html"))
+  await nextEventNamed(page, "turbo:load")
+
+  // First back — returns to the advanced URL
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  // Second back — returns to frame_navigation.html
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frame_navigation.html"))
+  await expect(page.locator("#empty-head h2")).not.toBeVisible()
+  await expect(page.locator("#empty-head #link-to-frame-fragment")).toBeVisible()
+})
+
 test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
   await page.context().setOffline(true)
