@@ -3,6 +3,7 @@ import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
 import { getHistoryMethodForAction, uuid } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
+import { StreamingBodyRenderer } from "./streaming_body_renderer"
 import { ViewTransitioner } from "./view_transitioner"
 
 const defaultOptions = {
@@ -202,7 +203,13 @@ export class Visit {
 
   loadResponse() {
     if (this.response) {
-      const { statusCode, responseHTML } = this.response
+      const { statusCode, responseHTML, streamBody, fetchResponse } = this.response
+
+      if (streamBody && fetchResponse) {
+        this.loadStreamingResponse(fetchResponse)
+        return
+      }
+
       this.render(async () => {
         if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
@@ -220,6 +227,20 @@ export class Visit {
         }
       })
     }
+  }
+
+  async loadStreamingResponse(fetchResponse) {
+    this.render(async () => {
+      if (this.view.renderPromise) await this.view.renderPromise
+
+      this.changeHistory()
+
+      const renderer = new StreamingBodyRenderer(fetchResponse, this)
+      await renderer.render()
+
+      this.adapter.visitRendered(this)
+      this.complete()
+    })
   }
 
   getCachedSnapshot() {
@@ -291,8 +312,15 @@ export class Visit {
   requestPreventedHandlingResponse(_request, _response) {}
 
   async requestSucceededWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
     const { redirected, statusCode } = response
+
+    if (response.isStreamBody && response.isHTML) {
+      this.redirectedToLocation = response.redirected ? response.location : undefined
+      this.recordResponse({ statusCode, redirected, streamBody: true, fetchResponse: response })
+      return
+    }
+
+    const responseHTML = await response.responseHTML
     if (responseHTML == undefined) {
       this.recordResponse({
         statusCode: SystemStatusCode.contentTypeMismatch,

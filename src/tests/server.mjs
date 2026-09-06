@@ -142,6 +142,24 @@ router.get("/stream-response", (request, response) => {
   }
 })
 
+router.get("/stream-body", (request, response) => {
+  response.set({
+    "Content-Type": "text/html; charset=utf-8",
+    "X-Turbo-Stream-Body": "true"
+  })
+
+  const chunk1 = "<main><h1>Streaming Page</h1><div id=\"chunk-1\">First chunk loaded</div>"
+  const chunk2 = "<div id=\"chunk-2\">Second chunk loaded</div>"
+  const chunk3 = "<div id=\"chunk-3\">Third chunk loaded</div></main>"
+
+  response.write(chunk1)
+  response.write("<!-- turbo-chunk -->")
+  response.write(chunk2)
+  response.write("<!-- turbo-chunk -->")
+  response.write(chunk3)
+  response.end()
+})
+
 router.put("/messages/:id", (request, response) => {
   const { content, type } = request.body
   const { id } = request.params
