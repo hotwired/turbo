@@ -189,6 +189,46 @@ router.get("/file.unknown_html", (request, response) => {
   response.sendFile(path.join(__dirname, "../../src/tests/fixtures/visit.html"))
 })
 
+// To simulate network delay
+let networkDelay = 0
+
+router.post("/test-control/set-delay", (request, response) => {
+  networkDelay = parseInt(request.body.delay || 0, 10)
+  response.json({ status: `Network delay set to ${networkDelay}ms` })
+})
+
+router.get("/dynamic.txt", (request, response) => {
+  const delay = networkDelay || 0
+  const timestamp = Date.now()
+  const randomId = Math.random().toString(36).substring(7)
+  setTimeout(() => {
+    response
+      .type("text/plain")
+      .send(`Hello from dynamic test file! Generated at ${timestamp} (ID: ${randomId})`)
+  }, delay)
+})
+
+router.get("/dynamic.json", (request, response) => {
+  const timestamp = Date.now()
+  const randomId = Math.random().toString(36).substring(7)
+  response
+    .type("application/json")
+    .send({
+      message: "Hello from dynamic JSON file",
+      timestamp: timestamp,
+      requestId: randomId
+    })
+})
+
+router.get("/preload/:filename", (request, response) => {
+  const { filename } = request.params
+  const timestamp = Date.now()
+  const randomId = Math.random().toString(36).substring(7)
+  response
+    .type("application/javascript")
+    .send(`// Preload test file: ${filename}\n// Generated at ${timestamp} (ID: ${randomId})\nwindow.preloaded_${filename.replace('.js', '')} = "${randomId}";`)
+})
+
 function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
@@ -238,7 +278,14 @@ function escapeHTML(html) {
 const app = express()
 
 app.use(json({ limit: "1mb" }), urlencoded({ extended: true }))
-app.use(express.static("."))
+app.use(express.static(".", {
+  setHeaders: (res, path) => {
+    // Allow service workers from any subfolder to control the entire domain
+    if (path.endsWith(".js") && path.includes("service_worker")) {
+      res.set("Service-Worker-Allowed", "/")
+    }
+  }
+}))
 app.use(/\/__turbo/, router)
 
 const port = parseInt(process.env.PORT || "9000")

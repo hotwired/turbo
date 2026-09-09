@@ -13,6 +13,30 @@ module.exports = {
       parserOptions: {
         sourceType: "script"
       }
+    },
+    {
+      env: {
+        serviceworker: true
+      },
+      files: ["src/tests/fixtures/service_workers/*.js"],
+      parserOptions: {
+        sourceType: "script"
+      },
+      globals: {
+        TurboOffline: true
+      }
+    },
+    {
+      env: {
+        serviceworker: true
+      },
+      files: ["src/tests/fixtures/service_workers/module.js"],
+      parserOptions: {
+        sourceType: "module"
+      },
+      globals: {
+        TurboOffline: true
+      }
     }
   ],
   parserOptions: {

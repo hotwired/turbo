@@ -1,6 +1,6 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe } from "../../http/fetch_request"
 import { expandURL } from "../url"
-import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
+import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy, getCookie } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { prefetchCache } from "./prefetch_cache"
 import { config } from "../config"
@@ -108,7 +108,7 @@ export class FormSubmission {
 
   prepareRequest(request) {
     if (!request.isSafe) {
-      const token = getCookieValue(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
+      const token = getCookie(getMetaContent("csrf-param")) || getMetaContent("csrf-token")
       if (token) {
         request.headers["X-CSRF-Token"] = token
       }
@@ -226,17 +226,6 @@ function buildFormData(formElement, submitter) {
   }
 
   return formData
-}
-
-function getCookieValue(cookieName) {
-  if (cookieName != null) {
-    const cookies = document.cookie ? document.cookie.split("; ") : []
-    const cookie = cookies.find((cookie) => cookie.startsWith(cookieName))
-    if (cookie) {
-      const value = cookie.split("=").slice(1).join("=")
-      return value ? decodeURIComponent(value) : undefined
-    }
-  }
 }
 
 function responseSucceededWithoutRedirect(response) {
