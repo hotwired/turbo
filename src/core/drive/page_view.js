@@ -52,7 +52,7 @@ export class PageView extends View {
   }
 
   getCachedSnapshotForLocation(location) {
-    return this.snapshotCache.get(location)
+    return this.snapshotCache.get(location)?.clone()
   }
 
   isPageRefresh(visit) {
