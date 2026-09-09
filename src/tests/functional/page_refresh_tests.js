@@ -417,7 +417,12 @@ test("a refresh='morph' frame ignores a superseded request that finishes renderi
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   expect(frame.requestCount, "the later morph coalesces behind the live request").toBe(2)
 
+  // The stale render must not have stripped #2's morph render mode either: it
+  // still renders by morphing, not by replacement.
   await frame.release()
+  const { newElement } = await nextEventOnTarget(page, "morph-frame", "turbo:before-frame-morph")
+  expect(newElement, "the live morph refresh renders by morphing").toContain("Loaded frame 2")
+
   await expect(page.locator("#morph-frame")).toHaveText("Loaded frame 3")
   await expect.poll(() => frame.requestCount, "exactly one coalesced follow-up runs").toBe(3)
 })

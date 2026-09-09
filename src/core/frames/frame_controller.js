@@ -34,6 +34,7 @@ export class FrameController {
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
   #shouldMorphFrame = false
+  #morphingRequests = new WeakSet()
   #currentRequestIsMorphRefresh = false
   #pendingMorphRefresh = false
   #performingMorphRefresh = false
@@ -168,7 +169,7 @@ export class FrameController {
     }
   }
 
-  async loadResponse(fetchResponse) {
+  async loadResponse(fetchResponse, { morph = false } = {}) {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       this.sourceURL = fetchResponse.response.url
     }
@@ -180,13 +181,12 @@ export class FrameController {
         const pageSnapshot = PageSnapshot.fromDocument(document)
 
         if (pageSnapshot.isVisitable) {
-          await this.#loadFrameResponse(fetchResponse, document)
+          await this.#loadFrameResponse(fetchResponse, document, morph)
         } else {
           await this.#handleUnvisitableFrameResponse(fetchResponse)
         }
       }
     } finally {
-      this.#shouldMorphFrame = false
       this.fetchResponseLoaded = () => Promise.resolve()
     }
   }
@@ -263,7 +263,7 @@ export class FrameController {
 
   async requestSucceededWithResponse(request, response) {
     try {
-      await this.loadResponse(response)
+      await this.loadResponse(response, { morph: this.#morphingRequests.has(request) })
     } finally {
       this.#finishRequest(request)
     }
@@ -271,7 +271,7 @@ export class FrameController {
 
   async requestFailedWithResponse(request, response) {
     try {
-      await this.loadResponse(response)
+      await this.loadResponse(response, { morph: this.#morphingRequests.has(request) })
     } finally {
       this.#finishRequest(request)
     }
@@ -371,9 +371,9 @@ export class FrameController {
 
   // Private
 
-  async #loadFrameResponse(fetchResponse, document) {
+  async #loadFrameResponse(fetchResponse, document, morph) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
-    const rendererClass = this.#shouldMorphFrame ? MorphingFrameRenderer : FrameRenderer
+    const rendererClass = morph ? MorphingFrameRenderer : FrameRenderer
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
@@ -397,11 +397,15 @@ export class FrameController {
     this.#currentFetchRequest?.cancel()
     this.#currentFetchRequest = request
 
-    // Consume the morph-refresh tag exactly once, before perform() dispatches
-    // turbo:before-fetch-request — a listener that synchronously starts another
-    // visit must not inherit this request's morph-refresh classification.
+    // Consume the morph-refresh and morph-render tags exactly once, before
+    // perform() dispatches turbo:before-fetch-request — a listener that
+    // synchronously starts another visit must not inherit this request's
+    // classification. The render mode travels with the request so that a
+    // superseded request rendering late can neither steal nor clear it.
     this.#currentRequestIsMorphRefresh = this.#performingMorphRefresh
     this.#performingMorphRefresh = false
+    if (this.#shouldMorphFrame) this.#morphingRequests.add(request)
+    this.#shouldMorphFrame = false
 
     return new Promise((resolve) => {
       this.#resolveVisitPromise = () => {
