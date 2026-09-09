@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html id="html">
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-refresh-method" content="morph">
+
+    <title>Turbo</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1 id="title">Page with an in-flight morph frame</h1>
+
+    <turbo-frame id="morph-frame" src="/src/tests/fixtures/frame_morph_in_flight.html" refresh="morph">
+      <h2>Frame awaiting its in-flight fetch</h2>
+      <form id="frame-form" action="/src/tests/fixtures/frame_morph_in_flight_submitted.html" method="get">
+        <input id="frame-form-submit" type="submit" value="frame form[method=get]">
+      </form>
+      <form id="cross-frame-form" action="/src/tests/fixtures/frame_morph_in_flight_failed.html" method="get" data-turbo-frame="other-frame">
+        <input id="cross-frame-form-submit" type="submit" value="cross-frame form[method=get]">
+      </form>
+    </turbo-frame>
+
+    <turbo-frame id="other-frame">
+      <h2>Other frame</h2>
+    </turbo-frame>
+
+    <form id="form" action="/__turbo/refresh" method="post" class="redirect">
+      <input type="hidden" name="path" value="/src/tests/fixtures/page_refresh_morph_in_flight_frame.html">
+      <input type="hidden" name="sleep" value="20">
+      <input id="form-submit" type="submit" value="form[method=post]">
+    </form>
+  </body>
+</html>
