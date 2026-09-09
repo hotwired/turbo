@@ -370,8 +370,9 @@ test("a refresh='morph' frame's queued morph is dropped by a form submission tha
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
-  // Submitting the form inside the frame navigates it directly through
-  // loadResponse, never touching src, so it must retire the queued morph itself.
+  // Submitting the form inside the frame lands its response directly through
+  // loadResponse, never touching src, so the landing must retire the queued
+  // morph itself.
   await page.click("#frame-form-submit")
   await expect(page.locator("#morph-frame")).toHaveText("Submitted frame")
   await nextEventOnTarget(page, "morph-frame", "turbo:frame-load")
@@ -383,6 +384,38 @@ test("a refresh='morph' frame's queued morph is dropped by a form submission tha
   await nextEventOnTarget(page, "morph-frame", "turbo:frame-load")
   await page.waitForTimeout(200)
   expect(frame.requestCount, "no follow-up after the submission superseded the queued morph").toBe(2)
+})
+
+test("a refresh='morph' frame's queued morph is dropped by a failed cross-frame submission that renders into it", async ({ page }) => {
+  const frame = await holdFrameRequests(page, { url: "**/frame_morph_in_flight.html" })
+  await page.route("**/frame_morph_in_flight_failed.html", (route) => route.fulfill({
+    status: 422,
+    contentType: "text/html",
+    body: `<turbo-frame id="morph-frame"><h2>Submission failed</h2></turbo-frame>`
+  }))
+
+  await page.goto("/src/tests/fixtures/page_refresh_morph_in_flight_frame.html")
+  await expect.poll(() => frame.requestCount).toBe(1)
+
+  // Morph refresh #2 in flight, with a second morph queued behind it.
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await expect.poll(() => frame.requestCount).toBe(2)
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  // The form targets another frame, but its failure response renders back into
+  // the originating frame, so that is the queue the response must retire.
+  await page.click("#cross-frame-form-submit")
+  await expect(page.locator("#morph-frame")).toHaveText("Submission failed")
+  await expect(page.locator("#other-frame")).toHaveText("Other frame")
+  await nextEventOnTarget(page, "morph-frame", "turbo:frame-load")
+  expect(frame.requestCount, "the submission is not a src fetch").toBe(2)
+
+  await frame.release()
+  await nextEventOnTarget(page, "morph-frame", "turbo:frame-load")
+  await page.waitForTimeout(200)
+  expect(frame.requestCount, "no follow-up after the failed submission rendered into the frame").toBe(2)
 })
 
 test("a refresh='morph' frame ignores a superseded request that finishes rendering after a morph replaced it", async ({ page }) => {

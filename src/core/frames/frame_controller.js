@@ -235,10 +235,6 @@ export class FrameController {
     const { fetchRequest } = this.formSubmission
     const frame = this.#findFrameElement(element, submitter)
 
-    // A submission navigates its target frame without passing through
-    // sourceURLChanged, so it supersedes a queued morph refresh here instead.
-    frame.delegate.#pendingMorphRefresh = false
-
     this.prepareRequest(fetchRequest, frame)
     this.formSubmission.start()
   }
@@ -296,7 +292,7 @@ export class FrameController {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
-    frame.delegate.loadResponse(response)
+    frame.delegate.#loadFormResponse(response)
 
     if (!formSubmission.isSafe) {
       session.clearCache()
@@ -304,8 +300,16 @@ export class FrameController {
   }
 
   formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
-    this.element.delegate.loadResponse(fetchResponse)
+    this.element.delegate.#loadFormResponse(fetchResponse)
     session.clearCache()
+  }
+
+  // A form response navigates whichever frame it renders into — the target on
+  // success, the originating frame on failure — without passing through
+  // sourceURLChanged, so it supersedes that frame's queued morph refresh here.
+  #loadFormResponse(fetchResponse) {
+    this.#pendingMorphRefresh = false
+    return this.loadResponse(fetchResponse)
   }
 
   formSubmissionErrored(formSubmission, error) {
