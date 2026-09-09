@@ -56,6 +56,11 @@ test("turbo:before-frame-refresh fires for a refreshed frame with the morph sour
 
   const detail = await nextEventOnTarget(page, "auto-frame", "turbo:before-frame-refresh")
   expect(detail.source).toEqual("page-morph")
+
+  // newFrame is the incoming frame from the response, not the live one.
+  expect(detail.newFrame).toContain('id="auto-frame"')
+  expect(detail.newFrame).toContain("Automatic frame")
+  expect(detail.newFrame).not.toContain("Fetched auto frame")
 })
 
 test("canceling turbo:before-frame-refresh opts a frame out of the morph refresh", async ({ page }) => {
@@ -71,6 +76,27 @@ test("canceling turbo:before-frame-refresh opts a frame out of the morph refresh
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await expect(page.locator("#auto-frame")).toHaveText("Prevented sentinel")
+})
+
+test("canceling turbo:before-frame-refresh preserves a frame missing from new content", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh_manual_frame.html")
+  await expect(page.locator("#auto-frame")).toHaveText("Fetched auto frame")
+
+  await page.locator("#auto-frame").evaluate((frame) => {
+    frame.addEventListener("turbo:before-frame-refresh", (event) => event.preventDefault())
+    frame.textContent = "Prevented sentinel"
+    frame.id = "auto-missing" // absent from the server's new content
+  })
+
+  await page.click("#form-submit")
+
+  const detail = await nextEventOnTarget(page, "auto-missing", "turbo:before-frame-refresh")
+  expect(detail.source).toEqual("page-morph")
+  expect(detail.newFrame).toBeUndefined()
+
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await expect(page.locator("#auto-missing"), "the frame is preserved").toBeAttached()
+  await expect(page.locator("#auto-missing")).toHaveText("Prevented sentinel")
 })
 
 test("a data-turbo-refresh-policy='manual' frame missing from new content is preserved without refetching", async ({ page }) => {
@@ -145,4 +171,92 @@ test("during an ancestor frame morph, a manual inner frame is preserved and an a
   const events = await frameRefreshEvents(page)
   expect(events.some((event) => event.id === "inner-manual")).toBe(false)
   expect(events.some((event) => event.id === "inner-auto" && event.source === "frame-morph")).toBe(true)
+})
+
+test("turbo:before-frame-refresh fires during an ancestor frame morph with the incoming frame", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_morph_manual_inner.html")
+  await expect(page.locator("#inner-auto")).toHaveText("Inner auto frame loaded")
+
+  await page.evaluate(() => document.getElementById("outer-morph").reload())
+
+  const detail = await nextEventOnTarget(page, "inner-auto", "turbo:before-frame-refresh")
+  expect(detail.source).toEqual("frame-morph")
+  expect(detail.newFrame).toContain('id="inner-auto"')
+  expect(detail.newFrame).toContain("Inner auto frame</h2>")
+  expect(detail.newFrame).not.toContain("Inner auto frame loaded")
+})
+
+test("canceling turbo:before-frame-refresh opts an inner frame out of an ancestor frame morph", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_morph_manual_inner.html")
+  await expect(page.locator("#inner-auto")).toHaveText("Inner auto frame loaded")
+
+  await page.locator("#inner-auto").evaluate((frame) => {
+    frame.addEventListener("turbo:before-frame-refresh", (event) => event.preventDefault())
+    frame.textContent = "Inner auto sentinel"
+  })
+
+  await page.evaluate(() => document.getElementById("outer-morph").reload())
+  await nextEventOnTarget(page, "outer-morph", "turbo:before-frame-morph")
+
+  await expect(page.locator("#outer-morph")).toContainText("Outer frame loaded")
+  await expect(page.locator("#inner-auto")).toHaveText("Inner auto sentinel")
+})
+
+test("canceling turbo:before-frame-refresh preserves an inner frame missing from the ancestor frame's new content", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_morph_manual_inner.html")
+  await expect(page.locator("#inner-auto")).toHaveText("Inner auto frame loaded")
+
+  await page.locator("#inner-auto").evaluate((frame) => {
+    frame.addEventListener("turbo:before-frame-refresh", (event) => event.preventDefault())
+    frame.textContent = "Inner auto sentinel"
+    frame.id = "inner-missing" // absent from the outer frame's new content
+  })
+
+  await page.evaluate(() => document.getElementById("outer-morph").reload())
+
+  const detail = await nextEventOnTarget(page, "inner-missing", "turbo:before-frame-refresh")
+  expect(detail.source).toEqual("frame-morph")
+  expect(detail.newFrame).toBeUndefined()
+
+  await expect(page.locator("#inner-auto")).toHaveText("Inner auto frame loaded")
+  await expect(page.locator("#inner-missing"), "the frame is preserved").toBeAttached()
+  await expect(page.locator("#inner-missing")).toHaveText("Inner auto sentinel")
+})
+
+test("a manual inner frame missing from the ancestor frame's new content is preserved without refetching", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_morph_manual_inner.html")
+  await expect(page.locator("#inner-manual")).toHaveText("Inner manual frame loaded")
+
+  await collectFrameRefreshEvents(page)
+  await page.locator("#inner-manual").evaluate((frame) => {
+    frame.textContent = "Inner manual sentinel"
+    frame.id = "inner-missing" // absent from the outer frame's new content
+  })
+
+  await page.evaluate(() => document.getElementById("outer-morph").reload())
+  await nextEventOnTarget(page, "outer-morph", "turbo:before-frame-morph")
+
+  await expect(page.locator("#inner-auto")).toHaveText("Inner auto frame loaded")
+  await expect(page.locator("#inner-missing"), "the frame is preserved").toBeAttached()
+  await expect(page.locator("#inner-missing")).toHaveText("Inner manual sentinel")
+
+  const events = await frameRefreshEvents(page)
+  expect(events.some((event) => event.id === "inner-missing")).toBe(false)
+})
+
+test("a manual inner frame is preserved even when its src is incompatible with the ancestor frame's new content", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_morph_manual_inner.html")
+  await expect(page.locator("#inner-manual")).toHaveText("Inner manual frame loaded")
+
+  // As in the page-morph case: an incompatible src would otherwise be morphed in
+  // place from the outer frame's response.
+  await page.locator("#inner-manual").evaluate((frame) => frame.setAttribute("src", "/src/tests/fixtures/frame_inner_manual_changed.html"))
+  await expect(page.locator("#inner-manual")).toHaveText("Inner manual frame changed")
+  await page.locator("#inner-manual").evaluate((frame) => (frame.textContent = "Inner manual sentinel"))
+
+  await page.evaluate(() => document.getElementById("outer-morph").reload())
+  await nextEventOnTarget(page, "outer-morph", "turbo:before-frame-morph")
+
+  await expect(page.locator("#inner-auto")).toHaveText("Inner auto frame loaded")
+  await expect(page.locator("#inner-manual")).toHaveText("Inner manual sentinel")
 })
