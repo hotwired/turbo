@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html id="html">
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-refresh-method" content="morph">
+
+    <title>Turbo</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1 id="title">Page with manual and automatic morph frames</h1>
+
+    <turbo-frame id="manual-frame" src="/src/tests/fixtures/frame_manual.html" refresh="morph" data-turbo-refresh-policy="manual">
+      <h2>Manual frame</h2>
+    </turbo-frame>
+
+    <turbo-frame id="auto-frame" src="/src/tests/fixtures/frame_auto.html" refresh="morph">
+      <h2>Automatic frame</h2>
+    </turbo-frame>
+
+    <form id="form" action="/__turbo/refresh" method="post" class="redirect">
+      <input type="hidden" name="path" value="/src/tests/fixtures/page_refresh_manual_frame.html">
+      <input type="hidden" name="sleep" value="20">
+      <input id="form-submit" type="submit" value="form[method=post]">
+    </form>
+  </body>
+</html>

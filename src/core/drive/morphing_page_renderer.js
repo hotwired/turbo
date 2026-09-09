@@ -1,12 +1,20 @@
 import { PageRenderer } from "./page_renderer"
 import { dispatch } from "../../util"
-import { morphElements, shouldRefreshFrameWithMorphing, closestFrameReloadableWithMorphing } from "../morphing"
+import {
+  morphElements,
+  shouldRefreshFrameWithMorphing,
+  shouldPreserveFrameDuringMorphRefresh,
+  closestFrameReloadableWithMorphing
+} from "../morphing"
 
 export class MorphingPageRenderer extends PageRenderer {
   static renderElement(currentElement, newElement) {
     morphElements(currentElement, newElement, {
       callbacks: {
         beforeNodeMorphed: (node, newNode) => {
+          if (shouldPreserveFrameDuringMorphRefresh(node, newNode, "page-morph")) {
+            return false
+          }
           if (
             shouldRefreshFrameWithMorphing(node, newNode) &&
               !closestFrameReloadableWithMorphing(node)
