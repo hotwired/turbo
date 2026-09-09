@@ -235,6 +235,10 @@ export class FrameController {
     const { fetchRequest } = this.formSubmission
     const frame = this.#findFrameElement(element, submitter)
 
+    // A submission navigates its target frame without passing through
+    // sourceURLChanged, so it supersedes a queued morph refresh here instead.
+    frame.delegate.#pendingMorphRefresh = false
+
     this.prepareRequest(fetchRequest, frame)
     this.formSubmission.start()
   }

@@ -267,28 +267,37 @@ test("frames with refresh='morph' are preserved when missing from new content", 
 // Holds every fetch for the frame's src so it stays in flight while the page is
 // morphed, and counts how many requests Turbo issues. Each response is tagged
 // with the ordinal of the request that produced it, so the rendered text proves
-// exactly which request settled. Returns a `release` that serves the held
+// exactly which request settled. `fulfill(n)` serves one held request (with an
+// optional custom body) while the rest stay held; `release` serves the held
 // requests (and any later ones) so the frame can settle.
 async function holdFrameRequests(page, { url }) {
   const state = { requestCount: 0 }
-  const held = []
+  const held = new Map()
   let holding = true
   const bodyFor = (n) => `<turbo-frame id="morph-frame"><h2>Loaded frame ${n}</h2></turbo-frame>`
+  const fulfill = (route, body) => route.fulfill({ contentType: "text/html", body }).catch(() => {})
 
   await page.route(url, async (route) => {
     const n = ++state.requestCount
     if (holding) {
-      held.push({ route, n })
+      held.set(n, route)
     } else {
-      await route.fulfill({ contentType: "text/html", body: bodyFor(n) }).catch(() => {})
+      await fulfill(route, bodyFor(n))
     }
   })
 
+  state.fulfill = async (n, body = bodyFor(n)) => {
+    const route = held.get(n)
+    held.delete(n)
+    await fulfill(route, body)
+  }
+
   state.release = async () => {
     holding = false
-    for (const { route, n } of held) {
-      await route.fulfill({ contentType: "text/html", body: bodyFor(n) }).catch(() => {})
+    for (const [n, route] of held) {
+      await fulfill(route, bodyFor(n))
     }
+    held.clear()
   }
 
   return state
@@ -346,6 +355,98 @@ test("a refresh='morph' frame with an in-flight fetch is not aborted and refetch
   // The two coalesced morphs produce a single follow-up, not one request each.
   await page.waitForTimeout(200)
   expect(frame.requestCount, "no extra requests beyond the single follow-up").toBe(3)
+})
+
+test("a refresh='morph' frame's queued morph is dropped by a form submission that navigates the frame", async ({ page }) => {
+  const frame = await holdFrameRequests(page, { url: "**/frame_morph_in_flight.html" })
+
+  await page.goto("/src/tests/fixtures/page_refresh_morph_in_flight_frame.html")
+  await expect.poll(() => frame.requestCount).toBe(1)
+
+  // Morph refresh #2 in flight, with a second morph queued behind it.
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await expect.poll(() => frame.requestCount).toBe(2)
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  // Submitting the form inside the frame navigates it directly through
+  // loadResponse, never touching src, so it must retire the queued morph itself.
+  await page.click("#frame-form-submit")
+  await expect(page.locator("#morph-frame")).toHaveText("Submitted frame")
+  await nextEventOnTarget(page, "morph-frame", "turbo:frame-load")
+  expect(frame.requestCount, "the submission is not a src fetch").toBe(2)
+
+  // The in-flight morph refresh still settles, but the queued follow-up that
+  // predates the submission must not run on top of the submission's result.
+  await frame.release()
+  await nextEventOnTarget(page, "morph-frame", "turbo:frame-load")
+  await page.waitForTimeout(200)
+  expect(frame.requestCount, "no follow-up after the submission superseded the queued morph").toBe(2)
+})
+
+test("a refresh='morph' frame ignores a superseded request that finishes rendering after a morph replaced it", async ({ page }) => {
+  const frame = await holdFrameRequests(page, { url: "**/frame_morph_in_flight.html" })
+
+  await page.goto("/src/tests/fixtures/page_refresh_morph_in_flight_frame.html")
+  await expect.poll(() => frame.requestCount).toBe(1)
+
+  // Serve the ordinary initial fetch (#1) but hold its render open, so its
+  // settlement is still pending when a morph starts the replacement request.
+  await page.evaluate(() => {
+    addEventListener("turbo:before-frame-render", (event) => {
+      event.preventDefault()
+      window.resumeFrameRender = event.detail.resume
+    }, { once: true })
+  })
+  await frame.fulfill(1)
+  await page.waitForFunction(() => window.resumeFrameRender)
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await expect.poll(() => frame.requestCount, "the morph starts its own request").toBe(2)
+
+  // The stale request now finishes rendering. Its settlement must not resolve or
+  // clear the in-flight morph refresh (#2), so a further morph still coalesces
+  // behind #2 instead of aborting it and starting a third request.
+  await page.evaluate(() => window.resumeFrameRender())
+  await expect(page.locator("#morph-frame")).toHaveText("Loaded frame 1")
+  await nextEventOnTarget(page, "morph-frame", "turbo:frame-load")
+
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  expect(frame.requestCount, "the later morph coalesces behind the live request").toBe(2)
+
+  await frame.release()
+  await expect(page.locator("#morph-frame")).toHaveText("Loaded frame 3")
+  await expect.poll(() => frame.requestCount, "exactly one coalesced follow-up runs").toBe(3)
+})
+
+test("a refresh='morph' frame still runs its queued morph when the in-flight response fails to render", async ({ page }) => {
+  const frame = await holdFrameRequests(page, { url: "**/frame_morph_in_flight.html" })
+
+  await page.goto("/src/tests/fixtures/page_refresh_morph_in_flight_frame.html")
+  await expect.poll(() => frame.requestCount).toBe(1)
+
+  // Morph refresh #2 in flight, with a second morph queued behind it.
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await expect.poll(() => frame.requestCount).toBe(2)
+  await page.click("#form-submit")
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  // A response without the frame makes loadResponse throw. The request must
+  // still settle so the queued morph runs, rather than wedging the queue behind
+  // a request that never clears.
+  const [error] = await Promise.all([
+    page.waitForEvent("pageerror"),
+    frame.fulfill(2, "<div>No frame here</div>")
+  ])
+  expect(error.message).toContain(`did not contain the expected <turbo-frame id="morph-frame">`)
+
+  await expect.poll(() => frame.requestCount, "the queued follow-up still runs").toBe(3)
+  await frame.release()
+  await expect(page.locator("#morph-frame")).toHaveText("Loaded frame 3")
 })
 
 test("it preserves the scroll position when the turbo-refresh-scroll meta tag is 'preserve'", async ({ page }) => {

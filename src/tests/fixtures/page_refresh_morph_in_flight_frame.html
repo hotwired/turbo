@@ -14,6 +14,9 @@
 
     <turbo-frame id="morph-frame" src="/src/tests/fixtures/frame_morph_in_flight.html" refresh="morph">
       <h2>Frame awaiting its in-flight fetch</h2>
+      <form id="frame-form" action="/src/tests/fixtures/frame_morph_in_flight_submitted.html" method="get">
+        <input id="frame-form-submit" type="submit" value="frame form[method=get]">
+      </form>
     </turbo-frame>
 
     <form id="form" action="/__turbo/refresh" method="post" class="redirect">
