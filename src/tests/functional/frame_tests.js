@@ -848,6 +848,17 @@ test("a turbo-frame that has been driven by a[data-turbo-action] can be navigate
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/hello.html"))
 })
 
+test("navigating a frame with a link that has a path and hash preserves the hash", async ({ page }) => {
+  await page.click("#link-frame-with-hash")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  await expect(page).toHaveURL(/#frame-hash$/)
+
+  const src = (await attributeForSelector(page, "#frame", "src")) ?? ""
+  expect(src).toContain("#frame-hash")
+})
+
 test("navigating turbo-frame from within with a[data-turbo-action=advance] pushes URL state", async ({ page }) => {
   await page.click("#link-nested-frame-action-advance")
   await nextEventNamed(page, "turbo:load")
