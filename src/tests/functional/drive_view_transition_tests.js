@@ -36,3 +36,12 @@ test("navigating does not trigger a view transition when meta tag not present", 
   const called = await page.evaluate(`window.startViewTransitionCalled`)
   expect(called).toEqual(undefined)
 })
+
+test("navigating a frame with data-turbo-action does not trigger a view transition", async ({ page }) => {
+  await page.locator("#go-frame").click()
+  await page.locator("#frame").getByText("Loaded").waitFor()
+  await nextBody(page)
+
+  const called = await page.evaluate(`window.startViewTransitionCalled`)
+  expect(called).toEqual(undefined)
+})
