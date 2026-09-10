@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Scroll reset after a frame navigation</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <style>
+      body { min-height: 300vh; }
+    </style>
+  </head>
+  <body>
+    <turbo-frame id="frame">
+      <a id="frame-link" href="/src/tests/fixtures/frames/frame_only_body.html">Navigate the frame</a>
+    </turbo-frame>
+
+    <a id="full-visit" href="/src/tests/fixtures/scroll_restoration.html">Full Drive visit</a>
+  </body>
+</html>

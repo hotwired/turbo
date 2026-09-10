@@ -24,6 +24,10 @@ export class PageView extends View {
     if (!renderer.shouldRender) {
       this.forceReloaded = true
     } else {
+      // Reset on every real render so a forced reload recorded by an earlier render
+      // (e.g. a no-render frame promotion via data-turbo-action) cannot persist and
+      // suppress the scroll reset of subsequent Visits.
+      this.forceReloaded = false
       visit?.changeHistory()
     }
 
