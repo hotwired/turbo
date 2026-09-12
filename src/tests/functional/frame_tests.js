@@ -1090,3 +1090,21 @@ async function withoutChangingEventListenersCount(page, callback) {
 function frameScriptEvaluationCount(page) {
   return page.evaluate(() => window.frameScriptEvaluationCount)
 }
+
+test("FrameElement does not throw when delegate is undefined in connectedCallback (fixes #1364)", async ({ page }) => {
+  const errorThrown = await page.evaluate(() => {
+    const frame = document.createElement("turbo-frame")
+    frame.id = "test-frame-1364"
+    frame.delegate = undefined
+
+    try {
+      document.body.appendChild(frame)
+      document.body.removeChild(frame)
+      return false
+    } catch (e) {
+      return true
+    }
+  })
+
+  expect(errorThrown, "FrameElement should not throw when delegate is undefined").toBe(false)
+})
