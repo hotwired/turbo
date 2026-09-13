@@ -340,11 +340,7 @@ export class Session {
       detail: { render }
     } = event
 
-    if (this.view.renderer && render) {
-      this.view.renderer.renderElement = render
-    }
-
-    return !defaultPrevented
+    return { immediateRender: !defaultPrevented, render }
   }
 
   viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
