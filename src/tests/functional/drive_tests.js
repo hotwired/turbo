@@ -30,3 +30,15 @@ test("drive enabled by default; click link inside data-turbo='false'", async ({ 
   await expect(page).toHaveURL(withPathname(path))
   expect(await visitAction(page)).toEqual("load")
 })
+
+test("progressively renders streamed response when X-Turbo-Stream-Body is true (fixes #1517)", async ({
+  page
+}) => {
+  await page.click("#drive_stream_body")
+
+  await expect(page).toHaveURL(withPathname("/__turbo/stream-body"))
+  await expect(page.locator("h1")).toHaveText("Streaming Page")
+  await expect(page.locator("#chunk-1")).toHaveText("First chunk loaded")
+  await expect(page.locator("#chunk-2")).toHaveText("Second chunk loaded")
+  await expect(page.locator("#chunk-3")).toHaveText("Third chunk loaded")
+})
