@@ -33,3 +33,19 @@ test("returning from history", async ({ page }) => {
   const { y: yAfterReturning } = await scrollPosition(page)
   expect(yAfterReturning).not.toEqual(0)
 })
+
+test("returning from history with scroll-behavior: smooth restores scroll position instantly", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_restoration_with_smooth_scroll.html")
+  await scrollToSelector(page, "#three")
+  const { y: yAfterScrolling } = await scrollPosition(page)
+  expect(yAfterScrolling).not.toEqual(0)
+
+  await page.goto("/src/tests/fixtures/bare.html")
+  await page.goBack()
+
+  // Scroll position should be restored instantly, not animated
+  // If scroll-behavior: smooth was applied, the position would still be 0 or near 0
+  // immediately after goBack() because the animation would be in progress
+  const { y: yAfterReturning } = await scrollPosition(page)
+  expect(yAfterReturning).not.toEqual(0)
+})
