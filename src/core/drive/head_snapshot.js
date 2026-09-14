@@ -4,6 +4,7 @@ import { Snapshot } from "../snapshot"
 export class HeadSnapshot extends Snapshot {
   detailsByOuterHTML = this.children
     .filter((element) => !elementIsNoscript(element))
+    .filter((element) => element instanceof Element)
     .map((element) => elementWithoutNonce(element))
     .reduce((result, element) => {
       const { outerHTML } = element
