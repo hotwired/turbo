@@ -314,6 +314,43 @@ test("it resets the scroll position when the turbo-refresh-scroll meta tag is 'r
   await assertPageScroll(page, 0, 0)
 })
 
+test("it preserves the scroll position when visiting another page with the scroll: 'preserve' option", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => window.Turbo.visit("/src/tests/fixtures/page_refresh_scroll_reset.html", { scroll: "preserve" }))
+  await nextEventNamed(page, "turbo:render", { renderMethod: "replace" })
+
+  await expect(page).toHaveURL(/page_refresh_scroll_reset\.html$/)
+  await assertPageScroll(page, 10, 10)
+})
+
+test("it preserves the scroll position on a page refresh with the scroll: 'preserve' option, despite the turbo-refresh-scroll meta tag being 'reset'", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh_scroll_reset.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => window.Turbo.visit(window.location.href, { action: "replace", scroll: "preserve" }))
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await assertPageScroll(page, 10, 10)
+})
+
+test("it resets the scroll position on a page refresh with the scroll: 'reset' option, despite the turbo-refresh-scroll meta tag being 'preserve'", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => window.Turbo.visit(window.location.href, { action: "replace", scroll: "reset" }))
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await assertPageScroll(page, 0, 0)
+})
+
 test("it preserves focus across morphs", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 

@@ -1,8 +1,8 @@
 import { getAnchor } from "./url"
 
 export class View {
-  #resolveRenderPromise = (_value) => {}
-  #resolveInterceptionPromise = (_value) => {}
+  #resolveRenderPromise = (_value) => { }
+  #resolveInterceptionPromise = (_value) => { }
 
   constructor(delegate, element) {
     this.delegate = delegate
@@ -26,7 +26,7 @@ export class View {
   }
 
   scrollToElement(element) {
-    element.scrollIntoView()
+    element.scrollIntoView({ behavior: "auto" })
   }
 
   focusElement(element) {
