@@ -47,6 +47,9 @@ export function registerAdapter(adapter) {
  * navigations to the same page will not result in a new history entry.
  * @param options.snapshotHTML Cached snapshot to render
  * @param options.response Response of the specified location
+ * @param options.scroll Scroll behavior to apply after rendering ("preserve"
+ * or "reset"). Defaults to resetting the scroll position, unless the visit is
+ * a page refresh governed by the `turbo-refresh-scroll` meta tag.
  */
 export function visit(location, options) {
   session.visit(location, options)
