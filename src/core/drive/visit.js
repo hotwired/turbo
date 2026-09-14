@@ -128,6 +128,7 @@ export class Visit {
       }
       this.cancelRender()
       this.state = VisitState.canceled
+      this.delegate.visitCanceled(this)
     }
   }
 
@@ -288,7 +289,12 @@ export class Visit {
     this.startRequest()
   }
 
-  requestPreventedHandlingResponse(_request, _response) {}
+  requestPreventedHandlingResponse(_request, _response) {
+    // The response was handled out-of-band (e.g. rendered as a Turbo Stream),
+    // so this visit will never complete or render. Cancel it so the terminal
+    // path runs and scroll tracking (paused on visitStarted) is resumed.
+    this.cancel()
+  }
 
   async requestSucceededWithResponse(request, response) {
     const responseHTML = await response.responseHTML

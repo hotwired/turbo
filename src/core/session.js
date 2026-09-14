@@ -15,6 +15,7 @@ import { StreamMessageRenderer } from "./streams/stream_message_renderer"
 import { StreamObserver } from "../observers/stream_observer"
 import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy, debounce } from "../util"
 import { PageView } from "./drive/page_view"
+import { VisitState } from "./drive/visit"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 import { Cache } from "./cache"
@@ -283,12 +284,20 @@ export class Session {
     }
     extendURLWithDeprecatedProperties(visit.location)
     this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
+    if (visit.state === VisitState.started) {
+      this.scrollObserver.pause()
+    }
   }
 
   visitCompleted(visit) {
+    this.scrollObserver.resume()
     this.view.unmarkVisitDirection()
     clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
+  }
+
+  visitCanceled(_visit) {
+    this.scrollObserver.resume()
   }
 
   // Form submit observer delegate
@@ -309,6 +318,7 @@ export class Session {
   // Page observer delegate
 
   pageBecameInteractive() {
+    this.scrollObserver.refresh()
     this.view.lastRenderedLocation = this.location
     this.notifyApplicationAfterPageLoad()
   }
@@ -348,6 +358,7 @@ export class Session {
   }
 
   viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
+    this.scrollObserver.refresh()
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender(renderMethod)
   }
