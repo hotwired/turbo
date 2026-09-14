@@ -12,6 +12,7 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 export class LinkPrefetchObserver {
   started = false
   #prefetchedLink = null
+  #pendingFetchRequests = new Map()
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -41,6 +42,7 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
+    this.eventTarget.removeEventListener("turbo:before-visit", this.#cancelPendingFetchRequests, true)
     this.started = false
   }
 
@@ -55,6 +57,7 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
+    this.eventTarget.addEventListener("turbo:before-visit", this.#cancelPendingFetchRequests, true)
     this.started = true
   }
 
@@ -81,7 +84,25 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
+        // Memorize fetch request and cancel previous one to the same URL
+        const url = location.href
+        const lastFetchRequest = this.#pendingFetchRequests.get(url)
+
+        if(lastFetchRequest) lastFetchRequest.cancel()
+        this.#pendingFetchRequests.set(url, fetchRequest)
+
         prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
+      }
+    }
+  }
+
+  #cancelPendingFetchRequests = (event) => {
+    if (event.detail.fetchRequest) return
+
+    for (const [url, fetchRequest] of this.#pendingFetchRequests.entries()) {
+      if (url !== event.detail.url) {
+        fetchRequest.cancel()
+        this.#pendingFetchRequests.delete(url)
       }
     }
   }
@@ -129,7 +150,13 @@ export class LinkPrefetchObserver {
 
   requestErrored(fetchRequest) {}
 
-  requestFinished(fetchRequest) {}
+  requestFinished(fetchRequest) {
+    const url = fetchRequest.url.href
+
+    if(this.#pendingFetchRequests.get(url) === fetchRequest) {
+      this.#pendingFetchRequests.delete(url)
+    }
+  }
 
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
 
