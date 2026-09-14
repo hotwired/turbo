@@ -155,8 +155,16 @@ export class LinkPrefetchObserver {
 }
 
 const unfetchableLink = (link) => {
-  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+  const target = link.getAttribute("target")
+  const hasMeaningfulTarget = target && target !== "_self" && target !== "_top" && target !== "_parent"
+
+  return (
+    link.origin !== document.location.origin ||
+    !["http:", "https:"].includes(link.protocol) ||
+    hasMeaningfulTarget
+  )
 }
+
 
 const linkToTheSamePage = (link) => {
   return (link.pathname + link.search === document.location.pathname + document.location.search) || getLinkHrefString(link).startsWith("#")
