@@ -44,6 +44,19 @@ test("Session interface", () => {
   assert.equal("off", config.forms.mode)
 })
 
+test("config.drive.prefetchDelay is configurable", () => {
+  const { config } = Turbo
+
+  assert.equal(100, config.drive.prefetchDelay)
+
+  config.drive.prefetchDelay = 200
+
+  assert.equal(200, config.drive.prefetchDelay)
+
+  // Reset to default
+  config.drive.prefetchDelay = 100
+})
+
 test("StreamActions interface", () => {
   assert.equal(typeof StreamActions, "object")
 })
