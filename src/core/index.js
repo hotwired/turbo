@@ -8,10 +8,13 @@ import { MorphingPageRenderer } from "./drive/morphing_page_renderer"
 import { MorphingFrameRenderer } from "./frames/morphing_frame_renderer"
 
 export { morphChildren, morphElements } from "./morphing"
+export { PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
 
 const session = new Session(recentRequests)
-const { cache, navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
+
+// Rename `navigator` to avoid shadowing `window.navigator`
+const { cache, navigator: sessionNavigator } = session
+export { session, cache, sessionNavigator as navigator }
 
 /**
  * Starts the main session.
@@ -75,19 +78,6 @@ export function disconnectStreamSource(source) {
  */
 export function renderStreamMessage(message) {
   session.renderStreamMessage(message)
-}
-
-/**
- * Removes all entries from the Turbo Drive page cache.
- * Call this when state has changed on the server that may affect cached pages.
- *
- * @deprecated since version 7.2.0 in favor of `Turbo.cache.clear()`
- */
-export function clearCache() {
-  console.warn(
-    "Please replace `Turbo.clearCache()` with `Turbo.cache.clear()`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
-  )
-  session.clearCache()
 }
 
 /**

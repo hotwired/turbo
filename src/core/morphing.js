@@ -35,14 +35,16 @@ export function morphChildren(currentElement, newElement, options = {}) {
 
 export function shouldRefreshFrameWithMorphing(currentFrame, newFrame) {
   return currentFrame instanceof FrameElement &&
-    // newFrame cannot yet be an instance of FrameElement because custom
-    // elements don't get initialized until they're attached to the DOM, so
-    // test its Element#nodeName instead
-    newFrame instanceof Element && newFrame.nodeName === "TURBO-FRAME" &&
-    currentFrame.shouldReloadWithMorph &&
-    currentFrame.id === newFrame.id &&
-    (!newFrame.getAttribute("src") || urlsAreEqual(currentFrame.src, newFrame.getAttribute("src"))) &&
+    currentFrame.shouldReloadWithMorph && (!newFrame || areFramesCompatibleForRefreshing(currentFrame, newFrame)) &&
     !currentFrame.closest("[data-turbo-permanent]")
+}
+
+function areFramesCompatibleForRefreshing(currentFrame, newFrame) {
+  // newFrame cannot yet be an instance of FrameElement because custom
+  // elements don't get initialized until they're attached to the DOM, so
+  // test its Element#nodeName instead
+  return newFrame instanceof Element && newFrame.nodeName === "TURBO-FRAME" && currentFrame.id === newFrame.id &&
+  (!newFrame.getAttribute("src") || urlsAreEqual(currentFrame.src, newFrame.getAttribute("src")))
 }
 
 export function closestFrameReloadableWithMorphing(node) {

@@ -69,17 +69,27 @@ export class FrameController {
       this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
+
+      if (!this.element.hasAttribute("recurse")) {
+        this.#currentFetchRequest?.cancel()
+      }
     }
   }
 
   disabledChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
+    if (this.disabled) {
+      this.#currentFetchRequest?.cancel()
+    } else if (this.loadingStyle == FrameLoadingStyle.eager) {
       this.#loadSourceURL()
     }
   }
 
   sourceURLChanged() {
     if (this.#isIgnoringChangesTo("src")) return
+
+    if (!this.sourceURL) {
+      this.#currentFetchRequest?.cancel()
+    }
 
     if (this.element.isConnected) {
       this.complete = false
@@ -182,15 +192,18 @@ export class FrameController {
     }
 
     this.formSubmission = new FormSubmission(this, element, submitter)
+
     const { fetchRequest } = this.formSubmission
-    this.prepareRequest(fetchRequest)
+    const frame = this.#findFrameElement(element, submitter)
+
+    this.prepareRequest(fetchRequest, frame)
     this.formSubmission.start()
   }
 
   // Fetch request delegate
 
-  prepareRequest(request) {
-    request.headers["Turbo-Frame"] = this.id
+  prepareRequest(request, frame = this) {
+    request.headers["Turbo-Frame"] = frame.id
 
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
       request.acceptResponseType(StreamMessage.contentType)
@@ -286,7 +299,15 @@ export class FrameController {
   // Frame renderer delegate
 
   willRenderFrame(currentElement, _newElement) {
-    this.previousFrameElement = currentElement.cloneNode(true)
+    // Only clone the frame for promoted frame visits, where visitCachedSnapshot
+    // consumes the clone to restore the frame's contents into the cached page
+    // snapshot (and deletes it). For plain frame renders — src changes without
+    // a data-turbo-action, refresh="morph" reloads, broadcast-driven reloads —
+    // nothing ever consumes or clears the clone, so it would pin a complete
+    // copy of the frame's previous subtree on the controller indefinitely.
+    if (this.action) {
+      this.previousFrameElement = currentElement.cloneNode(true)
+    }
   }
 
   visitCachedSnapshot = ({ element }) => {
@@ -432,7 +453,9 @@ export class FrameController {
 
   #findFrameElement(element, submitter) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
-    return getFrameElementById(id) ?? this.element
+    const target = this.#getFrameElementById(id)
+
+    return target instanceof FrameElement ? target : this.element
   }
 
   async extractForeignFrameElement(container) {
@@ -476,9 +499,11 @@ export class FrameController {
     }
 
     if (id) {
-      const frameElement = getFrameElementById(id)
+      const frameElement = this.#getFrameElementById(id)
       if (frameElement) {
         return !frameElement.disabled
+      } else if (id == "_parent") {
+        return false
       }
     }
 
@@ -499,8 +524,12 @@ export class FrameController {
     return this.element.id
   }
 
+  get disabled() {
+    return this.element.disabled
+  }
+
   get enabled() {
-    return !this.element.disabled
+    return !this.disabled
   }
 
   get sourceURL() {
@@ -560,13 +589,15 @@ export class FrameController {
     callback()
     delete this.currentNavigationElement
   }
-}
 
-function getFrameElementById(id) {
-  if (id != null) {
-    const element = document.getElementById(id)
-    if (element instanceof FrameElement) {
-      return element
+  #getFrameElementById(id) {
+    if (id != null) {
+      const element = id === "_parent" ?
+        this.element.parentElement.closest("turbo-frame") :
+        document.getElementById(id)
+      if (element instanceof FrameElement) {
+        return element
+      }
     }
   }
 }

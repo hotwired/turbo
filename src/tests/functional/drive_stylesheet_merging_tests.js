@@ -1,30 +1,29 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
-import { cssClassIsDefined, getComputedStyle, hasSelector, nextBody } from "../helpers/page"
+import { expect, test } from "@playwright/test"
+import { cssClassIsDefined, getComputedStyle } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/stylesheets/left.html")
 })
 
 test("navigating removes unused dynamically tracked style elements", async ({ page }) => {
-  assert.ok(await hasSelector(page, 'style[id="added-style"]'))
-  assert.ok(await hasSelector(page, 'link[id="added-link"]'))
+  const addedStyle = page.locator('style[id="added-style"]')
+  const addedLink = page.locator('link[id="added-link"]')
+  await expect(addedStyle).toBeAttached()
+  await expect(addedLink).toBeAttached()
 
   await page.locator("#go-right").click()
-  await nextBody(page)
 
-  assert.ok(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/common.css"]'))
-  assert.ok(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/right.css"]'))
-  assert.notOk(await hasSelector(page, 'link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/left.css"]'))
-  assert.equal(await getComputedStyle(page, "body", "backgroundColor"), "rgb(0, 128, 0)")
-  assert.equal(await getComputedStyle(page, "body", "color"), "rgb(0, 128, 0)")
+  await expect(page.locator('link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/common.css"]')).toBeAttached()
+  await expect(page.locator('link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/right.css"]')).toBeAttached()
+  await expect(page.locator('link[rel=stylesheet][href="/src/tests/fixtures/stylesheets/left.css"]')).not.toBeAttached()
+  expect(await getComputedStyle(page, "body", "backgroundColor")).toEqual("rgb(0, 128, 0)")
+  expect(await getComputedStyle(page, "body", "color")).toEqual("rgb(0, 128, 0)")
 
-  assert.ok(await hasSelector(page, 'style[id="added-style"]'))
-  assert.ok(await hasSelector(page, 'link[id="added-link"]'))
+  await expect(addedStyle).toBeAttached()
+  await expect(addedLink).toBeAttached()
 
-  assert.ok(await cssClassIsDefined(page, "right"))
-  assert.notOk(await cssClassIsDefined(page, "left"))
-  assert.equal(await getComputedStyle(page, "body", "marginLeft"), "0px")
-  assert.equal(await getComputedStyle(page, "body", "marginRight"), "20px")
+  expect(await cssClassIsDefined(page, "right")).toBeTruthy()
+  expect(await cssClassIsDefined(page, "left")).not.toBeTruthy()
+  expect(await getComputedStyle(page, "body", "marginLeft")).toEqual("0px")
+  expect(await getComputedStyle(page, "body", "marginRight")).toEqual("20px")
 })
-

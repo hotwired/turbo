@@ -1,4 +1,4 @@
-import { parseHTMLDocument } from "../../util"
+import { elementIsStylesheet, parseHTMLDocument } from "../../util"
 import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
@@ -38,11 +38,23 @@ export class PageSnapshot extends Snapshot {
       clonedPasswordInput.value = ""
     }
 
+    for (const clonedNoscriptElement of clonedElement.querySelectorAll("noscript")) {
+      for (const child of [...clonedNoscriptElement.children]) {
+        if (elementIsStylesheet(child)) {
+          child.remove()
+        }
+      }
+    }
+
     return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)
   }
 
   get lang() {
     return this.documentElement.getAttribute("lang")
+  }
+
+  get dir() {
+    return this.documentElement.getAttribute("dir")
   }
 
   get headElement() {
@@ -75,12 +87,12 @@ export class PageSnapshot extends Snapshot {
     return viewTransitionEnabled && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }
 
-  get shouldMorphPage() {
-    return this.getSetting("refresh-method") === "morph"
+  get refreshMethod() {
+    return this.getSetting("refresh-method")
   }
 
-  get shouldPreserveScrollPosition() {
-    return this.getSetting("refresh-scroll") === "preserve"
+  get refreshScroll() {
+    return this.getSetting("refresh-scroll")
   }
 
   // Private

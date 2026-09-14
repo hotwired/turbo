@@ -1,5 +1,4 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 
 test("window variable with ESM", async ({ page }) => {
   await page.goto("/src/tests/fixtures/esm.html")
@@ -20,7 +19,6 @@ async function assertTurboInterface(page) {
   await assertTypeOf(page, "Turbo.connectStreamSource", "function")
   await assertTypeOf(page, "Turbo.disconnectStreamSource", "function")
   await assertTypeOf(page, "Turbo.renderStreamMessage", "function")
-  await assertTypeOf(page, "Turbo.clearCache", "function")
   await assertTypeOf(page, "Turbo.setProgressBarDelay", "function")
   await assertTypeOf(page, "Turbo.setConfirmMethod", "function")
   await assertTypeOf(page, "Turbo.setFormMode", "function")
@@ -40,5 +38,5 @@ async function assertTypeOf(page, propertyName, propertyType) {
     return typeof object
   }, propertyName)
 
-  assert.equal(type, propertyType, `Expected ${propertyName} to be ${propertyType}`)
+  expect(type, `Expected ${propertyName} to be ${propertyType}`).toEqual(propertyType)
 }

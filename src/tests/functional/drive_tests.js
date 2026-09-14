@@ -1,6 +1,5 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
-import { nextBody, pathname, visitAction } from "../helpers/page"
+import { expect, test } from "@playwright/test"
+import { visitAction, withPathname } from "../helpers/page"
 
 const path = "/src/tests/fixtures/drive.html"
 
@@ -10,8 +9,8 @@ test.beforeEach(async ({ page }) => {
 
 test("drive enabled by default; click normal link", async ({ page }) => {
   await page.click("#drive_enabled")
-  await nextBody(page)
-  assert.equal(pathname(page.url()), path)
+
+  await expect(page).toHaveURL(withPathname(path))
 })
 
 test("drive to external link", async ({ page }) => {
@@ -20,16 +19,14 @@ test("drive to external link", async ({ page }) => {
   })
 
   await page.click("#drive_enabled_external")
-  await nextBody(page)
 
-  assert.equal(await page.evaluate(() => window.location.href), "https://example.com/")
-  assert.equal(await page.textContent("body"), "Hello from the outside world")
+  await expect(page).toHaveURL("https://example.com/")
+  await expect(page.locator("body")).toHaveText("Hello from the outside world")
 })
 
 test("drive enabled by default; click link inside data-turbo='false'", async ({ page }) => {
   await page.click("#drive_disabled")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), path)
-  assert.equal(await visitAction(page), "load")
+  await expect(page).toHaveURL(withPathname(path))
+  expect(await visitAction(page)).toEqual("load")
 })

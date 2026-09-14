@@ -1,8 +1,9 @@
+import { getLocationForLink } from "../core/url"
 import {
   dispatch,
-  getLocationForLink,
   getMetaContent,
-  findClosestRecursively
+  findClosestRecursively,
+  getLinkHrefString
 } from "../util"
 
 import { FetchMethod, FetchRequest } from "../http/fetch_request"
@@ -80,7 +81,7 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
+        prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
       }
     }
   }
@@ -96,7 +97,7 @@ export class LinkPrefetchObserver {
 
   #tryToUsePrefetchedRequest = (event) => {
     if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
-      const cached = prefetchCache.get(event.detail.url.toString())
+      const cached = prefetchCache.get(event.detail.url)
 
       if (cached) {
         // User clicked link, use cache response
@@ -158,7 +159,7 @@ const unfetchableLink = (link) => {
 }
 
 const linkToTheSamePage = (link) => {
-  return (link.pathname + link.search === document.location.pathname + document.location.search) || link.href.startsWith("#")
+  return (link.pathname + link.search === document.location.pathname + document.location.search) || getLinkHrefString(link).startsWith("#")
 }
 
 const linkOptsOut = (link) => {

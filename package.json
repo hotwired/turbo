@@ -1,6 +1,6 @@
 {
   "name": "@hotwired/turbo",
-  "version": "8.0.13",
+  "version": "8.0.23",
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
   "main": "dist/turbo.es2017-umd.js",
@@ -41,25 +41,24 @@
     "@web/test-runner-playwright": "^0.9.0",
     "arg": "^5.0.1",
     "body-parser": "^1.20.1",
-    "chai": "~4.3.4",
     "eslint": "^8.13.0",
     "express": "^4.18.2",
-    "idiomorph": "~0.7.2",
-    "multer": "^1.4.2",
+    "idiomorph": "~0.7.4",
+    "multer": "^2.0.2",
     "rollup": "^2.35.1"
   },
   "scripts": {
     "clean": "rm -fr dist",
     "clean:win": "rmdir /s /q dist",
-    "build": "rollup -c",
-    "build:win": "rollup -c",
+    "build": "yarn install && rollup -c",
+    "build:win": "yarn install && rollup -c",
     "watch": "rollup -wc",
     "start": "node src/tests/server.mjs",
     "test": "yarn test:unit && yarn test:browser",
     "test:browser": "playwright test",
     "test:unit": "NODE_OPTIONS=--inspect web-test-runner",
     "test:unit:win": "SET NODE_OPTIONS=--inspect & web-test-runner",
-    "release": "yarn build && npm publish",
+    "release": "yarn build && yarn publish",
     "lint": "eslint . --ext .js"
   },
   "engines": {

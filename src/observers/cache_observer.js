@@ -1,6 +1,5 @@
 export class CacheObserver {
   selector = "[data-turbo-temporary]"
-  deprecatedSelector = "[data-turbo-cache=false]"
 
   started = false
 
@@ -25,18 +24,6 @@ export class CacheObserver {
   }
 
   get temporaryElements() {
-    return [...document.querySelectorAll(this.selector), ...this.temporaryElementsWithDeprecation]
-  }
-
-  get temporaryElementsWithDeprecation() {
-    const elements = document.querySelectorAll(this.deprecatedSelector)
-
-    if (elements.length) {
-      console.warn(
-        `The ${this.deprecatedSelector} selector is deprecated and will be removed in a future version. Use ${this.selector} instead.`
-      )
-    }
-
-    return [...elements]
+    return [...document.querySelectorAll(this.selector)]
   }
 }

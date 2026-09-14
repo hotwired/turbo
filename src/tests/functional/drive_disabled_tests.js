@@ -1,13 +1,11 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 import {
   getFromLocalStorage,
-  nextBody,
   nextEventOnTarget,
-  pathname,
-  searchParams,
   setLocalStorageFromEvent,
-  visitAction
+  visitAction,
+  withPathname,
+  withSearchParam
 } from "../helpers/page"
 
 const path = "/src/tests/fixtures/drive_disabled.html"
@@ -18,30 +16,27 @@ test.beforeEach(async ({ page }) => {
 
 test("drive disabled by default; click normal link", async ({ page }) => {
   await page.click("#drive_disabled")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), path)
-  assert.equal(await visitAction(page), "load")
+  await expect(page).toHaveURL(withPathname(path))
+  expect(await visitAction(page)).toEqual("load")
 })
 
 test("drive disabled by default; click link inside data-turbo='true'", async ({ page }) => {
   await page.click("#drive_enabled")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), path)
-  assert.equal(await visitAction(page), "advance")
+  await expect(page).toHaveURL(withPathname(path))
+  expect(await visitAction(page)).toEqual("advance")
 })
 
 test("drive disabled by default; submit form inside data-turbo='true'", async ({ page }) => {
   await setLocalStorageFromEvent(page, "turbo:submit-start", "formSubmitted", "true")
 
   await page.click("#no_submitter_drive_enabled a#requestSubmit")
-  await nextBody(page)
 
-  assert.ok(await getFromLocalStorage(page, "formSubmitted"))
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(await visitAction(page), "advance")
-  assert.equal(await searchParams(page.url()).get("greeting"), "Hello from a redirect")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("greeting", "Hello from a redirect"))
+  expect(await getFromLocalStorage(page, "formSubmitted")).toBeTruthy()
+  expect(await visitAction(page)).toEqual("advance")
 })
 
 test("drive disabled by default; links within <turbo-frame> navigate with Turbo", async ({ page }) => {

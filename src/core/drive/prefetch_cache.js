@@ -1,32 +1,48 @@
+import { LRUCache } from "../lru_cache"
+import { toCacheKey } from "../url"
+
 const PREFETCH_DELAY = 100
 
-class PrefetchCache {
+class PrefetchCache extends LRUCache {
   #prefetchTimeout = null
-  #prefetched = null
+  #maxAges = {}
 
-  get(url) {
-    if (this.#prefetched && this.#prefetched.url === url && this.#prefetched.expire > Date.now()) {
-      return this.#prefetched.request
-    }
+  constructor(size = 1, prefetchDelay = PREFETCH_DELAY) {
+    super(size, toCacheKey)
+    this.prefetchDelay = prefetchDelay
   }
 
-  setLater(url, request, ttl) {
-    this.clear()
-
+  putLater(url, request, ttl) {
     this.#prefetchTimeout = setTimeout(() => {
       request.perform()
-      this.set(url, request, ttl)
+      this.put(url, request, ttl)
       this.#prefetchTimeout = null
-    }, PREFETCH_DELAY)
+    }, this.prefetchDelay)
   }
 
-  set(url, request, ttl) {
-    this.#prefetched = { url, request, expire: new Date(new Date().getTime() + ttl) }
+  put(url, request, ttl = cacheTtl) {
+    super.put(url, request)
+    this.#maxAges[toCacheKey(url)] = new Date(new Date().getTime() + ttl)
   }
 
   clear() {
+    super.clear()
     if (this.#prefetchTimeout) clearTimeout(this.#prefetchTimeout)
-    this.#prefetched = null
+  }
+
+  evict(key) {
+    super.evict(key)
+    delete this.#maxAges[key]
+  }
+
+  has(key) {
+    if (super.has(key)) {
+      const maxAge = this.#maxAges[toCacheKey(key)]
+
+      return maxAge && maxAge > Date.now()
+    } else {
+      return false
+    }
   }
 }
 
