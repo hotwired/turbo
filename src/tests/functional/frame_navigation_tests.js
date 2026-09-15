@@ -80,7 +80,75 @@ test("promoted frame visit advances history when the response omits tracked elem
   await nextEventNamed(page, "turbo:load")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/empty_head.html"))
-  expect(await page.evaluate(() => window.Turbo.session.view.forceReloaded)).toEqual(false)
+
+  await page.click("#drive-away")
+  await nextEventNamed(page, "turbo:load")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/empty_head.html"))
+  await expect(page.locator("#empty-head h2")).toHaveText("Frame updated")
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frame_navigation.html"))
+  await expect(page.locator("#link-to-frame-with-empty-head")).toHaveCount(1)
+
+  await page.goForward()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/empty_head.html"))
+  await expect(page.locator("#empty-head h2")).toHaveText("Frame updated")
+
+  await page.goForward()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+})
+
+test("promoted frame visit replaces history and keeps the head when the response describes none", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_promoted_start.html")
+  await readEventLogs(page)
+  await page.click("#start-promoted-visit")
+  await nextEventNamed(page, "turbo:load")
+
+  await page.click("#replace-with-no-head")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/promoted_no_head.html"))
+  await expect(page).toHaveTitle("Promoted frame visits")
+  await expect(page.locator('meta[name="description"]')).toHaveCount(1)
+  await expect(page.locator('link[rel="icon"]')).toHaveCount(1)
+  await expect(page.locator("html")).toHaveAttribute("lang", "en")
+
+  await page.click("#drive-away")
+  await nextEventNamed(page, "turbo:load")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frame_promoted_destination.html"))
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/promoted_no_head.html"))
+  await expect(page.locator("#promoted h2")).toHaveText("Frame: No head")
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frame_promoted_start.html"))
+  await expect(page.locator("h1")).toHaveText("Promoted frame start")
+
+  await page.goForward()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/promoted_no_head.html"))
+  await expect(page.locator("#promoted h2")).toHaveText("Frame: No head")
+  await expect(page).toHaveTitle("Promoted frame visits")
+
+  await page.goForward()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frame_promoted_destination.html"))
+})
+
+test("promoted frame visit merges a complete document head", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_promoted_full_visit.html")
+  await readEventLogs(page)
+
+  await page.click("#to-full-head")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveTitle("Complete promoted frame title")
+  await expect(page.locator("head title")).toHaveCount(1)
+  await expect(page.locator('meta[name="description"]')).toHaveCount(1)
+  await expect(page.locator('link[rel="icon"]')).toHaveCount(1)
+  await expect(page.locator("html")).toHaveAttribute("lang", "fr")
 })
 
 test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {

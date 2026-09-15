@@ -11,11 +11,13 @@
   <body>
     <div id="container">
       <h1>Promoted frame visits</h1>
+      <a id="drive-away" href="/src/tests/fixtures/frame_promoted_destination.html">Leave with Turbo Drive</a>
 
       <turbo-frame id="promoted" data-turbo-action="advance">
         <h2>Frame: Not Loaded</h2>
 
         <a id="to-no-head" href="/src/tests/fixtures/frames/promoted_no_head.html">Response without a head</a>
+        <a id="replace-with-no-head" href="/src/tests/fixtures/frames/promoted_no_head.html" data-turbo-action="replace">Replace with a response without a head</a>
         <a id="to-partial-head" href="/src/tests/fixtures/frames/promoted_partial_head.html">Response with a partial head</a>
       </turbo-frame>
     </div>
