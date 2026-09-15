@@ -508,6 +508,37 @@ test("removing [disabled] attribute from eager-loaded frame navigates it", async
   await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
 })
 
+test("failed frame src fetch does not produce an unhandled rejection", async ({ page }) => {
+  await page.evaluate(() => {
+    window.unhandledRejections = []
+    addEventListener("unhandledrejection", (event) => {
+      window.unhandledRejections.push(String(event.reason?.message || event.reason))
+    })
+
+    const nativeFetch = window.fetch
+    window.fetch = (input, options) => {
+      const url = new URL(input, window.location.href)
+
+      if (url.pathname === "/src/tests/fixtures/frames/frame.html") {
+        return Promise.reject(new TypeError("Load failed"))
+      }
+
+      return nativeFetch(input, options)
+    }
+  })
+
+  await page.evaluate(() =>
+    document.getElementById("frame")?.setAttribute("src", "/src/tests/fixtures/frames/frame.html")
+  )
+
+  await nextEventOnTarget(page, "frame", "turbo:fetch-request-error")
+  await page.evaluate(() => document.getElementById("frame").loaded)
+  await nextBeat()
+
+  const unhandledRejections = await page.evaluate(() => window.unhandledRejections)
+  expect(unhandledRejections, "does not produce an unhandled rejection").toEqual([])
+})
+
 test("evaluates frame script elements on each render", async ({ page }) => {
   expect(await frameScriptEvaluationCount(page)).toEqual(undefined)
 

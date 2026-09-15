@@ -354,7 +354,9 @@ export class FrameController {
         this.#currentFetchRequest = null
         resolve()
       }
-      request.perform()
+      void request.perform().catch(() => {
+        this.#resolveVisitPromise()
+      })
     })
   }
 
