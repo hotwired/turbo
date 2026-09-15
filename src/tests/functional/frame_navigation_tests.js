@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { getFromLocalStorage, nextBeat, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector, withPathname } from "../helpers/page"
+import { getFromLocalStorage, nextBeat, nextEventNamed, nextEventOnTarget, pathname, readEventLogs, scrollToSelector, withPathname } from "../helpers/page"
 
 test("frame navigation with descendant link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
@@ -41,6 +41,46 @@ test("frame navigation with data-turbo-action", async ({ page }) => {
 
   const titleText = page.locator("h1")
   await expect(titleText).toHaveText("Frame navigation tests")
+})
+
+test("promoted frame visit keeps the document head when the response describes none", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_promoted_visit.html")
+  await readEventLogs(page)
+
+  await page.click("#to-no-head")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveTitle("Promoted frame visits")
+  await expect(page.locator('meta[name="description"]')).toHaveCount(1)
+  await expect(page.locator('link[rel="icon"]')).toHaveCount(1)
+  await expect(page.locator("html")).toHaveAttribute("lang", "en")
+})
+
+test("promoted frame visit merges the head the response describes without discarding the rest", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_promoted_visit.html")
+  await expect(page.locator('meta[name="partial"]')).toHaveCount(0)
+  await readEventLogs(page)
+
+  await page.click("#to-partial-head")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveTitle("Promoted frame title")
+  await expect(page.locator("head title")).toHaveCount(1)
+  await expect(page.locator('meta[name="partial"]')).toHaveCount(1)
+  await expect(page.locator('meta[name="description"]')).toHaveCount(1)
+  await expect(page.locator('link[rel="icon"]')).toHaveCount(1)
+  await expect(page.locator("html")).toHaveAttribute("lang", "en")
+})
+
+test("promoted frame visit advances history when the response omits tracked elements", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await readEventLogs(page)
+
+  await page.click("#link-to-frame-with-empty-head")
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/empty_head.html"))
+  expect(await page.evaluate(() => window.Turbo.session.view.forceReloaded)).toEqual(false)
 })
 
 test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {

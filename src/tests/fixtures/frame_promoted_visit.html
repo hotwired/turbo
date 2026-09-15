@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Promoted frame visits</title>
+    <meta name="description" content="Description from the page">
+    <link rel="icon" href="data:image/x-icon;base64,AA">
+    <script src="/dist/turbo.es2017-umd.js"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <h1>Promoted frame visits</h1>
+
+      <turbo-frame id="promoted" data-turbo-action="advance">
+        <h2>Frame: Not Loaded</h2>
+
+        <a id="to-no-head" href="/src/tests/fixtures/frames/promoted_no_head.html">Response without a head</a>
+        <a id="to-partial-head" href="/src/tests/fixtures/frames/promoted_partial_head.html">Response with a partial head</a>
+      </turbo-frame>
+    </div>
+  </body>
+</html>
