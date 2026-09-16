@@ -14,6 +14,7 @@ import {
   readEventLogs,
   scrollPosition,
   scrollToSelector,
+  visitAction,
   withPathname,
   withSearchParam
 } from "../helpers/page"
@@ -724,11 +725,72 @@ test("navigating pushing URL state from a frame navigation fires events", async 
   expect(await nextAttributeMutationNamed(page, "html", "aria-busy"), "sets aria-busy on the <html>").toEqual("true")
   await nextEventOnTarget(page, "html", "turbo:before-visit")
   await nextEventOnTarget(page, "html", "turbo:visit")
-  await nextEventOnTarget(page, "html", "turbo:before-cache")
   await nextEventOnTarget(page, "html", "turbo:before-render")
   await nextEventOnTarget(page, "html", "turbo:render")
   await nextEventOnTarget(page, "html", "turbo:load")
   expect(await nextAttributeMutationNamed(page, "html", "aria-busy"), "removes aria-busy from the <html>").not.toBeTruthy()
+})
+
+test("navigating a frame with an action does not fire turbo:before-cache", async ({ page }) => {
+  await page.evaluate(() => {
+    window.beforeCacheCount = 0
+    addEventListener("turbo:before-cache", () => window.beforeCacheCount++)
+  })
+  await page.click("#link-outside-frame-action-advance")
+  await nextEventNamed(page, "turbo:load")
+
+  expect(await page.evaluate(() => window.beforeCacheCount), "does not fire turbo:before-cache").toEqual(0)
+})
+
+test("navigating a frame with an action preserves unrelated temporary elements", async ({ page }) => {
+  await page.locator("body").evaluate((body) => {
+    body.insertAdjacentHTML("beforeend", '<div id="temporary" data-turbo-temporary>Temporary element</div>')
+  })
+  await page.click("#link-outside-frame-action-advance")
+  await nextEventNamed(page, "turbo:load")
+
+  expect(await visitAction(page)).toEqual("advance")
+  await expect(page.locator("#temporary")).toHaveText("Temporary element")
+})
+
+test("restoring history after a promoted frame navigation does not restore temporary elements", async ({ page }) => {
+  await page.locator("body").evaluate((body) => {
+    body.insertAdjacentHTML("beforeend", '<div id="marker">Client-only marker</div>')
+    body.insertAdjacentHTML("beforeend", '<div id="temporary" data-turbo-temporary>Temporary element</div>')
+  })
+  await page.locator("#frame").evaluate((frame) => {
+    frame.insertAdjacentHTML("beforeend", '<div id="frame-temporary" data-turbo-temporary>Temporary frame element</div>')
+  })
+  await page.click("#link-outside-frame-action-advance")
+  await nextEventNamed(page, "turbo:load")
+  await nextBeat()
+  await nextBeat()
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+  await expect(page.locator("#marker"), "restores Back from the snapshot cache").toHaveCount(1)
+  await expect(page.locator("#temporary")).toHaveCount(0)
+  await expect(page.locator("#frame-temporary")).toHaveCount(0)
+
+  await page.goForward()
+  await nextEventNamed(page, "turbo:load")
+  await expect(page.locator("#marker"), "restores Forward from the snapshot cache").toHaveCount(1)
+  await expect(page.locator("#temporary")).toHaveCount(0)
+  await expect(page.locator("#frame-temporary")).toHaveCount(0)
+})
+
+test("replacing URL state from a frame navigation preserves unrelated temporary elements", async ({ page }) => {
+  await page.locator("body").evaluate((body) => {
+    body.insertAdjacentHTML("beforeend", '<div id="temporary" data-turbo-temporary>Temporary element</div>')
+  })
+  await page.locator("#link-outside-frame-action-advance").evaluate((link) => {
+    link.setAttribute("data-turbo-action", "replace")
+  })
+  await page.click("#link-outside-frame-action-advance")
+  await nextEventNamed(page, "turbo:load")
+
+  expect(await visitAction(page)).toEqual("replace")
+  await expect(page.locator("#temporary")).toHaveText("Temporary element")
 })
 
 test("navigating a frame with a form[method=get] that does not redirect still updates the [src]", async ({
