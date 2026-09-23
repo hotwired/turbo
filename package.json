@@ -59,7 +59,8 @@
     "test:unit": "NODE_OPTIONS=--inspect web-test-runner",
     "test:unit:win": "SET NODE_OPTIONS=--inspect & web-test-runner",
     "release": "yarn build && yarn publish",
-    "lint": "eslint . --ext .js"
+    "lint": "eslint . --ext .js",
+    "prepare": "yarn build"
   },
   "engines": {
     "node": ">= 18"
