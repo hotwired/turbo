@@ -210,6 +210,103 @@ test("preventing a turbo:before-morph-element prevents the morph", async ({ page
   await expect(page.locator("#message_1")).toHaveText("Morph me")
 })
 
+test("dispatches turbo:before-morph-element-added and turbo:morph-element-added when a new element is added via morph", async ({ page }) => {
+  // First clear the container, then add new content via morph
+  await page.evaluate(() => {
+    document.getElementById("container").innerHTML = ""
+  })
+
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" method="morph" target="container">
+        <template>
+          <div id="new-child">New child element</div>
+        </template>
+      </turbo-stream>
+    `)
+  })
+
+  await nextEventNamed(page, "turbo:before-morph-element-added")
+  await nextEventNamed(page, "turbo:morph-element-added")
+  await expect(page.locator("#new-child")).toHaveText("New child element")
+})
+
+test("preventing turbo:before-morph-element-added prevents the element from being added", async ({ page }) => {
+  await page.evaluate(() => {
+    document.getElementById("container").innerHTML = ""
+  })
+
+  await page.evaluate(() => {
+    addEventListener("turbo:before-morph-element-added", (event) => {
+      if (event.detail.newElement.id === "prevented-child") {
+        event.preventDefault()
+      }
+    })
+  })
+
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" method="morph" target="container">
+        <template>
+          <div id="prevented-child">Should not appear</div>
+        </template>
+      </turbo-stream>
+    `)
+  })
+
+  await nextEventNamed(page, "turbo:before-morph-element-added")
+  await expect(page.locator("#prevented-child")).not.toBeAttached()
+})
+
+test("dispatches turbo:before-morph-element-removed and turbo:morph-element-removed when an element is removed via morph", async ({ page }) => {
+  // Set up a container with a child that will be removed
+  await page.evaluate(() => {
+    document.getElementById("container").innerHTML = '<div id="to-be-removed">Remove me</div>'
+  })
+
+  await expect(page.locator("#to-be-removed")).toBeAttached()
+
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" method="morph" target="container">
+        <template></template>
+      </turbo-stream>
+    `)
+  })
+
+  await nextEventNamed(page, "turbo:before-morph-element-removed")
+  await nextEventNamed(page, "turbo:morph-element-removed")
+  await expect(page.locator("#to-be-removed")).not.toBeAttached()
+})
+
+test("preventing turbo:before-morph-element-removed prevents the element from being removed", async ({ page }) => {
+  // Set up a container with a child that should be preserved
+  await page.evaluate(() => {
+    document.getElementById("container").innerHTML = '<div id="preserve-me">Keep me</div>'
+  })
+
+  await expect(page.locator("#preserve-me")).toBeAttached()
+
+  await page.evaluate(() => {
+    addEventListener("turbo:before-morph-element-removed", (event) => {
+      if (event.detail.currentElement.id === "preserve-me") {
+        event.preventDefault()
+      }
+    })
+  })
+
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" method="morph" target="container">
+        <template></template>
+      </turbo-stream>
+    `)
+  })
+
+  await nextEventNamed(page, "turbo:before-morph-element-removed")
+  await expect(page.locator("#preserve-me")).toBeAttached()
+})
+
 test("rendering a stream message into the HTML executes it", async ({ page }) => {
   await page.evaluate(() => {
     document.body.insertAdjacentHTML(
