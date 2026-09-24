@@ -68,6 +68,21 @@ router.post("/reject/morph", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.post("/reject/morph/reset", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_morph_reset.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.post("/reject/reset", (request, response) => {
+  const { status } = request.body
+  const statusCode = parseInt(status || "404", 10)
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/${statusCode}_reset.html`)
+
+  response.status(statusCode).sendFile(fixture)
+})
+
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
