@@ -45,6 +45,7 @@ export class PageView extends View {
       this.delegate.viewWillCacheSnapshot()
       const { lastRenderedLocation: location } = this
       await nextEventLoopTick()
+      if (this.renderPromise) await this.renderPromise
       const cachedSnapshot = snapshot.clone()
       this.snapshotCache.put(location, cachedSnapshot)
       return cachedSnapshot
