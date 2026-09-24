@@ -42,11 +42,13 @@ test("drive disabled by default; submit form inside data-turbo='true'", async ({
 test("drive disabled by default; links within <turbo-frame> navigate with Turbo", async ({ page }) => {
   await page.click("#frame a")
   await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
 test("drive disabled by default; forms within <turbo-frame> navigate with Turbo", async ({ page }) => {
   await page.click("#frame button")
   await nextEventOnTarget(page, "frame", "turbo:frame-render")
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
 test("drive disabled by default; slot within <turbo-frame> navigate with Turbo", async ({ page }) => {

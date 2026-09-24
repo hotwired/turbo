@@ -362,12 +362,12 @@ export class Session {
 
   // Frame element
 
-  frameLoaded(frame) {
-    this.notifyApplicationAfterFrameLoad(frame)
+  frameLoaded(frame, fetchResponse) {
+    this.notifyApplicationAfterFrameLoad(frame, fetchResponse)
   }
 
-  frameRendered(fetchResponse, frame) {
-    this.notifyApplicationAfterFrameRender(fetchResponse, frame)
+  frameRendered(frame, fetchResponse) {
+    this.notifyApplicationAfterFrameRender(frame, fetchResponse)
   }
 
   // Application events
@@ -422,13 +422,19 @@ export class Session {
     })
   }
 
-  notifyApplicationAfterFrameLoad(frame) {
-    return dispatch("turbo:frame-load", { target: frame })
+  notifyApplicationAfterFrameLoad(frame, fetchResponse) {
+    return dispatch("turbo:frame-load", { target: frame, detail: { fetchResponse } })
   }
 
-  notifyApplicationAfterFrameRender(fetchResponse, frame) {
+  notifyApplicationAfterFrameRender(frame, fetchResponse) {
+    const detailWithDeprecation = {
+      get fetchResponse() {
+        console.warn("DEPRECATED: If your event listener needs to access the detail.fetchResponse, listen for the turbo:frame-load event")
+        return fetchResponse
+      }
+    }
     return dispatch("turbo:frame-render", {
-      detail: { fetchResponse },
+      detail: detailWithDeprecation,
       target: frame,
       cancelable: true
     })
