@@ -237,6 +237,13 @@ function escapeHTML(html) {
 }
 const app = express()
 
+app.use((request, response, next) => {
+  if (request.query['Content-Security-Policy']) {
+    response.setHeader('Content-Security-Policy', request.query['Content-Security-Policy'])
+  }
+  next()
+})
+
 app.use(json({ limit: "1mb" }), urlencoded({ extended: true }))
 app.use(express.static("."))
 app.use(/\/__turbo/, router)
