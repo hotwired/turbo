@@ -127,7 +127,7 @@ test("turbo:before-morph-attribute Stimulus listeners can handle morphing attrib
 
   const { mutationType } = await nextEventOnTarget(page, "stimulus-controller", "turbo:before-morph-attribute", { attributeName: "data-test-state-value" })
 
-  await expect(mutationType).toEqual("update")
+  await expect(mutationType).toEqual("remove")
   await expect(controller).toHaveAttribute("data-test-state-value", "controller state")
   await expect(page.locator("#form-text")).toHaveValue("")
   await expect(page.locator("#test-output")).toHaveText("connected")
