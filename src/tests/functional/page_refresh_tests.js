@@ -16,6 +16,35 @@ test("renders a page refresh with morphing", async ({ page }) => {
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 })
 
+test("does not throw when a saved focus id matches a non-input element after morphing", async ({ page }) => {
+  let requestCount = 0
+  const pageErrors = []
+
+  page.on("pageerror", (error) => pageErrors.push(error))
+  await page.route("**/src/tests/fixtures/page_refresh_focus.html", async (route) => {
+    requestCount += 1
+
+    if (requestCount === 1) {
+      await route.continue()
+    } else {
+      const response = await route.fetch()
+      const body = await response.text()
+
+      await route.fulfill({
+        response,
+        body: body.replace(`<input id="title">`, `<div id="title">Saved</div>`)
+      })
+    }
+  })
+
+  await page.goto("/src/tests/fixtures/page_refresh_focus.html")
+  await page.locator("#title").fill("Morph me")
+  await refreshWithStream(page)
+
+  await expect(page.locator("#title")).toHaveText("Saved")
+  expect(pageErrors).toEqual([])
+})
+
 test("async page refresh with turbo-stream", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
 
