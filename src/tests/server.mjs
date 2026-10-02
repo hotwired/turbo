@@ -117,6 +117,18 @@ router.post("/refreshes", (request, response) => {
   }
 })
 
+router.post("/redirects", (request, response) => {
+  const params = { ...request.body, ...request.query }
+  const { url, advance } = params
+
+  if (acceptsStreams(request)) {
+    response.type("text/vnd.turbo-stream.html; charset=utf-8")
+    response.send(renderRedirect(url, advance))
+  } else {
+    response.sendStatus(201)
+  }
+})
+
 router.get("/request_id_header", (request, response) => {
   const turboRequestHeader = request.get("X-Turbo-Request-Id")
 
@@ -216,6 +228,12 @@ function renderMessageForTargets(content, id, targets) {
 function renderPageRefresh(requestId) {
   return `
     <turbo-stream action="refresh" request-id="${requestId}"></turbo-stream>
+  `
+}
+
+function renderRedirect(url, advance) {
+  return `
+    <turbo-stream action="redirect" url="${escapeHTML(url)}"${advance ? " advance" : ""}></turbo-stream>
   `
 }
 

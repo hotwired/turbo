@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turbo Streams</title>
+  <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+  <script src="/src/tests/fixtures/test.js"></script>
+</head>
+<body>
+  <form id="same-origin" method="post" action="/__turbo/redirects">
+    <input type="hidden" name="url" value="/src/tests/fixtures/one.html">
+    <button>Redirect</button>
+  </form>
+
+  <form id="advance" method="post" action="/__turbo/redirects">
+    <input type="hidden" name="url" value="/src/tests/fixtures/one.html">
+    <input type="hidden" name="advance" value="1">
+    <button>Redirect and advance</button>
+  </form>
+
+  <form id="cross-origin" method="post" action="/__turbo/redirects">
+    <input type="hidden" name="url" value="https://example.com/">
+    <button>Redirect cross-origin</button>
+  </form>
+</body>
+</html>
