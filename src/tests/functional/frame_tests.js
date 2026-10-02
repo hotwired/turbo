@@ -37,6 +37,20 @@ test("navigating a frame with Turbo.visit", async ({ page }) => {
   await expect(page.locator("#frame h2"), "navigates the target frame").toHaveText("Frame: Loaded")
 })
 
+test("reloading a frame while its response body is still streaming does not leak an AbortError", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error.message))
+
+  const responded = page.waitForResponse("**/__turbo/slow_body")
+  await page.locator("#frame").evaluate((frame) => frame.setAttribute("src", "/__turbo/slow_body"))
+  await responded
+  await nextBeat()
+  await page.locator("#frame").evaluate((frame) => frame.reload())
+  await nextBeat()
+
+  expect(errors).toEqual([])
+})
+
 test("navigating a frame a second time does not leak event listeners", async ({ page }) => {
   await withoutChangingEventListenersCount(page, async () => {
     await page.click("#outer-frame-link")

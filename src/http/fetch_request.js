@@ -155,11 +155,19 @@ export class FetchRequest {
     if (event.defaultPrevented) {
       this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
     } else if (fetchResponse.succeeded) {
-      this.delegate.requestSucceededWithResponse(this, fetchResponse)
+      this.#ignoreCancellation(this.delegate.requestSucceededWithResponse(this, fetchResponse))
     } else {
-      this.delegate.requestFailedWithResponse(this, fetchResponse)
+      this.#ignoreCancellation(this.delegate.requestFailedWithResponse(this, fetchResponse))
     }
     return fetchResponse
+  }
+
+  // Delegates read the body after this returns, so a cancel() mid-read rejects
+  // a promise nobody awaits. Treat that like perform() treats any abort.
+  #ignoreCancellation(result) {
+    result?.catch?.((error) => {
+      if (error.name !== "AbortError") throw error
+    })
   }
 
   get defaultHeaders() {

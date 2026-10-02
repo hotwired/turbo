@@ -89,6 +89,12 @@ router.get("/delayed_response", (request, response) => {
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
 })
 
+router.get("/slow_body", (request, response) => {
+  response.status(200).type("html").write("<html><head></head><body>")
+  const finish = setTimeout(() => response.end(`<turbo-frame id="frame"><h2>Frame: Slow</h2></turbo-frame></body></html>`), 1000)
+  request.on("close", () => clearTimeout(finish))
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, id, status, type, target, targets } = params
