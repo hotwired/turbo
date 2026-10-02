@@ -78,7 +78,7 @@ async function withPreservedFocus(callback) {
 
   const restoreFocusTo = activeElementBeforeRender && activeElementBeforeRender.id
 
-  if (restoreFocusTo) {
+  if (restoreFocusTo && (activeElementAfterRender == null || activeElementAfterRender == document.body)) {
     const elementToFocus = document.getElementById(restoreFocusTo)
 
     if (elementIsFocusable(elementToFocus) && elementToFocus != activeElementAfterRender) {
