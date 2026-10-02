@@ -6,12 +6,13 @@ import { nextRepaint } from "../util"
 /**
  * Renders updates to the page from a stream of messages.
  *
- * Using the `action` attribute, this can be configured one of eight ways:
+ * Using the `action` attribute, this can be configured one of nine ways:
  *
  * - `after` - inserts the result after the target
  * - `append` - appends the result to the target
  * - `before` - inserts the result before the target
  * - `prepend` - prepends the result to the target
+ * - `redirect` - navigates to the location given by the url attribute
  * - `refresh` - initiates a page refresh
  * - `remove` - removes the target
  * - `replace` - replaces the outer HTML of the target

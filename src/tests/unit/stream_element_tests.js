@@ -311,3 +311,63 @@ test("action=update method=morph", async () => {
   assert.ok(subject.find("div#hello > h1#hello-child-element"))
   assert.equal(subject.find("div#hello > h1#hello-child-element").textContent, "Hello Turbo Morphed")
 })
+
+async function renderRedirectStreamElement(attributes) {
+  const visits = []
+  const errors = []
+  const { visit } = Turbo.session
+  const { error } = console
+  Turbo.session.visit = (location, options) => visits.push([location.toString(), options])
+  console.error = (e) => errors.push(e)
+
+  try {
+    subject.append(createStreamElement("redirect", null, null, attributes))
+    await nextAnimationFrame()
+  } finally {
+    Turbo.session.visit = visit
+    console.error = error
+  }
+
+  return { visits, errors }
+}
+
+test("action=redirect visits a same-origin url, replacing the history entry", async () => {
+  const { visits, errors } = await renderRedirectStreamElement({ url: "/src/tests/fixtures/one.html" })
+
+  assert.deepEqual(errors, [])
+  assert.deepEqual(visits, [[new URL("/src/tests/fixtures/one.html", document.baseURI).href, { action: "replace" }]])
+})
+
+test("action=redirect with advance visits a same-origin url, advancing the history", async () => {
+  const { visits } = await renderRedirectStreamElement({ url: "/src/tests/fixtures/one.html", advance: "" })
+
+  assert.deepEqual(visits, [[new URL("/src/tests/fixtures/one.html", document.baseURI).href, { action: "advance" }]])
+})
+
+test("action=redirect without url does not navigate", async () => {
+  const location = window.location.href
+  const { visits, errors } = await renderRedirectStreamElement({})
+
+  assert.deepEqual(visits, [])
+  assert.equal(errors.length, 1)
+  assert.match(errors[0].message, /url attribute is missing/)
+  assert.equal(window.location.href, location)
+})
+
+for (const url of [
+  "javascript:window.redirected = true",
+  "JaVaScRiPt:window.redirected = true",
+  "java\nscript:window.redirected = true",
+  "data:text/html,<script>window.redirected = true</script>"
+]) {
+  test(`action=redirect rejects the non-http(s) url ${JSON.stringify(url)}`, async () => {
+    const location = window.location.href
+    const { visits, errors } = await renderRedirectStreamElement({ url })
+
+    assert.deepEqual(visits, [])
+    assert.equal(errors.length, 1)
+    assert.match(errors[0].message, /url must use the http or https scheme/)
+    assert.notOk(window.redirected)
+    assert.equal(window.location.href, location)
+  })
+}
