@@ -261,6 +261,28 @@ test("it does not make a network request when clicking on a link that has been p
   await assertRequestNotMadeOnClick({ page, selector: "#anchor_for_prefetch" })
 })
 
+test("it reuses the prefetched response when the link query is not URLSearchParams-serialized", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_with_non_normalized_query" })
+  await assertRequestNotMadeOnClick({ page, selector: "#anchor_with_non_normalized_query" })
+
+  await expect(page).toHaveTitle("Prefetched Page")
+})
+
+test("it reuses the prefetched response for a frame link whose query is not URLSearchParams-serialized", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertPrefetchedOnHover({
+    page,
+    selector: "#anchor_for_prefetch_in_frame_with_non_normalized_query",
+    callback: (request) => {
+      expect(request.headers()["turbo-frame"]).toEqual("frame_for_prefetch_query")
+    }
+  })
+  await assertRequestNotMadeOnClick({ page, selector: "#anchor_for_prefetch_in_frame_with_non_normalized_query" })
+
+  await expect(page.locator("#frame_for_prefetch_query")).toContainText("Prefetched frame content")
+})
+
 test("it follows the link using the cached response when clicking on a link that has been prefetched", async ({
   page
 }) => {
