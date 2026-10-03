@@ -70,7 +70,12 @@ export class History {
 
   relinquishControlOfScrollRestoration() {
     if (this.previousScrollRestoration) {
-      history.scrollRestoration = this.previousScrollRestoration
+      try {
+        history.scrollRestoration = this.previousScrollRestoration
+      } catch {
+        // Firefox can throw SecurityError when restoring scrollRestoration
+        // during pagehide. The page is unloading; leave the browser's value.
+      }
       delete this.previousScrollRestoration
     }
   }
