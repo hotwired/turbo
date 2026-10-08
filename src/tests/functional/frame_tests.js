@@ -329,6 +329,21 @@ test("calling reload on a frame[refresh=morph] preserves [data-turbo-permanent] 
   await expect(input).toHaveValue("Preserve me")
 })
 
+test("navigating from within while a frame[refresh=morph] reloads replaces the contents", async ({ page }) => {
+  await page.click("#add-src-to-frame")
+  await page.click("#add-refresh-morph-to-frame")
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  await page.route("**/src/tests/fixtures/frames.html", () => {})
+  const reloadRequested = page.waitForRequest("**/src/tests/fixtures/frames.html")
+  await page.evaluate(() => { document.getElementById("frame").reload() })
+  await reloadRequested
+  await page.click("#link-frame")
+
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  await expect(page.locator("#permanent-input")).not.toBeAttached()
+})
+
 test("following a link in rapid succession cancels the previous request", async ({ page }) => {
   await page.click("#outside-frame-form")
   await page.click("#outer-frame-link")
