@@ -117,14 +117,26 @@ export class LinkPrefetchObserver {
 
   #tryToUsePrefetchedRequest = (event) => {
     if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
-      const cached = prefetchCache.get(event.detail.url)
-
-      if (cached) {
-        // User clicked link, use cache response
-        event.detail.fetchRequest = cached
-      }
-
+      this.#usePrefetchedRequest(event.detail)
       prefetchCache.clear()
+    }
+  }
+
+  #usePrefetchedRequest(detail) {
+    const cached = prefetchCache.get(detail.url)
+
+    if (cached && !cached.abortSignal.aborted) {
+      // The navigation now owns this request, so prefetching must not cancel it.
+      this.#removePendingFetchRequest(cached)
+      detail.fetchRequest = cached
+    }
+  }
+
+  #removePendingFetchRequest(fetchRequest) {
+    for (const [url, pendingFetchRequest] of this.#pendingFetchRequests) {
+      if (pendingFetchRequest === fetchRequest) {
+        this.#pendingFetchRequests.delete(url)
+      }
     }
   }
 
@@ -150,11 +162,7 @@ export class LinkPrefetchObserver {
   requestErrored(fetchRequest) {}
 
   requestFinished(fetchRequest) {
-    const url = fetchRequest.url.href
-
-    if(this.#pendingFetchRequests.get(url) === fetchRequest) {
-      this.#pendingFetchRequests.delete(url)
-    }
+    this.#removePendingFetchRequest(fetchRequest)
   }
 
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
