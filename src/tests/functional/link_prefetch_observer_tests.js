@@ -300,6 +300,43 @@ test("it keeps the running prefetch request when clicking a link", async ({ page
   expect(requestCount).toEqual(1)
 })
 
+test("rehovering does not abort the prefetch adopted by a navigation", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const destination = "**/__turbo/delayed_response"
+  let releaseResponse
+  const responseReady = new Promise(resolve => { releaseResponse = resolve })
+  const failedRequests = []
+  page.on("requestfailed", request => failedRequests.push(request.url()))
+  await page.route(destination, async route => {
+    await responseReady
+    await route.continue()
+  })
+  await page.evaluate(() => {
+    window.adoptedPrefetch = null
+    document.addEventListener("turbo:before-fetch-request", event => {
+      if (event.detail.fetchRequest) window.adoptedPrefetch = event.detail.fetchRequest
+    })
+  })
+
+  const prefetchStarted = page.waitForRequest(destination)
+  await page.hover("#anchor_for_slow_prefetch")
+  const prefetch = await prefetchStarted
+  expect(prefetch.headers()["x-sec-purpose"]).toEqual("prefetch")
+  await page.click("#anchor_for_slow_prefetch", { noWaitAfter: true })
+  await expect.poll(() => page.evaluate(() => !!window.adoptedPrefetch)).toBe(true)
+
+  await page.mouse.move(0, 0)
+  await page.hover("#anchor_for_slow_prefetch")
+  const aborted = await page.evaluate(() => window.adoptedPrefetch.abortSignal.aborted)
+  releaseResponse()
+
+  expect(aborted).toBe(false)
+  await expect(page).toHaveTitle("One")
+  await expect(page).toHaveURL("/__turbo/delayed_response")
+  expect(failedRequests).not.toContain(prefetch.url())
+})
+
 test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
