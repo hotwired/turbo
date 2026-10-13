@@ -55,6 +55,16 @@
       >Won't prefetch when hovering me</a>
     <iframe src="/src/tests/fixtures/hover_to_prefetch_iframe.html" name="prefetch_iframe"> </iframe>
 
+    <div style="position: relative">
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_under_form" style="display: block">Hover to prefetch me</a>
+      <form action="/__turbo/redirect" method="post" id="form_over_anchor" onsubmit="this.hidden = true"
+        style="position: absolute; inset: 0; margin: 0">
+        <input type="hidden" name="path" value="/src/tests/fixtures/hover_to_prefetch.html">
+        <input type="hidden" name="sleep" value="500">
+        <button type="submit" style="width: 100%; height: 100%">Submit</button>
+      </form>
+    </div>
+
     <turbo-frame id="frame_for_prefetch">
       <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame">Hover to prefetch me</a>
     </turbo-frame>

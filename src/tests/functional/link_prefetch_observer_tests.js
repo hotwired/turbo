@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { nextBeat, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
+import { nextBeat, nextEventNamed, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
 import fs from "fs"
 import path from "path"
 
@@ -269,6 +269,71 @@ test("it follows the link using the cached response when clicking on a link that
 
   await clickSelector({ page, selector: "#anchor_for_prefetch" })
   await expect(page).toHaveTitle("Prefetched Page")
+})
+
+test("it doesn't prefetch the page while a POST form submission is in progress", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await page.evaluate(() => {
+    window.timings = {}
+    const record = (name) => () => (window.timings[name] ??= performance.now())
+    // Timers with the same delay run in the order they were scheduled, so this one runs after
+    // the prefetch timer that LinkPrefetchObserver schedules once this event has been dispatched
+    document.getElementById("anchor_under_form").addEventListener("turbo:before-prefetch", () => {
+      queueMicrotask(() => setTimeout(record("prefetchDelayElapsed"), 100))
+    })
+    document.getElementById("form_over_anchor").addEventListener("turbo:before-fetch-response", record("responded"))
+  })
+
+  const prefetchRequests = []
+  page.on("request", (request) => {
+    if (request.headers()["x-sec-purpose"] === "prefetch") prefetchRequests.push(request.url())
+  })
+
+  await page.click("#form_over_anchor button")
+  await nextEventNamed(page, "turbo:submit-end")
+
+  const { prefetchDelayElapsed, responded } = await page.evaluate(() => window.timings)
+  expect(prefetchDelayElapsed).toBeLessThan(responded)
+  expect(prefetchRequests).toEqual([])
+})
+
+test("it cancels a scheduled prefetch when a POST form submission starts", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const prefetchRequests = []
+  page.on("request", (request) => {
+    if (request.headers()["x-sec-purpose"] === "prefetch") prefetchRequests.push(request.url())
+  })
+
+  await page.evaluate(() => {
+    window.timings = {}
+    const record = (name) => () => (window.timings[name] ??= performance.now())
+    document.getElementById("form_over_anchor").addEventListener("turbo:before-fetch-response", record("responded"))
+
+    document.getElementById("anchor_for_prefetch").dispatchEvent(new MouseEvent("mouseenter"))
+    // Runs after the prefetch timer that LinkPrefetchObserver has just scheduled
+    setTimeout(record("prefetchDelayElapsed"), 100)
+    document.getElementById("form_over_anchor").requestSubmit()
+  })
+  await nextEventNamed(page, "turbo:submit-end")
+
+  const { prefetchDelayElapsed, responded } = await page.evaluate(() => window.timings)
+  expect(prefetchDelayElapsed).toBeLessThan(responded)
+  expect(prefetchRequests).toEqual([])
+})
+
+test("it prefetches the page again after a POST form submission finishes", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await page.click("#form_over_anchor button")
+  await nextEventNamed(page, "turbo:submit-end")
+  await nextEventNamed(page, "turbo:load")
+
+  const link = page.locator("#anchor_for_prefetch")
+  await link.hover()
+  const { url, fetchOptions } = await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
+
+  await expect(link).toHaveJSProperty("href", url)
+  expect(fetchOptions.headers["X-Sec-Purpose"]).toEqual("prefetch")
 })
 
 const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
