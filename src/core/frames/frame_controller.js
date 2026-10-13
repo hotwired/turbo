@@ -149,6 +149,7 @@ export class FrameController {
     } finally {
       this.#shouldMorphFrame = false
       this.fetchResponseLoaded = () => Promise.resolve()
+      this.action = null
     }
   }
 
@@ -379,6 +380,12 @@ export class FrameController {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
           const responseHTML = await fetchResponse.responseHTML
+
+          // If the user navigated away (e.g. Back) after changeHistory() but
+          // before this promoted visit starts, skip it so Navigator#startVisit
+          // does not cancel the in-flight restore.
+          if (!urlsAreEqual(frame.src, session.location)) return
+
           const response = { statusCode, redirected, responseHTML }
           const options = {
             response,

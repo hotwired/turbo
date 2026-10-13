@@ -995,6 +995,35 @@ test("navigating back then forward after pushing URL state from a turbo-frame[da
   await expect(page.locator("#frame"), "marks the frame as [complete]").toHaveAttribute("complete")
 })
 
+test("navigating back before a turbo-frame[data-turbo-action=advance] visit is promoted restores the previous page", async ({
+  page
+}) => {
+  // Reproduce #1579: Back during the gap between #frame's frame-load and the
+  // promoted visit. Listen on #frame only (the page also has a recursive
+  // frame that loads on visit). The busy loop stands in for a slow main
+  // thread so popstate runs before the promoted visit is proposed. Click via
+  // evaluate so Playwright is not blocked by that synchronous page work.
+  await page.locator("#frame").evaluate((frame) => {
+    frame.addEventListener(
+      "turbo:frame-load",
+      () => {
+        history.back()
+        const until = performance.now() + 100
+        while (performance.now() < until) {
+          /* busy-wait so popstate is handled before the promoted visit */
+        }
+      },
+      { once: true }
+    )
+  })
+  await page.locator("#link-outside-frame-action-advance").evaluate((link) => link.click())
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames.html"))
+  await expect(page.locator("#frame h2")).toHaveText("Frames: #frame")
+  await expect(page.locator("#frame")).not.toHaveAttribute("src")
+})
+
 test("turbo:before-fetch-request fires on the frame element", async ({ page }) => {
   await page.click("#hello a")
   expect(await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")).toBeTruthy()
