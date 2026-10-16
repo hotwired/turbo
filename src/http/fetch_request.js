@@ -152,13 +152,17 @@ export class FetchRequest {
       detail: { fetchResponse },
       target: this.target
     })
+    let responseHandling
     if (event.defaultPrevented) {
-      this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
     } else if (fetchResponse.succeeded) {
-      this.delegate.requestSucceededWithResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestSucceededWithResponse(this, fetchResponse)
     } else {
-      this.delegate.requestFailedWithResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestFailedWithResponse(this, fetchResponse)
     }
+    Promise.resolve(responseHandling).catch((error) => {
+      if (error?.name !== "AbortError") throw error
+    })
     return fetchResponse
   }
 
