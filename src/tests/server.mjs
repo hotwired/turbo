@@ -89,6 +89,24 @@ router.get("/delayed_response", (request, response) => {
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
 })
 
+router.get("/delayed_response_body", (request, response) => {
+  const { status, disconnect } = request.query
+  const fixture = fs.readFileSync(path.join(__dirname, "fixtures/frames/frame.html"), "utf8")
+  const [head, body] = fixture.split("<body>")
+
+  response.type("html").status(parseInt(status || "200", 10))
+  response.write(`${head}<body>`)
+
+  const timeout = setTimeout(() => {
+    if (disconnect) {
+      response.destroy()
+    } else {
+      response.end(body)
+    }
+  }, 1000)
+  response.on("close", () => clearTimeout(timeout))
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, id, status, type, target, targets } = params

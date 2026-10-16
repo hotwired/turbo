@@ -336,6 +336,58 @@ test("following a link in rapid succession cancels the previous request", async 
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
 })
 
+test("canceling a frame request before its response arrives does not raise an unhandled rejection", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error))
+
+  await page.locator("#frame").evaluate((frame) => {
+    frame.src = "/__turbo/delayed_response"
+  })
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
+
+  await page.click("#outer-frame-link")
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+  await nextBeat()
+
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  expect(errors).toEqual([])
+})
+
+for (const status of [200, 422]) {
+  test(`canceling a frame's ${status} response body does not raise an unhandled rejection`, async ({ page }) => {
+    const errors = []
+    page.on("pageerror", (error) => errors.push(error))
+
+    await page.locator("#frame").evaluate((frame, status) => {
+      frame.src = `/__turbo/delayed_response_body?status=${status}`
+    }, status)
+    await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+
+    await page.click("#outer-frame-link")
+    await nextEventOnTarget(page, "frame", "turbo:frame-load")
+    await page.locator("#frame").evaluate((frame) => frame.loaded)
+    await nextBeat()
+
+    await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+    await expect(page.locator("#frame")).toHaveAttribute("complete")
+    await expect(page.locator("#frame")).not.toHaveAttribute("busy")
+    expect(errors).toEqual([])
+  })
+
+  test(`disconnecting a frame's ${status} response body still raises an error`, async ({ page }) => {
+    const errorPromise = page.waitForEvent("pageerror")
+
+    await page.locator("#frame").evaluate((frame, status) => {
+      frame.src = `/__turbo/delayed_response_body?status=${status}&disconnect=true`
+    }, status)
+    await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+
+    const error = await errorPromise
+    expect(error.name).not.toEqual("AbortError")
+    expect(error.message).toBeTruthy()
+  })
+}
+
 test("following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame", async ({
   page
 }) => {
