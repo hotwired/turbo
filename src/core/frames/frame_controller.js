@@ -72,6 +72,10 @@ export class FrameController {
 
       if (!this.element.hasAttribute("recurse")) {
         this.#currentFetchRequest?.cancel()
+
+        if (this.formSubmission?.isSafe && !this.element.isConnected) {
+          this.formSubmission.stop()
+        }
       }
     }
   }
