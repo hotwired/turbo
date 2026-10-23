@@ -89,6 +89,12 @@ router.get("/delayed_response", (request, response) => {
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
 })
 
+router.get("/interrupted_response", (request, response) => {
+  const { status } = request.query
+  response.type("html").status(parseInt(status || "200")).write("<!DOCTYPE html><html><head><title>Interrupted</title></head><body>")
+  setTimeout(() => response.destroy(), 100)
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, id, status, type, target, targets } = params

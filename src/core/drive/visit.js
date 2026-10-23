@@ -291,7 +291,12 @@ export class Visit {
   requestPreventedHandlingResponse(_request, _response) {}
 
   async requestSucceededWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -305,7 +310,12 @@ export class Visit {
   }
 
   async requestFailedWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -326,6 +336,10 @@ export class Visit {
 
   requestFinished() {
     this.finishRequest()
+  }
+
+  #responseBodyErrored(request, error) {
+    if (!request.abortSignal.aborted) this.requestErrored(request, error)
   }
 
   // Scrolling
