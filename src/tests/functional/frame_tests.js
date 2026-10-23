@@ -336,6 +336,22 @@ test("following a link in rapid succession cancels the previous request", async 
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
 })
 
+test("a frame navigation promoted to a visit does not cancel a page visit in progress", async ({ page }) => {
+  const delay = (milliseconds) => async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, milliseconds))
+    await route.continue()
+  }
+  await page.route("**/frames/frame.html", delay(250))
+  await page.route("**/fixtures/one.html", delay(1000))
+
+  await page.click("#link-outside-frame-action-advance")
+  await page.click("#outside-navigate-top-link")
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+
+  await expect(page.locator("h1")).toHaveText("One")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+})
+
 test("following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame", async ({
   page
 }) => {
