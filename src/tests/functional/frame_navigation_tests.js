@@ -44,10 +44,16 @@ test("frame navigation with data-turbo-action", async ({ page }) => {
 })
 
 test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error))
+
   await page.goto("/src/tests/fixtures/tabs.html")
   await page.context().setOffline(true)
   await page.click("#tab-2")
   await nextEventOnTarget(page, "tab-frame", "turbo:fetch-request-error")
+  await nextBeat()
+
+  expect(errors, "does not raise an unhandled rejection").toEqual([])
 })
 
 test("lazy-loaded frame promotes navigation", async ({ page }) => {
