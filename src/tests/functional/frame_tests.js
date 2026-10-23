@@ -5,6 +5,7 @@ import {
   nextAttributeMutationNamed,
   noNextAttributeMutationNamed,
   nextBeat,
+  nextBody,
   nextEventNamed,
   nextEventOnTarget,
   noNextEventNamed,
@@ -334,6 +335,28 @@ test("following a link in rapid succession cancels the previous request", async 
   await page.click("#outer-frame-link")
 
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+})
+
+test("removing a frame cancels a GET form submission targeting it", async ({ page }) => {
+  await page.route("**/frames/frame.html*", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await route.continue()
+  })
+  await page.evaluate(() => {
+    const form = document.createElement("form")
+    form.action = "/src/tests/fixtures/frames/frame.html"
+    form.setAttribute("data-turbo-frame", "frame")
+    form.setAttribute("data-turbo-action", "advance")
+    document.body.append(form)
+    form.requestSubmit()
+  })
+  await nextEventNamed(page, "turbo:before-fetch-request")
+  await page.locator("#frame").evaluate((frame) => frame.remove())
+  await nextEventNamed(page, "turbo:submit-end")
+  await nextBody(page)
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames.html"))
+  expect(await noNextEventNamed(page, "turbo:visit")).toEqual(true)
 })
 
 test("following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame", async ({
