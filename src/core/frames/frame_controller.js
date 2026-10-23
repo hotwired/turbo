@@ -13,6 +13,7 @@ import {
   getVisitAction
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
+import { VisitState } from "../drive/visit"
 import { Snapshot } from "../snapshot"
 import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
@@ -25,6 +26,11 @@ import { session } from "../index"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
 import { TurboFrameMissingError } from "../errors"
+
+function pageVisitInProgress() {
+  const visit = session.navigator.currentVisit
+  return visit?.state == VisitState.started && visit.willRender
+}
 
 export class FrameController {
   fetchResponseLoaded = (_fetchResponse) => Promise.resolve()
@@ -391,7 +397,7 @@ export class FrameController {
 
           if (this.action) options.action = this.action
 
-          session.visit(frame.src, options)
+          if (!pageVisitInProgress()) session.visit(frame.src, options)
         }
       }
     }
