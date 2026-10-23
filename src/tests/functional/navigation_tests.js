@@ -10,6 +10,7 @@ import {
   pathname,
   pathnameForIFrame,
   readEventLogs,
+  sleep,
   visitAction,
   willChangeBody,
   withHash,
@@ -41,6 +42,17 @@ test("navigating does not render a progress bar before expiring the delay", asyn
   await page.click("#same-origin-unannotated-link")
 
   await expect(page.locator(".turbo-progress-bar"), "does not show progress bar before delay").not.toBeAttached()
+})
+
+test("navigating does not render the progress bar of a cancelled visit", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(500))
+  await page.click("#delayed-link")
+  await nextEventNamed(page, "turbo:before-fetch-request")
+  await page.click("#same-origin-unannotated-link")
+  await nextEventNamed(page, "turbo:load")
+  await sleep(600)
+
+  await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
 })
 
 test("navigating hides the progress bar on failure", async ({ page }) => {
