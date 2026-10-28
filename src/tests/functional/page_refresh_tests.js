@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test"
 import {
+  listenForEventOnTarget,
   nextEventNamed,
   nextEventOnTarget,
   noNextEventOnTarget,
@@ -102,6 +103,20 @@ test("turbo:before-morph-attribute Stimulus listeners can handle morphing attrib
   await expect(controller).toHaveAttribute("data-test-state-value", "controller state")
   await expect(page.locator("#form-text")).toHaveValue("")
   await expect(page.locator("#test-output")).toHaveText("connected")
+})
+
+test("page refreshes close a modal dialog that the new page renders closed", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  const dialog = page.locator("#modal-dialog")
+  await listenForEventOnTarget(page, "modal-dialog", "close")
+  await dialog.evaluate((dialog) => dialog.showModal())
+  await expect(dialog).toBeVisible()
+
+  await refreshWithStream(page)
+
+  await nextEventOnTarget(page, "modal-dialog", "close")
+  await expect(dialog).toBeHidden()
+  await expect(page.locator(":modal")).toHaveCount(0)
 })
 
 test("page refreshes cause a reload when assets change", async ({ page }) => {
