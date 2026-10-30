@@ -1,0 +1,7 @@
+#two-b::after {
+  content: " Yes"
+}
+
+#validation::after {
+  content: "One and two are in order"
+}
