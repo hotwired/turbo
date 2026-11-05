@@ -34,6 +34,7 @@ export class FrameController {
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
   #shouldMorphFrame = false
+  #snapshotBeforeSubmission = null
   action = null
 
   constructor(element) {
@@ -197,6 +198,14 @@ export class FrameController {
     const frame = this.#findFrameElement(element, submitter)
 
     this.prepareRequest(fetchRequest, frame)
+
+    if (getVisitAction(submitter, element, frame)) {
+      // Create the snapshot before the formSubmission marks the page busy. Keep the snapshot
+      // of a superseded formSubmission around, because the page is still marked busy by it,
+      // and a new snapshot would include the busy state
+      this.#snapshotBeforeSubmission ??= PageSnapshot.fromElement(frame).clone()
+    }
+
     this.formSubmission.start()
   }
 
@@ -246,7 +255,11 @@ export class FrameController {
   formSubmissionSucceededWithResponse(formSubmission, response) {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
-    frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
+    frame.delegate.proposeVisitIfNavigatedWithAction(
+      frame,
+      getVisitAction(formSubmission.submitter, formSubmission.formElement, frame),
+      this.#snapshotBeforeSubmission
+    )
     frame.delegate.loadResponse(response)
 
     if (!formSubmission.isSafe) {
@@ -263,7 +276,13 @@ export class FrameController {
     console.error(error)
   }
 
-  formSubmissionFinished({ formElement }) {
+  formSubmissionFinished(formSubmission) {
+    const { formElement } = formSubmission
+
+    // Keep the snapshot available for the latest formSubmission and clear it afterwards
+    if (formSubmission === this.formSubmission) {
+      this.#snapshotBeforeSubmission = null
+    }
     clearBusyState(formElement, this.#findFrameElement(formElement))
   }
 
@@ -368,11 +387,11 @@ export class FrameController {
     })
   }
 
-  proposeVisitIfNavigatedWithAction(frame, action = null) {
+  proposeVisitIfNavigatedWithAction(frame, action = null, snapshot = null) {
     this.action = action
 
     if (this.action) {
-      const pageSnapshot = PageSnapshot.fromElement(frame).clone()
+      const pageSnapshot = snapshot || PageSnapshot.fromElement(frame).clone()
       const { visitCachedSnapshot } = frame.delegate
 
       frame.delegate.fetchResponseLoaded = async (fetchResponse) => {

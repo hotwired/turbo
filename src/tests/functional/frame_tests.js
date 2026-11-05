@@ -995,6 +995,56 @@ test("navigating back then forward after pushing URL state from a turbo-frame[da
   await expect(page.locator("#frame"), "marks the frame as [complete]").toHaveAttribute("complete")
 })
 
+test("navigating back after a form[method=get][data-turbo-action=advance] submission restores the page as it was before the submission", async ({
+  page
+}) => {
+  await page.evaluate(() => {
+    document.querySelector("h1").textContent = "Changed"
+  })
+
+  await page.click("#form-get-frame-action-advance button")
+  await nextEventNamed(page, "turbo:load")
+  await nextBeat()
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  const form = page.locator("#form-get-frame-action-advance")
+
+  await expect(page.locator("h1"), "restores the page from the snapshot cache").toHaveText("Changed")
+  await expect(page.locator("#frame h2")).toHaveText("Frames: #frame")
+  await expect(page.locator("#frame"), "clears turbo-frame[busy]").not.toHaveAttribute("busy")
+  await expect(page.locator("#frame"), "clears turbo-frame[aria-busy]").not.toHaveAttribute("aria-busy")
+  await expect(form, "clears form[aria-busy]").not.toHaveAttribute("aria-busy")
+  await expect(form.locator("button"), "re-enables the submitter").toBeEnabled()
+})
+
+test("navigating back after resubmitting a form[data-turbo-action=advance] during a submission restores the page as it was before the submissions", async ({
+  page
+}) => {
+  const form = page.locator("#form-post-frame-action-advance")
+
+  await page.evaluate(() => {
+    document.querySelector("h1").textContent = "Changed"
+    document
+      .querySelector("#form-post-frame-action-advance")
+      .insertAdjacentHTML("beforeend", `<input type="hidden" name="sleep" value="500">`)
+  })
+
+  await page.click("#form-post-frame-action-advance button")
+  await nextEventNamed(page, "turbo:submit-start")
+  await form.evaluate((element) => element.requestSubmit())
+  await nextEventNamed(page, "turbo:load")
+  await nextBeat()
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("h1"), "restores the page from the snapshot cache").toHaveText("Changed")
+  await expect(page.locator("#frame"), "clears turbo-frame[busy]").not.toHaveAttribute("busy")
+  await expect(page.locator("#frame"), "clears turbo-frame[aria-busy]").not.toHaveAttribute("aria-busy")
+  await expect(form, "clears form[aria-busy]").not.toHaveAttribute("aria-busy")
+  await expect(form.locator("button"), "re-enables the submitter").toBeEnabled()
+})
+
 test("turbo:before-fetch-request fires on the frame element", async ({ page }) => {
   await page.click("#hello a")
   expect(await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")).toBeTruthy()
