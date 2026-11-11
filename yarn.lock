@@ -809,9 +809,9 @@ body-parser@1.20.3, body-parser@^1.20.1:
     unpipe "1.0.0"
 
 brace-expansion@^1.1.7:
-  version "1.1.11"
-  resolved "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.11.tgz"
-  integrity sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==
+  version "1.1.22"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.22.tgz#82f87655acd0bae5c8a717bb0a81573e43ab42c0"
+  integrity sha512-CKLDTuSsN0+r1ThM0WkzzBI7dnPI6xEGfa/JnVYIK9JNBA1N1NyPwXVHor//NKD/y3sDxp764sZdLhFK7pH8XQ==
   dependencies:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
