@@ -24,6 +24,7 @@ export class PageView extends View {
     if (!renderer.shouldRender) {
       this.forceReloaded = true
     } else {
+      this.forceReloaded = false
       visit?.changeHistory()
     }
 

@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test"
 import {
+  clickWithoutScrolling,
   nextBeat,
+  nextEventNamed,
   reloadPage,
   scrollPosition,
   scrollToSelector
@@ -33,3 +35,30 @@ test("returning from history", async ({ page }) => {
   const { y: yAfterReturning } = await scrollPosition(page)
   expect(yAfterReturning).not.toEqual(0)
 })
+
+test('scrolls to the top on a Drive visit made after a frame navigation with data-turbo-action="advance"', async ({ page }) => {
+  await assertScrollsToTopAfterFrameNavigation(page, "advance")
+})
+
+test('scrolls to the top on a Drive visit made after a frame navigation with data-turbo-action="replace"', async ({ page }) => {
+  await assertScrollsToTopAfterFrameNavigation(page, "replace")
+})
+
+async function assertScrollsToTopAfterFrameNavigation(page, action) {
+  await page.goto("/src/tests/fixtures/scroll_reset_after_frame_navigation.html")
+  await nextEventNamed(page, "turbo:load") // consume the initial load before tracking later ones
+
+  await page.locator("#frame").evaluate((frame, action) => frame.setAttribute("data-turbo-action", action), action)
+  await page.click("#frame-link")
+  await nextEventNamed(page, "turbo:load")
+  await expect(page).toHaveURL(/frame_only_body\.html/)
+
+  await page.evaluate(() => window.scrollTo(0, 500))
+  expect((await scrollPosition(page)).y).toEqual(500)
+
+  await clickWithoutScrolling(page, "#full-visit")
+  await nextEventNamed(page, "turbo:load")
+  await expect(page).toHaveURL(/scroll_restoration\.html/)
+
+  expect((await scrollPosition(page)).y).toEqual(0)
+}
