@@ -81,7 +81,7 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
+        prefetchCache.putLater(fetchRequest.url, fetchRequest, this.#cacheTtl)
       }
     }
   }

@@ -38,6 +38,8 @@
       >Won't prefetch when hovering me</a>
     <a href="/src/tests/fixtures/prefetched.html?foo=bar" id="anchor_for_same_location_with_query"
       >Hover to prefetch me</a>
+    <a href="/src/tests/fixtures/prefetched.html?specs[title]=A%20/%20B" id="anchor_with_non_normalized_query"
+      >Hover to prefetch me</a>
     <a href="https://example.com" id="anchor_for_different_origin">Won't prefetch when hovering me</a>
     <a href="http://localhost:9000/src/tests/fixtures/prefetched.html" id="anchor_with_whole_url"
       >Hover to prefetch me</a>
@@ -57,6 +59,10 @@
 
     <turbo-frame id="frame_for_prefetch">
       <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame">Hover to prefetch me</a>
+    </turbo-frame>
+
+    <turbo-frame id="frame_for_prefetch_query">
+      <a href="/src/tests/fixtures/prefetched_frame.html?specs[title]=A%20/%20B" id="anchor_for_prefetch_in_frame_with_non_normalized_query">Hover to prefetch me</a>
     </turbo-frame>
 
     <turbo-frame id="frame_for_prefetch_top" target="_top">
