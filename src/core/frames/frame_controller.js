@@ -33,7 +33,7 @@ export class FrameController {
   #connected = false
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
-  #shouldMorphFrame = false
+  #morphingFetchRequest = null
   action = null
 
   constructor(element) {
@@ -103,11 +103,11 @@ export class FrameController {
   sourceURLReloaded() {
     const { refresh, src } = this.element
 
-    this.#shouldMorphFrame = src && refresh === "morph"
-
     this.element.removeAttribute("complete")
     this.element.src = null
     this.element.src = src
+
+    this.#morphingFetchRequest = src && refresh === "morph" ? this.#currentFetchRequest : null
     return this.element.loaded
   }
 
@@ -129,7 +129,7 @@ export class FrameController {
     }
   }
 
-  async loadResponse(fetchResponse) {
+  async loadResponse(fetchResponse, fetchRequest) {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       this.sourceURL = fetchResponse.response.url
     }
@@ -141,13 +141,12 @@ export class FrameController {
         const pageSnapshot = PageSnapshot.fromDocument(document)
 
         if (pageSnapshot.isVisitable) {
-          await this.#loadFrameResponse(fetchResponse, document)
+          await this.#loadFrameResponse(fetchResponse, document, fetchRequest)
         } else {
           await this.#handleUnvisitableFrameResponse(fetchResponse)
         }
       }
     } finally {
-      this.#shouldMorphFrame = false
       this.fetchResponseLoaded = () => Promise.resolve()
     }
   }
@@ -219,12 +218,12 @@ export class FrameController {
   }
 
   async requestSucceededWithResponse(request, response) {
-    await this.loadResponse(response)
+    await this.loadResponse(response, request)
     this.#resolveVisitPromise()
   }
 
   async requestFailedWithResponse(request, response) {
-    await this.loadResponse(response)
+    await this.loadResponse(response, request)
     this.#resolveVisitPromise()
   }
 
@@ -322,9 +321,9 @@ export class FrameController {
 
   // Private
 
-  async #loadFrameResponse(fetchResponse, document) {
+  async #loadFrameResponse(fetchResponse, document, fetchRequest) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
-    const rendererClass = this.#shouldMorphFrame ? MorphingFrameRenderer : FrameRenderer
+    const rendererClass = fetchRequest && fetchRequest === this.#morphingFetchRequest ? MorphingFrameRenderer : FrameRenderer
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
