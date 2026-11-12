@@ -299,7 +299,15 @@ export class FrameController {
   // Frame renderer delegate
 
   willRenderFrame(currentElement, _newElement) {
-    this.previousFrameElement = currentElement.cloneNode(true)
+    // Only clone the frame for promoted frame visits, where visitCachedSnapshot
+    // consumes the clone to restore the frame's contents into the cached page
+    // snapshot (and deletes it). For plain frame renders — src changes without
+    // a data-turbo-action, refresh="morph" reloads, broadcast-driven reloads —
+    // nothing ever consumes or clears the clone, so it would pin a complete
+    // copy of the frame's previous subtree on the controller indefinitely.
+    if (this.action) {
+      this.previousFrameElement = currentElement.cloneNode(true)
+    }
   }
 
   visitCachedSnapshot = ({ element }) => {

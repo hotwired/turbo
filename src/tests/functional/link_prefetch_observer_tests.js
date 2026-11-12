@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { nextBeat, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
+import { nextBeat, nextEventNamed, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
 import fs from "fs"
 import path from "path"
 
@@ -121,6 +121,11 @@ test("it doesn't prefetch the page when link has a hash as a href", async ({ pag
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_hash" })
 })
 
+test("it doesn't prefetch the page when SVG link has a hash as a href", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_hash_inside_svg" })
+})
+
 test("it doesn't prefetch the page when link has a ftp protocol", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
   await assertNotPrefetchedOnHover({ page, selector: "#anchor_with_ftp_protocol" })
@@ -205,6 +210,24 @@ test("doesn't include a turbo-frame header when the link is inside a turbo frame
   }})
 })
 
+test("includes turbo-frame header when the link with a data-turbo-frame=_self is inside a turbo frame", async ({ page}) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_in_frame_target_self", callback: (request) => {
+    const turboFrameHeader = request.headers()["turbo-frame"]
+    expect(turboFrameHeader).toEqual("frame_for_prefetch_self")
+  }})
+})
+
+test("doesn't include turbo-frame header when the link with a data-turbo-frame=_self is outside of a turbo frame", async ({ page}) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  await assertPrefetchedOnHover({ page, selector: "#anchor_for_prefetch_out_of_frame_target_self", callback: (request) => {
+    const turboFrameHeader = request.headers()["turbo-frame"]
+    expect(turboFrameHeader).toEqual(undefined)
+  }})
+})
+
 test("it prefetches links with a delay", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
@@ -256,6 +279,28 @@ test("it does not make a network request when clicking on a link that has been p
   await assertRequestNotMadeOnClick({ page, selector: "#anchor_for_prefetch" })
 })
 
+test("it reuses the prefetched response when the link query is not URLSearchParams-serialized", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertPrefetchedOnHover({ page, selector: "#anchor_with_non_normalized_query" })
+  await assertRequestNotMadeOnClick({ page, selector: "#anchor_with_non_normalized_query" })
+
+  await expect(page).toHaveTitle("Prefetched Page")
+})
+
+test("it reuses the prefetched response for a frame link whose query is not URLSearchParams-serialized", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await assertPrefetchedOnHover({
+    page,
+    selector: "#anchor_for_prefetch_in_frame_with_non_normalized_query",
+    callback: (request) => {
+      expect(request.headers()["turbo-frame"]).toEqual("frame_for_prefetch_query")
+    }
+  })
+  await assertRequestNotMadeOnClick({ page, selector: "#anchor_for_prefetch_in_frame_with_non_normalized_query" })
+
+  await expect(page.locator("#frame_for_prefetch_query")).toContainText("Prefetched frame content")
+})
+
 test("it follows the link using the cached response when clicking on a link that has been prefetched", async ({
   page
 }) => {
@@ -264,6 +309,71 @@ test("it follows the link using the cached response when clicking on a link that
 
   await clickSelector({ page, selector: "#anchor_for_prefetch" })
   await expect(page).toHaveTitle("Prefetched Page")
+})
+
+test("it doesn't prefetch the page while a POST form submission is in progress", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await page.evaluate(() => {
+    window.timings = {}
+    const record = (name) => () => (window.timings[name] ??= performance.now())
+    // Timers with the same delay run in the order they were scheduled, so this one runs after
+    // the prefetch timer that LinkPrefetchObserver schedules once this event has been dispatched
+    document.getElementById("anchor_under_form").addEventListener("turbo:before-prefetch", () => {
+      queueMicrotask(() => setTimeout(record("prefetchDelayElapsed"), 100))
+    })
+    document.getElementById("form_over_anchor").addEventListener("turbo:before-fetch-response", record("responded"))
+  })
+
+  const prefetchRequests = []
+  page.on("request", (request) => {
+    if (request.headers()["x-sec-purpose"] === "prefetch") prefetchRequests.push(request.url())
+  })
+
+  await page.click("#form_over_anchor button")
+  await nextEventNamed(page, "turbo:submit-end")
+
+  const { prefetchDelayElapsed, responded } = await page.evaluate(() => window.timings)
+  expect(prefetchDelayElapsed).toBeLessThan(responded)
+  expect(prefetchRequests).toEqual([])
+})
+
+test("it cancels a scheduled prefetch when a POST form submission starts", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const prefetchRequests = []
+  page.on("request", (request) => {
+    if (request.headers()["x-sec-purpose"] === "prefetch") prefetchRequests.push(request.url())
+  })
+
+  await page.evaluate(() => {
+    window.timings = {}
+    const record = (name) => () => (window.timings[name] ??= performance.now())
+    document.getElementById("form_over_anchor").addEventListener("turbo:before-fetch-response", record("responded"))
+
+    document.getElementById("anchor_for_prefetch").dispatchEvent(new MouseEvent("mouseenter"))
+    // Runs after the prefetch timer that LinkPrefetchObserver has just scheduled
+    setTimeout(record("prefetchDelayElapsed"), 100)
+    document.getElementById("form_over_anchor").requestSubmit()
+  })
+  await nextEventNamed(page, "turbo:submit-end")
+
+  const { prefetchDelayElapsed, responded } = await page.evaluate(() => window.timings)
+  expect(prefetchDelayElapsed).toBeLessThan(responded)
+  expect(prefetchRequests).toEqual([])
+})
+
+test("it prefetches the page again after a POST form submission finishes", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await page.click("#form_over_anchor button")
+  await nextEventNamed(page, "turbo:submit-end")
+  await nextEventNamed(page, "turbo:load")
+
+  const link = page.locator("#anchor_for_prefetch")
+  await link.hover()
+  const { url, fetchOptions } = await nextEventOnTarget(page, "anchor_for_prefetch", "turbo:before-fetch-request")
+
+  await expect(link).toHaveJSProperty("href", url)
+  expect(fetchOptions.headers["X-Sec-Purpose"]).toEqual("prefetch")
 })
 
 const assertPrefetchedOnHover = async ({ page, selector, callback }) => {

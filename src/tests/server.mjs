@@ -83,10 +83,45 @@ router.get("/headers", (request, response) => {
     .send(template.replace("$HEADERS", JSON.stringify(request.headers, null, 4)))
 })
 
+for (const name of ["source", "destination"]) {
+  router.get(`/csp_nonce/${name}`, (_request, response) => {
+    const fixture = path.join(__dirname, `fixtures/csp_nonce_${name}.html`)
+    response.set(
+      "Content-Security-Policy",
+      "script-src 'nonce-turbo-test-nonce' 'nonce-explicit-test-nonce'; style-src 'unsafe-inline'"
+    )
+    response.sendFile(fixture)
+  })
+}
+
 router.get("/delayed_response", (request, response) => {
   const { status } = request.query
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
+})
+
+router.get("/interrupted_response", (request, response) => {
+  const { status } = request.query
+  response.type("html").status(parseInt(status || "200")).write("<!DOCTYPE html><html><head><title>Interrupted</title></head><body>")
+  setTimeout(() => response.destroy(), 100)
+})
+
+router.get("/delayed_response_body", (request, response) => {
+  const { status, disconnect } = request.query
+  const fixture = fs.readFileSync(path.join(__dirname, "fixtures/frames/frame.html"), "utf8")
+  const [head, body] = fixture.split("<body>")
+
+  response.type("html").status(parseInt(status || "200", 10))
+  response.write(`${head}<body>`)
+
+  const timeout = setTimeout(() => {
+    if (disconnect) {
+      response.destroy()
+    } else {
+      response.end(body)
+    }
+  }, 1000)
+  response.on("close", () => clearTimeout(timeout))
 })
 
 router.post("/messages", (request, response) => {
