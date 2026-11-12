@@ -410,6 +410,28 @@ test("navigating back to anchored URL", async ({ page }) => {
   expect(await isScrolledToSelector(page, "#main"), "scrolled to #main").toEqual(true)
 })
 
+test("reusing a cached snapshot keeps document.body connected during rendering", async ({ page }) => {
+  const bodyWasDisconnected = await page.evaluate(async () => {
+    // Cached snapshots must stay detached so subsequent transitions never reuse the same body element.
+    let bodyWasDisconnected = false
+    const adoptNode = document.adoptNode
+    document.adoptNode = function (node) {
+      const adoptedNode = adoptNode.call(this, node)
+      if (!document.body) bodyWasDisconnected = true
+      return adoptedNode
+    }
+
+    const view = window.Turbo.session.view
+    await view.cacheSnapshot()
+    await view.renderPage(view.getCachedSnapshotForLocation(location))
+    await view.renderPage(view.getCachedSnapshotForLocation(location))
+
+    return bodyWasDisconnected
+  })
+
+  expect(bodyWasDisconnected, "keeps document.body connected").toEqual(false)
+})
+
 test("following a redirection", async ({ page }) => {
   await page.click("#redirection-link")
 
