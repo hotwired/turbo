@@ -8,10 +8,13 @@ import { MorphingPageRenderer } from "./drive/morphing_page_renderer"
 import { MorphingFrameRenderer } from "./frames/morphing_frame_renderer"
 
 export { morphChildren, morphElements } from "./morphing"
+export { PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
 
 const session = new Session(recentRequests)
-const { cache, navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
+
+// Rename `navigator` to avoid shadowing `window.navigator`
+const { cache, navigator: sessionNavigator } = session
+export { session, cache, sessionNavigator as navigator }
 
 /**
  * Starts the main session.
@@ -44,6 +47,9 @@ export function registerAdapter(adapter) {
  * navigations to the same page will not result in a new history entry.
  * @param options.snapshotHTML Cached snapshot to render
  * @param options.response Response of the specified location
+ * @param options.scroll Scroll behavior to apply after rendering ("preserve"
+ * or "reset"). Defaults to resetting the scroll position, unless the visit is
+ * a page refresh governed by the `turbo-refresh-scroll` meta tag.
  */
 export function visit(location, options) {
   session.visit(location, options)

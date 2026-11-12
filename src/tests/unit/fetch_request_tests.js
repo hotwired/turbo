@@ -112,12 +112,12 @@ test("canceling an unrelated request does not cancel an adopted request", async 
   assert.lengthOf(delivered, 1)
 })
 
-test("an adopted request error is still reported and rethrown", async () => {
+test("an adopted request error is reported to the delegate", async () => {
   const error = new TypeError("Network failed")
   adopted.response = Promise.reject(error)
-  const result = await consumer.perform().catch(caught => caught)
+  const result = await consumer.perform()
 
-  assert.strictEqual(result, error)
+  assert.isUndefined(result)
   assert.deepEqual(errors, [error])
   assert.deepEqual(finished, [consumer])
 })
@@ -137,3 +137,44 @@ test("ordinary requests retain their own cancellation and response lifecycle", a
   assert.equal(await response.responseText, "Ordinary")
   assert.deepEqual(finished, [request])
 })
+
+test("mutating an empty POST body and its URL keeps them independent", () => {
+  const request = requestFor(FetchMethod.post)
+  const originalURL = request.url.href
+
+  request.body.append("message", "event-only")
+  assert.equal(request.url.href, originalURL)
+  const body = request.body.toString()
+  request.url.searchParams.append("url-only", "value")
+  assert.equal(request.body.toString(), body)
+  assert.equal(request.body.get("message"), "event-only")
+})
+
+test("POST form data remains in the body without replacing the URL query", () => {
+  const request = requestFor(FetchMethod.post, new URLSearchParams({ message: "form-value" }))
+
+  assert.equal(request.url.search, "?existing=1&filter=old")
+  assert.equal(request.body.toString(), "message=form-value")
+  request.body.append("another", "value")
+  assert.equal(request.url.search, "?existing=1&filter=old")
+})
+
+test("a GET request without form data preserves its URL query", () => {
+  const request = requestFor(FetchMethod.get)
+
+  assert.equal(request.url.search, "?existing=1&filter=old")
+  assert.isNull(request.fetchOptions.body)
+})
+
+test("GET form data replaces the URL query and preserves repeated fields", () => {
+  const request = requestFor(FetchMethod.get, new URLSearchParams([
+    ["filter", "new"], ["tag", "one"], ["tag", "two"]
+  ]))
+
+  assert.equal(request.url.search, "?filter=new&tag=one&tag=two")
+  assert.isNull(request.fetchOptions.body)
+})
+
+function requestFor(method, body = new URLSearchParams()) {
+  return new FetchRequest({}, method, new URL("http://example.test/submit?existing=1&filter=old"), body)
+}
