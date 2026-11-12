@@ -1,4 +1,4 @@
-import { parseHTMLDocument } from "../../util"
+import { elementIsStylesheet, parseHTMLDocument } from "../../util"
 import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
@@ -12,12 +12,13 @@ export class PageSnapshot extends Snapshot {
     return this.fromDocument(element.ownerDocument)
   }
 
-  static fromDocument({ head, body }) {
-    return new this(body, new HeadSnapshot(head))
+  static fromDocument({ documentElement, body, head }) {
+    return new this(documentElement, body, new HeadSnapshot(head))
   }
 
-  constructor(element, headSnapshot) {
-    super(element)
+  constructor(documentElement, body, headSnapshot) {
+    super(body)
+    this.documentElement = documentElement
     this.headSnapshot = headSnapshot
   }
 
@@ -37,11 +38,23 @@ export class PageSnapshot extends Snapshot {
       clonedPasswordInput.value = ""
     }
 
-    return new PageSnapshot(clonedElement, this.headSnapshot)
+    for (const clonedNoscriptElement of clonedElement.querySelectorAll("noscript")) {
+      for (const child of [...clonedNoscriptElement.children]) {
+        if (elementIsStylesheet(child)) {
+          child.remove()
+        }
+      }
+    }
+
+    return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)
   }
 
-  get html() {
-    return `${this.headElement.outerHTML}\n\n${this.element.outerHTML}`
+  get lang() {
+    return this.documentElement.getAttribute("lang")
+  }
+
+  get dir() {
+    return this.documentElement.getAttribute("dir")
   }
 
   get headElement() {
@@ -70,7 +83,16 @@ export class PageSnapshot extends Snapshot {
   }
 
   get prefersViewTransitions() {
-    return this.headSnapshot.getMetaValue("view-transition") === "same-origin"
+    const viewTransitionEnabled = this.getSetting("view-transition") === "true" || this.headSnapshot.getMetaValue("view-transition") === "same-origin"
+    return viewTransitionEnabled && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  }
+
+  get refreshMethod() {
+    return this.getSetting("refresh-method")
+  }
+
+  get refreshScroll() {
+    return this.getSetting("refresh-scroll")
   }
 
   // Private

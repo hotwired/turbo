@@ -1,153 +1,77 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
-import { hasSelector, nextBeat } from "../helpers/page"
+import { expect, test } from "@playwright/test"
+import { nextEventNamed, nextPageRefresh } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/autofocus.html")
 })
 
-test("test autofocus first autofocus element on load", async ({ page }) => {
-  await nextBeat()
-  assert.ok(
-    await hasSelector(page, "#first-autofocus-element:focus"),
-    "focuses the first [autofocus] element on the page"
-  )
-  assert.notOk(
-    await hasSelector(page, "#second-autofocus-element:focus"),
-    "focuses the first [autofocus] element on the page"
-  )
+test("autofocus first autofocus element on load", async ({ page }) => {
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
 })
 
-test("test autofocus first [autofocus] element on visit", async ({ page }) => {
+test("autofocus first [autofocus] element on visit", async ({ page }) => {
   await page.goto("/src/tests/fixtures/navigation.html")
   await page.click("#autofocus-link")
-  await nextBeat()
-
-  assert.ok(
-    await hasSelector(page, "#first-autofocus-element:focus"),
-    "focuses the first [autofocus] element on the page"
-  )
-  assert.notOk(
-    await hasSelector(page, "#second-autofocus-element:focus"),
-    "focuses the first [autofocus] element on the page"
-  )
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
 })
 
-test("test navigating a frame with a descendant link autofocuses [autofocus]:first-of-type", async ({ page }) => {
+test("navigating a frame with a descendant link autofocuses [autofocus]:first-of-type", async ({ page }) => {
   await page.click("#frame-inner-link")
-  await nextBeat()
-
-  assert.ok(
-    await hasSelector(page, "#frames-form-first-autofocus-element:focus"),
-    "focuses the first [autofocus] element in frame"
-  )
-  assert.notOk(
-    await hasSelector(page, "#frames-form-second-autofocus-element:focus"),
-    "focuses the first [autofocus] element in frame"
-  )
+  await expect(page.locator("#frames-form-first-autofocus-element")).toBeFocused()
 })
 
-test("test autofocus visible [autofocus] element on visit with inert elements", async ({ page }) => {
+test("autofocus visible [autofocus] element on visit with inert elements", async ({ page }) => {
   await page.click("#autofocus-inert-link")
-  await nextBeat()
-
-  assert.notOk(
-    await hasSelector(page, "#dialog-autofocus-element:focus"),
-    "autofocus element is ignored in a closed dialog"
-  )
-  assert.notOk(
-    await hasSelector(page, "#details-autofocus-element:focus"),
-    "autofocus element is ignored in a closed details"
-  )
-  assert.notOk(
-    await hasSelector(page, "#hidden-autofocus-element:focus"),
-    "autofocus element is ignored in a hidden div"
-  )
-  assert.notOk(
-    await hasSelector(page, "#inert-autofocus-element:focus"),
-    "autofocus element is ignored in an inert div"
-  )
-  assert.notOk(
-    await hasSelector(page, "#disabled-autofocus-element:focus"),
-    "autofocus element is ignored when disabled"
-  )
-  assert.ok(
-    await hasSelector(page, "#visible-autofocus-element:focus"),
-    "focuses the visible [autofocus] element on the page"
-  )
+  await expect(page.locator("#visible-autofocus-element")).toBeFocused()
 })
 
-test("test navigating a frame with a link targeting the frame autofocuses [autofocus]:first-of-type", async ({
+test("navigating a frame with a link targeting the frame autofocuses [autofocus]:first-of-type", async ({
   page
 }) => {
   await page.click("#frame-outer-link")
-  await nextBeat()
-
-  assert.ok(
-    await hasSelector(page, "#frames-form-first-autofocus-element:focus"),
-    "focuses the first [autofocus] element in frame"
-  )
-  assert.notOk(
-    await hasSelector(page, "#frames-form-second-autofocus-element:focus"),
-    "focuses the first [autofocus] element in frame"
-  )
+  await expect(page.locator("#frames-form-first-autofocus-element")).toBeFocused()
 })
 
-test("test navigating a frame with a turbo-frame targeting the frame autofocuses [autofocus]:first-of-type", async ({
+test("navigating a frame with a turbo-frame targeting the frame autofocuses [autofocus]:first-of-type", async ({
   page
 }) => {
   await page.click("#drives-frame-target-link")
-  await nextBeat()
-
-  assert.ok(
-    await hasSelector(page, "#frames-form-first-autofocus-element:focus"),
-    "focuses the first [autofocus] element in frame"
-  )
-  assert.notOk(
-    await hasSelector(page, "#frames-form-second-autofocus-element:focus"),
-    "focuses the first [autofocus] element in frame"
-  )
+  await expect(page.locator("#frames-form-first-autofocus-element")).toBeFocused()
 })
 
-test("test receiving a Turbo Stream message with an [autofocus] element when the activeElement is the document", async ({ page }) => {
+test("receiving a Turbo Stream message with an [autofocus] element when the activeElement is the document", async ({ page }) => {
+  // Ensure the [autofocus] element has been processed before blurring
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+
   await page.evaluate(() => {
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur()
-    }
+    document.activeElement.blur()
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="append" targets="body">
         <template><input id="autofocus-from-stream" autofocus></template>
       </turbo-stream>
     `)
   })
-  await nextBeat()
 
-  assert.ok(
-    await hasSelector(page, "#autofocus-from-stream:focus"),
-    "focuses the [autofocus] element in from the turbo-stream"
-  )
+  await expect(page.locator("#autofocus-from-stream")).toBeFocused()
 })
 
-test("test autofocus from a Turbo Stream message does not leak a placeholder [id]", async ({ page }) => {
+test("autofocus from a Turbo Stream message does not leak a placeholder [id]", async ({ page }) => {
+  // Ensure the [autofocus] element has been processed before blurring
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+
   await page.evaluate(() => {
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur()
-    }
+    document.activeElement.blur()
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="append" targets="body">
         <template><div id="container-from-stream"><input autofocus></div></template>
       </turbo-stream>
     `)
   })
-  await nextBeat()
 
-  assert.ok(
-    await hasSelector(page, "#container-from-stream input:focus"),
-    "focuses the [autofocus] element in from the turbo-stream"
-  )
+  await expect(page.locator("#container-from-stream input")).toBeFocused()
 })
 
-test("test receiving a Turbo Stream message with an [autofocus] element when an element within the document has focus", async ({ page }) => {
+test("receiving a Turbo Stream message with an [autofocus] element when an element within the document has focus", async ({ page }) => {
   await page.evaluate(() => {
     window.Turbo.renderStreamMessage(`
       <turbo-stream action="append" targets="body">
@@ -155,10 +79,24 @@ test("test receiving a Turbo Stream message with an [autofocus] element when an 
       </turbo-stream>
     `)
   })
-  await nextBeat()
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+})
 
-  assert.ok(
-    await hasSelector(page, "#first-autofocus-element:focus"),
-    "focuses the first [autofocus] element on the page"
-  )
+test("don't focus on [autofocus] elements on page refreshes with morphing", async ({ page }) => {
+  const input = await page.locator("#form input[autofocus]")
+
+  const button = page.locator("#first-autofocus-element")
+  await button.click()
+
+  await nextPageRefresh(page)
+
+  await expect(button).toBeFocused()
+  await expect(input).not.toBeFocused()
+
+  await page.locator("#form").evaluate((form) => form.requestSubmit())
+
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextPageRefresh(page)
+
+  await expect(button).toBeFocused()
 })

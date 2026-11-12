@@ -1,6 +1,7 @@
 import { FetchResponse } from "./fetch_response"
 import { expandURL } from "../core/url"
 import { dispatch } from "../util"
+import { fetch } from "./fetch"
 
 export function fetchMethodFromString(method) {
   switch (method.toLowerCase()) {
@@ -55,7 +56,7 @@ export class FetchRequest {
     this.fetchOptions = {
       credentials: "same-origin",
       redirect: "follow",
-      method: method,
+      method: method.toUpperCase(),
       headers: { ...this.defaultHeaders },
       body: body,
       signal: this.abortSignal,
@@ -78,7 +79,7 @@ export class FetchRequest {
 
     this.url = url
     this.fetchOptions.body = body
-    this.fetchOptions.method = fetchMethod
+    this.fetchOptions.method = fetchMethod.toUpperCase()
   }
 
   get headers() {
@@ -120,17 +121,23 @@ export class FetchRequest {
   async perform() {
     const { fetchOptions } = this
     this.delegate.prepareRequest(this)
-    await this.#allowRequestToBeIntercepted(fetchOptions)
+    const event = await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
       this.delegate.requestStarted(this)
-      const response = await fetch(this.url.href, fetchOptions)
+
+      if (event.detail.fetchRequest) {
+        this.response = event.detail.fetchRequest.response
+      } else {
+        this.response = fetch(this.url.href, fetchOptions)
+      }
+
+      const response = await this.response
       return await this.receive(response)
     } catch (error) {
       if (error.name !== "AbortError") {
         if (this.#willDelegateErrorHandling(error)) {
           this.delegate.requestErrored(this, error)
         }
-        throw error
       }
     } finally {
       this.delegate.requestFinished(this)
@@ -144,13 +151,17 @@ export class FetchRequest {
       detail: { fetchResponse },
       target: this.target
     })
+    let responseHandling
     if (event.defaultPrevented) {
-      this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
     } else if (fetchResponse.succeeded) {
-      this.delegate.requestSucceededWithResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestSucceededWithResponse(this, fetchResponse)
     } else {
-      this.delegate.requestFailedWithResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestFailedWithResponse(this, fetchResponse)
     }
+    Promise.resolve(responseHandling).catch((error) => {
+      if (error?.name !== "AbortError") throw error
+    })
     return fetchResponse
   }
 
@@ -185,6 +196,8 @@ export class FetchRequest {
     })
     this.url = event.detail.url
     if (event.defaultPrevented) await requestInterception
+
+    return event
   }
 
   #willDelegateErrorHandling(error) {

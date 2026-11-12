@@ -1,5 +1,4 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 import {
   getFromLocalStorage,
   getSearchParam,
@@ -7,20 +6,17 @@ import {
   isScrolledToTop,
   nextAttributeMutationNamed,
   nextBeat,
-  nextBody,
   nextEventNamed,
   nextEventOnTarget,
   noNextEventNamed,
   outerHTMLForSelector,
-  pathname,
   readEventLogs,
   scrollToSelector,
-  search,
-  searchParams,
   setLocalStorageFromEvent,
   visitAction,
-  waitUntilSelector,
-  waitUntilNoSelector
+  withPathname,
+  withSearch,
+  withSearchParam
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -30,119 +26,130 @@ test.beforeEach(async ({ page }) => {
   await readEventLogs(page)
 })
 
-test("test standard form submission renders a progress bar", async ({ page }) => {
+test("standard form submission renders a progress bar", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
   await page.click("#standard form.sleep input[type=submit]")
 
-  await waitUntilSelector(page, ".turbo-progress-bar")
-  assert.ok(await hasSelector(page, ".turbo-progress-bar"), "displays progress bar")
+  await expect(page.locator(".turbo-progress-bar"), "displays progress bar").toBeAttached()
 
-  await nextBody(page)
-  await waitUntilNoSelector(page, ".turbo-progress-bar")
-
-  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "hides progress bar")
+  await nextEventNamed(page, "turbo:load")
+  await expect(page.locator(".turbo-progress-bar"), "hides progress bar").not.toBeAttached()
 })
 
-test("test form submission with confirmation confirmed", async ({ page }) => {
+test("form submission with confirmation confirmed", async ({ page }) => {
   page.on("dialog", (alert) => {
-    assert.equal(alert.message(), "Are you sure?")
+    expect(alert.message()).toEqual("Are you sure?")
     alert.accept()
   })
 
   await page.click("#standard form.confirm input[type=submit]")
 
   await nextEventNamed(page, "turbo:load")
-  assert.ok(await formSubmitStarted(page))
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  expect(await formSubmitStarted(page)).toEqual("true")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
 })
 
-test("test form submission with confirmation cancelled", async ({ page }) => {
+test("form submission with confirmation cancelled", async ({ page }) => {
   page.on("dialog", (alert) => {
-    assert.equal(alert.message(), "Are you sure?")
+    expect(alert.message()).toEqual("Are you sure?")
     alert.dismiss()
   })
   await page.click("#standard form.confirm input[type=submit]")
 
-  assert.notOk(await formSubmitStarted(page))
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test form submission with secondary submitter click - confirmation confirmed", async ({ page }) => {
+test("form submission with secondary submitter click - confirmation confirmed", async ({ page }) => {
   page.on("dialog", (alert) => {
-    assert.equal(alert.message(), "Are you really sure?")
+    expect(alert.message()).toEqual("Are you really sure?")
     alert.accept()
   })
 
   await page.click("#standard form.confirm #secondary_submitter")
 
   await nextEventNamed(page, "turbo:load")
-  assert.ok(await formSubmitStarted(page))
-  assert.equal(await pathname(page.url()), "/src/tests/fixtures/one.html")
-  assert.equal(await visitAction(page), "advance")
-  assert.equal(getSearchParam(page.url(), "greeting"), "secondary_submitter")
+  expect(await formSubmitStarted(page)).toEqual("true")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  expect(await visitAction(page)).toEqual("advance")
+  await expect(page).toHaveURL(withSearchParam("greeting", "secondary_submitter"))
 })
 
-test("test form submission with secondary submitter click - confirmation cancelled", async ({ page }) => {
+test("form submission with secondary submitter click - confirmation cancelled", async ({ page }) => {
   page.on("dialog", (alert) => {
-    assert.equal(alert.message(), "Are you really sure?")
+    expect(alert.message()).toEqual("Are you really sure?")
     alert.dismiss()
   })
 
   await page.click("#standard form.confirm #secondary_submitter")
 
-  assert.notOk(await formSubmitStarted(page))
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test from submission with confirmation overridden", async ({ page }) => {
+test("from submission with confirmation overridden", async ({ page }) => {
   page.on("dialog", (alert) => {
-    assert.equal(alert.message(), "Overridden message")
+    expect(alert.message()).toEqual("Overridden message")
     alert.accept()
   })
 
   await page.evaluate(() => window.Turbo.setConfirmMethod(() => Promise.resolve(confirm("Overridden message"))))
   await page.click("#standard form.confirm input[type=submit]")
 
-  assert.ok(await formSubmitStarted(page))
+  expect(await formSubmitStarted(page)).toEqual("true")
 })
 
-test("test standard form submission does not render a progress bar before expiring the delay", async ({ page }) => {
+test("standard form submission does not render a progress bar before expiring the delay", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(500))
   await page.click("#standard form.redirect input[type=submit]")
 
-  assert.notOk(await hasSelector(page, ".turbo-progress-bar"), "does not show progress bar before delay")
+  await expect(page.locator(".turbo-progress-bar"), "does not show progress bar before delay").not.toBeAttached()
 })
 
-test("test standard POST form submission with redirect response", async ({ page }) => {
+test("standard POST form submission with redirect response", async ({ page }) => {
   await page.click("#standard form.redirect input[type=submit]")
-  await nextBody(page)
 
-  assert.ok(await formSubmitStarted(page))
-  assert.equal(await pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(await visitAction(page), "advance")
-  assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a redirect")
-  assert.equal(
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("greeting", "Hello from a redirect"))
+  expect(await formSubmitStarted(page)).toEqual("true")
+  expect(await visitAction(page)).toEqual("advance")
+  expect(
     await nextAttributeMutationNamed(page, "html", "aria-busy"),
-    "true",
     "sets [aria-busy] on the document element"
-  )
-  assert.equal(
+  ).toEqual("true")
+  expect(
     await nextAttributeMutationNamed(page, "html", "aria-busy"),
-    null,
     "removes [aria-busy] from the document element"
-  )
+  ).toEqual(null)
 })
 
-test("test standard POST form submission events", async ({ page }) => {
+
+test("sets aria-busy on the form element during a form submission", async ({ page }) => {
+  await page.click("#standard form.redirect input[type=submit]")
+
+  await nextEventNamed(page, "turbo:submit-start")
+  expect(
+    await nextAttributeMutationNamed(page, "standard-form", "aria-busy"),
+    "sets [aria-busy] on the form element"
+  ).toEqual("true")
+
+  await nextEventNamed(page, "turbo:submit-end")
+  expect(
+    await nextAttributeMutationNamed(page, "standard-form", "aria-busy"),
+    "removes [aria-busy] from the form element"
+  ).toEqual(null)
+})
+
+test("standard POST form submission events", async ({ page }) => {
   await page.click("#standard-post-form-submit")
 
-  assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
+  expect(await formSubmitStarted(page), "fires turbo:submit-start").toEqual("true")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  expect(fetchOptions.headers["Accept"]).toContain("text/vnd.turbo-stream.html")
 
   await nextEventNamed(page, "turbo:before-fetch-response")
 
-  assert.ok(await formSubmitEnded(page), "fires turbo:submit-end")
+  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
 
   await nextEventNamed(page, "turbo:before-visit")
   await nextEventNamed(page, "turbo:visit")
@@ -151,7 +158,7 @@ test("test standard POST form submission events", async ({ page }) => {
   await nextEventNamed(page, "turbo:load")
 })
 
-test("test supports transforming a POST submission to a GET in a turbo:submit-start listener", async ({ page }) => {
+test("supports transforming a POST submission to a GET in a turbo:submit-start listener", async ({ page }) => {
   await page.evaluate(() =>
     addEventListener("turbo:submit-start", (({ detail }) => {
       detail.formSubmission.method = "get"
@@ -162,14 +169,14 @@ test("test supports transforming a POST submission to a GET in a turbo:submit-st
   await page.click("#standard form[method=post] [type=submit]")
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
-  assert.equal(getSearchParam(page.url(), "greeting"), "Hello, from an event listener")
+  await expect(page.locator("h1"), "overrides the method and action").toHaveText("One")
+  await expect(page).toHaveURL(withSearchParam("greeting", "Hello, from an event listener"))
 })
 
-test("test supports transforming a GET submission to a POST in a turbo:submit-start listener", async ({ page }) => {
+test("supports transforming a GET submission to a POST in a turbo:submit-start listener", async ({ page }) => {
   await page.evaluate(() =>
     addEventListener("turbo:submit-start", (({ detail }) => {
-      detail.formSubmission.method = "post"
+      detail.formSubmission.method = "POST"
       detail.formSubmission.body.set("path", "/src/tests/fixtures/one.html")
       detail.formSubmission.body.set("greeting", "Hello, from an event listener")
     }))
@@ -177,11 +184,11 @@ test("test supports transforming a GET submission to a POST in a turbo:submit-st
   await page.click("#standard form[method=get] [type=submit]")
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
-  assert.equal(getSearchParam(page.url(), "greeting"), "Hello, from an event listener")
+  await expect(page.locator("h1"), "overrides the method and action").toHaveText("One")
+  await expect(page).toHaveURL(withSearchParam("greeting", "Hello, from an event listener"))
 })
 
-test("test supports modifying the submission in a turbo:before-fetch-request listener", async ({ page }) => {
+test("supports modifying the submission in a turbo:before-fetch-request listener", async ({ page }) => {
   await page.evaluate(() =>
     addEventListener("turbo:before-fetch-request", (({ detail }) => {
       detail.url = new URL("/src/tests/fixtures/one.html", document.baseURI)
@@ -193,89 +200,93 @@ test("test supports modifying the submission in a turbo:before-fetch-request lis
   await page.click("#standard form[method=post] [type=submit]")
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("h1"), "One", "overrides the method and action")
-  assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a redirect")
+  await expect(page.locator("h1"), "overrides the method and action").toHaveText("One")
+  await expect(page).toHaveURL(withSearchParam("greeting", "Hello from a redirect"))
 })
 
-test("test standard POST form submission merges values from both searchParams and body", async ({ page }) => {
+test("standard POST form submission merges values from both searchParams and body", async ({ page }) => {
   await page.click("#form-action-post-redirect-self-q-b")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "q"), "b")
-  assert.equal(getSearchParam(page.url(), "sort"), "asc")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("q", "b"))
+  await expect(page).toHaveURL(withSearchParam("sort", "asc"))
 })
 
-test("test standard POST form submission toggles submitter [disabled] attribute", async ({ page }) => {
+test("standard POST form submission toggles submitter [disabled] attribute", async ({ page }) => {
   await page.click("#standard-post-form-submit")
 
-  assert.equal(
+  expect(
     await nextAttributeMutationNamed(page, "standard-post-form-submit", "disabled"),
-    "",
     "sets [disabled] on the submitter"
-  )
-  assert.equal(
+  ).toEqual("")
+  expect(
     await nextAttributeMutationNamed(page, "standard-post-form-submit", "disabled"),
-    null,
     "removes [disabled] from the submitter"
-  )
+  ).toEqual(null)
+})
+
+test("standard POST form submission toggles submitter [aria-disabled=true] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#standard-post-form-submit")
+
+  expect(
+    await nextAttributeMutationNamed(page, "standard-post-form-submit", "aria-disabled"),
+    "sets [aria-disabled=true] on the submitter"
+  ).toEqual("true")
+  expect(
+    await nextAttributeMutationNamed(page, "standard-post-form-submit", "aria-disabled"),
+    "removes [aria-disabled] from the submitter"
+  ).toEqual(null)
 })
 
 test("replaces input value with data-turbo-submits-with on form submission", async ({ page }) => {
   page.click("#submits-with-form-input")
 
-  assert.equal(
+  expect(
     await nextAttributeMutationNamed(page, "submits-with-form-input", "value"),
-    "Saving...",
     "sets data-turbo-submits-with on the submitter"
-  )
+  ).toEqual("Saving...")
 
-  assert.equal(
+  expect(
     await nextAttributeMutationNamed(page, "submits-with-form-input", "value"),
-    "Save",
     "restores the original submitter text value"
-  )
+  ).toEqual("Save")
 })
 
 test("replaces button innerHTML with data-turbo-submits-with on form submission", async ({ page }) => {
   await page.click("#submits-with-form-button")
 
   await nextEventNamed(page, "turbo:submit-start")
-  assert.equal(
-    await page.textContent("#submits-with-form-button"),
-    "Saving...",
+  await expect(
+    page.locator("#submits-with-form-button"),
     "sets data-turbo-submits-with on the submitter"
-  )
+  ).toHaveText("Saving...")
 
   await nextEventNamed(page, "turbo:submit-end")
-  assert.equal(
-    await page.textContent("#submits-with-form-button"),
-    "Save",
+  await expect(
+    page.locator("#submits-with-form-button"),
     "sets data-turbo-submits-with on the submitter"
-  )
+  ).toHaveText("Save")
 })
 
-test("test standard GET form submission", async ({ page }) => {
+test("standard GET form submission", async ({ page }) => {
   await page.click("#standard form.greeting input[type=submit]")
-  await nextBody(page)
 
-  assert.ok(await formSubmitStarted(page))
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
-  assert.equal(await visitAction(page), "advance")
-  assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a form")
-  assert.equal(
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  await expect(page).toHaveURL(withSearchParam("greeting", "Hello from a form"))
+  expect(await formSubmitStarted(page)).toEqual("true")
+  expect(await visitAction(page)).toEqual("advance")
+  expect(
     await nextAttributeMutationNamed(page, "html", "aria-busy"),
-    "true",
     "sets [aria-busy] on the document element"
-  )
-  assert.equal(
+  ).toEqual("true")
+  expect(
     await nextAttributeMutationNamed(page, "html", "aria-busy"),
-    null,
     "removes [aria-busy] from the document element"
-  )
+  ).toEqual(null)
 })
 
-test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
+test("standard GET HTMLFormElement.requestSubmit() with Turbo Action", async ({ page }) => {
   await page.evaluate(() => {
     const formControl = document.querySelector("#external-select")
 
@@ -283,50 +294,48 @@ test("test standard GET HTMLFormElement.requestSubmit() with Turbo Action", asyn
   })
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("h1"), "Form", "Retains original page state")
-  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "navigates #hello turbo frame")
-  assert.equal(await visitAction(page), "replace", "reads Turbo Action from <form>")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/hello.html", "promotes frame navigation to page Visit")
-  assert.equal(getSearchParam(page.url(), "greeting"), "Hello from a replace Visit", "encodes <form> into request")
+  await expect(page.locator("h1"), "Retains original page state").toHaveText("Form")
+  await expect(page.locator("#hello h2"), "navigates #hello turbo frame").toHaveText("Hello from a frame")
+  expect(await visitAction(page), "reads Turbo Action from <form>").toEqual("replace")
+  await expect(page, "promotes frame navigation to page Visit").toHaveURL(withPathname("/src/tests/fixtures/frames/hello.html"))
+  await expect(page, "encodes <form> into request").toHaveURL(withSearchParam("greeting", "Hello from a replace Visit"))
 })
 
-test("test GET HTMLFormElement.requestSubmit() triggered by javascript", async ({ page }) => {
+test("GET HTMLFormElement.requestSubmit() triggered by javascript", async ({ page }) => {
   await page.click("#request-submit-trigger")
 
-  await nextEventNamed(page, "turbo:load")
-
-  assert.notEqual(pathname(page.url()), "/src/tests/fixtures/one.html", "SubmitEvent was triggered without a submitter")
-  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "navigates #hello turbo frame")
+  await expect(page.locator("#hello h2"), "navigates #hello turbo frame").toHaveText("Hello from a frame")
+  await expect(page, "SubmitEvent was triggered without a submitter").not.toHaveURL(withPathname("/src/tests/fixtures/one.html"))
 })
 
-test("test standard GET form submission with [data-turbo-stream] declared on the form", async ({ page }) => {
+test("standard GET form submission with [data-turbo-stream] declared on the form", async ({ page }) => {
   await page.click("#standard-get-form-with-stream-opt-in-submit")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  expect(fetchOptions.headers["Accept"]).toContain("text/vnd.turbo-stream.html")
 })
 
-test("test standard GET form submission with [data-turbo-stream] declared on submitter", async ({ page }) => {
+test("standard GET form submission with [data-turbo-stream] declared on submitter", async ({ page }) => {
   await page.click("#standard-get-form-with-stream-opt-in-submitter")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  expect(fetchOptions.headers["Accept"]).toContain("text/vnd.turbo-stream.html")
 })
 
-test("test standard GET form submission events", async ({ page }) => {
+test("standard GET form submission events", async ({ page }) => {
   await page.click("#standard-get-form-submit")
 
-  assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
+  expect(await formSubmitStarted(page), "fires turbo:submit-start").toEqual("true")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.notOk(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  expect(fetchOptions.headers["Accept"]).not.toContain("text/vnd.turbo-stream.html")
 
   await nextEventNamed(page, "turbo:before-fetch-response")
 
-  assert.ok(await formSubmitEnded(page), "fires turbo:submit-end")
+  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
 
   await nextEventNamed(page, "turbo:before-visit")
   await nextEventNamed(page, "turbo:visit")
@@ -336,384 +345,419 @@ test("test standard GET form submission events", async ({ page }) => {
   await nextEventNamed(page, "turbo:load")
 })
 
-test("test standard GET form submission does not incorporate the current page's URLSearchParams values into the submission", async ({
+test("standard GET form submission does not incorporate the current page's URLSearchParams values into the submission", async ({
   page
 }) => {
   await page.click("#form-action-self-sort")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(search(page.url()), "?sort=asc")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("sort", "asc"))
 
   await page.click("#form-action-none-q-a")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(search(page.url()), "?q=a", "navigates without omitted keys")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page, "navigates without omitted keys").toHaveURL(withSearchParam("q", "a"))
 })
 
-test("test standard GET form submission does not merge values into the [action] attribute", async ({ page }) => {
+test("standard GET form submission does not merge values into the [action] attribute", async ({ page }) => {
   await page.click("#form-action-self-sort")
-  await nextBody(page)
 
-  assert.equal(await pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(await search(page.url()), "?sort=asc")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("sort", "asc"))
 
   await page.click("#form-action-self-q-b")
-  await nextBody(page)
 
-  assert.equal(await pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(await search(page.url()), "?q=b", "navigates without omitted keys")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page, "navigates without omitted keys").toHaveURL(withSearchParam("q", "b"))
 })
 
-test("test standard GET form submission omits the [action] value's URLSearchParams from the submission", async ({
+test("standard GET form submission omits the [action] value's URLSearchParams from the submission", async ({
   page
 }) => {
   await page.click("#form-action-self-submit")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(search(page.url()), "")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page, "navigates without omitted keys").toHaveURL(withSearch(""))
 })
 
-test("test standard GET form submission toggles submitter [disabled] attribute", async ({ page }) => {
+test("standard GET form submission toggles submitter [disabled] attribute", async ({ page }) => {
   await page.click("#standard-get-form-submit")
 
-  assert.equal(
+  expect(
     await nextAttributeMutationNamed(page, "standard-get-form-submit", "disabled"),
-    "",
     "sets [disabled] on the submitter"
-  )
-  assert.equal(
+  ).toEqual("")
+  expect(
     await nextAttributeMutationNamed(page, "standard-get-form-submit", "disabled"),
-    null,
     "removes [disabled] from the submitter"
-  )
+  ).toEqual(null)
 })
 
-test("test standard GET form submission appending keys", async ({ page }) => {
+test("standard GET form submission toggles submitter [aria-disabled] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#standard-get-form-submit")
+
+  expect(
+    await nextAttributeMutationNamed(page, "standard-get-form-submit", "aria-disabled"),
+    "sets [aria-disabled] on the submitter"
+  ).toEqual("true")
+  expect(
+    await nextAttributeMutationNamed(page, "standard-get-form-submit", "aria-disabled"),
+    "removes [aria-disabled] from the submitter"
+  ).toEqual(null)
+})
+
+test("standard GET form submission appending keys", async ({ page }) => {
   await page.goto("/src/tests/fixtures/form.html?query=1")
   await page.click("#standard form.conflicting-values input[type=submit]")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "query"), "2")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", "2"))
 })
 
-test("test standard form submission with empty created response", async ({ page }) => {
+test("standard form submission with empty created response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "body")
   const button = await page.locator("#standard form.created input[type=submit]")
   await button.click()
   await nextBeat()
 
   const htmlAfter = await outerHTMLForSelector(page, "body")
-  assert.equal(htmlAfter, htmlBefore)
+  expect(htmlAfter).toEqual(htmlBefore)
 })
 
-test("test standard form submission with empty no-content response", async ({ page }) => {
+test("standard form submission with empty no-content response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "body")
   const button = await page.locator("#standard form.no-content input[type=submit]")
   await button.click()
   await nextBeat()
 
   const htmlAfter = await outerHTMLForSelector(page, "body")
-  assert.equal(htmlAfter, htmlBefore)
+  expect(htmlAfter).toEqual(htmlBefore)
 })
 
-test("test standard POST form submission with multipart/form-data enctype", async ({ page }) => {
+test("standard POST form submission with multipart/form-data enctype", async ({ page }) => {
   await page.click("#standard form[method=post][enctype] input[type=submit]")
-  await nextBeat()
 
-  const enctype = getSearchParam(page.url(), "enctype")
-  assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
+  await expect(
+    page,
+    "submits a multipart/form-data request"
+  ).toHaveURL((url) => {
+    const enctype = url.searchParams.get("enctype")
+    return enctype?.startsWith("multipart/form-data")
+  })
 })
 
-test("test standard GET form submission ignores enctype", async ({ page }) => {
+test("standard GET form submission ignores enctype", async ({ page }) => {
   await page.click("#standard form[method=get][enctype] input[type=submit]")
-  await nextBeat()
 
-  const enctype = getSearchParam(page.url(), "enctype")
-  assert.notOk(enctype, "GET form submissions ignore enctype")
+  await expect(page, "GET form submissions ignore enctype").not.toHaveURL(url => url.searchParams.has("enctype"))
 })
 
-test("test standard POST form submission without an enctype", async ({ page }) => {
+test("standard POST form submission without an enctype", async ({ page }) => {
   await page.click("#standard form[method=post].no-enctype input[type=submit]")
-  await nextBeat()
 
-  const enctype = getSearchParam(page.url(), "enctype")
-  assert.ok(
-    enctype?.startsWith("application/x-www-form-urlencoded"),
+  await expect(
+    page,
     "submits a application/x-www-form-urlencoded request"
-  )
+  ).toHaveURL((url) => {
+    const enctype = url.searchParams.get("enctype")
+    return enctype?.startsWith("application/x-www-form-urlencoded")
+  })
 })
 
-test("test no-action form submission with single parameter", async ({ page }) => {
+test("no-action form submission with single parameter", async ({ page }) => {
   await page.click("#no-action form.single input[type=submit]")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "query"), "1")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", "1"))
 
   await page.click("#no-action form.single input[type=submit]")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "query"), "1")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", "1"))
 
   await page.goto("/src/tests/fixtures/form.html?query=2")
   await page.click("#no-action form.single input[type=submit]")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "query"), "1")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", "1"))
 })
 
-test("test no-action form submission with multiple parameters", async ({ page }) => {
+test("no-action form submission with multiple parameters", async ({ page }) => {
   await page.goto("/src/tests/fixtures/form.html?query=2")
   await page.click("#no-action form.multiple input[type=submit]")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.deepEqual(searchParams(page.url()).getAll("query"), ["1", "2"])
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", ["1", "2"]))
+  await nextEventNamed(page, "turbo:load")
 
   await page.click("#no-action form.multiple input[type=submit]")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.deepEqual(searchParams(page.url()).getAll("query"), ["1", "2"])
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", ["1", "2"]))
 })
 
-test("test no-action form submission submitter parameters", async ({ page }) => {
+test("no-action form submission submitter parameters", async ({ page }) => {
   await page.click("#no-action form.button-param [type=submit]")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "query"), "1")
-  assert.deepEqual(searchParams(page.url()).getAll("button"), [""])
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", "1"))
+  await expect(page).toHaveURL(withSearchParam("button", [""]))
 
   await page.click("#no-action form.button-param [type=submit]")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "query"), "1")
-  assert.deepEqual(searchParams(page.url()).getAll("button"), [""])
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("query", "1"))
+  await expect(page).toHaveURL(withSearchParam("button", [""]))
 })
 
-test("test submitter with blank formaction submits to the current page", async ({ page }) => {
+test("submitter with blank formaction submits to the current page", async ({ page }) => {
   await page.click("#blank-formaction button")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.ok(await hasSelector(page, "#blank-formaction"), "overrides form[action] navigation")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page.locator("#blank-formaction"), "overrides form[action] navigation").toBeAttached()
 })
 
-test("test input named action with no action attribute", async ({ page }) => {
+test("input named action with no action attribute", async ({ page }) => {
   await page.click("#action-input form.no-action [type=submit]")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.equal(getSearchParam(page.url(), "action"), "1")
-  assert.equal(getSearchParam(page.url(), "query"), "1")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page).toHaveURL(withSearchParam("action", "1"))
+  await expect(page).toHaveURL(withSearchParam("query", "1"))
 })
 
-test("test input named action with action attribute", async ({ page }) => {
+test("input named action with action attribute", async ({ page }) => {
   await page.click("#action-input form.action [type=submit]")
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
-  assert.equal(getSearchParam(page.url(), "action"), "1")
-  assert.equal(getSearchParam(page.url(), "query"), "1")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  await expect(page).toHaveURL(withSearchParam("action", "1"))
+  await expect(page).toHaveURL(withSearchParam("query", "1"))
 })
 
-test("test invalid form submission with unprocessable entity status", async ({ page }) => {
-  await page.click("#reject form.unprocessable_entity input[type=submit]")
-  await nextBody(page)
+test("invalid form submission with unprocessable content status", async ({ page }) => {
+  await page.click("#reject form.unprocessable_content input[type=submit]")
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
-  assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
+  await expect(page.locator("h1"), "renders the response HTML").toHaveText("Unprocessable Content")
+  await expect(page.locator("#frame form.reject"), "replaces entire page").not.toBeAttached()
 })
 
-test("test invalid form submission with long form", async ({ page }) => {
-  await scrollToSelector(page, "#reject form.unprocessable_entity_with_tall_form input[type=submit]")
-  await page.click("#reject form.unprocessable_entity_with_tall_form input[type=submit]")
-  await nextBody(page)
+test("invalid form submission with long form", async ({ page }) => {
+  await scrollToSelector(page, "#reject form.unprocessable_content_with_tall_form input[type=submit]")
+  await page.click("#reject form.unprocessable_content_with_tall_form input[type=submit]")
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Unprocessable Entity", "renders the response HTML")
-  assert(await isScrolledToTop(page), "page is scrolled to the top")
-  assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
+  await expect(page.locator("h1"), "renders the response HTML").toHaveText("Unprocessable Content")
+  expect(await isScrolledToTop(page), "page is scrolled to the top").toBeTruthy()
+  await expect(page.locator("#frame form.reject"), "replaces entire page").not.toBeAttached()
 })
 
-test("test invalid form submission with server error status", async ({ page }) => {
-  assert(await hasSelector(page, "head > #form-fixture-styles"))
+test("invalid form submission with server error status", async ({ page }) => {
+  await expect(page.locator("head > #form-fixture-styles")).toBeAttached()
   await page.click("#reject form.internal_server_error input[type=submit]")
-  await nextBody(page)
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Internal Server Error", "renders the response HTML")
-  assert.notOk(await hasSelector(page, "head > #form-fixture-styles"), "replaces head")
-  assert.notOk(await hasSelector(page, "#frame form.reject"), "replaces entire page")
+  await expect(page.locator("h1"), "renders the response HTML").toHaveText("Internal Server Error")
+  await expect(page.locator("head > #form-fixture-styles"), "replaces head").not.toBeAttached()
+  await expect(page.locator("#frame form.reject"), "replaces entire page").not.toBeAttached()
 })
 
-test("test form submission with network error", async ({ page }) => {
+test("form submission with network error", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error))
+
   await page.context().setOffline(true)
   await page.click("#reject-form [type=submit]")
   await nextEventOnTarget(page, "reject-form", "turbo:fetch-request-error")
+  await nextBeat()
+
+  expect(errors, "does not raise an unhandled rejection").toEqual([])
 })
 
-test("test submitter form submission reads button attributes", async ({ page }) => {
+test("submitter form submission reads button attributes", async ({ page }) => {
   const button = await page.locator("#submitter form button[type=submit][formmethod=post]")
   await button.click()
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/two.html")
-  assert.equal(await visitAction(page), "advance")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/two.html"))
+  expect(await visitAction(page)).toEqual("advance")
 })
 
-test("test submitter POST form submission with multipart/form-data formenctype", async ({ page }) => {
+test("submitter POST form submission with multipart/form-data formenctype", async ({ page }) => {
   await page.click("#submitter form[method=post]:not([enctype]) input[formenctype]")
-  await nextBeat()
 
-  const enctype = getSearchParam(page.url(), "enctype")
-  assert.ok(enctype?.startsWith("multipart/form-data"), "submits a multipart/form-data request")
+  await expect(
+    page,
+    "submits a multipart/form-data request"
+  ).toHaveURL((url) => {
+    const enctype = url.searchParams.get("enctype")
+    return enctype?.startsWith("multipart/form-data")
+  })
 })
 
-test("test submitter GET submission from submitter with data-turbo-frame", async ({ page }) => {
+test("submitter GET submission from submitter with data-turbo-frame", async ({ page }) => {
   await page.click("#submitter form[method=get] [type=submit][data-turbo-frame]")
-  await nextBeat()
 
-  const message = await page.locator("#frame div.message")
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Form")
-  assert.equal(await message.textContent(), "Frame redirected")
+  await expect(page.locator("#frame div.message")).toHaveText("Frame redirected")
+  await expect(page.locator("h1")).toHaveText("Form")
 })
 
-test("test submitter POST submission from submitter with data-turbo-frame", async ({ page }) => {
+test("submitter POST submission from submitter with data-turbo-frame", async ({ page }) => {
   await page.click("#submitter form[method=post] [type=submit][data-turbo-frame]")
-  await nextBeat()
 
-  const message = await page.locator("#frame div.message")
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Form")
-  assert.equal(await message.textContent(), "Frame redirected")
+  await expect(page.locator("#frame div.message")).toHaveText("Frame redirected")
+  await expect(page.locator("h1")).toHaveText("Form")
 })
 
-test("test frame form GET submission from submitter with data-turbo-frame=_top", async ({ page }) => {
+test("form[data-turbo-frame=_top] submission", async ({ page }) => {
+  const form = await page.locator("#standard form.redirect[data-turbo-frame=_top]")
+
+  await form.locator("button").click()
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("h1")).toHaveText("One")
+})
+
+test("form[data-turbo-frame=_top] submission within frame", async ({ page }) => {
+  const frame = await page.locator("turbo-frame#frame")
+  const form = await frame.locator("form.redirect[data-turbo-frame=_top]")
+
+  await form.locator("button").click()
+  await nextEventNamed(page, "turbo:load")
+
+  await expect(page.locator("h1")).toHaveText("Frames: Form")
+})
+
+test("frame form GET submission from submitter with data-turbo-frame=_top", async ({ page }) => {
   await page.click("#frame form[method=get] [type=submit][data-turbo-frame=_top]")
-  await nextBody(page)
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "One")
+  await expect(page.locator("h1")).toHaveText("One")
 })
 
-test("test frame form POST submission from submitter with data-turbo-frame=_top", async ({ page }) => {
+test("frame form POST submission from submitter with data-turbo-frame=_top", async ({ page }) => {
   await page.click("#frame form[method=post] [type=submit][data-turbo-frame=_top]")
-  await nextBody(page)
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "One")
+  await expect(page.locator("h1")).toHaveText("One")
 })
 
-test("test frame POST form targeting frame submission", async ({ page }) => {
+test("frame POST form targeting frame submission", async ({ page }) => {
   await page.click("#targets-frame-post-form-submit")
 
-  assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
+  expect(await formSubmitStarted(page), "fires turbo:submit-start").toEqual("true")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
-  assert.equal("frame", fetchOptions.headers["Turbo-Frame"])
+  expect(fetchOptions.headers["Accept"]).toContain("text/vnd.turbo-stream.html")
+  expect("frame").toEqual(fetchOptions.headers["Turbo-Frame"])
 
   await nextEventNamed(page, "turbo:before-fetch-response")
 
-  assert.ok(await formSubmitEnded(page), "fires turbo:submit-end")
+  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
 
   await nextEventNamed(page, "turbo:frame-render")
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  expect(otherEvents.length, "no more events").toEqual(0)
 
   const src = (await page.getAttribute("#frame", "src")) || ""
-  assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
+  expect(new URL(src).pathname).toEqual("/src/tests/fixtures/frames/frame.html")
 })
 
-test("test frame POST form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
+test("frame POST form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
   await page.click("#targets-frame-post-form-submit")
 
-  assert.equal(
+  expect(
     await nextAttributeMutationNamed(page, "targets-frame-post-form-submit", "disabled"),
-    "",
     "sets [disabled] on the submitter"
-  )
-  assert.equal(
+  ).toEqual("")
+  expect(
     await nextAttributeMutationNamed(page, "targets-frame-post-form-submit", "disabled"),
-    null,
     "removes [disabled] from the submitter"
-  )
+  ).toEqual(null)
 })
 
-test("test frame GET form targeting frame submission", async ({ page }) => {
+test("frame POST form targeting frame toggles submitter's [aria-disabled] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#targets-frame-post-form-submit")
+
+  expect(
+    await nextAttributeMutationNamed(page, "targets-frame-post-form-submit", "aria-disabled"),
+    "sets [aria-disabled] on the submitter"
+  ).toEqual("true")
+  expect(
+    await nextAttributeMutationNamed(page, "targets-frame-post-form-submit", "aria-disabled"),
+    "removes [aria-disabled] from the submitter"
+  ).toEqual(null)
+})
+
+test("frame GET form targeting frame submission", async ({ page }) => {
   await page.click("#targets-frame-get-form-submit")
 
-  assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
+  expect(await formSubmitStarted(page), "fires turbo:submit-start").toEqual("true")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.notOk(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
-  assert.equal("frame", fetchOptions.headers["Turbo-Frame"])
+  expect(fetchOptions.headers["Accept"]).not.toContain("text/vnd.turbo-stream.html")
+  expect(fetchOptions.headers["Turbo-Frame"]).toEqual("frame")
 
   await nextEventNamed(page, "turbo:before-fetch-response")
 
-  assert.ok(await formSubmitEnded(page), "fires turbo:submit-end")
+  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
 
   await nextEventNamed(page, "turbo:frame-render")
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  expect(otherEvents.length, "no more events").toEqual(0)
 
   const src = (await page.getAttribute("#frame", "src")) || ""
-  assert.equal(new URL(src).pathname, "/src/tests/fixtures/frames/frame.html")
+  expect(new URL(src).pathname).toEqual("/src/tests/fixtures/frames/frame.html")
 })
 
-test("test frame GET form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
+test("frame GET form targeting frame toggles submitter's [disabled] attribute", async ({ page }) => {
   await page.click("#targets-frame-get-form-submit")
 
-  assert.equal(
+  expect(
     await nextAttributeMutationNamed(page, "targets-frame-get-form-submit", "disabled"),
-    "",
     "sets [disabled] on the submitter"
-  )
-  assert.equal(
+  ).toEqual("")
+  expect(
     await nextAttributeMutationNamed(page, "targets-frame-get-form-submit", "disabled"),
-    null,
     "removes [disabled] from the submitter"
-  )
+  ).toEqual(null)
 })
 
-test("test frame form GET submission from submitter referencing another frame", async ({ page }) => {
+test("frame GET form targeting frame toggles submitter's [aria-disabled] attribute", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.config.forms.submitter = "aria-disabled")
+  await page.click("#targets-frame-get-form-submit")
+
+  expect(
+    await nextAttributeMutationNamed(page, "targets-frame-get-form-submit", "aria-disabled"),
+    "sets [aria-disabled] on the submitter"
+  ).toEqual("true")
+  expect(
+    await nextAttributeMutationNamed(page, "targets-frame-get-form-submit", "aria-disabled"),
+    "removes [aria-disabled] from the submitter"
+  ).toEqual(null)
+})
+
+test("frame form GET submission from submitter referencing another frame", async ({ page }) => {
   await page.click("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
-  await nextBeat()
 
-  const title = await page.locator("h1")
-  const frameTitle = await page.locator("#hello h2")
-  assert.equal(await frameTitle.textContent(), "Hello from a frame")
-  assert.equal(await title.textContent(), "Form")
+  await expect(page.locator("h1")).toHaveText("Form")
+  await expect(page.locator("#hello h2")).toHaveText("Hello from a frame")
 })
 
-test("test frame form POST submission from submitter referencing another frame", async ({ page }) => {
+test("frame form POST submission from submitter referencing another frame", async ({ page }) => {
   await page.click("#frame form[method=post] [type=submit][data-turbo-frame=hello]")
-  await nextBeat()
 
-  const title = await page.locator("h1")
-  const frameTitle = await page.locator("#hello h2")
-  assert.equal(await frameTitle.textContent(), "Hello from a frame")
-  assert.equal(await title.textContent(), "Form")
+  await expect(page.locator("h1")).toHaveText("Form")
+  await expect(page.locator("#hello h2")).toHaveText("Hello from a frame")
 })
 
-test("test frame form submission with redirect response", async ({ page }) => {
+test("frame form submission with redirect response", async ({ page }) => {
   const path = (await page.getAttribute("#frame form.redirect input[name=path]", "value")) || ""
   const url = new URL(path, "http://localhost:9000")
   url.searchParams.set("enctype", "application/x-www-form-urlencoded;charset=UTF-8")
@@ -722,211 +766,219 @@ test("test frame form submission with redirect response", async ({ page }) => {
   await button.click()
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 
-  const message = await page.locator("#frame div.message")
-  assert.notOk(await hasSelector(page, "#frame form.redirect"))
-  assert.equal(await message.textContent(), "Frame redirected")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html", "does not redirect _top")
-  assert.notOk(search(page.url()), "does not redirect _top")
-  assert.equal(await page.getAttribute("#frame", "src"), url.href, "redirects the target frame")
+  await expect(page.locator("#frame form.redirect")).not.toBeAttached()
+  await expect(page.locator("#frame div.message")).toHaveText("Frame redirected")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page, "does not redirect _top").toHaveURL(withSearch(""))
+  await expect(page.locator("#frame"), "redirects the target frame").toHaveAttribute("src", url.href)
 })
 
-test("test frame POST form submission toggles the ancestor frame's [aria-busy] attribute", async ({ page }) => {
+test("frame POST form submission toggles the ancestor frame's [aria-busy] attribute", async ({ page }) => {
   await page.click("#frame form.redirect input[type=submit]")
-  await nextBeat()
 
-  assert.equal(await nextAttributeMutationNamed(page, "frame", "busy"), "", "sets [busy] on the #frame")
-  assert.equal(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "true", "sets [aria-busy] on the #frame")
-  assert.equal(await nextAttributeMutationNamed(page, "frame", "busy"), null, "removes [busy] from the #frame")
-  assert.equal(
+  expect(await nextAttributeMutationNamed(page, "frame", "busy"), "sets [busy] on the #frame").toEqual("")
+  expect(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "sets [aria-busy] on the #frame").toEqual("true")
+  expect(await nextAttributeMutationNamed(page, "frame", "busy"), "removes [busy] from the #frame").toEqual(null)
+  expect(
     await nextAttributeMutationNamed(page, "frame", "aria-busy"),
-    null,
     "removes [aria-busy] from the #frame"
-  )
+  ).toEqual(null)
 })
 
-test("test frame POST form submission toggles the target frame's [aria-busy] attribute", async ({ page }) => {
+test("frame POST form submission toggles the target frame's [aria-busy] attribute", async ({ page }) => {
   await page.click('#targets-frame form.frame [type="submit"]')
-  await nextBeat()
 
-  assert.equal(await nextAttributeMutationNamed(page, "frame", "busy"), "", "sets [busy] on the #frame")
-  assert.equal(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "true", "sets [aria-busy] on the #frame")
+  expect(await nextAttributeMutationNamed(page, "frame", "busy"), "sets [busy] on the #frame").toEqual("")
+  expect(await nextAttributeMutationNamed(page, "frame", "aria-busy"), "sets [aria-busy] on the #frame").toEqual("true")
 
-  const title = await page.locator("#frame h2")
-  assert.equal(await title.textContent(), "Frame: Loaded")
-  assert.equal(await nextAttributeMutationNamed(page, "frame", "busy"), null, "removes [busy] from the #frame")
-  assert.equal(
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  expect(await nextAttributeMutationNamed(page, "frame", "busy"), "removes [busy] from the #frame").toEqual(null)
+  expect(
     await nextAttributeMutationNamed(page, "frame", "aria-busy"),
-    null,
     "removes [aria-busy] from the #frame"
-  )
+  ).toEqual(null)
 })
 
-test("test frame form submission with empty created response", async ({ page }) => {
+test("frame form submission with empty created response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "#frame")
   const button = await page.locator("#frame form.created input[type=submit]")
   await button.click()
   await nextBeat()
 
   const htmlAfter = await outerHTMLForSelector(page, "#frame")
-  assert.equal(htmlAfter, htmlBefore)
+  expect(htmlAfter).toEqual(htmlBefore)
 })
 
-test("test frame form submission with empty no-content response", async ({ page }) => {
+test("frame form submission with empty no-content response", async ({ page }) => {
   const htmlBefore = await outerHTMLForSelector(page, "#frame")
   const button = await page.locator("#frame form.no-content input[type=submit]")
   await button.click()
   await nextBeat()
 
   const htmlAfter = await outerHTMLForSelector(page, "#frame")
-  assert.equal(htmlAfter, htmlBefore)
+  expect(htmlAfter).toEqual(htmlBefore)
 })
 
-test("test frame form submission within a frame submits the Turbo-Frame header", async ({ page }) => {
+test("frame form submission within a frame submits the Turbo-Frame header", async ({ page }) => {
   await page.click("#frame form.redirect input[type=submit]")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+  expect(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header").toBeTruthy()
 })
 
-test("test invalid frame form submission with unprocessable entity status", async ({ page }) => {
-  await page.click("#frame form.unprocessable_entity input[type=submit]")
+test("invalid frame form submission with unprocessable content status", async ({ page }) => {
+  await page.click("#frame form.unprocessable_content input[type=submit]")
 
-  assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
+  expect(await formSubmitStarted(page), "fires turbo:submit-start").toEqual("true")
   await nextEventNamed(page, "turbo:before-fetch-request")
   await nextEventNamed(page, "turbo:before-fetch-response")
-  assert.ok(await formSubmitEnded(page), "fires turbo:submit-end")
+  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
   await nextEventNamed(page, "turbo:frame-render")
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  expect(otherEvents.length, "no more events").toEqual(0)
 
-  const title = await page.locator("#frame h2")
-  assert.ok(await hasSelector(page, "#reject form"), "only replaces frame")
-  assert.equal(await title.textContent(), "Frame: Unprocessable Entity")
+  expect(await hasSelector(page, "#reject form"), "only replaces frame").toBeTruthy()
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Unprocessable Content")
 })
 
-test("test invalid frame form submission with internal server error status", async ({ page }) => {
+test("invalid frame form submission with internal server error status", async ({ page }) => {
   await page.click("#frame form.internal_server_error input[type=submit]")
 
-  assert.ok(await formSubmitStarted(page), "fires turbo:submit-start")
+  expect(await formSubmitStarted(page), "fires turbo:submit-start").toEqual("true")
   await nextEventNamed(page, "turbo:before-fetch-request")
   await nextEventNamed(page, "turbo:before-fetch-response")
-  assert.ok(await formSubmitEnded(page), "fires turbo:submit-end")
+  expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
   await nextEventNamed(page, "turbo:frame-render")
   await nextEventNamed(page, "turbo:frame-load")
 
   const otherEvents = await readEventLogs(page)
-  assert.equal(otherEvents.length, 0, "no more events")
+  expect(otherEvents.length, "no more events").toEqual(0)
 
-  assert.ok(await hasSelector(page, "#reject form"), "only replaces frame")
-  assert.equal(await page.textContent("#frame h2"), "Frame: Internal Server Error")
+  expect(await hasSelector(page, "#reject form"), "only replaces frame").toBeTruthy()
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Internal Server Error")
 })
 
-test("test frame form submission with stream response", async ({ page }) => {
+test("frame form submission with stream response", async ({ page }) => {
   const button = await page.locator("#frame form.stream[method=post] input[type=submit]")
   await button.click()
-  await nextBeat()
 
-  const message = await page.locator("#frame div.message")
-  assert.ok(await hasSelector(page, "#frame form.redirect"))
-  assert.equal(await message.textContent(), "Hello!")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.notOk(await page.getAttribute("#frame", "src"), "does not change frame's src")
+  await expect(page.locator("#frame div.message")).toHaveText("Hello!")
+  await expect(page.locator("#frame form.redirect").first()).toBeAttached()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  await expect(page.locator("#frame"), "does not change frame's src").not.toHaveAttribute("src")
 })
 
-test("test frame form submission with HTTP verb other than GET or POST", async ({ page }) => {
+test("frame form submission with HTTP verb other than GET or POST", async ({ page }) => {
   await page.click("#frame form.put.stream input[type=submit]")
-  await nextBeat()
 
-  assert.ok(await hasSelector(page, "#frame form.redirect"))
-  assert.equal(await page.textContent("#frame div.message"), "1: Hello!")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
+  await expect(page.locator("#frame div.message")).toHaveText("1: Hello!")
+  await expect(page.locator("#frame form.redirect").first()).toBeAttached()
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
 })
 
-test("test frame form submission with [data-turbo=false] on the form", async ({ page }) => {
+test("frame form submission with [data-turbo=false] on the form", async ({ page }) => {
   await page.click('#frame form[data-turbo="false"] input[type=submit]')
-  await waitUntilSelector(page, "#element-id")
 
-  assert.notOk(await formSubmitStarted(page))
+  await expect(page.locator("#element-id")).toBeAttached()
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test frame form submission with [data-turbo=false] on the submitter", async ({ page }) => {
+test("frame form submission with [data-turbo=false] on the submitter", async ({ page }) => {
   await page.click('#frame form:not([data-turbo]) input[data-turbo="false"]')
-  await waitUntilSelector(page, "#element-id")
 
-  assert.notOk(await formSubmitStarted(page))
+  await expect(page.locator("#element-id")).toBeAttached()
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test frame form submission ignores submissions with their defaultPrevented", async ({ page }) => {
+test("frame form submission ignores submissions with their defaultPrevented", async ({ page }) => {
   await page.evaluate(() => document.addEventListener("submit", (event) => event.preventDefault(), true))
   await page.click("#frame .redirect [type=submit]")
-  await nextBeat()
 
-  assert.equal(await page.textContent("#frame h2"), "Frame: Form")
-  assert.equal(await page.getAttribute("#frame", "src"), null, "does not navigate frame")
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Form")
+  await expect(page.locator("#frame"), "does not navigate frame").not.toHaveAttribute("src")
 })
 
-test("test form submission with [data-turbo=false] on the form", async ({ page }) => {
+test("form submission with [data-turbo=false] on the form", async ({ page }) => {
   await page.click('#turbo-false form[data-turbo="false"] input[type=submit]')
-  await waitUntilSelector(page, "#element-id")
 
-  assert.notOk(await formSubmitStarted(page))
+  await expect(page.locator("#element-id")).toBeAttached()
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test form submission with [data-turbo=false] on the submitter", async ({ page }) => {
+test("form submission with [data-turbo=false] on the submitter", async ({ page }) => {
   await page.click('#turbo-false form:not([data-turbo]) input[data-turbo="false"]')
-  await waitUntilSelector(page, "#element-id")
 
-  assert.notOk(await formSubmitStarted(page))
+  await expect(page.locator("#element-id")).toBeAttached()
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test form submission skipped within method=dialog", async ({ page }) => {
-  await page.click('#dialog-method [type="submit"]')
-  await nextBeat()
+test("form submission skipped within method=dialog", async ({ page }) => {
+  const dialog = page.locator("#dialog-method")
+  await dialog.click('[type="submit"]')
 
-  assert.notOk(await formSubmitStarted(page))
+  await expect(dialog).not.toHaveAttribute("open")
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test form submission skipped with submitter formmethod=dialog", async ({ page }) => {
-  await page.click('#dialog-formmethod-turbo-frame [formmethod="dialog"]')
-  await nextBeat()
+test("form submission skipped with submitter formmethod=dialog", async ({ page }) => {
+  const dialog = page.locator("#dialog-formmethod-turbo-frame")
+  await dialog.click('[formmethod="dialog"]')
 
-  assert.notOk(await formSubmitEnded(page))
+  await expect(dialog).not.toHaveAttribute("open")
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test form submission targeting frame skipped within method=dialog", async ({ page }) => {
-  await page.click("#dialog-method-turbo-frame button")
-  await nextBeat()
+test("form submission targeting frame skipped within method=dialog", async ({ page }) => {
+  const dialog = page.locator("#dialog-formmethod-turbo-frame")
+  await dialog.click("button")
 
-  assert.notOk(await formSubmitEnded(page))
+  await expect(dialog).not.toHaveAttribute("open")
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test form submission targeting frame skipped with submitter formmethod=dialog", async ({ page }) => {
-  await page.click('#dialog-formmethod [formmethod="dialog"]')
-  await nextBeat()
+test("form submission targeting frame skipped with submitter formmethod=dialog", async ({ page }) => {
+  const dialog = page.locator("#dialog-formmethod")
+  await dialog.click('[formmethod="dialog"]')
 
-  assert.notOk(await formSubmitStarted(page))
+  await expect(dialog).not.toHaveAttribute("open")
+  expect(await formSubmitStarted(page)).toEqual(null)
 })
 
-test("test form submission targets disabled frame", async ({ page }) => {
+test("form submission targets disabled frame", async ({ page }) => {
   await page.evaluate(() => document.getElementById("frame")?.setAttribute("disabled", ""))
   await page.click('#targets-frame form.one [type="submit"]')
-  await nextBody(page)
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/one.html")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
 })
 
-test("test form submission targeting a frame submits the Turbo-Frame header", async ({ page }) => {
-  await page.click('#targets-frame [type="submit"]')
+test("form submission targeting a frame submits the Turbo-Frame header", async ({ page }) => {
+  await page.click("#targets-frame [type=submit]")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header")
+  expect(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header").toBeTruthy()
 })
 
-test("test link method form submission dispatches events from a connected <form> element", async ({ page }) => {
+test("form submission targeting another frame submits the Turbo-Frame header", async ({ page }) => {
+  await page.click("#frame form[method=get][data-turbo-frame=hello] [type=submit]")
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  expect(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header").toEqual("hello")
+})
+
+test("form submission with submitter referencing another frame submits the Turbo-Frame header", async ({ page }) => {
+  await page.click("#frame form[method=get] [type=submit][data-turbo-frame=hello]")
+
+  const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
+
+  expect(fetchOptions.headers["Turbo-Frame"], "submits with the Turbo-Frame header").toEqual("hello")
+})
+
+test("link method form submission dispatches events from a connected <form> element", async ({ page }) => {
   await page.evaluate(() =>
     new MutationObserver(([record]) => {
       for (const form of record.addedNodes) {
@@ -941,152 +993,151 @@ test("test link method form submission dispatches events from a connected <form>
   await nextEventOnTarget(page, "a-form-link", "turbo:before-fetch-response")
   await nextEventOnTarget(page, "a-form-link", "turbo:submit-end")
 
-  assert.notOk(await hasSelector(page, "a-form-link"), "the <form> is removed")
+  await expect(page.locator("a-form-link"), "the <form> is removed").not.toBeAttached()
 })
 
-test("test link method form submission submits a single request", async ({ page }) => {
+test("link method form submission submits a single request", async ({ page }) => {
   let requestCounter = 0
   page.on("request", () => requestCounter++)
 
   await page.click("#stream-link-method-within-form-outside-frame")
-  await nextBeat()
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
-  assert.equal(requestCounter, 1, "submits a single HTTP request")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+  expect(fetchOptions.method, "[data-turbo-method] overrides the GET method").toEqual("POST")
+  expect(requestCounter, "submits a single HTTP request").toEqual(1)
 })
 
-test("test link method form submission inside frame submits a single request", async ({ page }) => {
+test("link method form submission inside frame submits a single request", async ({ page }) => {
   let requestCounter = 0
   page.on("request", () => requestCounter++)
 
   await page.click("#stream-link-method-inside-frame")
-  await nextBeat()
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
-  assert.equal(requestCounter, 1, "submits a single HTTP request")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+  expect(fetchOptions.method, "[data-turbo-method] overrides the GET method").toEqual("POST")
+  expect(requestCounter, "submits a single HTTP request").toEqual(1)
 })
 
-test("test link method form submission targeting frame submits a single request", async ({ page }) => {
+test("link method form submission targeting frame submits a single request", async ({ page }) => {
   let requestCounter = 0
-  page.on("request", () => requestCounter++)
+  page.on("request", (request) => {
+    if (request.url().includes("/__turbo/redirect")) requestCounter++
+  })
 
   await page.click("#turbo-method-post-to-targeted-frame")
-  await nextBeat()
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
-  assert.equal(fetchOptions.method, "post", "[data-turbo-method] overrides the GET method")
-  assert.equal(requestCounter, 2, "submits a single HTTP request then follows a redirect")
+  await noNextEventNamed(page, "turbo:before-fetch-request")
+  expect(fetchOptions.method, "[data-turbo-method] overrides the GET method").toEqual("POST")
+  await expect(page.locator("#hello h2")).toHaveText("Hello from a frame")
+  expect(requestCounter, "submits a single HTTP request").toEqual(1)
 })
 
-test("test link method form submission inside frame", async ({ page }) => {
+test("link method form submission inside frame", async ({ page }) => {
   await page.click("#link-method-inside-frame")
-  await nextBeat()
 
-  assert.equal(await page.textContent("#frame h2"), "Frame: Loaded")
-  assert.notOk(await hasSelector(page, "#nested-child"))
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  await expect(page.locator("#nested-child")).not.toBeAttached()
 })
 
-test("test link method form submission inside frame with data-turbo-frame=_top", async ({ page }) => {
+test("link method form submission inside frame with data-turbo-frame=_top", async ({ page }) => {
   await page.click("#link-method-inside-frame-target-top")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Hello")
+  await expect(page.locator("h1")).toHaveText("Hello")
 })
 
-test("test link method form submission inside frame with data-turbo-frame target", async ({ page }) => {
+test("link method form submission inside frame with data-turbo-frame target", async ({ page }) => {
   await page.click("#link-method-inside-frame-with-target")
-  await nextBeat()
 
-  const title = await page.locator("h1")
-  const frameTitle = await page.locator("#hello h2")
-  assert.equal(await frameTitle.textContent(), "Hello from a frame")
-  assert.equal(await title.textContent(), "Form")
+  await expect(page.locator("#hello h2")).toHaveText("Hello from a frame")
+  await expect(page.locator("h1")).toHaveText("Form")
 })
 
-test("test stream link method form submission inside frame", async ({ page }) => {
+test("stream link method form submission inside frame", async ({ page }) => {
   await page.click("#stream-link-method-inside-frame")
-  await nextBeat()
 
-  const message = page.locator("#frame div.message")
-  assert.equal(await message.textContent(), "Link!")
+  await expect(page.locator("#frame div.message")).toHaveText("Link!")
 })
 
-test("test stream link GET method form submission inside frame", async ({ page }) => {
+test("stream link GET method form submission inside frame", async ({ page }) => {
   await page.click("#stream-link-get-method-inside-frame")
 
   const { fetchOptions } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
+  expect(fetchOptions.headers["Accept"]).toContain("text/vnd.turbo-stream.html")
 })
 
-test("test stream link inside frame", async ({ page }) => {
+test("stream link inside frame", async ({ page }) => {
   await page.click("#stream-link-inside-frame")
 
   const { fetchOptions, url } = await nextEventNamed(page, "turbo:before-fetch-request")
 
-  assert.ok(fetchOptions.headers["Accept"].includes("text/vnd.turbo-stream.html"))
-  assert.equal(getSearchParam(url, "content"), "Link!")
+  expect(fetchOptions.headers["Accept"]).toContain("text/vnd.turbo-stream.html")
+  expect(getSearchParam(url, "content")).toEqual("Link!")
 })
 
-test("test link method form submission within form inside frame", async ({ page }) => {
+test("link method form submission within form inside frame", async ({ page }) => {
   await page.click("#stream-link-method-within-form-inside-frame")
-  await nextBeat()
 
-  const message = page.locator("#frame div.message")
-  assert.equal(await message.textContent(), "Link!")
+  await expect(page.locator("#frame div.message")).toHaveText("Link!")
 })
 
-test("test link method form submission inside frame with confirmation confirmed", async ({ page }) => {
+test("link method form submission inside frame with confirmation confirmed", async ({ page }) => {
   page.on("dialog", (dialog) => {
-    assert.equal(dialog.message(), "Are you sure?")
+    expect(dialog.message()).toEqual("Are you sure?")
     dialog.accept()
   })
 
   await page.click("#link-method-inside-frame-with-confirmation")
-  await nextBeat()
 
-  const message = page.locator("#frame div.message")
-  assert.equal(await message.textContent(), "Link!")
+  await expect(page.locator("#frame div.message")).toHaveText("Link!")
 })
 
-test("test link method form submission inside frame with confirmation cancelled", async ({ page }) => {
+test("link method form submission inside frame with confirmation cancelled", async ({ page }) => {
   page.on("dialog", (dialog) => {
-    assert.equal(dialog.message(), "Are you sure?")
+    expect(dialog.message()).toEqual("Are you sure?")
     dialog.dismiss()
   })
 
   await page.click("#link-method-inside-frame-with-confirmation")
-  await nextBeat()
 
-  assert.notOk(await hasSelector(page, "#frame div.message"), "Not confirming form submission does not submit the form")
+  await expect(page.locator("#frame div.message"), "Not confirming form submission does not submit the form").not.toBeAttached()
 })
 
-test("test link method form submission outside frame", async ({ page }) => {
+test("link method form submission outside frame", async ({ page }) => {
   await page.click("#link-method-outside-frame")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Hello")
+  await expect(page.locator("h1")).toHaveText("Hello")
 })
 
-test("test following a link with [data-turbo-method] set and a target set navigates the target frame", async ({
+test("following a link with [data-turbo-method] set and a target set navigates the target frame", async ({
   page
 }) => {
   await page.click("#turbo-method-post-to-targeted-frame")
 
-  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
+  await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
 })
 
-test("test following a link with [data-turbo-method] and [data-turbo=true] set when html[data-turbo=false]", async ({
+test("following a link with [data-turbo-method] and empty [target]", async ({ page }) => {
+  await page.click("#turbo-method-post-empty-target")
+
+  await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
+})
+
+test("following a link with [data-turbo-method] and bare [target]", async ({ page }) => {
+  await page.click("#turbo-method-post-bare-target")
+
+  await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
+})
+
+test("following a link with [data-turbo-method] and [data-turbo=true] set when html[data-turbo=false]", async ({
   page
 }) => {
   const html = await page.locator("html")
@@ -1097,117 +1148,107 @@ test("test following a link with [data-turbo-method] and [data-turbo=true] set w
 
   await link.click()
 
-  assert.equal(await page.textContent("h1"), "Form", "does not navigate the full page")
-  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
+  await expect(page.locator("h1"), "does not navigate the full page").toHaveText("Form")
+  await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
 })
 
-test("test following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
+test("following a link with [data-turbo-method] and [data-turbo=true] set when Turbo.session.drive = false", async ({
   page
 }) => {
-  await page.evaluate(() => (window.Turbo.session.drive = false))
+  await page.evaluate(() => (window.Turbo.config.drive.enabled = false))
 
   const link = await page.locator("#turbo-method-post-to-targeted-frame")
   await link.evaluate((link) => link.setAttribute("data-turbo", "true"))
 
   await link.click()
 
-  assert.equal(await page.textContent("h1"), "Form", "does not navigate the full page")
-  assert.equal(await page.textContent("#hello h2"), "Hello from a frame", "drives the turbo-frame")
+  await expect(page.locator("h1"), "does not navigate the full page").toHaveText("Form")
+  await expect(page.locator("#hello h2"), "drives the turbo-frame").toHaveText("Hello from a frame")
 })
 
-test("test following a link with [data-turbo-method] set when html[data-turbo=false]", async ({ page }) => {
+test("following a link with [data-turbo-method] set when html[data-turbo=false]", async ({ page }) => {
   const html = await page.locator("html")
   await html.evaluate((html) => html.setAttribute("data-turbo", "false"))
 
   await page.click("#turbo-method-post-to-targeted-frame")
 
-  assert.equal(await page.textContent("h1"), "Hello", "treats link full-page navigation")
+  await expect(page.locator("h1"), "treats link full-page navigation").toHaveText("Hello")
 })
 
-test("test following a link with [data-turbo-method] set when Turbo.session.drive = false", async ({ page }) => {
-  await page.evaluate(() => (window.Turbo.session.drive = false))
+test("following a link with [data-turbo-method] set when Turbo.session.drive = false", async ({ page }) => {
+  await page.evaluate(() => (window.Turbo.config.drive = false))
   await page.click("#turbo-method-post-to-targeted-frame")
 
-  assert.equal(await page.textContent("h1"), "Hello", "treats link full-page navigation")
+  await expect(page.locator("h1"), "treats link full-page navigation").toHaveText("Hello")
 })
 
-test("test stream link method form submission outside frame", async ({ page }) => {
+test("stream link method form submission outside frame", async ({ page }) => {
   await page.click("#stream-link-method-outside-frame")
-  await nextBeat()
 
-  const message = page.locator("#frame div.message")
-  assert.equal(await message.textContent(), "Link!")
+  await expect(page.locator("#frame div.message")).toHaveText("Link!")
 })
 
-test("test link method form submission within form outside frame", async ({ page }) => {
+test("link method form submission within form outside frame", async ({ page }) => {
   await page.click("#link-method-within-form-outside-frame")
-  await nextBody(page)
+  await nextEventNamed(page, "turbo:load")
 
-  const title = await page.locator("h1")
-  assert.equal(await title.textContent(), "Hello")
+  await expect(page.locator("h1")).toHaveText("Hello")
 })
 
-test("test stream link method form submission within form outside frame", async ({ page }) => {
+test("stream link method form submission within form outside frame", async ({ page }) => {
   await page.click("#stream-link-method-within-form-outside-frame")
-  await nextBeat()
 
-  assert.equal(await page.textContent("#frame div.message"), "Link!")
+  await expect(page.locator("#frame div.message")).toHaveText("Link!")
 })
 
-test("test turbo:before-fetch-request fires on the form element", async ({ page }) => {
+test("turbo:before-fetch-request fires on the form element", async ({ page }) => {
   await page.click('#targets-frame form.one [type="submit"]')
-  assert.ok(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-request"))
+  expect(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-request")).toBeTruthy()
 })
 
-test("test turbo:before-fetch-response fires on the form element", async ({ page }) => {
+test("turbo:before-fetch-response fires on the form element", async ({ page }) => {
   await page.click('#targets-frame form.one [type="submit"]')
-  assert.ok(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-response"))
+  expect(await nextEventOnTarget(page, "form_one", "turbo:before-fetch-response")).toBeTruthy()
 })
 
-test("test POST to external action ignored", async ({ page }) => {
+test("POST to external action ignored", async ({ page }) => {
   await page.click("#submit-external")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
+  await noNextEventNamed(page, "turbo:before-fetch-request")
 
-  await nextBody(page)
-
-  assert.equal(page.url(), "https://httpbin.org/post")
+  await expect(page).toHaveURL("https://httpbin.org/post")
 })
 
-test("test POST to external action within frame ignored", async ({ page }) => {
+test("POST to external action within frame ignored", async ({ page }) => {
   await page.click("#submit-external-within-ignored")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
+  await noNextEventNamed(page, "turbo:before-fetch-request")
 
-  await nextBody(page)
-
-  assert.equal(page.url(), "https://httpbin.org/post")
+  await expect(page).toHaveURL("https://httpbin.org/post")
 })
 
-test("test POST to external action targeting frame ignored", async ({ page }) => {
+test("POST to external action targeting frame ignored", async ({ page }) => {
   await page.click("#submit-external-target-ignored")
 
-  assert.ok(await noNextEventNamed(page, "turbo:before-fetch-request"))
+  await noNextEventNamed(page, "turbo:before-fetch-request")
 
-  await nextBody(page)
-
-  assert.equal(page.url(), "https://httpbin.org/post")
+  await expect(page).toHaveURL("https://httpbin.org/post")
 })
 
-test("test form submission skipped with form[target]", async ({ page }) => {
+test("form submission skipped with form[target]", async ({ page }) => {
   await page.click("#skipped form[target] button")
   await nextBeat()
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.notOk(await formSubmitEnded(page))
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  expect(await formSubmitEnded(page)).toEqual(null)
 })
 
-test("test form submission skipped with submitter button[formtarget]", async ({ page }) => {
+test("form submission skipped with submitter button[formtarget]", async ({ page }) => {
   await page.click("#skipped [formtarget]")
   await nextBeat()
 
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/form.html")
-  assert.notOk(await formSubmitEnded(page))
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/form.html"))
+  expect(await formSubmitEnded(page)).toEqual(null)
 })
 
 function formSubmitStarted(page) {

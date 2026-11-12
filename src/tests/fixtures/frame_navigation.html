@@ -3,19 +3,34 @@
   <head>
     <meta charset="utf-8">
     <title>Turbo</title>
+    <link rel="icon" href="data:image/x-icon;base64,AA">
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
   </head>
   <body>
     <div id="container">
+      <h1>Frame navigation tests</h1>
       <a id="outside" href="/src/tests/fixtures/frame_navigation.html" data-turbo-frame="frame">Outside Frame</a>
 
       <custom-link-element id="outside-in-shadow-dom" link="/src/tests/fixtures/frame_navigation.html" data-turbo-frame="frame">
         Outside Frame in Shadow DOM
       </custom-link-element>
 
-      <custom-link-element id="data-turbo-frame-in-shadow-dom" link="/src/tests/fixtures/frame_navigation.html" frame="frame">
-        Data turbo frame attribute in Shadow DOM
+      <custom-link-element id="shadow-frame-slot" link="/src/tests/fixtures/frame_navigation.html?shadow=frame" frame="frame">
+        <span id="shadow-link-slot">Frame target on the shadow link</span>
+      </custom-link-element>
+      <custom-link-element id="shadow-frame-span" link="/src/tests/fixtures/frame_navigation.html?shadow=frame" frame="frame" text='<span>Frame target with an inner span</span>'></custom-link-element>
+      <custom-link-element id="shadow-frame-host" link="/src/tests/fixtures/frame_navigation.html?shadow=frame" frame="_top" data-turbo-frame="frame">
+        Frame target on the host takes precedence
+      </custom-link-element>
+      <custom-link-element id="shadow-top-link" link="/src/tests/fixtures/frame_navigation.html?shadow=top" frame="_top">
+        Top target on the shadow link
+      </custom-link-element>
+      <custom-link-element id="shadow-top-host" link="/src/tests/fixtures/frame_navigation.html?shadow=top" frame="frame" data-turbo-frame="_top">
+        Top target on the host takes precedence
+      </custom-link-element>
+      <custom-link-element id="shadow-empty-host" link="/src/tests/fixtures/frame_navigation.html?shadow=top" frame="frame" data-turbo-frame="">
+        Empty target on the host takes precedence
       </custom-link-element>
 
       <turbo-frame id="frame">
@@ -24,6 +39,15 @@
         <a id="inside" href="/src/tests/fixtures/frame_navigation.html">Inside Frame</a>
         <a id="self" href="/src/tests/fixtures/frame_navigation.html" data-turbo-frame="_self">Self Frame</a>
         <a id="top" href="/src/tests/fixtures/frame_navigation.html" data-turbo-frame="_top">Top</a>
+        <custom-link-element id="shadow-frame-nested" link="/src/tests/fixtures/frame_navigation.html?shadow=frame" frame="empty-head">
+          Target another frame from a shadow link inside a frame
+        </custom-link-element>
+      </turbo-frame>
+
+      <turbo-frame id="empty-head">
+        <p>The following link has a <code>data-turbo-action="advance"</code> attribute and exists within a Turbo Frame. Tapping
+          it should replace the frame's contents, keeping the Index heading.</p>
+        <a id="link-to-frame-with-empty-head" href="/src/tests/fixtures/frames/empty_head.html" data-turbo-action="advance">About (a link with data-turbo-action="advance")</a>
       </turbo-frame>
 
       <div style="height: calc(100vh*2);"></div>

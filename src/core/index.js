@@ -1,16 +1,20 @@
 import { Session } from "./session"
-import { Cache } from "./cache"
 import { PageRenderer } from "./drive/page_renderer"
 import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
-import { FormSubmission } from "./drive/form_submission"
+import { fetch, recentRequests } from "../http/fetch"
+import { config } from "./config"
+import { MorphingPageRenderer } from "./drive/morphing_page_renderer"
+import { MorphingFrameRenderer } from "./frames/morphing_frame_renderer"
 
-const session = new Session()
-const cache = new Cache(session)
-const { navigator } = session
-export { navigator, session, cache, PageRenderer, PageSnapshot, FrameRenderer }
+export { morphChildren, morphElements } from "./morphing"
+export { PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
 
-export { StreamActions } from "./streams/stream_actions"
+const session = new Session(recentRequests)
+
+// Rename `navigator` to avoid shadowing `window.navigator`
+const { cache, navigator: sessionNavigator } = session
+export { session, cache, sessionNavigator as navigator }
 
 /**
  * Starts the main session.
@@ -43,6 +47,9 @@ export function registerAdapter(adapter) {
  * navigations to the same page will not result in a new history entry.
  * @param options.snapshotHTML Cached snapshot to render
  * @param options.response Response of the specified location
+ * @param options.scroll Scroll behavior to apply after rendering ("preserve"
+ * or "reset"). Defaults to resetting the scroll position, unless the visit is
+ * a page refresh governed by the `turbo-refresh-scroll` meta tag.
  */
 export function visit(location, options) {
   session.visit(location, options)
@@ -77,19 +84,6 @@ export function renderStreamMessage(message) {
 }
 
 /**
- * Removes all entries from the Turbo Drive page cache.
- * Call this when state has changed on the server that may affect cached pages.
- *
- * @deprecated since version 7.2.0 in favor of `Turbo.cache.clear()`
- */
-export function clearCache() {
-  console.warn(
-    "Please replace `Turbo.clearCache()` with `Turbo.cache.clear()`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
-  )
-  session.clearCache()
-}
-
-/**
  * Sets the delay after which the progress bar will appear during navigation.
  *
  * The progress bar appears after 500ms by default.
@@ -100,13 +94,48 @@ export function clearCache() {
  * @param delay Time to delay in milliseconds
  */
 export function setProgressBarDelay(delay) {
-  session.setProgressBarDelay(delay)
+  console.warn(
+    "Please replace `Turbo.setProgressBarDelay(delay)` with `Turbo.config.drive.progressBarDelay = delay`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
+  config.drive.progressBarDelay = delay
 }
 
 export function setConfirmMethod(confirmMethod) {
-  FormSubmission.confirmMethod = confirmMethod
+  console.warn(
+    "Please replace `Turbo.setConfirmMethod(confirmMethod)` with `Turbo.config.forms.confirm = confirmMethod`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
+  config.forms.confirm = confirmMethod
 }
 
 export function setFormMode(mode) {
-  session.setFormMode(mode)
+  console.warn(
+    "Please replace `Turbo.setFormMode(mode)` with `Turbo.config.forms.mode = mode`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
+  )
+  config.forms.mode = mode
+}
+
+/**
+ * Morph the state of the currentBody based on the attributes and contents of
+ * the newBody. Morphing body elements may dispatch turbo:morph,
+ * turbo:before-morph-element, turbo:before-morph-attribute, and
+ * turbo:morph-element events.
+ *
+ * @param currentBody HTMLBodyElement destination of morphing changes
+ * @param newBody HTMLBodyElement source of morphing changes
+ */
+export function morphBodyElements(currentBody, newBody) {
+  MorphingPageRenderer.renderElement(currentBody, newBody)
+}
+
+/**
+ * Morph the child elements of the currentFrame based on the child elements of
+ * the newFrame. Morphing turbo-frame elements may dispatch turbo:before-frame-morph,
+ * turbo:before-morph-element, turbo:before-morph-attribute, and
+ * turbo:morph-element events.
+ *
+ * @param currentFrame FrameElement destination of morphing children changes
+ * @param newFrame FrameElement source of morphing children changes
+ */
+export function morphTurboFrameElements(currentFrame, newFrame) {
+  MorphingFrameRenderer.renderElement(currentFrame, newFrame)
 }

@@ -1,3 +1,5 @@
+import { findLinkFromClickTarget } from "../../util"
+
 export class LinkInterceptor {
   constructor(delegate, element) {
     this.delegate = delegate
@@ -17,7 +19,7 @@ export class LinkInterceptor {
   }
 
   clickBubbled = (event) => {
-    if (this.respondsToEventTarget(event.target)) {
+    if (this.clickEventIsSignificant(event)) {
       this.clickEvent = event
     } else {
       delete this.clickEvent
@@ -25,7 +27,7 @@ export class LinkInterceptor {
   }
 
   linkClicked = (event) => {
-    if (this.clickEvent && this.respondsToEventTarget(event.target) && event.target instanceof Element) {
+    if (this.clickEvent && this.clickEventIsSignificant(event)) {
       const linkOrCustomElement = event.target
       const actuallyClickedLink = (linkOrCustomElement.shadowRoot && !linkOrCustomElement.hasAttribute("data-turbo-frame"))
         ? event.composedPath()[0] : linkOrCustomElement
@@ -43,8 +45,10 @@ export class LinkInterceptor {
     delete this.clickEvent
   }
 
-  respondsToEventTarget(target) {
-    const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
-    return element && element.closest("turbo-frame, html") == this.element
+  clickEventIsSignificant(event) {
+    const target = event.composed ? event.target?.parentElement : event.target
+    const element = findLinkFromClickTarget(target) || target
+
+    return element instanceof Element && element.closest("turbo-frame, html") == this.element
   }
 }

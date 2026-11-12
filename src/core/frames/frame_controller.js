@@ -20,6 +20,7 @@ import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
 import { FormLinkClickObserver } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
+import { MorphingFrameRenderer } from "./morphing_frame_renderer"
 import { session } from "../index"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
@@ -32,6 +33,7 @@ export class FrameController {
   #connected = false
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
+  #shouldMorphFrame = false
   action = null
 
   constructor(element) {
@@ -67,17 +69,27 @@ export class FrameController {
       this.formLinkClickObserver.stop()
       this.linkInterceptor.stop()
       this.formSubmitObserver.stop()
+
+      if (!this.element.hasAttribute("recurse")) {
+        this.#currentFetchRequest?.cancel()
+      }
     }
   }
 
   disabledChanged() {
-    if (this.loadingStyle == FrameLoadingStyle.eager) {
+    if (this.disabled) {
+      this.#currentFetchRequest?.cancel()
+    } else if (this.loadingStyle == FrameLoadingStyle.eager) {
       this.#loadSourceURL()
     }
   }
 
   sourceURLChanged() {
     if (this.#isIgnoringChangesTo("src")) return
+
+    if (!this.sourceURL) {
+      this.#currentFetchRequest?.cancel()
+    }
 
     if (this.element.isConnected) {
       this.complete = false
@@ -89,19 +101,14 @@ export class FrameController {
   }
 
   sourceURLReloaded() {
-    const { src } = this.element
-    this.#ignoringChangesToAttribute("complete", () => {
-      this.element.removeAttribute("complete")
-    })
+    const { refresh, src } = this.element
+
+    this.#shouldMorphFrame = src && refresh === "morph"
+
+    this.element.removeAttribute("complete")
     this.element.src = null
     this.element.src = src
     return this.element.loaded
-  }
-
-  completeChanged() {
-    if (this.#isIgnoringChangesTo("complete")) return
-
-    this.#loadSourceURL()
   }
 
   loadingStyleChanged() {
@@ -140,6 +147,7 @@ export class FrameController {
         }
       }
     } finally {
+      this.#shouldMorphFrame = false
       this.fetchResponseLoaded = () => Promise.resolve()
     }
   }
@@ -147,7 +155,7 @@ export class FrameController {
   // Appearance observer delegate
 
   elementAppearedInViewport(element) {
-    this.proposeVisitIfNavigatedWithAction(element, element)
+    this.proposeVisitIfNavigatedWithAction(element, getVisitAction(element))
     this.#loadSourceURL()
   }
 
@@ -184,15 +192,18 @@ export class FrameController {
     }
 
     this.formSubmission = new FormSubmission(this, element, submitter)
+
     const { fetchRequest } = this.formSubmission
-    this.prepareRequest(fetchRequest)
+    const frame = this.#findFrameElement(element, submitter)
+
+    this.prepareRequest(fetchRequest, frame)
     this.formSubmission.start()
   }
 
   // Fetch request delegate
 
-  prepareRequest(request) {
-    request.headers["Turbo-Frame"] = this.id
+  prepareRequest(request, frame = this) {
+    request.headers["Turbo-Frame"] = frame.id
 
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
       request.acceptResponseType(StreamMessage.contentType)
@@ -235,7 +246,7 @@ export class FrameController {
   formSubmissionSucceededWithResponse(formSubmission, response) {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
-    frame.delegate.proposeVisitIfNavigatedWithAction(frame, formSubmission.formElement, formSubmission.submitter)
+    frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
     frame.delegate.loadResponse(response)
 
     if (!formSubmission.isSafe) {
@@ -258,12 +269,13 @@ export class FrameController {
 
   // View delegate
 
-  allowsImmediateRender({ element: newFrame }, _isPreview, options) {
+  allowsImmediateRender({ element: newFrame }, options) {
     const event = dispatch("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
       cancelable: true
     })
+
     const {
       defaultPrevented,
       detail: { render }
@@ -276,7 +288,7 @@ export class FrameController {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, _isPreview) {}
+  viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
 
   preloadOnLoadLinksForView(element) {
     session.preloadOnLoadLinksForView(element)
@@ -287,7 +299,15 @@ export class FrameController {
   // Frame renderer delegate
 
   willRenderFrame(currentElement, _newElement) {
-    this.previousFrameElement = currentElement.cloneNode(true)
+    // Only clone the frame for promoted frame visits, where visitCachedSnapshot
+    // consumes the clone to restore the frame's contents into the cached page
+    // snapshot (and deletes it). For plain frame renders — src changes without
+    // a data-turbo-action, refresh="morph" reloads, broadcast-driven reloads —
+    // nothing ever consumes or clears the clone, so it would pin a complete
+    // copy of the frame's previous subtree on the controller indefinitely.
+    if (this.action) {
+      this.previousFrameElement = currentElement.cloneNode(true)
+    }
   }
 
   visitCachedSnapshot = ({ element }) => {
@@ -304,10 +324,11 @@ export class FrameController {
 
   async #loadFrameResponse(fetchResponse, document) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
+    const rendererClass = this.#shouldMorphFrame ? MorphingFrameRenderer : FrameRenderer
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
-      const renderer = new FrameRenderer(this, this.view.snapshot, snapshot, FrameRenderer.renderElement, false, false)
+      const renderer = new rendererClass(this, this.view.snapshot, snapshot, false, false)
       if (this.view.renderPromise) await this.view.renderPromise
       this.changeHistory()
 
@@ -340,15 +361,15 @@ export class FrameController {
   #navigateFrame(element, url, submitter) {
     const frame = this.#findFrameElement(element, submitter)
 
-    frame.delegate.proposeVisitIfNavigatedWithAction(frame, element, submitter)
+    frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(submitter, element, frame))
 
     this.#withCurrentNavigationElement(element, () => {
       frame.src = url
     })
   }
 
-  proposeVisitIfNavigatedWithAction(frame, element, submitter) {
-    this.action = getVisitAction(submitter, element, frame)
+  proposeVisitIfNavigatedWithAction(frame, action = null) {
+    this.action = action
 
     if (this.action) {
       const pageSnapshot = PageSnapshot.fromElement(frame).clone()
@@ -432,7 +453,9 @@ export class FrameController {
 
   #findFrameElement(element, submitter) {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
-    return getFrameElementById(id) ?? this.element
+    const target = this.#getFrameElementById(id)
+
+    return target instanceof FrameElement ? target : this.element
   }
 
   async extractForeignFrameElement(container) {
@@ -476,9 +499,11 @@ export class FrameController {
     }
 
     if (id) {
-      const frameElement = getFrameElementById(id)
+      const frameElement = this.#getFrameElementById(id)
       if (frameElement) {
         return !frameElement.disabled
+      } else if (id == "_parent") {
+        return false
       }
     }
 
@@ -499,8 +524,12 @@ export class FrameController {
     return this.element.id
   }
 
+  get disabled() {
+    return this.element.disabled
+  }
+
   get enabled() {
-    return !this.element.disabled
+    return !this.disabled
   }
 
   get sourceURL() {
@@ -528,13 +557,11 @@ export class FrameController {
   }
 
   set complete(value) {
-    this.#ignoringChangesToAttribute("complete", () => {
-      if (value) {
-        this.element.setAttribute("complete", "")
-      } else {
-        this.element.removeAttribute("complete")
-      }
-    })
+    if (value) {
+      this.element.setAttribute("complete", "")
+    } else {
+      this.element.removeAttribute("complete")
+    }
   }
 
   get isActive() {
@@ -562,13 +589,15 @@ export class FrameController {
     callback()
     delete this.currentNavigationElement
   }
-}
 
-function getFrameElementById(id) {
-  if (id != null) {
-    const element = document.getElementById(id)
-    if (element instanceof FrameElement) {
-      return element
+  #getFrameElementById(id) {
+    if (id != null) {
+      const element = id === "_parent" ?
+        this.element.parentElement.closest("turbo-frame") :
+        document.getElementById(id)
+      if (element instanceof FrameElement) {
+        return element
+      }
     }
   }
 }

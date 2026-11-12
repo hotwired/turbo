@@ -1,11 +1,11 @@
-import { nextMicrotask, uuid } from "../../util"
+import { uuid } from "../../util"
 
 export class History {
   location
   restorationIdentifier = uuid()
   restorationData = {}
   started = false
-  pageLoaded = false
+  currentIndex = 0
 
   constructor(delegate) {
     this.delegate = delegate
@@ -14,7 +14,7 @@ export class History {
   start() {
     if (!this.started) {
       addEventListener("popstate", this.onPopState, false)
-      addEventListener("load", this.onPageLoad, false)
+      this.currentIndex = history.state?.turbo?.restorationIndex || 0
       this.started = true
       this.replace(new URL(window.location.href))
     }
@@ -23,7 +23,6 @@ export class History {
   stop() {
     if (this.started) {
       removeEventListener("popstate", this.onPopState, false)
-      removeEventListener("load", this.onPageLoad, false)
       this.started = false
     }
   }
@@ -37,7 +36,9 @@ export class History {
   }
 
   update(method, location, restorationIdentifier = uuid()) {
-    const state = { turbo: { restorationIdentifier } }
+    if (method === history.pushState) ++this.currentIndex
+
+    const state = { turbo: { restorationIdentifier, restorationIndex: this.currentIndex } }
     method.call(history, state, "", location.href)
     this.location = location
     this.restorationIdentifier = restorationIdentifier
@@ -69,7 +70,12 @@ export class History {
 
   relinquishControlOfScrollRestoration() {
     if (this.previousScrollRestoration) {
-      history.scrollRestoration = this.previousScrollRestoration
+      try {
+        history.scrollRestoration = this.previousScrollRestoration
+      } catch {
+        // Firefox can throw SecurityError when restoring scrollRestoration
+        // during pagehide. The page is unloading; leave the browser's value.
+      }
       delete this.previousScrollRestoration
     }
   }
@@ -77,30 +83,18 @@ export class History {
   // Event handlers
 
   onPopState = (event) => {
-    if (this.shouldHandlePopState()) {
-      const { turbo } = event.state || {}
-      if (turbo) {
-        this.location = new URL(window.location.href)
-        const { restorationIdentifier } = turbo
-        this.restorationIdentifier = restorationIdentifier
-        this.delegate.historyPoppedToLocationWithRestorationIdentifier(this.location, restorationIdentifier)
-      }
+    const { turbo } = event.state || {}
+    this.location = new URL(window.location.href)
+
+    if (turbo) {
+      const { restorationIdentifier, restorationIndex } = turbo
+      this.restorationIdentifier = restorationIdentifier
+      const direction = restorationIndex > this.currentIndex ? "forward" : "back"
+      this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(this.location, restorationIdentifier, direction)
+      this.currentIndex = restorationIndex
+    } else {
+      this.currentIndex++
+      this.delegate.historyPoppedWithEmptyState(this.location)
     }
-  }
-
-  onPageLoad = async (_event) => {
-    await nextMicrotask()
-    this.pageLoaded = true
-  }
-
-  // Private
-
-  shouldHandlePopState() {
-    // Safari dispatches a popstate event after window's load event, ignore it
-    return this.pageIsLoaded()
-  }
-
-  pageIsLoaded() {
-    return this.pageLoaded || document.readyState == "complete"
   }
 }

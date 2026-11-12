@@ -1,62 +1,113 @@
-import { test } from "@playwright/test"
-import { getFromLocalStorage, nextEventNamed, nextEventOnTarget, pathname, scrollToSelector } from "../helpers/page"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
+import { getFromLocalStorage, nextBeat, nextEventNamed, nextEventOnTarget, pathname, readEventLogs, scrollToSelector, withPathname } from "../helpers/page"
 
-test("test frame navigation with descendant link", async ({ page }) => {
+const frameNavigationPath = "/src/tests/fixtures/frame_navigation.html"
+
+test("frame navigation with descendant link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#inside")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation with self link", async ({ page }) => {
+test("frame navigation with self link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#self")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation with exterior link", async ({ page }) => {
+test("frame navigation with exterior link", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#outside")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation with exterior link in Shadow DOM", async ({ page }) => {
+test("frame navigation with exterior link in Shadow DOM", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
   await page.click("#outside-in-shadow-dom")
 
   await nextEventOnTarget(page, "frame", "turbo:frame-load")
 })
 
-test("test frame navigation with a data-turbo-frame in the Shadow DOM", async ({ page }) => {
-  await page.goto("/src/tests/fixtures/frame_navigation.html")
-  await page.click("#data-turbo-frame-in-shadow-dom")
+for (const { description, selector, target } of [
+  { description: "uses the inner frame target when clicking slotted content", selector: "#shadow-link-slot", target: "frame" },
+  { description: "uses the inner frame target when clicking an inner span", selector: "#shadow-frame-span span", target: "frame" },
+  { description: "preserves the host frame target over an inner _top target", selector: "#shadow-frame-host", target: "frame" },
+  { description: "respects an inner _top target", selector: "#shadow-top-link", target: "_top" },
+  { description: "preserves the host _top target over an inner frame target", selector: "#shadow-top-host", target: "_top" },
+  { description: "preserves an empty host target over an inner frame target", selector: "#shadow-empty-host", target: "_top" },
+  { description: "targets another frame from inside an enclosing frame", selector: "#shadow-frame-nested", target: "empty-head" }
+]) {
+  test(`frame navigation from a Shadow DOM link ${description}`, async ({ page }) => {
+    await prepareShadowLinkNavigation(page)
+    const requests = trackFrameNavigationRequests(page)
 
-  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+    await page.click(selector)
+
+    if (target === "_top") {
+      await nextEventNamed(page, "turbo:load")
+      await expect(page).toHaveURL(`${frameNavigationPath}?shadow=top`)
+      await expect(page.locator("h1")).toHaveText("Frame navigation tests")
+    } else {
+      await nextEventOnTarget(page, target, "turbo:frame-load")
+      await expect(page).toHaveURL(frameNavigationPath)
+      await expect(page.locator("h1")).toHaveText("Original page")
+
+      if (target === "frame") {
+        await expect(page.locator("#frame h2")).toHaveText("Frame Navigation")
+        await expect(page.locator("#empty-head")).toHaveText("Original second frame")
+      } else {
+        await expect(page.locator("#empty-head p")).toContainText("The following link")
+        await expect(page.locator("#frame h2")).toHaveText("Original frame")
+      }
+    }
+
+    expect(requests, "makes one request with the correct frame target").toEqual([target === "_top" ? undefined : target])
+  })
+}
+
+test("frame navigation with data-turbo-action", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_navigation.html")
+  await page.click("#link-to-frame-with-empty-head")
+  await nextBeat()
+
+  await nextEventOnTarget(page, "empty-head", "turbo:frame-load")
+
+  const frameText = page.locator("#empty-head h2")
+  await expect(frameText).toHaveText("Frame updated")
+
+  const titleText = page.locator("h1")
+  await expect(titleText).toHaveText("Frame navigation tests")
 })
 
-test("test frame navigation emits fetch-request-error event when offline", async ({ page }) => {
+test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error))
+
   await page.goto("/src/tests/fixtures/tabs.html")
   await page.context().setOffline(true)
   await page.click("#tab-2")
   await nextEventOnTarget(page, "tab-frame", "turbo:fetch-request-error")
+  await nextBeat()
+
+  expect(errors, "does not raise an unhandled rejection").toEqual([])
 })
 
-test("test lazy-loaded frame promotes navigation", async ({ page }) => {
+test("lazy-loaded frame promotes navigation", async ({ page }) => {
   await page.goto("/src/tests/fixtures/frame_navigation.html")
 
-  assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Not Loaded")
+  await expect(page.locator("#eager-loaded-frame h2")).toHaveText("Eager-loaded frame: Not Loaded")
 
   await scrollToSelector(page, "#eager-loaded-frame")
   await nextEventOnTarget(page, "eager-loaded-frame", "turbo:frame-load")
 
-  assert.equal(await page.textContent("#eager-loaded-frame h2"), "Eager-loaded frame: Loaded")
-  assert.equal(pathname(page.url()), "/src/tests/fixtures/frames/frame_for_eager.html")
+  await expect(page.locator("#eager-loaded-frame h2")).toHaveText("Eager-loaded frame: Loaded")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/frames/frame_for_eager.html"))
 })
 
-test("test promoted frame navigation updates the URL before rendering", async ({ page }) => {
+test("promoted frame navigation updates the URL before rendering", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
 
   page.evaluate(() => {
@@ -69,45 +120,63 @@ test("test promoted frame navigation updates the URL before rendering", async ({
   await page.click("#tab-2")
   await nextEventNamed(page, "turbo:before-frame-render")
 
-  assert.equal(await getFromLocalStorage(page, "beforeRenderUrl"), "/src/tests/fixtures/tabs/two.html")
-  assert.equal(await getFromLocalStorage(page, "beforeRenderContent"), "One")
+  expect(await getFromLocalStorage(page, "beforeRenderUrl")).toEqual("/src/tests/fixtures/tabs/two.html")
+  expect(await getFromLocalStorage(page, "beforeRenderContent")).toEqual("One")
 
   await nextEventNamed(page, "turbo:frame-render")
 
-  assert.equal(await pathname(page.url()), "/src/tests/fixtures/tabs/two.html")
-  assert.equal(await page.textContent("#tab-content"), "Two")
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/tabs/two.html"))
+  await expect(page.locator("#tab-content")).toHaveText("Two")
 })
 
-test("test promoted frame navigations are cached", async ({ page }) => {
+test("promoted frame navigations are cached", async ({ page }) => {
   await page.goto("/src/tests/fixtures/tabs.html")
 
   await page.click("#tab-2")
   await nextEventOnTarget(page, "tab-frame", "turbo:frame-load")
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("#tab-content"), "Two")
-  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/two.html")
-  assert.equal(await page.getAttribute("#tab-frame", "complete"), "", "sets [complete]")
+  await expect(page.locator("#tab-content")).toHaveText("Two")
+  expect(pathname((await page.getAttribute("#tab-frame", "src")) || "")).toEqual("/src/tests/fixtures/tabs/two.html")
+  await expect(page.locator("#tab-frame"), "sets [complete]").toHaveAttribute("complete")
 
   await page.click("#tab-3")
   await nextEventOnTarget(page, "tab-frame", "turbo:frame-load")
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("#tab-content"), "Three")
-  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/three.html")
-  assert.equal(await page.getAttribute("#tab-frame", "complete"), "", "sets [complete]")
+  await expect(page.locator("#tab-content")).toHaveText("Three")
+  expect(pathname((await page.getAttribute("#tab-frame", "src")) || "")).toEqual("/src/tests/fixtures/tabs/three.html")
+  await expect(page.locator("#tab-frame"), "sets [complete]").toHaveAttribute("complete")
 
   await page.goBack()
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("#tab-content"), "Two")
-  assert.equal(pathname((await page.getAttribute("#tab-frame", "src")) || ""), "/src/tests/fixtures/tabs/two.html")
-  assert.equal(await page.getAttribute("#tab-frame", "complete"), "", "caches two.html with [complete]")
+  await expect(page.locator("#tab-content")).toHaveText("Two")
+  expect(pathname((await page.getAttribute("#tab-frame", "src")) || "")).toEqual("/src/tests/fixtures/tabs/two.html")
+  await expect(page.locator("#tab-frame"), "caches two.html with [complete]").toHaveAttribute("complete")
 
   await page.goBack()
   await nextEventNamed(page, "turbo:load")
 
-  assert.equal(await page.textContent("#tab-content"), "One")
-  assert.equal(await page.getAttribute("#tab-frame", "src"), null, "caches one.html without #tab-frame[src]")
-  assert.equal(await page.getAttribute("#tab-frame", "complete"), null, "caches one.html without [complete]")
+  await expect(page.locator("#tab-content")).toHaveText("One")
+  await expect(page.locator("#tab-frame"), "caches one.html without #tab-frame[src]").not.toHaveAttribute("src")
+  await expect(page.locator("#tab-frame"), "caches one.html without [complete]").not.toHaveAttribute("complete")
 })
+
+async function prepareShadowLinkNavigation(page) {
+  await page.goto(frameNavigationPath)
+  await page.locator("h1").evaluate((element) => element.textContent = "Original page")
+  await page.locator("#frame h2").evaluate((element) => element.textContent = "Original frame")
+  await page.locator("#empty-head").evaluate((element) => element.textContent = "Original second frame")
+  await readEventLogs(page)
+}
+
+function trackFrameNavigationRequests(page) {
+  const requests = []
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === frameNavigationPath) {
+      requests.push(request.headers()["turbo-frame"])
+    }
+  })
+  return requests
+}
