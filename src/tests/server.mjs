@@ -68,6 +68,13 @@ router.post("/reject/morph", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.post("/reject/view-transition", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/form_view_transition_${status}.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)

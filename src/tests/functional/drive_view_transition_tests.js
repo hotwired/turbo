@@ -7,7 +7,8 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(`
     document.startViewTransition = (callback) => {
       window.startViewTransitionCalled = true
-      callback()
+      const updateCallbackDone = Promise.resolve().then(callback)
+      return { ready: updateCallbackDone, updateCallbackDone, finished: updateCallbackDone }
     }
   `)
 })
