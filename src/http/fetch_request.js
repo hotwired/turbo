@@ -213,7 +213,10 @@ export function isSafe(fetchMethod) {
 }
 
 function buildResourceAndBody(resource, method, requestBody, enctype) {
-  const searchParams = new URLSearchParams(entriesExcludingFiles(requestBody))
+  const searchParams =
+    Array.from(requestBody).length > 0
+      ? new URLSearchParams(entriesExcludingFiles(requestBody))
+      : new URLSearchParams(resource.searchParams)
 
   if (isSafe(method)) {
     return [mergeIntoURLSearchParams(resource, searchParams), null]
@@ -236,8 +239,9 @@ function entriesExcludingFiles(requestBody) {
 }
 
 function mergeIntoURLSearchParams(url, requestBody) {
-  const searchParams = entriesExcludingFiles(requestBody)
-  searchParams.forEach(([name, value]) => url.searchParams.append(name, value))
+  const searchParams = new URLSearchParams(entriesExcludingFiles(requestBody))
+
+  url.search = searchParams.toString()
 
   return url
 }
