@@ -88,6 +88,10 @@
   "turbo:morph",
   "turbo:before-morph-element",
   "turbo:morph-element",
+  "turbo:before-morph-element-added",
+  "turbo:morph-element-added",
+  "turbo:before-morph-element-removed",
+  "turbo:morph-element-removed",
   "turbo:before-morph-attribute",
   "turbo:reload"
 ])
