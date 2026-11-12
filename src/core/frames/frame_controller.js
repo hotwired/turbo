@@ -14,7 +14,7 @@ import {
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { getAction, expandURL, getRequestURL, locationIsVisitable } from "../url"
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
@@ -129,9 +129,13 @@ export class FrameController {
     }
   }
 
-  async loadResponse(fetchResponse) {
+  async loadResponse(fetchResponse, requestURL) {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
-      this.sourceURL = fetchResponse.response.url + this.#hashFromSourceURL
+      const responseURL = expandURL(fetchResponse.response.url)
+      if (!fetchResponse.redirected && !responseURL.hash && requestURL) {
+        responseURL.hash = requestURL.hash
+      }
+      this.sourceURL = responseURL.href
     }
 
     try {
@@ -219,12 +223,12 @@ export class FrameController {
   }
 
   async requestSucceededWithResponse(request, response) {
-    await this.loadResponse(response)
+    await this.loadResponse(response, request.url)
     this.#resolveVisitPromise()
   }
 
   async requestFailedWithResponse(request, response) {
-    await this.loadResponse(response)
+    await this.loadResponse(response, request.url)
     this.#resolveVisitPromise()
   }
 
@@ -247,7 +251,7 @@ export class FrameController {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
-    frame.delegate.loadResponse(response)
+    frame.delegate.loadResponse(response, formSubmission.fetchRequest.url)
 
     if (!formSubmission.isSafe) {
       session.clearCache()
@@ -255,7 +259,7 @@ export class FrameController {
   }
 
   formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
-    this.element.delegate.loadResponse(fetchResponse)
+    this.element.delegate.loadResponse(fetchResponse, formSubmission.fetchRequest.url)
     session.clearCache()
   }
 
@@ -299,7 +303,15 @@ export class FrameController {
   // Frame renderer delegate
 
   willRenderFrame(currentElement, _newElement) {
-    this.previousFrameElement = currentElement.cloneNode(true)
+    // Only clone the frame for promoted frame visits, where visitCachedSnapshot
+    // consumes the clone to restore the frame's contents into the cached page
+    // snapshot (and deletes it). For plain frame renders — src changes without
+    // a data-turbo-action, refresh="morph" reloads, broadcast-driven reloads —
+    // nothing ever consumes or clears the clone, so it would pin a complete
+    // copy of the frame's previous subtree on the controller indefinitely.
+    if (this.action) {
+      this.previousFrameElement = currentElement.cloneNode(true)
+    }
   }
 
   visitCachedSnapshot = ({ element }) => {
@@ -530,13 +542,6 @@ export class FrameController {
     }
   }
 
-  get #hashFromSourceURL() {
-    if (this.sourceURL) {
-      return expandURL(this.sourceURL).hash
-    }
-    return ""
-  }
-
   set sourceURL(sourceURL) {
     this.#ignoringChangesToAttribute("src", () => {
       this.element.src = sourceURL ?? null
@@ -604,7 +609,7 @@ export class FrameController {
 function activateElement(element, currentURL) {
   if (element) {
     const src = element.getAttribute("src")
-    if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {
+    if (src != null && currentURL != null && getRequestURL(expandURL(src)) == getRequestURL(expandURL(currentURL))) {
       throw new Error(`Matching <turbo-frame id="${element.id}"> element has a source URL which references itself`)
     }
     if (element.ownerDocument !== document) {

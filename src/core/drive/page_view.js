@@ -24,6 +24,7 @@ export class PageView extends View {
     if (!renderer.shouldRender) {
       this.forceReloaded = true
     } else {
+      this.forceReloaded = false
       visit?.changeHistory()
     }
 
@@ -40,9 +41,9 @@ export class PageView extends View {
     this.snapshotCache.clear()
   }
 
-  async cacheSnapshot(snapshot = this.snapshot) {
+  async cacheSnapshot(snapshot = this.snapshot, shouldNotifyApplication = true) {
     if (snapshot.isCacheable) {
-      this.delegate.viewWillCacheSnapshot()
+      if (shouldNotifyApplication) this.delegate.viewWillCacheSnapshot()
       const { lastRenderedLocation: location } = this
       await nextEventLoopTick()
       const cachedSnapshot = snapshot.clone()
@@ -52,7 +53,7 @@ export class PageView extends View {
   }
 
   getCachedSnapshotForLocation(location) {
-    return this.snapshotCache.get(location)
+    return this.snapshotCache.get(location)?.clone()
   }
 
   isPageRefresh(visit) {
@@ -60,7 +61,11 @@ export class PageView extends View {
   }
 
   shouldPreserveScrollPosition(visit) {
-    return this.isPageRefresh(visit) && (visit?.refresh?.scroll || this.snapshot.refreshScroll) === "preserve"
+    if (visit?.scroll) {
+      return visit.scroll === "preserve"
+    } else {
+      return this.isPageRefresh(visit) && (visit?.refresh?.scroll || this.snapshot.refreshScroll) === "preserve"
+    }
   }
 
   get snapshot() {

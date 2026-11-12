@@ -56,6 +56,9 @@ test("receiving a Turbo Stream message with an [autofocus] element when the acti
 })
 
 test("autofocus from a Turbo Stream message does not leak a placeholder [id]", async ({ page }) => {
+  // Ensure the [autofocus] element has been processed before blurring
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+
   await page.evaluate(() => {
     document.activeElement.blur()
     window.Turbo.renderStreamMessage(`
