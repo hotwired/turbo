@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test"
-import { nextBeat, nextEventNamed, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
+import {
+  nextBeat, nextEventNamed, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget,
+  sleep, listenForEventOnTarget, readEventLogs
+} from "../helpers/page"
 import fs from "fs"
 import path from "path"
 
@@ -400,18 +403,33 @@ test("prefetches and reuses the GET for target=_self in a turbo frame", async ({
   expect(requests).toHaveLength(1)
 })
 
-for (const target of ["top", "parent", "blank"]) {
-  test(`does not prefetch links targeting _${target}`, async ({ page }) => {
-    await goTo({ page, path: "/hover_to_prefetch.html" })
+for (const [target, selector] of [
+  ["_top", "#anchor_with_top_target"],
+  ["_parent", "#anchor_with_parent_target"],
+  ["_blank", "#anchor_with_blank_target"]
+]) {
+  test(`does not prefetch links targeting ${target}`, async ({ page }) => {
+    await page.goto("/src/tests/fixtures/hover_to_prefetch.html")
+    const targetId = selector.slice(1)
+    const link = page.locator(selector)
+    await expect(link).toHaveAttribute("target", target)
+    await listenForEventOnTarget(page, targetId, "mouseenter")
+    await readEventLogs(page)
     const requests = []
     page.on("request", (request) => {
       if (request.headers()["x-sec-purpose"] === "prefetch") requests.push(request)
     })
 
-    await page.locator(`#anchor_with_${target}_target`).hover()
-    await sleep(250)
+    await link.hover()
+    await page.waitForFunction((targetId) => {
+      return window.eventLogs.some(([name, , id]) => name === "mouseenter" && id === targetId)
+    }, targetId)
+    const events = await readEventLogs(page)
+    const eventNames = events.filter(([, , id]) => id === targetId).map(([name]) => name)
 
+    expect(eventNames).toContain("mouseenter")
     expect(requests).toHaveLength(0)
+    expect(eventNames).not.toContain("turbo:before-prefetch")
   })
 }
 
