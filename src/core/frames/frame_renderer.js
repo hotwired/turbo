@@ -1,0 +1,77 @@
+import { activateScriptElement, nextRepaint } from "../../util"
+import { Renderer } from "../renderer"
+
+export class FrameRenderer extends Renderer {
+  static renderElement(currentElement, newElement) {
+    const sourceRange = newElement.ownerDocument.createRange()
+    sourceRange.selectNodeContents(newElement)
+    currentElement.replaceChildren(sourceRange.extractContents())
+  }
+
+  constructor(delegate, currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
+    super(currentSnapshot, newSnapshot, renderElement, isPreview, willRender)
+    this.delegate = delegate
+  }
+
+  get shouldRender() {
+    return true
+  }
+
+  async render() {
+    await nextRepaint()
+    this.preservingPermanentElements(() => {
+      this.loadFrameElement()
+    })
+    this.scrollFrameIntoView()
+    await nextRepaint()
+    this.focusFirstAutofocusableElement()
+    await nextRepaint()
+    this.activateScriptElements()
+  }
+
+  loadFrameElement() {
+    this.delegate.willRenderFrame(this.currentElement, this.newElement)
+    this.renderElement(this.currentElement, this.newElement)
+  }
+
+  scrollFrameIntoView() {
+    if (this.currentElement.autoscroll || this.newElement.autoscroll) {
+      const element = this.currentElement.firstElementChild
+      const block = readScrollLogicalPosition(this.currentElement.getAttribute("data-autoscroll-block"), "end")
+      const behavior = readScrollBehavior(this.currentElement.getAttribute("data-autoscroll-behavior"), "auto")
+
+      if (element) {
+        element.scrollIntoView({ block, behavior })
+        return true
+      }
+    }
+    return false
+  }
+
+  activateScriptElements() {
+    for (const inertScriptElement of this.newScriptElements) {
+      const activatedScriptElement = activateScriptElement(inertScriptElement)
+      inertScriptElement.replaceWith(activatedScriptElement)
+    }
+  }
+
+  get newScriptElements() {
+    return this.currentElement.querySelectorAll("script")
+  }
+}
+
+function readScrollLogicalPosition(value, defaultValue) {
+  if (value == "end" || value == "start" || value == "center" || value == "nearest") {
+    return value
+  } else {
+    return defaultValue
+  }
+}
+
+function readScrollBehavior(value, defaultValue) {
+  if (value == "auto" || value == "smooth") {
+    return value
+  } else {
+    return defaultValue
+  }
+}

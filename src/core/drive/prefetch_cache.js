@@ -1,0 +1,64 @@
+import { LRUCache } from "../lru_cache"
+import { toCacheKey } from "../url"
+
+const PREFETCH_DELAY = 100
+
+class PrefetchCache extends LRUCache {
+  #prefetchTimeout = null
+  #maxAges = {}
+  #pausingRequests = new Set()
+
+  constructor(size = 1, prefetchDelay = PREFETCH_DELAY) {
+    super(size, toCacheKey)
+    this.prefetchDelay = prefetchDelay
+  }
+
+  // A prefetch sent while a non-GET request is in flight can carry the cookies that
+  // request is about to change, and its response can then change them back.
+  pause(request) {
+    this.#pausingRequests.add(request)
+    this.clear()
+  }
+
+  resume(request) {
+    this.#pausingRequests.delete(request)
+  }
+
+  putLater(url, request, ttl) {
+    if (this.#pausingRequests.size > 0) return
+
+    this.#prefetchTimeout = setTimeout(() => {
+      request.perform()
+      this.put(url, request, ttl)
+      this.#prefetchTimeout = null
+    }, this.prefetchDelay)
+  }
+
+  put(url, request, ttl = cacheTtl) {
+    super.put(url, request)
+    this.#maxAges[toCacheKey(url)] = new Date(new Date().getTime() + ttl)
+  }
+
+  clear() {
+    super.clear()
+    if (this.#prefetchTimeout) clearTimeout(this.#prefetchTimeout)
+  }
+
+  evict(key) {
+    super.evict(key)
+    delete this.#maxAges[key]
+  }
+
+  has(key) {
+    if (super.has(key)) {
+      const maxAge = this.#maxAges[toCacheKey(key)]
+
+      return maxAge && maxAge > Date.now()
+    } else {
+      return false
+    }
+  }
+}
+
+export const cacheTtl = 10 * 1000
+export const prefetchCache = new PrefetchCache()
