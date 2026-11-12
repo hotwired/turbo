@@ -83,6 +83,17 @@ router.get("/headers", (request, response) => {
     .send(template.replace("$HEADERS", JSON.stringify(request.headers, null, 4)))
 })
 
+for (const name of ["source", "destination"]) {
+  router.get(`/csp_nonce/${name}`, (_request, response) => {
+    const fixture = path.join(__dirname, `fixtures/csp_nonce_${name}.html`)
+    response.set(
+      "Content-Security-Policy",
+      "script-src 'nonce-turbo-test-nonce' 'nonce-explicit-test-nonce'; style-src 'unsafe-inline'"
+    )
+    response.sendFile(fixture)
+  })
+}
+
 router.get("/delayed_response", (request, response) => {
   const { status } = request.query
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
