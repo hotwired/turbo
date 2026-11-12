@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>B/A</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <link rel="stylesheet" type="text/css" href="/src/tests/fixtures/stylesheets/replace/one-b000000.css" data-turbo-track="dynamic">
+    <link rel="stylesheet" type="text/css" href="/src/tests/fixtures/stylesheets/replace/two-a000000.css" data-turbo-track="dynamic">
+  </head>
+
+  <body>
+    <h1 id="validation"></h1>
+
+    <p>
+      This page allows testing of the turbo replace stylesheets functionality,
+      which will replace stylesheet tags in place (maintaining their order) if
+      their digest changes.
+    </p>
+    <p>
+      To test, click through the various letter combinations below. You should
+      see no flicker (unless dev tools are open) and you should only see a "Yes"
+      or a "No" in the below section under each of the "One A"/"One B", etc. If
+      you see both a "Yes" and a "No" in one row, that indicates a problem.
+    </p>
+    <p>
+      If the header changes to indicate that one and two are no longer in order,
+      that is a bug.
+    </p>
+
+    <hr style="margin: 2rem 0" />
+
+    <div id="one-a">One A: No</div>
+    <div id="one-b">One B: </div>
+    <div id="two-a">Two A: </div>
+    <div id="two-b">Two B: No</div>
+
+    <a href="/src/tests/fixtures/stylesheets/replace/aa.html">A/A</a>
+    <a href="/src/tests/fixtures/stylesheets/replace/ab.html">A/B</a>
+    <a href="/src/tests/fixtures/stylesheets/replace/ba.html">B/A</a>
+    <a href="/src/tests/fixtures/stylesheets/replace/bb.html">B/B</a>
+  </body>
+</html>
