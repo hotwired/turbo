@@ -68,6 +68,12 @@ export function nextMicrotask() {
   return Promise.resolve()
 }
 
+export function removeTemporaryElementsFrom(root) {
+  for (const element of root.querySelectorAll("[data-turbo-temporary]")) {
+    element.remove()
+  }
+}
+
 export function parseHTMLDocument(html = "") {
   return new DOMParser().parseFromString(html, "text/html")
 }
