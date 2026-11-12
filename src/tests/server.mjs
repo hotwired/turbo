@@ -82,6 +82,14 @@ router.post("/reject", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.get("/error_scroll/:status/:scroll", (request, response) => {
+  const isVisit = request.get("X-Turbo-Request-Id") !== undefined
+  const fixture = path.join(__dirname, `fixtures/error_scroll_${isVisit ? "destination" : "source"}.html`)
+  const html = fs.readFileSync(fixture, "utf8").replace("$SCROLL_MODE", request.params.scroll)
+
+  response.type("html").status(isVisit ? parseInt(request.params.status, 10) : 200).send(html)
+})
+
 router.get("/headers", (request, response) => {
   const template = fs.readFileSync("src/tests/fixtures/headers.html").toString()
   response
