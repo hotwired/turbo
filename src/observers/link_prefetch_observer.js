@@ -2,7 +2,8 @@ import { getLocationForLink } from "../core/url"
 import {
   dispatch,
   getMetaContent,
-  findClosestRecursively
+  findClosestRecursively,
+  getLinkHrefString
 } from "../util"
 
 import { FetchMethod, FetchRequest } from "../http/fetch_request"
@@ -80,7 +81,7 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
+        prefetchCache.putLater(fetchRequest.url, fetchRequest, this.#cacheTtl)
       }
     }
   }
@@ -113,7 +114,11 @@ export class LinkPrefetchObserver {
     request.headers["X-Sec-Purpose"] = "prefetch"
 
     const turboFrame = link.closest("turbo-frame")
-    const turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+    let turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+
+    if (turboFrameTarget === "_self") {
+      turboFrameTarget = turboFrame?.id
+    }
 
     if (turboFrameTarget && turboFrameTarget !== "_top") {
       request.headers["Turbo-Frame"] = turboFrameTarget
@@ -158,7 +163,7 @@ const unfetchableLink = (link) => {
 }
 
 const linkToTheSamePage = (link) => {
-  return (link.pathname + link.search === document.location.pathname + document.location.search) || link.href.startsWith("#")
+  return (link.pathname + link.search === document.location.pathname + document.location.search) || getLinkHrefString(link).startsWith("#")
 }
 
 const linkOptsOut = (link) => {

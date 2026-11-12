@@ -4,12 +4,12 @@ export function activateScriptElement(element) {
   } else {
     const createdScriptElement = document.createElement("script")
     const cspNonce = getCspNonce()
-    if (cspNonce) {
-      createdScriptElement.nonce = cspNonce
-    }
     createdScriptElement.textContent = element.textContent
     createdScriptElement.async = false
     copyElementAttributes(createdScriptElement, element)
+    if (cspNonce && !createdScriptElement.nonce) {
+      createdScriptElement.nonce = cspNonce
+    }
     return createdScriptElement
   }
 }
@@ -66,6 +66,12 @@ export function nextEventLoopTick() {
 
 export function nextMicrotask() {
   return Promise.resolve()
+}
+
+export function removeTemporaryElementsFrom(root) {
+  for (const element of root.querySelectorAll("[data-turbo-temporary]")) {
+    element.remove()
+  }
 }
 
 export function parseHTMLDocument(html = "") {
@@ -208,6 +214,11 @@ export function findClosestRecursively(element, selector) {
   }
 }
 
+export function elementIsStylesheet(element) {
+  return element.localName === "style" ||
+    (element.localName === "link" && element.relList.contains("stylesheet"))
+}
+
 export function elementIsFocusable(element) {
   const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
 
@@ -244,11 +255,21 @@ export function doesNotTargetIFrame(name) {
   }
 }
 
+/**
+ * Returns consistently the href attribute value as a string for both HTMLAnchorElement and SVGAElement.
+ * HTMLAnchorElement href property returns an absolute URL if the attribute contains a valid relative URL.
+ * SVGAElement exposes href as SVGAnimatedString which does not implement String methods.
+ * getAttribute() will return the proper value of the attribute in both cases.
+ */
+export function getLinkHrefString(link) {
+  return link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""
+}
+
 export function findLinkFromClickTarget(target) {
   const link = findClosestRecursively(target, "a[href], a[xlink\\:href]")
 
   if (!link) return null
-  if (link.href.startsWith("#")) return null
+  if (getLinkHrefString(link).startsWith("#")) return null
   if (link.hasAttribute("download")) return null
 
   const linkTarget = link.getAttribute("target")

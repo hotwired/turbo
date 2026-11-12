@@ -10,6 +10,7 @@ import {
   pathname,
   pathnameForIFrame,
   readEventLogs,
+  sleep,
   visitAction,
   willChangeBody,
   withHash,
@@ -43,12 +44,49 @@ test("navigating does not render a progress bar before expiring the delay", asyn
   await expect(page.locator(".turbo-progress-bar"), "does not show progress bar before delay").not.toBeAttached()
 })
 
+test("navigating does not render the progress bar of a cancelled visit", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(500))
+  await page.click("#delayed-link")
+  await nextEventNamed(page, "turbo:before-fetch-request")
+  await page.click("#same-origin-unannotated-link")
+  await nextEventNamed(page, "turbo:load")
+  await sleep(600)
+
+  await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
+})
+
 test("navigating hides the progress bar on failure", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
   await page.click("#delayed-failure-link")
 
   await expect(page.locator(".turbo-progress-bar")).toBeAttached()
   await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
+})
+
+test("navigating reloads the page when the response body cannot be read", async ({ page }) => {
+  await page.evaluate(() => {
+    const link = document.createElement("a")
+    link.id = "interrupted-response-link"
+    link.href = "/__turbo/interrupted_response"
+    link.textContent = "Interrupted response"
+    document.body.append(link)
+  })
+  await page.click("#interrupted-response-link")
+
+  await expect.poll(() => pathname(page.url())).toEqual("/__turbo/interrupted_response")
+})
+
+test("navigating reloads the page when an error response body cannot be read", async ({ page }) => {
+  await page.evaluate(() => {
+    const link = document.createElement("a")
+    link.id = "interrupted-error-response-link"
+    link.href = "/__turbo/interrupted_response?status=500"
+    link.textContent = "Interrupted error response"
+    document.body.append(link)
+  })
+  await page.click("#interrupted-error-response-link")
+
+  await expect.poll(() => pathname(page.url())).toEqual("/__turbo/interrupted_response")
 })
 
 test("after loading the page", async ({ page }) => {
@@ -298,7 +336,8 @@ test("following a same-origin link inside an SVG element", async ({ page }) => {
   await page.keyboard.press("Enter")
 
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
-  expect(await visitAction(page)).toEqual("load")
+  // A same-origin SVG link is visitable, so Turbo drives it like any other link.
+  expect(await visitAction(page)).toEqual("advance")
 })
 
 test("following a cross-origin link inside an SVG element", async ({ page }) => {
@@ -308,6 +347,23 @@ test("following a cross-origin link inside an SVG element", async ({ page }) => 
 
   await expect(page).toHaveURL("about:blank")
   expect(await visitAction(page)).toEqual("load")
+})
+
+test("following a same-origin SVG link", async ({ page }) => {
+  await page.click("#same-origin-link-inside-svg-element")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  // A same-origin SVG link is visitable, so Turbo drives it like any other link.
+  expect(await visitAction(page)).toEqual("advance")
+})
+
+test("following a same-origin SVG anchored link", async ({ page }) => {
+  await page.click("#same-origin-anchored-svg-link")
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/navigation.html"))
+  await expect(page).toHaveURL(withHash("#main"))
+  expect(await visitAction(page)).toEqual("load")
+  expect(await isScrolledToSelector(page, "#main"), "scrolled to #main").toEqual(true)
 })
 
 test("clicking the back button", async ({ page }) => {
@@ -392,6 +448,28 @@ test("navigating back to anchored URL", async ({ page }) => {
   expect(await isScrolledToSelector(page, "#main"), "scrolled to #main").toEqual(true)
 })
 
+test("reusing a cached snapshot keeps document.body connected during rendering", async ({ page }) => {
+  const bodyWasDisconnected = await page.evaluate(async () => {
+    // Cached snapshots must stay detached so subsequent transitions never reuse the same body element.
+    let bodyWasDisconnected = false
+    const adoptNode = document.adoptNode
+    document.adoptNode = function (node) {
+      const adoptedNode = adoptNode.call(this, node)
+      if (!document.body) bodyWasDisconnected = true
+      return adoptedNode
+    }
+
+    const view = window.Turbo.session.view
+    await view.cacheSnapshot()
+    await view.renderPage(view.getCachedSnapshotForLocation(location))
+    await view.renderPage(view.getCachedSnapshotForLocation(location))
+
+    return bodyWasDisconnected
+  })
+
+  expect(bodyWasDisconnected, "keeps document.body connected").toEqual(false)
+})
+
 test("following a redirection", async ({ page }) => {
   await page.click("#redirection-link")
 
@@ -449,15 +527,21 @@ test("double-clicking on a link", async ({ page }) => {
 })
 
 test("does not fire turbo:load twice after following a redirect", async ({ page }) => {
+  await page.evaluate(() => {
+    window.turboLoadCount = 0
+    addEventListener("turbo:load", () => window.turboLoadCount++)
+  })
+
   page.click("#redirection-link")
 
   await nextBeat() // 301 redirect response
 
-  expect(await noNextEventNamed(page, "turbo:load")).toEqual(true)
-
   await nextBeat() // 200 response
   await nextBody(page)
   await nextEventNamed(page, "turbo:load")
+  await nextBeat()
+
+  expect(await page.evaluate(() => window.turboLoadCount)).toEqual(1)
 })
 
 test("navigating back whilst a visit is in-flight", async ({ page }) => {
