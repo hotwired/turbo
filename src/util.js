@@ -4,12 +4,12 @@ export function activateScriptElement(element) {
   } else {
     const createdScriptElement = document.createElement("script")
     const cspNonce = getCspNonce()
-    if (cspNonce) {
-      createdScriptElement.nonce = cspNonce
-    }
     createdScriptElement.textContent = element.textContent
     createdScriptElement.async = false
     copyElementAttributes(createdScriptElement, element)
+    if (cspNonce && !createdScriptElement.nonce) {
+      createdScriptElement.nonce = cspNonce
+    }
     return createdScriptElement
   }
 }
