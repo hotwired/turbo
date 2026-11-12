@@ -75,26 +75,19 @@ router.post("/reject/view-transition", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
-router.post("/reject/morph/reset", (request, response) => {
-  const { status } = request.body
-  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_morph_reset.html`)
-
-  response.status(parseInt(status || "422", 10)).sendFile(fixture)
-})
-
-router.post("/reject/reset", (request, response) => {
-  const { status } = request.body
-  const statusCode = parseInt(status || "404", 10)
-  const fixture = path.join(__dirname, `../../src/tests/fixtures/${statusCode}_reset.html`)
-
-  response.status(statusCode).sendFile(fixture)
-})
-
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
 
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.get("/error_scroll/:status/:scroll", (request, response) => {
+  const isVisit = request.get("X-Turbo-Request-Id") !== undefined
+  const fixture = path.join(__dirname, `fixtures/error_scroll_${isVisit ? "destination" : "source"}.html`)
+  const html = fs.readFileSync(fixture, "utf8").replace("$SCROLL_MODE", request.params.scroll)
+
+  response.type("html").status(isVisit ? parseInt(request.params.status, 10) : 200).send(html)
 })
 
 router.get("/headers", (request, response) => {
