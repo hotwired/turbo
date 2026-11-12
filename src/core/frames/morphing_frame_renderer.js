@@ -16,7 +16,7 @@ export class MorphingFrameRenderer extends FrameRenderer {
             shouldRefreshFrameWithMorphing(node, newNode) &&
               closestFrameReloadableWithMorphing(node) === currentElement
           ) {
-            node.reload()
+            node.delegate.refreshForMorph()
             return false
           }
           return true

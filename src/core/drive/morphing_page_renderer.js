@@ -11,7 +11,7 @@ export class MorphingPageRenderer extends PageRenderer {
             shouldRefreshFrameWithMorphing(node, newNode) &&
               !closestFrameReloadableWithMorphing(node)
           ) {
-            node.reload()
+            node.delegate.refreshForMorph()
             return false
           }
           return true
