@@ -1,5 +1,5 @@
 import { ProgressBar } from "../drive/progress_bar"
-import { SystemStatusCode } from "../drive/visit"
+import { SystemStatusCode, VisitState } from "../drive/visit"
 import { uuid, dispatch } from "../../util"
 import { locationIsVisitable } from "../url"
 
@@ -29,7 +29,7 @@ export class BrowserAdapter {
   visitRequestStarted(visit) {
     this.progressBar.setValue(0)
     if (visit.hasCachedSnapshot() || visit.action != "restore") {
-      this.showVisitProgressBarAfterDelay()
+      this.showVisitProgressBarAfterDelay(visit)
     } else {
       this.showProgressBar()
     }
@@ -97,8 +97,10 @@ export class BrowserAdapter {
 
   // Private
 
-  showVisitProgressBarAfterDelay() {
-    this.visitProgressBarTimeout = window.setTimeout(this.showProgressBar, this.session.progressBarDelay)
+  showVisitProgressBarAfterDelay(visit) {
+    this.visitProgressBarTimeout = window.setTimeout(() => {
+      if (visit.state == VisitState.started) this.showProgressBar()
+    }, this.session.progressBarDelay)
   }
 
   hideVisitProgressBar() {
