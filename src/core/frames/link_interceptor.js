@@ -28,10 +28,14 @@ export class LinkInterceptor {
 
   linkClicked = (event) => {
     if (this.clickEvent && this.clickEventIsSignificant(event)) {
-      if (this.delegate.shouldInterceptLinkClick(event.target, event.detail.url, event.detail.originalEvent)) {
+      const linkOrCustomElement = event.target
+      const actuallyClickedLink = (linkOrCustomElement.shadowRoot && !linkOrCustomElement.hasAttribute("data-turbo-frame"))
+        ? event.composedPath()[0] : linkOrCustomElement
+
+      if (this.delegate.shouldInterceptLinkClick(actuallyClickedLink, event.detail.url, event.detail.originalEvent)) {
         this.clickEvent.preventDefault()
         event.preventDefault()
-        this.delegate.linkClickIntercepted(event.target, event.detail.url, event.detail.originalEvent)
+        this.delegate.linkClickIntercepted(actuallyClickedLink, event.detail.url, event.detail.originalEvent)
       }
     }
     delete this.clickEvent

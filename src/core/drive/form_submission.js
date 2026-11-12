@@ -119,8 +119,9 @@ export class FormSubmission {
     }
   }
 
-  requestStarted(_request) {
+  requestStarted(request) {
     this.state = FormSubmissionState.waiting
+    if (!request.isSafe) prefetchCache.pause(request)
     if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
     this.setSubmitsWith()
     markAsBusy(this.formElement)
@@ -165,8 +166,9 @@ export class FormSubmission {
     this.delegate.formSubmissionErrored(this, error)
   }
 
-  requestFinished(_request) {
+  requestFinished(request) {
     this.state = FormSubmissionState.stopped
+    prefetchCache.resume(request)
     if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
     this.resetSubmitterText()
     clearBusyState(this.formElement)

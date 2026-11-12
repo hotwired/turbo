@@ -13,7 +13,8 @@ const defaultOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
-  refresh: {}
+  refresh: {},
+  scroll: undefined
 }
 
 export const TimingMetric = {
@@ -74,7 +75,8 @@ export class Visit {
       shouldCacheSnapshot,
       acceptsStreamResponse,
       direction,
-      refresh
+      refresh,
+      scroll
     } = {
       ...defaultOptions,
       ...options
@@ -94,6 +96,7 @@ export class Visit {
     this.acceptsStreamResponse = acceptsStreamResponse
     this.direction = direction || Direction[action]
     this.refresh = refresh
+    this.scroll = scroll
   }
 
   get adapter() {
@@ -215,6 +218,7 @@ export class Visit {
           this.complete()
         } else {
           await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML), this)
+          this.performScroll()
           this.adapter.visitRendered(this)
           this.fail()
         }
@@ -291,7 +295,12 @@ export class Visit {
   requestPreventedHandlingResponse(_request, _response) {}
 
   async requestSucceededWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -305,7 +314,12 @@ export class Visit {
   }
 
   async requestFailedWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -326,6 +340,10 @@ export class Visit {
 
   requestFinished() {
     this.finishRequest()
+  }
+
+  #responseBodyErrored(request, error) {
+    if (!request.abortSignal.aborted) this.requestErrored(request, error)
   }
 
   // Scrolling

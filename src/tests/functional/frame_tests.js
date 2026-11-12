@@ -337,6 +337,58 @@ test("following a link in rapid succession cancels the previous request", async 
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
 })
 
+test("canceling a frame request before its response arrives does not raise an unhandled rejection", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error))
+
+  await page.locator("#frame").evaluate((frame) => {
+    frame.src = "/__turbo/delayed_response"
+  })
+  await nextEventOnTarget(page, "frame", "turbo:before-fetch-request")
+
+  await page.click("#outer-frame-link")
+  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+  await nextBeat()
+
+  await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+  expect(errors).toEqual([])
+})
+
+for (const status of [200, 422]) {
+  test(`canceling a frame's ${status} response body does not raise an unhandled rejection`, async ({ page }) => {
+    const errors = []
+    page.on("pageerror", (error) => errors.push(error))
+
+    await page.locator("#frame").evaluate((frame, status) => {
+      frame.src = `/__turbo/delayed_response_body?status=${status}`
+    }, status)
+    await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+
+    await page.click("#outer-frame-link")
+    await nextEventOnTarget(page, "frame", "turbo:frame-load")
+    await page.locator("#frame").evaluate((frame) => frame.loaded)
+    await nextBeat()
+
+    await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+    await expect(page.locator("#frame")).toHaveAttribute("complete")
+    await expect(page.locator("#frame")).not.toHaveAttribute("busy")
+    expect(errors).toEqual([])
+  })
+
+  test(`disconnecting a frame's ${status} response body still raises an error`, async ({ page }) => {
+    const errorPromise = page.waitForEvent("pageerror")
+
+    await page.locator("#frame").evaluate((frame, status) => {
+      frame.src = `/__turbo/delayed_response_body?status=${status}&disconnect=true`
+    }, status)
+    await nextEventOnTarget(page, "frame", "turbo:before-fetch-response")
+
+    const error = await errorPromise
+    expect(error.name).not.toEqual("AbortError")
+    expect(error.message).toBeTruthy()
+  })
+}
+
 test("following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame", async ({
   page
 }) => {
@@ -549,6 +601,85 @@ test("'turbo:frame-render' is triggered after frame has finished rendering", asy
   const { fetchResponse } = await nextEventNamed(page, "turbo:frame-render")
 
   expect(fetchResponse.response.url).toContain("/src/tests/fixtures/frames/part.html")
+})
+
+test("replacing a frame with many child nodes preserves every node", async ({ page }) => {
+  const childCount = 150000
+  const result = await page.evaluate((childCount) => {
+    const currentElement = document.createElement("turbo-frame")
+    const sourceDocument = document.implementation.createHTMLDocument()
+    const newElement = sourceDocument.createElement("turbo-frame")
+    newElement.innerHTML = "<span></span>".repeat(childCount)
+    const firstChild = newElement.firstChild
+    const lastChild = newElement.lastChild
+
+    window.Turbo.FrameRenderer.renderElement(currentElement, newElement)
+
+    return {
+      childCount: currentElement.childNodes.length,
+      firstChildPreserved: currentElement.firstChild === firstChild,
+      lastChildPreserved: currentElement.lastChild === lastChild,
+      sourceEmpty: newElement.childNodes.length === 0
+    }
+  }, childCount)
+
+  expect(result).toEqual({ childCount, firstChildPreserved: true, lastChildPreserved: true, sourceEmpty: true })
+})
+
+// This only fails on Chrome 149 and 151, where emptying the frame clamps the window scroll;
+// the native selects just supply the page height it needs. On the pinned CI browser it passes
+// with or without the fix; the mutation test below is the actual guard.
+test("replacing a frame below native selects preserves scroll when its focused link is removed", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_scroll.html")
+  await page.locator("#results").evaluate((frame) => {
+    frame.addEventListener(
+      "turbo:before-frame-render",
+      () => {
+        window.scrollYBeforeFrameRender = window.scrollY
+        window.activeElementBeforeFrameRender = document.activeElement?.id
+      },
+      { once: true }
+    )
+    frame.addEventListener("turbo:frame-render", () => (window.scrollYAfterFrameRender = window.scrollY), { once: true })
+  })
+  await page.locator("#next-page").scrollIntoViewIfNeeded()
+  await page.waitForFunction(() => window.scrollY > 0)
+  const frameRendered = nextEventOnTarget(page, "results", "turbo:frame-render")
+  await page.click("#next-page")
+  await frameRendered
+  await expect(page.locator("#page-marker")).toHaveText("Page 2")
+
+  const { activeElementBeforeRender, beforeRender, afterRender } = await page.evaluate(() => ({
+    activeElementBeforeRender: window.activeElementBeforeFrameRender,
+    beforeRender: window.scrollYBeforeFrameRender,
+    afterRender: window.scrollYAfterFrameRender
+  }))
+
+  expect(activeElementBeforeRender, "removes the focused link during rendering").toEqual("next-page")
+  expect(beforeRender, "starts with the frame scrolled into view").toBeGreaterThan(0)
+  expect(afterRender, "preserves Y scroll position").toEqual(beforeRender)
+})
+
+test("replacing frame contents replaces children in a single mutation", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frame_scroll.html")
+  await page.locator("#results").evaluate((frame) => {
+    window.frameMutations = []
+    new MutationObserver((records) => {
+      for (const { removedNodes, addedNodes } of records) {
+        window.frameMutations.push({ removed: removedNodes.length, added: addedNodes.length })
+      }
+    }).observe(frame, { childList: true })
+  })
+
+  const frameRendered = nextEventOnTarget(page, "results", "turbo:frame-render")
+  await page.click("#next-page")
+  await frameRendered
+  await page.waitForFunction(() => window.frameMutations.length > 0)
+
+  const [mutation, ...remainingMutations] = await page.evaluate(() => window.frameMutations)
+  expect(remainingMutations, "never empties the frame before inserting").toHaveLength(0)
+  expect(mutation.removed, "removes the previous children").toBeGreaterThan(0)
+  expect(mutation.added, "inserts the new children in the same mutation").toBeGreaterThan(0)
 })
 
 test("navigating a frame from an outer link with a turbo-frame child fires events", async ({ page }) => {
