@@ -3,6 +3,7 @@ import {
   clickWithoutScrolling,
   nextBeat,
   nextEventNamed,
+  readEventLogs,
   reloadPage,
   scrollPosition,
   scrollToSelector
@@ -42,6 +43,43 @@ test('scrolls to the top on a Drive visit made after a frame navigation with dat
 
 test('scrolls to the top on a Drive visit made after a frame navigation with data-turbo-action="replace"', async ({ page }) => {
   await assertScrollsToTopAfterFrameNavigation(page, "replace")
+})
+
+test("Turbo history restores the exact scroll position immediately despite smooth scroll CSS", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/scroll_restoration_with_smooth_scroll.html")
+  await readEventLogs(page)
+
+  const expectedPosition = { x: 0, y: 600 }
+  await page.evaluate(async (position) => {
+    window.scrollRestorationSentinel = "preserved across Turbo visits"
+    window.scrollRestorationLoads = []
+    addEventListener("turbo:load", () => {
+      window.scrollRestorationLoads.push({ pathname: location.pathname, x: scrollX, y: scrollY })
+    })
+
+    await new Promise((resolve) => {
+      addEventListener("scroll", () => requestAnimationFrame(resolve), { once: true })
+      scrollTo({ left: position.x, top: position.y, behavior: "instant" })
+    })
+  }, expectedPosition)
+  expect(await scrollPosition(page)).toEqual(expectedPosition)
+
+  await page.click("#leave")
+  await nextEventNamed(page, "turbo:load")
+  await expect(page).toHaveURL(new URL("/src/tests/fixtures/one.html", page.url()).href)
+  expect(await page.evaluate(() => window.scrollRestorationSentinel)).toEqual("preserved across Turbo visits")
+  await page.evaluate(() => scrollTo({ left: 0, top: 0, behavior: "instant" }))
+  expect(await scrollPosition(page)).toEqual({ x: 0, y: 0 })
+
+  await page.goBack()
+  await nextEventNamed(page, "turbo:load")
+
+  expect(await page.evaluate(() => window.scrollRestorationSentinel)).toEqual("preserved across Turbo visits")
+  const restoredAtLoad = await page.evaluate(() => window.scrollRestorationLoads.at(-1))
+  expect(restoredAtLoad).toEqual({
+    pathname: "/src/tests/fixtures/scroll_restoration_with_smooth_scroll.html",
+    ...expectedPosition
+  })
 })
 
 async function assertScrollsToTopAfterFrameNavigation(page, action) {
