@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test"
-import { nextBeat, nextEventNamed, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget, sleep } from "../helpers/page"
+import {
+  nextBeat, nextEventNamed, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget,
+  sleep, listenForEventOnTarget, readEventLogs
+} from "../helpers/page"
 import fs from "fs"
 import path from "path"
 
@@ -376,6 +379,60 @@ test("it prefetches the page again after a POST form submission finishes", async
   expect(fetchOptions.headers["X-Sec-Purpose"]).toEqual("prefetch")
 })
 
+for (const [target, selector] of [["_self", "#anchor_with_self_target"], ["empty", "#anchor_with_empty_target"]]) {
+  test(`prefetches and reuses the GET for target=${target}`, async ({ page }) => {
+    await goTo({ page, path: "/hover_to_prefetch.html" })
+    await page.evaluate(() => window.prefetchVisitSentinel = true)
+
+    const { requests } = await prefetchAndFollowLink(page, selector)
+
+    await expect(page.locator("body")).toHaveText("Prefetched Page Content")
+    expect(await page.evaluate(() => window.prefetchVisitSentinel)).toEqual(true)
+    expect(requests).toHaveLength(1)
+  })
+}
+
+test("prefetches and reuses the GET for target=_self in a turbo frame", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const { requests, prefetchedRequest } = await prefetchAndFollowLink(page, "#anchor_with_self_target_in_frame")
+
+  await expect(page.locator("#frame_for_prefetch_query")).toHaveText("Prefetched frame content")
+  await expect(page).toHaveTitle("Hover to Prefetch")
+  expect(prefetchedRequest.headers()["turbo-frame"]).toEqual("frame_for_prefetch_query")
+  expect(requests).toHaveLength(1)
+})
+
+for (const [target, selector] of [
+  ["_top", "#anchor_with_top_target"],
+  ["_parent", "#anchor_with_parent_target"],
+  ["_blank", "#anchor_with_blank_target"]
+]) {
+  test(`does not prefetch links targeting ${target}`, async ({ page }) => {
+    await page.goto("/src/tests/fixtures/hover_to_prefetch.html")
+    const targetId = selector.slice(1)
+    const link = page.locator(selector)
+    await expect(link).toHaveAttribute("target", target)
+    await listenForEventOnTarget(page, targetId, "mouseenter")
+    await readEventLogs(page)
+    const requests = []
+    page.on("request", (request) => {
+      if (request.headers()["x-sec-purpose"] === "prefetch") requests.push(request)
+    })
+
+    await link.hover()
+    await page.waitForFunction((targetId) => {
+      return window.eventLogs.some(([name, , id]) => name === "mouseenter" && id === targetId)
+    }, targetId)
+    const events = await readEventLogs(page)
+    const eventNames = events.filter(([, , id]) => id === targetId).map(([name]) => name)
+
+    expect(eventNames).toContain("mouseenter")
+    expect(requests).toHaveLength(0)
+    expect(eventNames).not.toContain("turbo:before-prefetch")
+  })
+}
+
 const assertPrefetchedOnHover = async ({ page, selector, callback }) => {
   await assertRequestMade(page, async () => {
     await hoverSelector({ page, selector })
@@ -437,4 +494,24 @@ const hoverSelector = async ({ page, selector }) => {
 const clickSelector = async ({ page, selector }) => {
   await page.click(selector)
   await nextBeat()
+}
+
+async function prefetchAndFollowLink(page, selector) {
+  const link = page.locator(selector)
+  const url = await link.evaluate((element) => element.href)
+  const requests = []
+  page.on("request", (request) => {
+    if (request.url() === url) requests.push(request)
+  })
+  const responsePromise = page.waitForResponse((response) => {
+    return response.url() === url && response.request().headers()["x-sec-purpose"] === "prefetch"
+  }, { timeout: 5000 })
+
+  await link.hover()
+  const response = await responsePromise
+  await response.finished()
+  expect(response.status()).toEqual(200)
+  await link.click()
+
+  return { requests, prefetchedRequest: response.request() }
 }

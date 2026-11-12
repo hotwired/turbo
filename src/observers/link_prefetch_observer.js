@@ -62,7 +62,7 @@ export class LinkPrefetchObserver {
     if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
-    const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
+    const isLink = target.matches && target.matches("a[href]:not([download])")
 
     if (isLink && this.#isPrefetchable(target)) {
       const link = target
@@ -159,7 +159,13 @@ export class LinkPrefetchObserver {
 }
 
 const unfetchableLink = (link) => {
-  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+  const target = link.getAttribute("target")
+
+  return (
+    link.origin !== document.location.origin ||
+    !["http:", "https:"].includes(link.protocol) ||
+    (target && target !== "_self")
+  )
 }
 
 const linkToTheSamePage = (link) => {
