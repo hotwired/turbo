@@ -1882,10 +1882,10 @@ iconv-lite@0.4.24:
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
-idiomorph@~0.7.4:
-  version "0.7.4"
-  resolved "https://registry.npmjs.org/idiomorph/-/idiomorph-0.7.4.tgz"
-  integrity sha512-uCdSpLo3uMfqOmrwXTpR1k/sq4sSmKC7l4o/LdJOEU+MMMq+wkevRqOQYn3lP7vfz9Mv+USBEqPvi0XhdL9ENw==
+idiomorph@~0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/idiomorph/-/idiomorph-0.8.0.tgz#ef5ad8cef99027fa1e961d6ce194bd5edbda06f7"
+  integrity sha512-R47JBL+6jHDQvcnbppIUtXXcxi5h6+wuCEEZXnRhUltsgzPFKzThL5PuHppP9ypJuy+7WawcY1TsSBD/iQbMhw==
 
 ieee754@^1.1.13:
   version "1.2.1"
