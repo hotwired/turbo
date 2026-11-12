@@ -378,7 +378,7 @@ export class FrameController {
       frame.delegate.fetchResponseLoaded = async (fetchResponse) => {
         if (frame.src) {
           const { statusCode, redirected } = fetchResponse
-          const responseHTML = await fetchResponse.responseHTML
+          const responseHTML = frame.ownerDocument.documentElement.outerHTML
           const response = { statusCode, redirected, responseHTML }
           const options = {
             response,
