@@ -3,7 +3,9 @@ import { Renderer } from "../renderer"
 
 export class FrameRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
-    currentElement.replaceChildren(...newElement.childNodes)
+    const sourceRange = newElement.ownerDocument.createRange()
+    sourceRange.selectNodeContents(newElement)
+    currentElement.replaceChildren(sourceRange.extractContents())
   }
 
   constructor(delegate, currentSnapshot, newSnapshot, renderElement, isPreview, willRender = true) {
