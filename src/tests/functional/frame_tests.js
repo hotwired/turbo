@@ -550,6 +550,29 @@ test("'turbo:frame-render' is triggered after frame has finished rendering", asy
   expect(fetchResponse.response.url).toContain("/src/tests/fixtures/frames/part.html")
 })
 
+test("replacing a frame with many child nodes preserves every node", async ({ page }) => {
+  const childCount = 150000
+  const result = await page.evaluate((childCount) => {
+    const currentElement = document.createElement("turbo-frame")
+    const sourceDocument = document.implementation.createHTMLDocument()
+    const newElement = sourceDocument.createElement("turbo-frame")
+    newElement.innerHTML = "<span></span>".repeat(childCount)
+    const firstChild = newElement.firstChild
+    const lastChild = newElement.lastChild
+
+    window.Turbo.FrameRenderer.renderElement(currentElement, newElement)
+
+    return {
+      childCount: currentElement.childNodes.length,
+      firstChildPreserved: currentElement.firstChild === firstChild,
+      lastChildPreserved: currentElement.lastChild === lastChild,
+      sourceEmpty: newElement.childNodes.length === 0
+    }
+  }, childCount)
+
+  expect(result).toEqual({ childCount, firstChildPreserved: true, lastChildPreserved: true, sourceEmpty: true })
+})
+
 // This only fails on Chrome 149 and 151, where emptying the frame clamps the window scroll;
 // the native selects just supply the page height it needs. On the pinned CI browser it passes
 // with or without the fix; the mutation test below is the actual guard.
