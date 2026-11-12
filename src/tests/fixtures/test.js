@@ -70,6 +70,7 @@
   "turbo:before-stream-render",
   "turbo:before-cache",
   "turbo:before-render",
+  "turbo:before-permanent-element-render",
   "turbo:before-visit",
   "turbo:load",
   "turbo:render",
