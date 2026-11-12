@@ -1,31 +1,25 @@
 import { PageSnapshot } from "./page_snapshot"
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
+import { AttributeObserver } from "../../observers/attribute_observer"
 
 export class Preloader {
-  selector = "a[data-turbo-preload]"
-
   constructor(delegate, snapshotCache) {
     this.delegate = delegate
     this.snapshotCache = snapshotCache
+    this.attributeObserver = new AttributeObserver(this, document.documentElement, "data-turbo-preload")
   }
 
   start() {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", this.#preloadAll)
-    } else {
-      this.preloadOnLoadLinksForView(document.body)
-    }
+    this.attributeObserver.start()
   }
 
   stop() {
-    document.removeEventListener("DOMContentLoaded", this.#preloadAll)
+    this.attributeObserver.stop()
   }
 
-  preloadOnLoadLinksForView(element) {
-    for (const link of element.querySelectorAll(this.selector)) {
-      if (this.delegate.shouldPreloadLink(link)) {
-        this.preloadURL(link)
-      }
+  observedElementWithAttribute(element) {
+    if (element instanceof HTMLAnchorElement && this.delegate.shouldPreloadLink(element)) {
+      this.preloadURL(element)
     }
   }
 
@@ -66,8 +60,4 @@ export class Preloader {
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
 
   requestFailedWithResponse(fetchRequest, fetchResponse) {}
-
-  #preloadAll = () => {
-    this.preloadOnLoadLinksForView(document.body)
-  }
 }
