@@ -63,6 +63,32 @@ test("navigating hides the progress bar on failure", async ({ page }) => {
   await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
 })
 
+test("navigating reloads the page when the response body cannot be read", async ({ page }) => {
+  await page.evaluate(() => {
+    const link = document.createElement("a")
+    link.id = "interrupted-response-link"
+    link.href = "/__turbo/interrupted_response"
+    link.textContent = "Interrupted response"
+    document.body.append(link)
+  })
+  await page.click("#interrupted-response-link")
+
+  await expect.poll(() => pathname(page.url())).toEqual("/__turbo/interrupted_response")
+})
+
+test("navigating reloads the page when an error response body cannot be read", async ({ page }) => {
+  await page.evaluate(() => {
+    const link = document.createElement("a")
+    link.id = "interrupted-error-response-link"
+    link.href = "/__turbo/interrupted_response?status=500"
+    link.textContent = "Interrupted error response"
+    document.body.append(link)
+  })
+  await page.click("#interrupted-error-response-link")
+
+  await expect.poll(() => pathname(page.url())).toEqual("/__turbo/interrupted_response")
+})
+
 test("after loading the page", async ({ page }) => {
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/navigation.html"))
   expect(await visitAction(page)).toEqual("load")
