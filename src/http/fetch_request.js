@@ -138,7 +138,6 @@ export class FetchRequest {
         if (this.#willDelegateErrorHandling(error)) {
           this.delegate.requestErrored(this, error)
         }
-        throw error
       }
     } finally {
       this.delegate.requestFinished(this)

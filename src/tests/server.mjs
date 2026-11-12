@@ -89,6 +89,12 @@ router.get("/delayed_response", (request, response) => {
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
 })
 
+router.get("/interrupted_response", (request, response) => {
+  const { status } = request.query
+  response.type("html").status(parseInt(status || "200")).write("<!DOCTYPE html><html><head><title>Interrupted</title></head><body>")
+  setTimeout(() => response.destroy(), 100)
+})
+
 router.get("/delayed_response_body", (request, response) => {
   const { status, disconnect } = request.query
   const fixture = fs.readFileSync(path.join(__dirname, "fixtures/frames/frame.html"), "utf8")
