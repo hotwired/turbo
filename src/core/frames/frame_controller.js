@@ -34,6 +34,7 @@ export class FrameController {
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
   #shouldMorphFrame = false
+  #formSubmissions = new Set()
   action = null
 
   constructor(element) {
@@ -73,8 +74,10 @@ export class FrameController {
       if (!this.element.hasAttribute("recurse")) {
         this.#currentFetchRequest?.cancel()
 
-        if (this.formSubmission?.isSafe && !this.element.isConnected) {
-          this.formSubmission.stop()
+        if (!this.element.isConnected) {
+          for (const formSubmission of this.#formSubmissions) {
+            if (formSubmission.isSafe) formSubmission.stop()
+          }
         }
       }
     }
@@ -201,7 +204,7 @@ export class FrameController {
     const frame = this.#findFrameElement(element, submitter)
 
     this.prepareRequest(fetchRequest, frame)
-    this.formSubmission.start()
+    this.#startFormSubmission(this.formSubmission, frame)
   }
 
   // Fetch request delegate
@@ -325,6 +328,22 @@ export class FrameController {
   }
 
   // Private
+
+  async #startFormSubmission(formSubmission, frame) {
+    const controller = frame.delegate
+    const { abortSignal } = formSubmission.fetchRequest
+    const unregister = () => controller.#formSubmissions.delete(formSubmission)
+
+    controller.#formSubmissions.add(formSubmission)
+    abortSignal.addEventListener("abort", unregister, { once: true })
+
+    try {
+      await formSubmission.start()
+    } finally {
+      abortSignal.removeEventListener("abort", unregister)
+      unregister()
+    }
+  }
 
   async #loadFrameResponse(fetchResponse, document) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)

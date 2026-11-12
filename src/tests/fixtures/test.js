@@ -104,8 +104,10 @@ customElements.define(
       this.attachShadow({ mode: "open" })
     }
     connectedCallback() {
+      const frame = this.getAttribute("frame")
+
       this.shadowRoot.innerHTML = `
-      <a href="${this.getAttribute("link")}">
+      <a href="${this.getAttribute("link")}" ${frame ? `data-turbo-frame="${frame}"` : ""}>
         ${this.getAttribute("text") || `<slot></slot>`}
       </a>
     `

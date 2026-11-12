@@ -217,7 +217,9 @@ export function isSafe(fetchMethod) {
 
 function buildResourceAndBody(resource, method, requestBody, enctype) {
   const searchParams =
-    Array.from(requestBody).length > 0 ? new URLSearchParams(entriesExcludingFiles(requestBody)) : resource.searchParams
+    Array.from(requestBody).length > 0
+      ? new URLSearchParams(entriesExcludingFiles(requestBody))
+      : new URLSearchParams(resource.searchParams)
 
   if (isSafe(method)) {
     return [mergeIntoURLSearchParams(resource, searchParams), null]
