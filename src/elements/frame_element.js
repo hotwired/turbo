@@ -34,18 +34,24 @@ export class FrameElement extends HTMLElement {
   }
 
   connectedCallback() {
-    this.delegate.connect()
+    if (this.delegate) {
+      this.delegate.connect()
+    }
   }
 
   disconnectedCallback() {
-    this.delegate.disconnect()
+    if (this.delegate) {
+      this.delegate.disconnect()
+    }
   }
 
   reload() {
-    return this.delegate.sourceURLReloaded()
+    return this.delegate?.sourceURLReloaded()
   }
 
   attributeChangedCallback(name) {
+    if (!this.delegate) return
+
     if (name == "loading") {
       this.delegate.loadingStyleChanged()
     } else if (name == "src") {
@@ -161,7 +167,7 @@ export class FrameElement extends HTMLElement {
    * Determines if the element has finished loading
    */
   get complete() {
-    return !this.delegate.isLoading
+    return this.delegate ? !this.delegate.isLoading : true
   }
 
   /**
