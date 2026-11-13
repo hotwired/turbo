@@ -109,6 +109,27 @@ for (const name of ["source", "destination"]) {
   })
 }
 
+router.get("/content_security_policy/:policy", (request, response) => {
+  const base = "default-src 'none'; script-src 'self'; connect-src 'self'"
+  const policies = {
+    none: "default-src 'none'",
+    scripts: base,
+    self: `${base}; style-src 'self'`,
+    inline: `${base}; style-src 'unsafe-inline'`,
+    nonce: `${base}; style-src 'nonce-123'`
+  }
+  if (request.params.policy === "hash") {
+    const hash = request.query.hash
+    if (typeof hash !== "string" || !/^[A-Za-z0-9+/]{43}=$/.test(hash)) return response.sendStatus(400)
+    policies.hash = `${base}; style-src 'sha256-${hash}'`
+  }
+  const policy = policies[request.params.policy]
+  if (typeof policy !== "string") return response.sendStatus(404)
+
+  response.set("Content-Security-Policy", policy)
+  response.sendFile(path.join(__dirname, "fixtures/content_security_policy.html"))
+})
+
 router.get("/delayed_response", (request, response) => {
   const { status } = request.query
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
@@ -237,6 +258,10 @@ router.get("/file.unknown_html", (request, response) => {
     "Content-Type": "text/html"
   })
   response.sendFile(path.join(__dirname, "../../src/tests/fixtures/visit.html"))
+})
+
+router.get("/download", (request, response) => {
+  response.download(path.join(__dirname, "../../src/tests/fixtures/svg.svg"))
 })
 
 function receiveMessage(content, id, target) {

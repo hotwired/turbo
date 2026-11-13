@@ -14,12 +14,20 @@ setup(() => {
   errors = []
   const delegate = {
     prepareRequest() {},
-    requestStarted(request) { started?.(request) },
-    requestSucceededWithResponse(request, response) { delivered.push({ request, response }) },
+    requestStarted(request) {
+      started?.(request)
+    },
+    requestSucceededWithResponse(request, response) {
+      delivered.push({ request, response })
+    },
     requestFailedWithResponse() {},
     requestPreventedHandlingResponse() {},
-    requestErrored(request, error) { errors.push(error) },
-    requestFinished(request) { finished.push(request) }
+    requestErrored(request, error) {
+      errors.push(error)
+    },
+    requestFinished(request) {
+      finished.push(request)
+    }
   }
   started = null
   adopted = new FetchRequest(delegate, FetchMethod.get, new URL("/adopted", document.baseURI), new URLSearchParams(), target)
@@ -34,15 +42,6 @@ teardown(() => {
   window.fetch = originalFetch
   container.remove()
 })
-
-function pendingResponse() {
-  let resolve, reject
-  adopted.response = new Promise((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise
-    reject = rejectPromise
-  })
-  return { resolve, reject }
-}
 
 test("canceling a consumer cancels its adopted in-flight request", async () => {
   const response = pendingResponse()
@@ -94,6 +93,7 @@ test("canceling an adopted response after headers aborts pending body consumptio
   adopted.response = Promise.resolve(new Response(body, { headers: { "Content-Type": "text/html" } }))
   await consumer.perform()
   assert.lengthOf(delivered, 1)
+  assert.deepEqual(finished, [consumer])
   const text = delivered[0].response.responseHTML.catch(error => error)
   consumer.cancel()
 
@@ -177,4 +177,13 @@ test("GET form data replaces the URL query and preserves repeated fields", () =>
 
 function requestFor(method, body = new URLSearchParams()) {
   return new FetchRequest({}, method, new URL("http://example.test/submit?existing=1&filter=old"), body)
+}
+
+function pendingResponse() {
+  let resolve, reject
+  adopted.response = new Promise((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+  return { resolve, reject }
 }

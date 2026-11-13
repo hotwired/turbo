@@ -87,9 +87,9 @@ export class Visit {
     this.snapshot = snapshot
     this.snapshotHTML = snapshotHTML
     this.response = response
+    this.willRender = willRender
     this.isPageRefresh = this.view.isPageRefresh(this)
     this.visitCachedSnapshot = visitCachedSnapshot
-    this.willRender = willRender
     this.updateHistory = updateHistory
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
@@ -251,7 +251,7 @@ export class Visit {
     if (snapshot) {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
-        this.cacheSnapshot()
+        if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.isPageRefresh) {
           this.adapter.visitRendered(this)
         } else {

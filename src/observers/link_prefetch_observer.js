@@ -1,4 +1,4 @@
-import { getLocationForLink } from "../core/url"
+import { expandURL, getLocationForLink, toCacheKey } from "../core/url"
 import {
   dispatch,
   getMetaContent,
@@ -42,7 +42,12 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
-    this.eventTarget.removeEventListener("turbo:before-visit", this.#cancelPendingFetchRequests, true)
+    this.eventTarget.removeEventListener("turbo:visit", this.#cancelPendingFetchRequests, true)
+    this.#cancelPrefetchRequest()
+    for (const fetchRequest of this.#pendingFetchRequests.keys()) {
+      fetchRequest.cancel()
+    }
+    this.#pendingFetchRequests.clear()
     this.started = false
   }
 
@@ -57,7 +62,7 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
-    this.eventTarget.addEventListener("turbo:before-visit", this.#cancelPendingFetchRequests, true)
+    this.eventTarget.addEventListener("turbo:visit", this.#cancelPendingFetchRequests, true)
     this.started = true
   }
 
@@ -65,7 +70,7 @@ export class LinkPrefetchObserver {
     if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
-    const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
+    const isLink = target.matches && target.matches("a[href]:not([download])")
 
     if (isLink && this.#isPrefetchable(target)) {
       const link = target
@@ -84,25 +89,18 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        // Memorize fetch request and cancel previous one to the same URL
-        const url = fetchRequest.url.href
-        const lastFetchRequest = this.#pendingFetchRequests.get(url)
-
-        if (lastFetchRequest) lastFetchRequest.cancel()
-        this.#pendingFetchRequests.set(url, fetchRequest)
-
         prefetchCache.putLater(fetchRequest.url, fetchRequest, this.#cacheTtl)
       }
     }
   }
 
   #cancelPendingFetchRequests = (event) => {
-    if (event.detail.fetchRequest) return
+    const key = toCacheKey(expandURL(event.detail.url))
 
-    for (const [url, fetchRequest] of this.#pendingFetchRequests.entries()) {
-      if (url !== event.detail.url) {
+    for (const [fetchRequest, location] of this.#pendingFetchRequests) {
+      if (toCacheKey(location) !== key) {
         fetchRequest.cancel()
-        this.#pendingFetchRequests.delete(url)
+        this.#pendingFetchRequests.delete(fetchRequest)
       }
     }
   }
@@ -128,20 +126,13 @@ export class LinkPrefetchObserver {
 
     if (cached && !cached.abortSignal.aborted) {
       // The navigation now owns this request, so prefetching must not cancel it.
-      this.#removePendingFetchRequest(cached)
+      this.#pendingFetchRequests.delete(cached)
       detail.fetchRequest = cached
     }
   }
 
-  #removePendingFetchRequest(fetchRequest) {
-    for (const [url, pendingFetchRequest] of this.#pendingFetchRequests) {
-      if (pendingFetchRequest === fetchRequest) {
-        this.#pendingFetchRequests.delete(url)
-      }
-    }
-  }
-
   prepareRequest(request) {
+    this.#trackPendingFetchRequest(request)
     const link = request.target
 
     request.headers["X-Sec-Purpose"] = "prefetch"
@@ -167,7 +158,7 @@ export class LinkPrefetchObserver {
   requestErrored(fetchRequest) {}
 
   requestFinished(fetchRequest) {
-    this.#removePendingFetchRequest(fetchRequest)
+    this.#pendingFetchRequests.delete(fetchRequest)
   }
 
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
@@ -176,6 +167,19 @@ export class LinkPrefetchObserver {
 
   get #cacheTtl() {
     return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
+  }
+
+  #trackPendingFetchRequest(fetchRequest) {
+    const key = toCacheKey(fetchRequest.url)
+
+    for (const [pendingFetchRequest, location] of this.#pendingFetchRequests) {
+      if (toCacheKey(location) === key) {
+        pendingFetchRequest.cancel()
+        this.#pendingFetchRequests.delete(pendingFetchRequest)
+      }
+    }
+
+    this.#pendingFetchRequests.set(fetchRequest, fetchRequest.url)
   }
 
   #isPrefetchable(link) {
@@ -194,7 +198,13 @@ export class LinkPrefetchObserver {
 }
 
 const unfetchableLink = (link) => {
-  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+  const target = link.getAttribute("target")
+
+  return (
+    link.origin !== document.location.origin ||
+    !["http:", "https:"].includes(link.protocol) ||
+    (target && target !== "_self")
+  )
 }
 
 const linkToTheSamePage = (link) => {

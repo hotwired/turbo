@@ -120,6 +120,7 @@ export class FormSubmission {
   }
 
   requestStarted(request) {
+    this.delegate.formSubmissionWillStart?.(this)
     this.state = FormSubmissionState.waiting
     if (!request.isSafe) prefetchCache.pause(request)
     if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
@@ -136,6 +137,10 @@ export class FormSubmission {
     prefetchCache.clear()
 
     this.result = { success: response.succeeded, fetchResponse: response }
+
+    if (response.succeeded && !this.isSafe && response.contentType?.startsWith(StreamMessage.contentType)) {
+      this.delegate.formSubmissionSucceededWithStreamResponse?.(this, response)
+    }
   }
 
   requestSucceededWithResponse(request, response) {

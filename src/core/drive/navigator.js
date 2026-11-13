@@ -90,6 +90,10 @@ export class Navigator {
     }
   }
 
+  formSubmissionSucceededWithStreamResponse(_formSubmission, _fetchResponse) {
+    this.view.clearSnapshotCache()
+  }
+
   async formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
     const responseHTML = await fetchResponse.responseHTML
 

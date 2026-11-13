@@ -10,8 +10,12 @@
 
   <body>
     <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch">Hover to prefetch me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_self_target" target="_self">Hover to prefetch me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_empty_target" target="">Hover to prefetch me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_top_target" target="_top">Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_parent_target" target="_parent">Won't prefetch when hovering me</a>
+    <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_blank_target" target="_blank">Won't prefetch when hovering me</a>
     <a href="/src/tests/fixtures/bare.html" id="anchor_for_prefetch_other_href">Hover to prefetch me</a>
-    <a href="/__turbo/delayed_response" id="anchor_for_slow_prefetch">Hover to prefetch me (response, that takes long to render)</a>
     <a href="/src/tests/fixtures/prefetched.html" id="anchor_with_inner_elements">
       <span>Hover to prefetch me</span>
     </a>
@@ -74,6 +78,7 @@
 
     <turbo-frame id="frame_for_prefetch_query">
       <a href="/src/tests/fixtures/prefetched_frame.html?specs[title]=A%20/%20B" id="anchor_for_prefetch_in_frame_with_non_normalized_query">Hover to prefetch me</a>
+      <a href="/src/tests/fixtures/prefetched_frame.html" id="anchor_with_self_target_in_frame" target="_self">Hover to prefetch me</a>
     </turbo-frame>
 
     <turbo-frame id="frame_for_prefetch_top" target="_top">
