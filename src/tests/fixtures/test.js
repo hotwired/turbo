@@ -73,6 +73,7 @@
   "turbo:before-visit",
   "turbo:load",
   "turbo:render",
+  "turbo:before-prefetch",
   "turbo:before-fetch-request",
   "turbo:submit-start",
   "turbo:submit-end",
@@ -91,6 +92,10 @@
   "turbo:reload"
 ])
 
+window.visitLogs = []
+
+addEventListener("turbo:visit", ({ detail }) => window.visitLogs.push(detail))
+
 customElements.define(
   "custom-link-element",
   class extends HTMLElement {
@@ -99,8 +104,10 @@ customElements.define(
       this.attachShadow({ mode: "open" })
     }
     connectedCallback() {
+      const frame = this.getAttribute("frame")
+
       this.shadowRoot.innerHTML = `
-      <a href="${this.getAttribute("link")}">
+      <a href="${this.getAttribute("link")}" ${frame ? `data-turbo-frame="${frame}"` : ""}>
         ${this.getAttribute("text") || `<slot></slot>`}
       </a>
     `

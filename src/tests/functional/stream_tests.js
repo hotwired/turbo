@@ -1,12 +1,9 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 import {
-  hasSelector,
-  nextBeat,
   nextEventNamed,
-  readEventLogs,
-  waitUntilNoSelector,
-  waitUntilText
+  nextEventOnTarget,
+  noNextEventOnTarget,
+  readEventLogs
 } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -15,14 +12,13 @@ test.beforeEach(async ({ page }) => {
 })
 
 test("receiving a stream message", async ({ page }) => {
-  const messages = await page.locator("#messages .message")
+  const messages = page.locator("#messages .message")
 
-  assert.deepEqual(await messages.allTextContents(), ["First"])
+  await expect(messages).toHaveText(["First"])
 
   await page.click("#append-target button")
-  await nextBeat()
 
-  assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
+  await expect(messages).toHaveText(["First", "Hello world!"])
 })
 
 test("dispatches a turbo:before-stream-render event", async ({ page }) => {
@@ -30,24 +26,23 @@ test("dispatches a turbo:before-stream-render event", async ({ page }) => {
   await nextEventNamed(page, "turbo:submit-end")
   const [[type, { newStream }, target]] = await readEventLogs(page, 1)
 
-  assert.equal(type, "turbo:before-stream-render")
-  assert.equal(target, "a-turbo-stream")
-  assert.ok(newStream.includes(`action="append"`))
-  assert.ok(newStream.includes(`target="messages"`))
+  expect(type).toEqual("turbo:before-stream-render")
+  expect(target).toEqual("a-turbo-stream")
+  expect(newStream).toContain(`action="append"`)
+  expect(newStream).toContain(`target="messages"`)
 })
 
 test("receiving a stream message with css selector target", async ({ page }) => {
-  const messages2 = await page.locator("#messages_2 .message")
-  const messages3 = await page.locator("#messages_3 .message")
+  const messages2 = page.locator("#messages_2 .message")
+  const messages3 = page.locator("#messages_3 .message")
 
-  assert.deepEqual(await messages2.allTextContents(), ["Second"])
-  assert.deepEqual(await messages3.allTextContents(), ["Third"])
+  await expect(messages2).toHaveText(["Second"])
+  await expect(messages3).toHaveText(["Third"])
 
   await page.click("#append-targets button")
-  await nextBeat()
 
-  assert.deepEqual(await messages2.allTextContents(), ["Second", "Hello CSS!"])
-  assert.deepEqual(await messages3.allTextContents(), ["Third", "Hello CSS!"])
+  await expect(messages2).toHaveText(["Second", "Hello CSS!"])
+  await expect(messages3).toHaveText(["Third", "Hello CSS!"])
 })
 
 test("receiving a message without a template", async ({ page }) => {
@@ -57,7 +52,7 @@ test("receiving a message without a template", async ({ page }) => {
     `)
   )
 
-  assert.notOk(await waitUntilNoSelector(page, "#messages"), "removes target element")
+  await expect(page.locator("#messages"), "removes target element").not.toBeAttached()
 })
 
 test("receiving a message with a <script> element", async ({ page }) => {
@@ -74,7 +69,7 @@ test("receiving a message with a <script> element", async ({ page }) => {
     `)
   )
 
-  assert.ok(await waitUntilText(page, "Hello from script"))
+  await expect(page.locator("#messages")).toHaveText("Hello from script")
 })
 
 test("overriding with custom StreamActions", async ({ page }) => {
@@ -101,7 +96,7 @@ test("overriding with custom StreamActions", async ({ page }) => {
     `)
   }, html)
 
-  assert.ok(await waitUntilText(page, "Rendered with Custom Action"), "evaluates custom StreamAction")
+  await expect(page.locator("#messages"), "evaluates custom StreamAction").toHaveText("Rendered with Custom Action")
 })
 
 test("receiving a stream message over SSE", async ({ page }) => {
@@ -111,35 +106,29 @@ test("receiving a stream message over SSE", async ({ page }) => {
       `<turbo-stream-source id="stream-source" src="/__turbo/messages"></turbo-stream-source>`
     )
   })
-  await nextBeat()
-  assert.equal(await getReadyState(page, "stream-source"), await page.evaluate(() => EventSource.OPEN))
 
-  const messages = await page.locator("#messages .message")
+  const streamSource = page.locator("#stream-source")
 
-  assert.deepEqual(await messages.allTextContents(), ["First"])
+  await expect(streamSource).toHaveJSProperty("streamSource.readyState", await page.evaluate(() => EventSource.OPEN))
+
+  const messages = page.locator("#messages .message")
+
+  await expect(messages).toHaveText(["First"])
+
+  await page.click("#async button")
+
+  await expect(messages).toHaveText(["First", "Hello world!"])
+
+  const readyState = await streamSource.evaluate((element) => {
+    element.remove()
+
+    return element.streamSource.readyState
+  })
+  expect(readyState).toEqual(await page.evaluate(() => EventSource.CLOSED))
 
   await page.click("#async button")
 
-  await waitUntilText(page, "Hello world!")
-  assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
-
-  const readyState = await page.evaluate((id) => {
-    const element = document.getElementById(id)
-
-    if (element && element.streamSource) {
-      element.remove()
-
-      return element.streamSource.readyState
-    } else {
-      return -1
-    }
-  }, "stream-source")
-  assert.equal(readyState, await page.evaluate(() => EventSource.CLOSED))
-
-  await page.click("#async button")
-  await nextBeat()
-
-  assert.deepEqual(await messages.allTextContents(), ["First", "Hello world!"])
+  await expect(messages).toHaveText(["First", "Hello world!"])
 })
 
 test("receiving an update stream message preserves focus if the activeElement has an [id]", async ({ page }) => {
@@ -151,9 +140,8 @@ test("receiving an update stream message preserves focus if the activeElement ha
       </turbo-stream>
     `)
   })
-  await nextBeat()
 
-  assert.ok(await hasSelector(page, "textarea#container-element:focus"))
+  await expect(page.locator("textarea#container-element:focus")).toBeFocused()
 })
 
 test("receiving a replace stream message preserves focus if the activeElement has an [id]", async ({ page }) => {
@@ -165,9 +153,8 @@ test("receiving a replace stream message preserves focus if the activeElement ha
       </turbo-stream>
     `)
   })
-  await nextBeat()
 
-  assert.ok(await hasSelector(page, "textarea#container-element:focus"))
+  await expect(page.locator("textarea#container-element:focus")).toBeFocused()
 })
 
 test("receiving a remove stream message preserves focus blurs the activeElement", async ({ page }) => {
@@ -177,19 +164,127 @@ test("receiving a remove stream message preserves focus blurs the activeElement"
       <turbo-stream action="remove" target="container-element"></turbo-stream>
     `)
   })
-  await nextBeat()
 
-  assert.notOk(await hasSelector(page, ":focus"))
+  await expect(page.locator(":focus")).not.toBeAttached()
 })
 
-async function getReadyState(page, id) {
-  return page.evaluate((id) => {
-    const element = document.getElementById(id)
+test("an unrelated stream message does not steal focus from a newly focused input", async ({ page }) => {
+  const activeElementId = await page.evaluate(async () => {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<div id="modal" tabindex="-1"><input id="email"></div><span id="notification">Before</span>`
+    )
 
-    if (element?.streamSource) {
-      return element.streamSource.readyState
-    } else {
-      return -1
-    }
-  }, id)
-}
+    document.getElementById("modal").focus()
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" target="notification">
+        <template>After</template>
+      </turbo-stream>
+    `)
+    document.getElementById("email").focus()
+
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    return document.activeElement.id
+  })
+
+  expect(activeElementId).toEqual("email")
+  await expect(page.locator("#notification")).toHaveText("After")
+})
+
+test("replacing the focused input with another input with the same id restores focus", async ({ page }) => {
+  const activeElementId = await page.evaluate(async () => {
+    document.getElementById("container-element").focus()
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" target="container-element">
+        <template><input id="container-element"></template>
+      </turbo-stream>
+    `)
+
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    return document.activeElement.id
+  })
+
+  expect(activeElementId).toEqual("container-element")
+})
+
+test("replacing the focused input after focus has moved elsewhere keeps the new target", async ({ page }) => {
+  const activeElementId = await page.evaluate(async () => {
+    document.body.insertAdjacentHTML("beforeend", `<input id="moved-focus">`)
+
+    document.getElementById("container-element").focus()
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" target="container-element">
+        <template><input id="container-element"></template>
+      </turbo-stream>
+    `)
+    document.getElementById("moved-focus").focus()
+
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    return document.activeElement.id
+  })
+
+  expect(activeElementId).toEqual("moved-focus")
+})
+
+test("dispatches a turbo:before-morph-element & turbo:morph-element for each morph stream action", async ({ page }) => {
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" method="morph" target="message_1">
+        <template>
+          <div id="message_1">
+            <h1>Morphed</h1>
+          </div>
+        </template>
+      </turbo-stream>
+    `)
+  })
+
+  await nextEventOnTarget(page, "message_1", "turbo:before-morph-element")
+  await nextEventOnTarget(page, "message_1", "turbo:morph-element")
+  await expect(page.locator("#message_1")).toHaveText("Morphed")
+})
+
+test("preventing a turbo:before-morph-element prevents the morph", async ({ page }) => {
+  await page.evaluate(() => {
+    addEventListener("turbo:before-morph-element", (event) => {
+      event.preventDefault()
+    })
+  })
+
+  await page.evaluate(() => {
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" method="morph" target="message_1">
+        <template>
+          <div id="message_1">
+            <h1>Morphed</h1>
+          </div>
+        </template>
+      </turbo-stream>
+    `)
+  })
+
+  await nextEventOnTarget(page, "message_1", "turbo:before-morph-element")
+  await noNextEventOnTarget(page, "message_1", "turbo:morph-element")
+  await expect(page.locator("#message_1")).toHaveText("Morph me")
+})
+
+test("rendering a stream message into the HTML executes it", async ({ page }) => {
+  await page.evaluate(() => {
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      `
+        <turbo-stream action="append" target="messages">
+          <template>
+            <div class="message">Hello world!</div>
+          </template>
+        </turbo-stream>
+      `
+    )
+  })
+
+  const messages = page.locator("#messages .message")
+  await expect(messages).toHaveText(["First", "Hello world!"])
+})

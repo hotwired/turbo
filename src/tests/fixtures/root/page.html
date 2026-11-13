@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html id="html">
+<html>
   <head>
     <meta charset="utf-8">
-    <title>Morph Stream Action</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
-    <meta name="turbo-refresh-method" content="replace">
+    <meta name="turbo-root" content="/src/tests/fixtures/root">
   </head>
-
   <body>
-    <div id="message_1">
-      <div>Morph me</div>
-    </div>
+    <section>
+      <p><a id="link-root" href="/src/tests/fixtures/root">Link to root</a></p>
+    </section>
   </body>
 </html>

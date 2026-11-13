@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { nextEventNamed, nextPageRefresh } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/src/tests/fixtures/autofocus.html")
@@ -39,6 +40,9 @@ test("navigating a frame with a turbo-frame targeting the frame autofocuses [aut
 })
 
 test("receiving a Turbo Stream message with an [autofocus] element when the activeElement is the document", async ({ page }) => {
+  // Ensure the [autofocus] element has been processed before blurring
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+
   await page.evaluate(() => {
     document.activeElement.blur()
     window.Turbo.renderStreamMessage(`
@@ -47,10 +51,14 @@ test("receiving a Turbo Stream message with an [autofocus] element when the acti
       </turbo-stream>
     `)
   })
+
   await expect(page.locator("#autofocus-from-stream")).toBeFocused()
 })
 
 test("autofocus from a Turbo Stream message does not leak a placeholder [id]", async ({ page }) => {
+  // Ensure the [autofocus] element has been processed before blurring
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+
   await page.evaluate(() => {
     document.activeElement.blur()
     window.Turbo.renderStreamMessage(`
@@ -59,6 +67,7 @@ test("autofocus from a Turbo Stream message does not leak a placeholder [id]", a
       </turbo-stream>
     `)
   })
+
   await expect(page.locator("#container-from-stream input")).toBeFocused()
 })
 
@@ -71,4 +80,23 @@ test("receiving a Turbo Stream message with an [autofocus] element when an eleme
     `)
   })
   await expect(page.locator("#first-autofocus-element")).toBeFocused()
+})
+
+test("don't focus on [autofocus] elements on page refreshes with morphing", async ({ page }) => {
+  const input = await page.locator("#form input[autofocus]")
+
+  const button = page.locator("#first-autofocus-element")
+  await button.click()
+
+  await nextPageRefresh(page)
+
+  await expect(button).toBeFocused()
+  await expect(input).not.toBeFocused()
+
+  await page.locator("#form").evaluate((form) => form.requestSubmit())
+
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  await nextPageRefresh(page)
+
+  await expect(button).toBeFocused()
 })

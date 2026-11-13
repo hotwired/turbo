@@ -1,17 +1,15 @@
-import { expandURL } from "./core/url"
-
 export function activateScriptElement(element) {
   if (element.getAttribute("data-turbo-eval") == "false") {
     return element
   } else {
     const createdScriptElement = document.createElement("script")
-    const cspNonce = getMetaContent("csp-nonce")
-    if (cspNonce) {
-      createdScriptElement.nonce = cspNonce
-    }
+    const cspNonce = getCspNonce()
     createdScriptElement.textContent = element.textContent
     createdScriptElement.async = false
     copyElementAttributes(createdScriptElement, element)
+    if (cspNonce && !createdScriptElement.nonce) {
+      createdScriptElement.nonce = cspNonce
+    }
     return createdScriptElement
   }
 }
@@ -45,6 +43,11 @@ export function dispatch(eventName, { target, cancelable, detail } = {}) {
   return event
 }
 
+export function cancelEvent(event) {
+  event.preventDefault()
+  event.stopImmediatePropagation()
+}
+
 export function nextRepaint() {
   if (document.visibilityState === "hidden") {
     return nextEventLoopTick()
@@ -63,6 +66,12 @@ export function nextEventLoopTick() {
 
 export function nextMicrotask() {
   return Promise.resolve()
+}
+
+export function removeTemporaryElementsFrom(root) {
+  for (const element of root.querySelectorAll("[data-turbo-temporary]")) {
+    element.remove()
+  }
 }
 
 export function parseHTMLDocument(html = "") {
@@ -93,7 +102,7 @@ export function uuid() {
       } else if (i == 19) {
         return (Math.floor(Math.random() * 4) + 8).toString(16)
       } else {
-        return Math.floor(Math.random() * 15).toString(16)
+        return Math.floor(Math.random() * 16).toString(16)
       }
     })
     .join("")
@@ -164,13 +173,22 @@ export function getVisitAction(...elements) {
   return isAction(action) ? action : null
 }
 
-export function getMetaElement(name) {
+function getMetaElement(name) {
   return document.querySelector(`meta[name="${name}"]`)
 }
 
 export function getMetaContent(name) {
   const element = getMetaElement(name)
   return element && element.content
+}
+
+export function getCspNonce() {
+  const element = getMetaElement("csp-nonce")
+
+  if (element) {
+    const { nonce, content } = element
+    return nonce == "" ? content : nonce
+  }
 }
 
 export function setMetaContent(name, content) {
@@ -196,6 +214,11 @@ export function findClosestRecursively(element, selector) {
   }
 }
 
+export function elementIsStylesheet(element) {
+  return element.localName === "style" ||
+    (element.localName === "link" && element.relList.contains("stylesheet"))
+}
+
 export function elementIsFocusable(element) {
   const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
 
@@ -218,22 +241,41 @@ export async function around(callback, reader) {
   return [before, after]
 }
 
-export function doesNotTargetIFrame(anchor) {
-  if (anchor.hasAttribute("target")) {
-    for (const element of document.getElementsByName(anchor.target)) {
+export function doesNotTargetIFrame(name) {
+  if (name === "_blank") {
+    return false
+  } else if (name) {
+    for (const element of document.getElementsByName(name)) {
       if (element instanceof HTMLIFrameElement) return false
     }
-  }
 
-  return true
+    return true
+  } else {
+    return true
+  }
+}
+
+/**
+ * Returns consistently the href attribute value as a string for both HTMLAnchorElement and SVGAElement.
+ * HTMLAnchorElement href property returns an absolute URL if the attribute contains a valid relative URL.
+ * SVGAElement exposes href as SVGAnimatedString which does not implement String methods.
+ * getAttribute() will return the proper value of the attribute in both cases.
+ */
+export function getLinkHrefString(link) {
+  return link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""
 }
 
 export function findLinkFromClickTarget(target) {
-  return findClosestRecursively(target, "a[href]:not([target^=_]):not([download])")
-}
+  const link = findClosestRecursively(target, "a[href], a[xlink\\:href]")
 
-export function getLocationForLink(link) {
-  return expandURL(link.getAttribute("href") || "")
+  if (!link) return null
+  if (getLinkHrefString(link).startsWith("#")) return null
+  if (link.hasAttribute("download")) return null
+
+  const linkTarget = link.getAttribute("target")
+  if (linkTarget && linkTarget !== "_self") return null
+
+  return link
 }
 
 export function debounce(fn, delay) {

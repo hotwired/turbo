@@ -1,7 +1,7 @@
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
-import { getHistoryMethodForAction, uuid, nextRepaint } from "../../util"
+import { getHistoryMethodForAction, removeTemporaryElementsFrom, uuid } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
 
@@ -12,7 +12,9 @@ const defaultOptions = {
   willRender: true,
   updateHistory: true,
   shouldCacheSnapshot: true,
-  acceptsStreamResponse: false
+  acceptsStreamResponse: false,
+  refresh: {},
+  scroll: undefined
 }
 
 export const TimingMetric = {
@@ -72,7 +74,9 @@ export class Visit {
       updateHistory,
       shouldCacheSnapshot,
       acceptsStreamResponse,
-      direction
+      direction,
+      refresh,
+      scroll
     } = {
       ...defaultOptions,
       ...options
@@ -83,7 +87,6 @@ export class Visit {
     this.snapshot = snapshot
     this.snapshotHTML = snapshotHTML
     this.response = response
-    this.isSamePage = this.delegate.locationWithActionIsSamePage(this.location, this.action)
     this.isPageRefresh = this.view.isPageRefresh(this)
     this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
@@ -92,6 +95,8 @@ export class Visit {
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
     this.direction = direction || Direction[action]
+    this.refresh = refresh
+    this.scroll = scroll
   }
 
   get adapter() {
@@ -108,10 +113,6 @@ export class Visit {
 
   get restorationData() {
     return this.history.getRestorationDataForIdentifier(this.restorationIdentifier)
-  }
-
-  get silent() {
-    return this.isSamePage
   }
 
   start() {
@@ -217,6 +218,7 @@ export class Visit {
           this.complete()
         } else {
           await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML), this)
+          this.performScroll()
           this.adapter.visitRendered(this)
           this.fail()
         }
@@ -250,7 +252,7 @@ export class Visit {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
         this.cacheSnapshot()
-        if (this.isSamePage || this.isPageRefresh) {
+        if (this.isPageRefresh) {
           this.adapter.visitRendered(this)
         } else {
           if (this.view.renderPromise) await this.view.renderPromise
@@ -278,17 +280,6 @@ export class Visit {
     }
   }
 
-  goToSamePageAnchor() {
-    if (this.isSamePage) {
-      this.render(async () => {
-        this.cacheSnapshot()
-        this.performScroll()
-        this.changeHistory()
-        this.adapter.visitRendered(this)
-      })
-    }
-  }
-
   // Fetch request delegate
 
   prepareRequest(request) {
@@ -304,7 +295,12 @@ export class Visit {
   requestPreventedHandlingResponse(_request, _response) {}
 
   async requestSucceededWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -318,7 +314,12 @@ export class Visit {
   }
 
   async requestFailedWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -341,6 +342,10 @@ export class Visit {
     this.finishRequest()
   }
 
+  #responseBodyErrored(request, error) {
+    if (!request.abortSignal.aborted) this.requestErrored(request, error)
+  }
+
   // Scrolling
 
   performScroll() {
@@ -349,9 +354,6 @@ export class Visit {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
       } else {
         this.scrollToAnchor() || this.view.scrollToTop()
-      }
-      if (this.isSamePage) {
-        this.delegate.visitScrolledToSamePageLocation(this.view.lastRenderedLocation, this.location)
       }
 
       this.scrolled = true
@@ -386,24 +388,12 @@ export class Visit {
 
   // Private
 
-  getHistoryMethodForAction(action) {
-    switch (action) {
-      case "replace":
-        return history.replaceState
-      case "advance":
-      case "restore":
-        return history.pushState
-    }
-  }
-
   hasPreloadedResponse() {
     return typeof this.response == "object"
   }
 
   shouldIssueRequest() {
-    if (this.isSamePage) {
-      return false
-    } else if (this.action == "restore") {
+    if (this.action == "restore") {
       return !this.hasCachedSnapshot()
     } else {
       return this.willRender
@@ -412,14 +402,28 @@ export class Visit {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      // Cache notifications prepare the live document. They cannot affect a supplied
+      // snapshot and would instead mutate the page that remains visible.
+      const shouldNotifyApplication = !this.snapshot
+      this.view.cacheSnapshot(this.snapshot, shouldNotifyApplication).then((snapshot) => {
+        if (snapshot) {
+          this.visitCachedSnapshot(snapshot)
+
+          // The callback can restore temporary elements with the previous frame contents,
+          // so remove them only after the cached snapshot has been prepared.
+          removeTemporaryElementsFrom(snapshot.element)
+        }
+      })
       this.snapshotCached = true
     }
   }
 
   async render(callback) {
     this.cancelRender()
-    this.frame = await nextRepaint()
+    await new Promise((resolve) => {
+      this.frame =
+        document.visibilityState === "hidden" ? setTimeout(() => resolve(), 0) : requestAnimationFrame(() => resolve())
+    })
     await callback()
     delete this.frame
   }

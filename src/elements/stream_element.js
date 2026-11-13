@@ -6,20 +6,22 @@ import { nextRepaint } from "../util"
 /**
  * Renders updates to the page from a stream of messages.
  *
- * Using the `action` attribute, this can be configured one of four ways:
+ * Using the `action` attribute, this can be configured one of eight ways:
  *
- * - `append` - appends the result to the container
- * - `prepend` - prepends the result to the container
- * - `replace` - replaces the contents of the container
- * - `remove` - removes the container
- * - `before` - inserts the result before the target
  * - `after` - inserts the result after the target
+ * - `append` - appends the result to the target
+ * - `before` - inserts the result before the target
+ * - `prepend` - prepends the result to the target
+ * - `refresh` - initiates a page refresh
+ * - `remove` - removes the target
+ * - `replace` - replaces the outer HTML of the target
+ * - `update` - replaces the inner HTML of the target
  *
  * @customElement turbo-stream
  * @example
  *   <turbo-stream action="append" target="dom_id">
  *     <template>
- *       Content to append to container designated with the dom_id.
+ *       Content to append to target designated with the dom_id.
  *     </template>
  *   </turbo-stream>
  */
@@ -67,7 +69,24 @@ export class StreamElement extends HTMLElement {
    * Gets the list of duplicate children (i.e. those with the same ID)
    */
   get duplicateChildren() {
-    const existingChildren = this.targetElements.flatMap((e) => [...e.children]).filter((c) => !!c.id)
+    const existingChildren = this.targetElements.flatMap((e) => [...e.children]).filter((c) => !!c.getAttribute("id"))
+    const newChildrenIds = [...(this.templateContent?.children || [])].filter((c) => !!c.getAttribute("id")).map((c) => c.getAttribute("id"))
+
+    return existingChildren.filter((c) => newChildrenIds.includes(c.getAttribute("id")))
+  }
+
+  /**
+  * Removes duplicate siblings (by ID)
+  */
+  removeDuplicateTargetSiblings() {
+    this.duplicateSiblings.forEach((c) => c.remove())
+  }
+
+  /**
+  * Gets the list of duplicate siblings (i.e. those with the same ID)
+  */
+  get duplicateSiblings() {
+    const existingChildren = this.targetElements.flatMap((e) => [...e.parentElement.children]).filter((c) => !!c.id)
     const newChildrenIds = [...(this.templateContent?.children || [])].filter((c) => !!c.id).map((c) => c.id)
 
     return existingChildren.filter((c) => newChildrenIds.includes(c.id))

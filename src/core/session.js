@@ -18,6 +18,7 @@ import { PageView } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
 import { Preloader } from "./drive/preloader"
 import { Cache } from "./cache"
+import { config } from "./config"
 
 export class Session {
   navigator = new Navigator(this)
@@ -37,11 +38,8 @@ export class Session {
   streamMessageRenderer = new StreamMessageRenderer()
   cache = new Cache(this)
 
-  drive = true
   enabled = true
-  progressBarDelay = 500
   started = false
-  formMode = "on"
   #pageRefreshDebouncePeriod = 150
 
   constructor(recentRequests) {
@@ -107,10 +105,14 @@ export class Session {
     }
   }
 
-  refresh(url, requestId) {
+  refresh(url, options = {}) {
+    options = typeof options === "string" ? { requestId: options } : options
+
+    const { method, requestId, scroll } = options
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
-    if (!isRecentRequest) {
-      this.visit(url, { action: "replace", shouldCacheSnapshot: false })
+    const isCurrentUrl = url === document.baseURI
+    if (!isRecentRequest && !this.navigator.currentVisit && isCurrentUrl) {
+      this.visit(url, { action: "replace", shouldCacheSnapshot: false, refresh: { method, scroll } })
     }
   }
 
@@ -131,11 +133,35 @@ export class Session {
   }
 
   setProgressBarDelay(delay) {
+    console.warn(
+      "Please replace `session.setProgressBarDelay(delay)` with `session.progressBarDelay = delay`. The function is deprecated and will be removed in a future version of Turbo.`"
+    )
+
     this.progressBarDelay = delay
   }
 
-  setFormMode(mode) {
-    this.formMode = mode
+  set progressBarDelay(delay) {
+    config.drive.progressBarDelay = delay
+  }
+
+  get progressBarDelay() {
+    return config.drive.progressBarDelay
+  }
+
+  set drive(value) {
+    config.drive.enabled = value
+  }
+
+  get drive() {
+    return config.drive.enabled
+  }
+
+  set formMode(value) {
+    config.forms.mode = value
+  }
+
+  get formMode() {
+    return config.forms.mode
   }
 
   get location() {
@@ -190,6 +216,12 @@ export class Session {
     }
   }
 
+  historyPoppedWithEmptyState(location) {
+    this.history.replace(location)
+    this.view.lastRenderedLocation = location
+    this.view.cacheSnapshot()
+  }
+
   // Scroll observer delegate
 
   scrollPositionChanged(position) {
@@ -209,7 +241,8 @@ export class Session {
   canPrefetchRequestToLocation(link, location) {
     return (
       this.elementIsNavigatable(link) &&
-        locationIsVisitable(location, this.snapshot.rootLocation)
+      locationIsVisitable(location, this.snapshot.rootLocation) &&
+      this.navigator.linkPrefetchingIsEnabledForLocation(location)
     )
   }
 
@@ -233,7 +266,7 @@ export class Session {
   // Navigator delegate
 
   allowsVisitingLocationWithAction(location, action) {
-    return this.locationWithActionIsSamePage(location, action) || this.applicationAllowsVisitingLocation(location)
+    return this.applicationAllowsVisitingLocation(location)
   }
 
   visitProposedToLocation(location, options) {
@@ -249,23 +282,13 @@ export class Session {
       this.view.markVisitDirection(visit.direction)
     }
     extendURLWithDeprecatedProperties(visit.location)
-    if (!visit.silent) {
-      this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
-    }
+    this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
   }
 
   visitCompleted(visit) {
     this.view.unmarkVisitDirection()
     clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
-  }
-
-  locationWithActionIsSamePage(location, action) {
-    return this.navigator.locationWithActionIsSamePage(location, action)
-  }
-
-  visitScrolledToSamePageLocation(oldURL, newURL) {
-    this.notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL)
   }
 
   // Form submit observer delegate
@@ -307,9 +330,7 @@ export class Session {
   // Page view delegate
 
   viewWillCacheSnapshot() {
-    if (!this.navigator.currentVisit?.silent) {
-      this.notifyApplicationBeforeCachingSnapshot()
-    }
+    this.notifyApplicationBeforeCachingSnapshot()
   }
 
   allowsImmediateRender({ element }, options) {
@@ -401,15 +422,6 @@ export class Session {
     })
   }
 
-  notifyApplicationAfterVisitingSamePageLocation(oldURL, newURL) {
-    dispatchEvent(
-      new HashChangeEvent("hashchange", {
-        oldURL: oldURL.toString(),
-        newURL: newURL.toString()
-      })
-    )
-  }
-
   notifyApplicationAfterFrameLoad(frame) {
     return dispatch("turbo:frame-load", { target: frame })
   }
@@ -425,14 +437,12 @@ export class Session {
   // Helpers
 
   submissionIsNavigatable(form, submitter) {
-    if (this.formMode == "off") {
+    if (config.forms.mode == "off") {
       return false
-    } else if (this.submitterReferencesNavigatable(form, submitter)) {
-      return true
     } else {
-      const submitterIsNavigatable = submitter ? this.elementIsNavigatable(submitter) : true
+      const submitterIsNavigatable = this.submitterIsNavigatable(submitter)
 
-      if (this.formMode == "optin") {
+      if (config.forms.mode == "optin") {
         return submitterIsNavigatable && form.closest('[data-turbo="true"]') != null
       } else {
         return submitterIsNavigatable && this.elementIsNavigatable(form)
@@ -440,11 +450,14 @@ export class Session {
     }
   }
 
-  submitterReferencesNavigatable(form, submitter) {
-    const formReference = submitter.hasAttribute("form")
-    const optedOut = submitter.getAttribute("data-turbo") == "false"
+  submitterIsNavigatable(submitter) {
+    if (!submitter) return true
 
-    return formReference && !optedOut && this.elementIsNavigatable(form)
+    if (submitter.hasAttribute("form") && submitter.form instanceof HTMLFormElement) {
+      return submitter.getAttribute("data-turbo") != "false"
+    }
+
+    return this.elementIsNavigatable(submitter)
   }
 
   elementIsNavigatable(element) {
@@ -452,7 +465,7 @@ export class Session {
     const withinFrame = findClosestRecursively(element, "turbo-frame")
 
     // Check if Drive is enabled on the session or we're within a Frame.
-    if (this.drive || withinFrame) {
+    if (config.drive.enabled || withinFrame) {
       // Element is navigatable by default, unless `data-turbo="false"`.
       if (container) {
         return container.getAttribute("data-turbo") != "false"

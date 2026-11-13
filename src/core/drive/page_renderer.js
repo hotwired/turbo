@@ -1,4 +1,4 @@
-import { activateScriptElement, waitForLoad } from "../../util"
+import { activateScriptElement, elementIsStylesheet, waitForLoad } from "../../util"
 import { Renderer } from "../renderer"
 
 export class PageRenderer extends Renderer {
@@ -60,12 +60,17 @@ export class PageRenderer extends Renderer {
 
   #setLanguage() {
     const { documentElement } = this.currentSnapshot
-    const { lang } = this.newSnapshot
+    const { dir, lang } = this.newSnapshot
 
     if (lang) {
       documentElement.setAttribute("lang", lang)
     } else {
       documentElement.removeAttribute("lang")
+    }
+    if (dir) {
+      documentElement.setAttribute("dir", dir)
+    } else {
+      documentElement.removeAttribute("dir")
     }
   }
 
@@ -168,7 +173,18 @@ export class PageRenderer extends Renderer {
 
   activateNewBody() {
     document.adoptNode(this.newElement)
+    this.deactivateNoscriptStylesheetElements()
     this.activateNewBodyScriptElements()
+  }
+
+  deactivateNoscriptStylesheetElements() {
+    for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
+      for (const child of [...noscriptElement.children]) {
+        if (elementIsStylesheet(child)) {
+          child.remove()
+        }
+      }
+    }
   }
 
   activateNewBodyScriptElements() {
