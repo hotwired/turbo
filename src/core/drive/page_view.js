@@ -1,4 +1,5 @@
 import { nextEventLoopTick } from "../../util"
+import { expandURL } from "../url"
 import { View } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { MorphingPageRenderer } from "./morphing_page_renderer"
@@ -7,6 +8,8 @@ import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 
 export class PageView extends View {
+  #lastSnapshotWrite = Promise.resolve()
+
   snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
@@ -44,11 +47,17 @@ export class PageView extends View {
   async cacheSnapshot(snapshot = this.snapshot, shouldNotifyApplication = true) {
     if (snapshot.isCacheable) {
       if (shouldNotifyApplication) this.delegate.viewWillCacheSnapshot()
-      const { lastRenderedLocation: location } = this
-      await nextEventLoopTick()
+      const location = expandURL(this.lastRenderedLocation)
+      const cachedSnapshot = nextEventLoopTick().then(() => snapshot.clone())
+      return this.#cacheSnapshot(location, cachedSnapshot)
+    }
+  }
+
+  async cacheSnapshotAtLocation(snapshot, location) {
+    if (snapshot.isCacheable) {
+      const cacheLocation = expandURL(location)
       const cachedSnapshot = snapshot.clone()
-      this.snapshotCache.put(location, cachedSnapshot)
-      return cachedSnapshot
+      return this.#cacheSnapshot(cacheLocation, Promise.resolve(cachedSnapshot))
     }
   }
 
@@ -70,5 +79,28 @@ export class PageView extends View {
 
   get snapshot() {
     return PageSnapshot.fromElement(this.element)
+  }
+
+  // Private
+
+  #cacheSnapshot(location, snapshotPromise) {
+    const snapshotResult = snapshotPromise.then(
+      (snapshot) => ({ snapshot }),
+      (error) => ({ error })
+    )
+
+    const write = this.#lastSnapshotWrite.then(async () => {
+      const result = await snapshotResult
+      if ("error" in result) throw result.error
+      const { snapshot } = result
+      this.snapshotCache.put(location, snapshot)
+      return snapshot
+    })
+
+    this.#lastSnapshotWrite = write.then(
+      () => undefined,
+      () => undefined
+    )
+    return write
   }
 }
