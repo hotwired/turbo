@@ -340,7 +340,11 @@ export class Session {
       detail: { render }
     } = event
 
-    return { immediateRender: !defaultPrevented, render }
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
@@ -436,7 +440,7 @@ export class Session {
     if (config.forms.mode == "off") {
       return false
     } else {
-      const submitterIsNavigatable = submitter ? this.elementIsNavigatable(submitter) : true
+      const submitterIsNavigatable = this.submitterIsNavigatable(submitter)
 
       if (config.forms.mode == "optin") {
         return submitterIsNavigatable && form.closest('[data-turbo="true"]') != null
@@ -444,6 +448,16 @@ export class Session {
         return submitterIsNavigatable && this.elementIsNavigatable(form)
       }
     }
+  }
+
+  submitterIsNavigatable(submitter) {
+    if (!submitter) return true
+
+    if (submitter.hasAttribute("form") && submitter.form instanceof HTMLFormElement) {
+      return submitter.getAttribute("data-turbo") != "false"
+    }
+
+    return this.elementIsNavigatable(submitter)
   }
 
   elementIsNavigatable(element) {

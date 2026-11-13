@@ -1,4 +1,4 @@
-import { activateScriptElement, waitForLoad } from "../../util"
+import { activateScriptElement, elementIsStylesheet, waitForLoad } from "../../util"
 import { Renderer } from "../renderer"
 
 export class PageRenderer extends Renderer {
@@ -173,13 +173,17 @@ export class PageRenderer extends Renderer {
 
   activateNewBody() {
     document.adoptNode(this.newElement)
-    this.removeNoscriptElements()
+    this.deactivateNoscriptStylesheetElements()
     this.activateNewBodyScriptElements()
   }
 
-  removeNoscriptElements() {
+  deactivateNoscriptStylesheetElements() {
     for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
-      noscriptElement.remove()
+      for (const child of [...noscriptElement.children]) {
+        if (elementIsStylesheet(child)) {
+          child.remove()
+        }
+      }
     }
   }
 

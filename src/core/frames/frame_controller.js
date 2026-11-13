@@ -10,11 +10,12 @@ import {
   markAsBusy,
   uuid,
   getHistoryMethodForAction,
-  getVisitAction
+  getVisitAction,
+  removeTemporaryElementsFrom
 } from "../../util"
-import { FormSubmission } from "../drive/form_submission"
+import { FormSubmission, FormSubmissionState } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { getAction, expandURL, getRequestURL, locationIsVisitable } from "../url"
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
@@ -25,16 +26,19 @@ import { session } from "../index"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
 import { TurboFrameMissingError } from "../errors"
+import { VisitState } from "../drive/visit"
 
 export class FrameController {
-  fetchResponseLoaded = (_fetchResponse) => Promise.resolve()
   #currentFetchRequest = null
+  #fetchRequests = new WeakMap()
+  #proposedVisit = null
   #resolveVisitPromise = () => {}
   #connected = false
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
   #shouldMorphFrame = false
-  action = null
+  #formSubmissions = new Set()
+  #formSubmissionContexts = new WeakMap()
 
   constructor(element) {
     this.element = element
@@ -72,6 +76,12 @@ export class FrameController {
 
       if (!this.element.hasAttribute("recurse")) {
         this.#currentFetchRequest?.cancel()
+
+        if (!this.element.isConnected) {
+          for (const formSubmission of this.#formSubmissions) {
+            if (formSubmission.isSafe) formSubmission.stop()
+          }
+        }
       }
     }
   }
@@ -129,32 +139,52 @@ export class FrameController {
     }
   }
 
-  async loadResponse(fetchResponse) {
+  async loadResponse(fetchResponse, requestURL, proposedVisit = null) {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
-      this.sourceURL = fetchResponse.response.url
+      const responseURL = expandURL(fetchResponse.response.url)
+      if (!fetchResponse.redirected && !responseURL.hash && requestURL) {
+        responseURL.hash = requestURL.hash
+      }
+      this.sourceURL = responseURL.href
     }
+    if (proposedVisit) proposedVisit.location = expandURL(this.sourceURL || requestURL)
 
     try {
-      const html = await fetchResponse.responseHTML
-      if (html) {
-        const document = parseHTMLDocument(html)
+      const responseHTML = await fetchResponse.responseHTML
+      if (responseHTML) {
+        if (proposedVisit) {
+          proposedVisit.response = {
+            statusCode: fetchResponse.statusCode,
+            redirected: fetchResponse.redirected,
+            responseHTML
+          }
+        }
+        const document = parseHTMLDocument(responseHTML)
         const pageSnapshot = PageSnapshot.fromDocument(document)
 
         if (pageSnapshot.isVisitable) {
-          await this.#loadFrameResponse(fetchResponse, document)
+          await this.#loadFrameResponse(fetchResponse, document, proposedVisit)
         } else {
           await this.#handleUnvisitableFrameResponse(fetchResponse)
         }
       }
     } finally {
       this.#shouldMorphFrame = false
-      this.fetchResponseLoaded = () => Promise.resolve()
+      if (this.#proposedVisit === proposedVisit) this.#proposedVisit = null
     }
   }
 
   // Appearance observer delegate
 
   elementAppearedInViewport(element) {
+    if (!this.isActive) return
+
+    if (this.complete) {
+      this.#hasBeenLoaded = true
+      this.appearanceObserver.stop()
+      return
+    }
+
     this.proposeVisitIfNavigatedWithAction(element, getVisitAction(element))
     this.#loadSourceURL()
   }
@@ -187,17 +217,29 @@ export class FrameController {
   }
 
   formSubmitted(element, submitter) {
-    if (this.formSubmission) {
-      this.formSubmission.stop()
-    }
+    const previousSubmission = this.formSubmission
+    const previousContext = this.#formSubmissionContexts.get(previousSubmission)
+    const previous = previousContext?.proposedVisit ? {
+      formSubmission: previousSubmission,
+      frame: previousContext.frame,
+      proposedVisit: previousContext.proposedVisit
+    } : previousContext?.previous
+    previousSubmission?.stop()
 
     this.formSubmission = new FormSubmission(this, element, submitter)
 
     const { fetchRequest } = this.formSubmission
     const frame = this.#findFrameElement(element, submitter)
 
+    this.#formSubmissionContexts.set(this.formSubmission, {
+      frame,
+      initialBody: frame.ownerDocument.body,
+      initialLocation: session.location.href,
+      previous
+    })
+
     this.prepareRequest(fetchRequest, frame)
-    this.formSubmission.start()
+    this.#startFormSubmission(this.formSubmission, frame)
   }
 
   // Fetch request delegate
@@ -214,48 +256,59 @@ export class FrameController {
     markAsBusy(this.element)
   }
 
-  requestPreventedHandlingResponse(_request, _response) {
-    this.#resolveVisitPromise()
+  requestPreventedHandlingResponse(request, _response) {
+    this.#resolveRequest(request)
   }
 
   async requestSucceededWithResponse(request, response) {
-    await this.loadResponse(response)
-    this.#resolveVisitPromise()
+    await this.loadResponse(response, request.url, this.#fetchRequests.get(request)?.proposedVisit)
+    this.#resolveRequest(request)
   }
 
   async requestFailedWithResponse(request, response) {
-    await this.loadResponse(response)
-    this.#resolveVisitPromise()
+    await this.loadResponse(response, request.url, this.#fetchRequests.get(request)?.proposedVisit)
+    this.#resolveRequest(request)
   }
 
   requestErrored(request, error) {
     console.error(error)
-    this.#resolveVisitPromise()
+    this.#resolveRequest(request)
   }
 
-  requestFinished(_request) {
-    clearBusyState(this.element)
+  requestFinished(request) {
+    if (!this.#currentFetchRequest || this.#currentFetchRequest === request) clearBusyState(this.element)
   }
 
   // Form submission delegate
 
-  formSubmissionStarted({ formElement }) {
-    markAsBusy(formElement, this.#findFrameElement(formElement))
+  formSubmissionWillStart(formSubmission) {
+    const context = this.#formSubmissionContexts.get(formSubmission)
+    if (context) this.#prepareFormSubmissionVisit(formSubmission, context)
+  }
+
+  formSubmissionStarted(formSubmission) {
+    const frame = this.#formSubmissionContexts.get(formSubmission)?.frame
+    markAsBusy(formSubmission.formElement, frame || this.#findFrameElement(formSubmission.formElement))
   }
 
   formSubmissionSucceededWithResponse(formSubmission, response) {
-    const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
+    const context = this.#formSubmissionContexts.get(formSubmission)
+    const frame = context?.frame || this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
+    const proposedVisit = context?.proposedVisit
 
-    frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
-    frame.delegate.loadResponse(response)
+    frame.delegate.loadResponse(response, formSubmission.fetchRequest.url, proposedVisit)
 
     if (!formSubmission.isSafe) {
       session.clearCache()
     }
   }
 
+  formSubmissionSucceededWithStreamResponse(_formSubmission, _fetchResponse) {
+    session.clearCache()
+  }
+
   formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
-    this.element.delegate.loadResponse(fetchResponse)
+    this.element.delegate.loadResponse(fetchResponse, formSubmission.fetchRequest.url)
     session.clearCache()
   }
 
@@ -263,8 +316,9 @@ export class FrameController {
     console.error(error)
   }
 
-  formSubmissionFinished({ formElement }) {
-    clearBusyState(formElement, this.#findFrameElement(formElement))
+  formSubmissionFinished(formSubmission) {
+    const frame = this.#formSubmissionContexts.get(formSubmission)?.frame
+    clearBusyState(formSubmission.formElement, frame || this.#findFrameElement(formSubmission.formElement))
   }
 
   // View delegate
@@ -281,7 +335,11 @@ export class FrameController {
       detail: { render }
     } = event
 
-    return { immediateRender: !defaultPrevented, render }
+    if (this.view.renderer && render) {
+      this.view.renderer.renderElement = render
+    }
+
+    return !defaultPrevented
   }
 
   viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
@@ -292,39 +350,83 @@ export class FrameController {
 
   viewInvalidated() {}
 
-  // Frame renderer delegate
-
-  willRenderFrame(currentElement, _newElement) {
-    this.previousFrameElement = currentElement.cloneNode(true)
-  }
-
-  visitCachedSnapshot = ({ element }) => {
-    const frame = element.querySelector("#" + this.element.id)
-
-    if (frame && this.previousFrameElement) {
-      frame.replaceChildren(...this.previousFrameElement.children)
-    }
-
-    delete this.previousFrameElement
-  }
-
   // Private
 
-  async #loadFrameResponse(fetchResponse, document) {
+  #resolveRequest(request) {
+    this.#fetchRequests.get(request)?.resolve()
+    this.#fetchRequests.delete(request)
+  }
+
+  #prepareFormSubmissionVisit(formSubmission, context) {
+    const { formElement, submitter } = formSubmission
+    const { frame, initialBody, initialLocation, previous } = context
+
+    if (frame.ownerDocument.body === initialBody && session.location.href === initialLocation) {
+      const action = getVisitAction(submitter, formElement, frame)
+      const proposedVisit = frame.delegate.#createProposedVisit(frame, action)
+
+      // A reentrant submission can start before the replaced one clears its busy state.
+      if (
+        proposedVisit && previous?.proposedVisit &&
+        previous.formSubmission.state !== FormSubmissionState.stopped &&
+        previous.frame === frame &&
+        previous.proposedVisit.liveSnapshot.element === initialBody &&
+        previous.proposedVisit.originLocation.href === proposedVisit.originLocation.href
+      ) {
+        proposedVisit.snapshot = previous.proposedVisit.snapshot.clone()
+      }
+
+      context.proposedVisit = proposedVisit
+    }
+
+    delete context.previous
+  }
+
+  async #startFormSubmission(formSubmission, frame) {
+    const controller = frame.delegate
+    const { abortSignal } = formSubmission.fetchRequest
+    const onAbort = () => {
+      controller.#formSubmissions.delete(formSubmission)
+      // Release snapshots on abort while keeping the target for busy-state cleanup.
+      this.#formSubmissionContexts.set(formSubmission, { frame })
+    }
+
+    controller.#formSubmissions.add(formSubmission)
+    abortSignal.addEventListener("abort", onAbort, { once: true })
+
+    try {
+      await formSubmission.start()
+    } finally {
+      abortSignal.removeEventListener("abort", onAbort)
+      controller.#formSubmissions.delete(formSubmission)
+      this.#formSubmissionContexts.delete(formSubmission)
+    }
+  }
+
+  async #loadFrameResponse(fetchResponse, document, proposedVisit) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
     const rendererClass = this.#shouldMorphFrame ? MorphingFrameRenderer : FrameRenderer
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
-      const renderer = new rendererClass(this, this.view.snapshot, snapshot, false, false)
+      const delegate = {
+        willRenderFrame: (currentElement) => {
+          if (proposedVisit) proposedVisit.previousFrameElement = currentElement.cloneNode(true)
+        }
+      }
+      const renderer = new rendererClass(delegate, this.view.snapshot, snapshot, false, false)
       if (this.view.renderPromise) await this.view.renderPromise
-      this.changeHistory()
+      this.changeHistory(proposedVisit)
 
       await this.view.render(renderer)
       this.complete = true
+      if (proposedVisit) {
+        this.#prepareSnapshotsForVisit(proposedVisit)
+        await this.#cachePromotedVisitIfNeeded(proposedVisit)
+      }
       session.frameRendered(fetchResponse, this.element)
       session.frameLoaded(this.element)
-      await this.fetchResponseLoaded(fetchResponse)
+      if (proposedVisit) await this.#visitFrameResponse(proposedVisit)
     } else if (this.#willHandleFrameMissingFromResponse(fetchResponse)) {
       this.#handleFrameMissingFromResponse(fetchResponse)
     }
@@ -337,11 +439,16 @@ export class FrameController {
     this.#currentFetchRequest = request
 
     return new Promise((resolve) => {
-      this.#resolveVisitPromise = () => {
-        this.#resolveVisitPromise = () => {}
-        this.#currentFetchRequest = null
+      const resolveRequest = () => {
+        if (this.#currentFetchRequest === request) {
+          this.#resolveVisitPromise = () => {}
+          this.#currentFetchRequest = null
+        }
         resolve()
       }
+      this.#resolveVisitPromise = resolveRequest
+      this.#fetchRequests.set(request, { proposedVisit: this.#proposedVisit, resolve: resolveRequest })
+      this.#proposedVisit = null
       request.perform()
     })
   }
@@ -357,39 +464,118 @@ export class FrameController {
   }
 
   proposeVisitIfNavigatedWithAction(frame, action = null) {
-    this.action = action
+    this.#proposedVisit = this.#createProposedVisit(frame, action)
+    return this.#proposedVisit
+  }
 
-    if (this.action) {
-      const pageSnapshot = PageSnapshot.fromElement(frame).clone()
-      const { visitCachedSnapshot } = frame.delegate
+  changeHistory(proposedVisit) {
+    if (proposedVisit) {
+      const pageVisit = this.#pageVisitInProgress()
+      proposedVisit.shouldCacheSnapshot &&= pageVisit?.shouldCacheSnapshot !== false
 
-      frame.delegate.fetchResponseLoaded = async (fetchResponse) => {
-        if (frame.src) {
-          const { statusCode, redirected } = fetchResponse
-          const responseHTML = await fetchResponse.responseHTML
-          const response = { statusCode, redirected, responseHTML }
-          const options = {
-            response,
-            visitCachedSnapshot,
-            willRender: false,
-            updateHistory: false,
-            restorationIdentifier: this.restorationIdentifier,
-            snapshot: pageSnapshot
-          }
-
-          if (this.action) options.action = this.action
-
-          session.visit(frame.src, options)
-        }
+      if (document.body === proposedVisit.liveSnapshot.element && !pageVisit?.historyChanged) {
+        const method = getHistoryMethodForAction(proposedVisit.action)
+        session.history.update(method, proposedVisit.location, proposedVisit.restorationIdentifier)
+        proposedVisit.historyChanged = true
+        if (pageVisit) session.view.lastRenderedLocation = proposedVisit.location
       }
     }
   }
 
-  changeHistory() {
-    if (this.action) {
-      const method = getHistoryMethodForAction(this.action)
-      session.history.update(method, expandURL(this.element.src || ""), this.restorationIdentifier)
+  #createProposedVisit(frame, action) {
+    if (action && frame.ownerDocument.body.contains(frame)) {
+      const liveSnapshot = PageSnapshot.fromElement(frame)
+      const pageVisit = this.#pageVisitInProgress()
+      return {
+        action,
+        liveSnapshot,
+        snapshot: liveSnapshot.clone(),
+        originLocation: expandURL(pageVisit?.historyChanged ? session.view.lastRenderedLocation : session.location),
+        restorationIdentifier: this.restorationIdentifier,
+        shouldCacheSnapshot: pageVisit?.shouldCacheSnapshot !== false
+      }
     }
+
+    return null
+  }
+
+  #pageVisitInProgress() {
+    const visit = session.navigator.currentVisit
+    if (visit?.state === VisitState.started && visit.willRender) return visit
+  }
+
+  #prepareSnapshotsForVisit(proposedVisit) {
+    const frameSelector = `#${CSS.escape(this.id)}`
+    const cachedFrame = proposedVisit.snapshot.element.querySelector(frameSelector)
+    if (cachedFrame && proposedVisit.previousFrameElement) {
+      cachedFrame.replaceChildren(...proposedVisit.previousFrameElement.children)
+    }
+    delete proposedVisit.previousFrameElement
+
+    proposedVisit.advancedSnapshot = proposedVisit.liveSnapshot.clone()
+    if (!proposedVisit.liveSnapshot.element.contains(this.element)) {
+      // A permanent frame can move to another page while rendering. Clone it
+      // with the same form-state rules as the rest of the cached snapshot.
+      const { documentElement, headSnapshot } = proposedVisit.liveSnapshot
+      const frameSnapshot = new PageSnapshot(documentElement, this.element, headSnapshot).clone()
+      const advancedFrame = proposedVisit.advancedSnapshot.element.querySelector(frameSelector)
+      advancedFrame?.replaceWith(frameSnapshot.element)
+    }
+  }
+
+  #shouldVisitFrameResponse(proposedVisit, pageVisit) {
+    return (
+      !pageVisit &&
+      document.body === proposedVisit.liveSnapshot.element &&
+      session.location.href === proposedVisit.location.href &&
+      this.sourceURL === proposedVisit.location.href
+    )
+  }
+
+  async #cachePromotedVisitIfNeeded(proposedVisit) {
+    const pageVisit = this.#pageVisitInProgress()
+    proposedVisit.shouldCacheSnapshot &&= pageVisit?.shouldCacheSnapshot !== false
+    const ownsPage = document.body === proposedVisit.liveSnapshot.element
+    const ownsHistory = session.location.href === proposedVisit.location.href
+
+    if (ownsPage && ownsHistory) session.view.lastRenderedLocation = proposedVisit.location
+
+    if (proposedVisit.shouldCacheSnapshot) {
+      await this.#cachePromotedSnapshot(proposedVisit.snapshot, proposedVisit.originLocation)
+      const currentPageVisit = this.#pageVisitInProgress()
+      proposedVisit.shouldCacheSnapshot &&= currentPageVisit?.shouldCacheSnapshot !== false
+
+      if (
+        proposedVisit.shouldCacheSnapshot && proposedVisit.historyChanged &&
+        !this.#shouldVisitFrameResponse(proposedVisit, currentPageVisit)
+      ) {
+        await this.#cachePromotedSnapshot(proposedVisit.advancedSnapshot, proposedVisit.location)
+      }
+    }
+  }
+
+  #cachePromotedSnapshot(snapshot, location) {
+    removeTemporaryElementsFrom(snapshot.element)
+    return session.view.cacheSnapshotAtLocation(snapshot, location)
+  }
+
+  async #visitFrameResponse(proposedVisit) {
+    const pageVisit = this.#pageVisitInProgress()
+    if (!this.#shouldVisitFrameResponse(proposedVisit, pageVisit)) {
+      await this.#cachePromotedVisitIfNeeded(proposedVisit)
+      return
+    }
+
+    // The origin snapshot is already cached under its own URL.
+    session.visit(proposedVisit.location, {
+      action: proposedVisit.action,
+      referrer: proposedVisit.originLocation,
+      response: proposedVisit.response,
+      willRender: false,
+      updateHistory: false,
+      restorationIdentifier: proposedVisit.restorationIdentifier,
+      shouldCacheSnapshot: false
+    })
   }
 
   async #handleUnvisitableFrameResponse(fetchResponse) {
@@ -499,7 +685,7 @@ export class FrameController {
       return false
     }
 
-    if (submitter && !session.elementIsNavigatable(submitter)) {
+    if (submitter && !session.submitterIsNavigatable(submitter)) {
       return false
     }
 
@@ -593,7 +779,7 @@ export class FrameController {
 function activateElement(element, currentURL) {
   if (element) {
     const src = element.getAttribute("src")
-    if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {
+    if (src != null && currentURL != null && getRequestURL(expandURL(src)) == getRequestURL(expandURL(currentURL))) {
       throw new Error(`Matching <turbo-frame id="${element.id}"> element has a source URL which references itself`)
     }
     if (element.ownerDocument !== document) {
