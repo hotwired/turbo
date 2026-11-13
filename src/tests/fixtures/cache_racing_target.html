@@ -5,11 +5,10 @@
     <title>Turbo</title>
     <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
     <script src="/src/tests/fixtures/test.js"></script>
-    <!-- Different head content triggers head merging during render -->
-    <style></style>
+    <link rel="stylesheet" href="/src/tests/fixtures/test.css?cache-racing">
   </head>
-  <body>
-    <h1>Target Page</h1>
-    <p>This page has different head content (an extra style tag).</p>
+  <body id="cache-racing-target">
+    <h1>Target page</h1>
+    <input id="client-state" value="Target value">
   </body>
 </html>

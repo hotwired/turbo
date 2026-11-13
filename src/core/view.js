@@ -1,9 +1,6 @@
 import { getAnchor } from "./url"
 
 export class View {
-  #resolveRenderPromise = (_value) => {}
-  #resolveInterceptionPromise = (_value) => {}
-
   constructor(delegate, element) {
     this.delegate = delegate
     this.element = element
@@ -42,7 +39,7 @@ export class View {
   }
 
   scrollToPosition({ x, y }) {
-    this.scrollRoot.scrollTo(x, y)
+    this.scrollRoot.scrollTo({ left: x, top: y, behavior: "instant" })
   }
 
   scrollToTop() {
@@ -63,24 +60,30 @@ export class View {
     const shouldInvalidate = willRender
 
     if (shouldRender) {
+      const previousRender = this.renderPromise
+      let resolveRenderPromise
+      const renderPromise = new Promise((resolve) => (resolveRenderPromise = resolve))
+      this.renderPromise = renderPromise
+
       try {
-        this.renderPromise = new Promise((resolve) => (this.#resolveRenderPromise = resolve))
+        if (previousRender) await previousRender
         this.renderer = renderer
         await this.prepareToRenderSnapshot(renderer)
 
-        const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
-        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement, renderMethod: this.renderer.renderMethod }
+        let resume
+        const renderInterception = new Promise((resolve) => (resume = resolve))
+        const options = { resume, render: renderer.renderElement, renderMethod: renderer.renderMethod }
         const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
-        this.delegate.viewRenderedSnapshot(snapshot, isPreview, this.renderer.renderMethod)
+        this.delegate.viewRenderedSnapshot(snapshot, isPreview, renderer.renderMethod)
         this.delegate.preloadOnLoadLinksForView(this.element)
         this.finishRenderingSnapshot(renderer)
       } finally {
-        delete this.renderer
-        this.#resolveRenderPromise(undefined)
-        delete this.renderPromise
+        if (this.renderer === renderer) delete this.renderer
+        resolveRenderPromise(undefined)
+        if (this.renderPromise === renderPromise) delete this.renderPromise
       }
     } else if (shouldInvalidate) {
       this.invalidate(renderer.reloadReason)

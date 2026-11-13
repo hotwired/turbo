@@ -440,7 +440,7 @@ export class Session {
     if (config.forms.mode == "off") {
       return false
     } else {
-      const submitterIsNavigatable = submitter ? this.elementIsNavigatable(submitter) : true
+      const submitterIsNavigatable = this.submitterIsNavigatable(submitter)
 
       if (config.forms.mode == "optin") {
         return submitterIsNavigatable && form.closest('[data-turbo="true"]') != null
@@ -448,6 +448,16 @@ export class Session {
         return submitterIsNavigatable && this.elementIsNavigatable(form)
       }
     }
+  }
+
+  submitterIsNavigatable(submitter) {
+    if (!submitter) return true
+
+    if (submitter.hasAttribute("form") && submitter.form instanceof HTMLFormElement) {
+      return submitter.getAttribute("data-turbo") != "false"
+    }
+
+    return this.elementIsNavigatable(submitter)
   }
 
   elementIsNavigatable(element) {

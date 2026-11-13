@@ -49,6 +49,8 @@ export class Preloader {
   async requestSucceededWithResponse(fetchRequest, fetchResponse) {
     try {
       const responseHTML = await fetchResponse.responseHTML
+      if (this.snapshotCache.has(fetchRequest.url)) return
+
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
 
       this.snapshotCache.put(fetchRequest.url, snapshot)
