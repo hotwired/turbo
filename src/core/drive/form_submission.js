@@ -2,6 +2,7 @@ import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromStrin
 import { expandURL } from "../url"
 import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
+import { Confirmation } from "../confirmation"
 import { prefetchCache } from "./prefetch_cache"
 import { config } from "../config"
 
@@ -22,10 +23,6 @@ export const FormEnctype = {
 
 export class FormSubmission {
   state = FormSubmissionState.initialized
-
-  static confirmMethod(message) {
-    return Promise.resolve(confirm(message))
-  }
 
   constructor(delegate, formElement, submitter, mustRedirect = false) {
     const method = getMethod(formElement, submitter)
@@ -81,7 +78,7 @@ export class FormSubmission {
     if (typeof confirmationMessage === "string") {
       const confirmMethod = typeof config.forms.confirm === "function" ?
         config.forms.confirm :
-        FormSubmission.confirmMethod
+        Confirmation.confirmMethod
 
       const answer = await confirmMethod(confirmationMessage, this.formElement, this.submitter)
       if (!answer) {
