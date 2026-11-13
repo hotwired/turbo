@@ -176,6 +176,14 @@ export class FrameController {
   // Appearance observer delegate
 
   elementAppearedInViewport(element) {
+    if (!this.isActive) return
+
+    if (this.complete) {
+      this.#hasBeenLoaded = true
+      this.appearanceObserver.stop()
+      return
+    }
+
     this.proposeVisitIfNavigatedWithAction(element, getVisitAction(element))
     this.#loadSourceURL()
   }
