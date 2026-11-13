@@ -120,6 +120,7 @@ export class FormSubmission {
   }
 
   requestStarted(request) {
+    this.delegate.formSubmissionWillStart?.(this)
     this.state = FormSubmissionState.waiting
     if (!request.isSafe) prefetchCache.pause(request)
     if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
