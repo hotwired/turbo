@@ -9,16 +9,12 @@ import { SnapshotCache } from "./snapshot_cache"
 
 export class PageView extends View {
   #lastSnapshotWrite = Promise.resolve()
-  #snapshotCacheRequests = new WeakMap()
-  #renderCacheRequests = new WeakMap()
+  #cacheRequestsByBody = new WeakMap()
+  #cacheRequestsByRenderer = new WeakMap()
 
   snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
-
-  shouldTransitionTo(newSnapshot) {
-    return this.snapshot.prefersViewTransitions && newSnapshot.prefersViewTransitions
-  }
 
   renderPage(snapshot, isPreview = false, willRender = true, visit) {
     const shouldMorphPage = this.isPageRefresh(visit) && (visit?.refresh?.method || this.snapshot.refreshMethod) === "morph"
@@ -43,57 +39,52 @@ export class PageView extends View {
   }
 
   render(renderer) {
-    const cacheRequest = this.#snapshotCacheRequests.get(renderer.currentElement)
-    this.#renderCacheRequests.set(renderer, cacheRequest)
+    const initialRequest = this.#cacheRequestsByBody.get(renderer.currentElement)
+    this.#cacheRequestsByRenderer.set(renderer, initialRequest)
 
-    return super.render(renderer).finally(() => {
-      const cacheRequest = this.#renderCacheRequests.get(renderer)
-      this.#renderCacheRequests.delete(renderer)
-      if (this.#snapshotCacheRequests.get(renderer.currentElement) === cacheRequest) {
-        this.#snapshotCacheRequests.delete(renderer.currentElement)
-      }
-    })
+    return super.render(renderer).finally(() => this.#releaseCacheRequest(renderer))
   }
 
   async renderSnapshot(renderer) {
+    let cacheRequest
     if (renderer.willRender) {
-      this.#renderCacheRequests.set(renderer, this.#snapshotCacheRequests.get(renderer.currentElement))
+      cacheRequest = this.#cacheRequestsByBody.get(renderer.currentElement)
+      this.#cacheRequestsByRenderer.set(renderer, cacheRequest)
     }
-    const cacheRequest = this.#renderCacheRequests.get(renderer)
 
     // Morphs and custom renders may mutate the body referenced by the outgoing snapshot.
-    if (cacheRequest && renderer.willRender && renderer.renderElement !== PageRenderer.renderElement) {
-      await cacheRequest.result
+    if (cacheRequest && renderer.renderElement !== PageRenderer.renderElement) {
+      await cacheRequest.cachedSnapshotPromise
     }
 
     try {
       await super.renderSnapshot(renderer)
     } finally {
-      if (cacheRequest && renderer.willRender) {
-        await this.#repairSnapshotCache(cacheRequest).catch((error) => console.error(error))
+      if (cacheRequest) {
+        await this.#repairSnapshotCache(cacheRequest)
       }
     }
   }
 
   clearSnapshotCache() {
     this.snapshotCache.clear()
-    this.#snapshotCacheRequests = new WeakMap()
+    this.#cacheRequestsByBody = new WeakMap()
   }
 
   async cacheSnapshot(snapshot = this.snapshot, shouldNotifyApplication = true) {
-    this.#snapshotCacheRequests.delete(snapshot.element)
+    this.#cacheRequestsByBody.delete(snapshot.element)
     if (snapshot.isCacheable) {
       if (shouldNotifyApplication) this.delegate.viewWillCacheSnapshot()
       const location = expandURL(this.lastRenderedLocation)
-      const request = { snapshot, location, cachedWhileConnected: false }
-      const cachedSnapshot = nextEventLoopTick().then(() => {
-        request.cachedWhileConnected = snapshot.isConnected
+      const cacheRequest = { snapshot, location, capturedWhileConnected: false }
+      const snapshotPromise = nextEventLoopTick().then(() => {
+        cacheRequest.capturedWhileConnected = snapshot.isConnected
         return snapshot.clone()
       })
-      const write = this.#cacheSnapshot(location, cachedSnapshot)
-      request.result = write.catch(() => undefined)
+      const write = this.#cacheSnapshot(location, snapshotPromise)
+      cacheRequest.cachedSnapshotPromise = write.catch(() => undefined)
       if (snapshot.element === this.element.ownerDocument.body) {
-        this.#snapshotCacheRequests.set(snapshot.element, request)
+        this.#cacheRequestsByBody.set(snapshot.element, cacheRequest)
       }
       return write
     }
@@ -109,6 +100,10 @@ export class PageView extends View {
 
   getCachedSnapshotForLocation(location) {
     return this.snapshotCache.get(location)?.clone()
+  }
+
+  shouldTransitionTo(newSnapshot) {
+    return this.snapshot.prefersViewTransitions && newSnapshot.prefersViewTransitions
   }
 
   isPageRefresh(visit) {
@@ -133,22 +128,42 @@ export class PageView extends View {
 
   // Private
 
-  async #repairSnapshotCache(request) {
-    const { snapshot, location } = request
-    if (this.#snapshotCacheRequests.get(snapshot.element) !== request) return
-    if (!request.cachedWhileConnected || snapshot.isConnected) return
+  #releaseCacheRequest(renderer) {
+    const cacheRequest = this.#cacheRequestsByRenderer.get(renderer)
+    this.#cacheRequestsByRenderer.delete(renderer)
+    if (this.#cacheRequestsByBody.get(renderer.currentElement) === cacheRequest) {
+      this.#cacheRequestsByBody.delete(renderer.currentElement)
+    }
+  }
 
-    const previousSnapshot = await request.result
-    if (!previousSnapshot) return
+  async #repairSnapshotCache(cacheRequest) {
+    try {
+      const { snapshot, capturedWhileConnected } = cacheRequest
+      const isCurrentRequest = this.#cacheRequestsByBody.get(snapshot.element) === cacheRequest
+      const wasCapturedBeforeRemoval = capturedWhileConnected && !snapshot.isConnected
 
+      if (isCurrentRequest && wasCapturedBeforeRemoval) {
+        const previousSnapshot = await cacheRequest.cachedSnapshotPromise
+        if (previousSnapshot) {
+          await this.#cacheSnapshotAfterRemoval(cacheRequest, previousSnapshot)
+        }
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  async #cacheSnapshotAfterRemoval(cacheRequest, previousSnapshot) {
     await nextEventLoopTick()
-    if (snapshot.isConnected) return
 
-    const cachedSnapshot = snapshot.clone()
-    return this.#cacheSnapshot(location, Promise.resolve(cachedSnapshot), () => {
-      return this.#snapshotCacheRequests.get(snapshot.element) === request &&
-        this.snapshotCache.get(location) === previousSnapshot
-    })
+    const { snapshot, location } = cacheRequest
+    if (!snapshot.isConnected) {
+      const cachedSnapshot = snapshot.clone()
+      return this.#cacheSnapshot(location, Promise.resolve(cachedSnapshot), () => {
+        return this.#cacheRequestsByBody.get(snapshot.element) === cacheRequest &&
+          this.snapshotCache.get(location) === previousSnapshot
+      })
+    }
   }
 
   #cacheSnapshot(location, snapshotPromise, shouldCache = () => true) {
