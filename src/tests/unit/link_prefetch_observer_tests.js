@@ -37,7 +37,6 @@ setup(() => {
   })
 })
 
-// eslint-disable-next-line no-undef
 teardown(() => {
   observer.stop()
   prefetchCache.clear()

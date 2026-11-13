@@ -37,7 +37,6 @@ setup(() => {
   })
 })
 
-// eslint-disable-next-line no-undef
 teardown(() => {
   window.fetch = originalFetch
   container.remove()

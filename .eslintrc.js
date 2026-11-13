@@ -13,6 +13,12 @@ module.exports = {
       parserOptions: {
         sourceType: "script"
       }
+    },
+    {
+      files: ["src/tests/unit/**/*_tests.js"],
+      globals: {
+        teardown: "readonly"
+      }
     }
   ],
   parserOptions: {
