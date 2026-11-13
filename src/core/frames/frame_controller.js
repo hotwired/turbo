@@ -233,8 +233,8 @@ export class FrameController {
 
     this.#formSubmissionContexts.set(this.formSubmission, {
       frame,
-      body: frame.ownerDocument.body,
-      location: session.location.href,
+      initialBody: frame.ownerDocument.body,
+      initialLocation: session.location.href,
       previous
     })
 
@@ -283,30 +283,7 @@ export class FrameController {
 
   formSubmissionWillStart(formSubmission) {
     const context = this.#formSubmissionContexts.get(formSubmission)
-    if (!context) return
-
-    const { formElement, submitter } = formSubmission
-    const { frame, body, location, previous } = context
-
-    if (frame.ownerDocument.body === body && session.location.href === location) {
-      const action = getVisitAction(submitter, formElement, frame)
-      const proposedVisit = frame.delegate.#createProposedVisit(frame, action)
-
-      // A reentrant submission can start before the replaced one clears its busy state.
-      if (
-        proposedVisit && previous?.proposedVisit &&
-        previous.formSubmission.state !== FormSubmissionState.stopped &&
-        previous.frame === frame &&
-        previous.proposedVisit.liveSnapshot.element === body &&
-        previous.proposedVisit.originLocation.href === proposedVisit.originLocation.href
-      ) {
-        proposedVisit.snapshot = previous.proposedVisit.snapshot.clone()
-      }
-
-      context.proposedVisit = proposedVisit
-    }
-
-    delete context.previous
+    if (context) this.#prepareFormSubmissionVisit(formSubmission, context)
   }
 
   formSubmissionStarted(formSubmission) {
@@ -380,23 +357,48 @@ export class FrameController {
     this.#fetchRequests.delete(request)
   }
 
+  #prepareFormSubmissionVisit(formSubmission, context) {
+    const { formElement, submitter } = formSubmission
+    const { frame, initialBody, initialLocation, previous } = context
+
+    if (frame.ownerDocument.body === initialBody && session.location.href === initialLocation) {
+      const action = getVisitAction(submitter, formElement, frame)
+      const proposedVisit = frame.delegate.#createProposedVisit(frame, action)
+
+      // A reentrant submission can start before the replaced one clears its busy state.
+      if (
+        proposedVisit && previous?.proposedVisit &&
+        previous.formSubmission.state !== FormSubmissionState.stopped &&
+        previous.frame === frame &&
+        previous.proposedVisit.liveSnapshot.element === initialBody &&
+        previous.proposedVisit.originLocation.href === proposedVisit.originLocation.href
+      ) {
+        proposedVisit.snapshot = previous.proposedVisit.snapshot.clone()
+      }
+
+      context.proposedVisit = proposedVisit
+    }
+
+    delete context.previous
+  }
+
   async #startFormSubmission(formSubmission, frame) {
     const controller = frame.delegate
     const { abortSignal } = formSubmission.fetchRequest
-    const unregister = () => {
+    const onAbort = () => {
       controller.#formSubmissions.delete(formSubmission)
       // Release snapshots on abort while keeping the target for busy-state cleanup.
       this.#formSubmissionContexts.set(formSubmission, { frame })
     }
 
     controller.#formSubmissions.add(formSubmission)
-    abortSignal.addEventListener("abort", unregister, { once: true })
+    abortSignal.addEventListener("abort", onAbort, { once: true })
 
     try {
       await formSubmission.start()
     } finally {
-      abortSignal.removeEventListener("abort", unregister)
-      unregister()
+      abortSignal.removeEventListener("abort", onAbort)
+      controller.#formSubmissions.delete(formSubmission)
       this.#formSubmissionContexts.delete(formSubmission)
     }
   }
@@ -466,24 +468,6 @@ export class FrameController {
     return this.#proposedVisit
   }
 
-  #createProposedVisit(frame, action) {
-    if (action && frame.ownerDocument.body.contains(frame)) {
-      const liveSnapshot = PageSnapshot.fromElement(frame)
-      const pageVisit = this.#pageVisitInProgress()
-      const proposedVisit = {
-        action,
-        liveSnapshot,
-        snapshot: liveSnapshot.clone(),
-        originLocation: expandURL(pageVisit?.historyChanged ? session.view.lastRenderedLocation : session.location),
-        restorationIdentifier: this.restorationIdentifier,
-        shouldCacheSnapshot: pageVisit?.shouldCacheSnapshot !== false
-      }
-      return proposedVisit
-    }
-
-    return null
-  }
-
   changeHistory(proposedVisit) {
     if (proposedVisit) {
       const pageVisit = this.#pageVisitInProgress()
@@ -496,6 +480,23 @@ export class FrameController {
         if (pageVisit) session.view.lastRenderedLocation = proposedVisit.location
       }
     }
+  }
+
+  #createProposedVisit(frame, action) {
+    if (action && frame.ownerDocument.body.contains(frame)) {
+      const liveSnapshot = PageSnapshot.fromElement(frame)
+      const pageVisit = this.#pageVisitInProgress()
+      return {
+        action,
+        liveSnapshot,
+        snapshot: liveSnapshot.clone(),
+        originLocation: expandURL(pageVisit?.historyChanged ? session.view.lastRenderedLocation : session.location),
+        restorationIdentifier: this.restorationIdentifier,
+        shouldCacheSnapshot: pageVisit?.shouldCacheSnapshot !== false
+      }
+    }
+
+    return null
   }
 
   #pageVisitInProgress() {
