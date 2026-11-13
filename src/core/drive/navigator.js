@@ -1,8 +1,9 @@
 import { getVisitAction } from "../../util"
 import { FormSubmission } from "./form_submission"
-import { expandURL, getAnchor, getRequestURL, locationIsVisitable } from "../url"
+import { expandURL } from "../url"
 import { Visit } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
+import { ViewTransitioner } from "./view_transitioner"
 
 export class Navigator {
   constructor(delegate) {
@@ -11,11 +12,7 @@ export class Navigator {
 
   proposeVisit(location, options = {}) {
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
-      if (locationIsVisitable(location, this.view.snapshot.rootLocation)) {
-        this.delegate.visitProposedToLocation(location, options)
-      } else {
-        window.location.href = location.toString()
-      }
+      this.delegate.visitProposedToLocation(location, options)
     }
   }
 
@@ -55,6 +52,10 @@ export class Navigator {
     return this.delegate.view
   }
 
+  get rootLocation() {
+    return this.view.snapshot.rootLocation
+  }
+
   get history() {
     return this.delegate.history
   }
@@ -78,7 +79,7 @@ export class Navigator {
         }
 
         const { statusCode, redirected } = fetchResponse
-        const action = this.getActionForFormSubmission(formSubmission)
+        const action = this.#getActionForFormSubmission(formSubmission, fetchResponse)
         const visitOptions = {
           action,
           shouldCacheSnapshot,
@@ -89,17 +90,28 @@ export class Navigator {
     }
   }
 
+  formSubmissionSucceededWithStreamResponse(_formSubmission, _fetchResponse) {
+    this.view.clearSnapshotCache()
+  }
+
   async formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
     const responseHTML = await fetchResponse.responseHTML
 
     if (responseHTML) {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
-      if (fetchResponse.serverError) {
-        await this.view.renderError(snapshot, this.currentVisit)
-      } else {
-        await this.view.renderPage(snapshot, false, true, this.currentVisit)
-      }
-      this.view.scrollToTop()
+      await new ViewTransitioner().renderChange(
+        this.view.shouldTransitionTo(snapshot),
+        async () => {
+          if (fetchResponse.serverError) {
+            await this.view.renderError(snapshot, this.currentVisit)
+          } else {
+            await this.view.renderPage(snapshot, false, true, this.currentVisit)
+          }
+          if (snapshot.refreshScroll !== "preserve") {
+            this.view.scrollToTop()
+          }
+        }
+      )
       this.view.clearSnapshotCache()
     }
   }
@@ -115,6 +127,17 @@ export class Navigator {
     }
   }
 
+  // Link prefetching
+
+  linkPrefetchingIsEnabledForLocation(location) {
+    // Not all adapters implement linkPrefetchingIsEnabledForLocation
+    if (typeof this.adapter.linkPrefetchingIsEnabledForLocation === "function") {
+      return this.adapter.linkPrefetchingIsEnabledForLocation(location)
+    }
+
+    return true
+  }
+
   // Visit delegate
 
   visitStarted(visit) {
@@ -123,22 +146,13 @@ export class Navigator {
 
   visitCompleted(visit) {
     this.delegate.visitCompleted(visit)
+    delete this.currentVisit
   }
 
+  // Same-page links are no longer handled with a Visit.
+  // This method is still needed for Turbo Native adapters.
   locationWithActionIsSamePage(location, action) {
-    const anchor = getAnchor(location)
-    const currentAnchor = getAnchor(this.view.lastRenderedLocation)
-    const isRestorationToTop = action === "restore" && typeof anchor === "undefined"
-
-    return (
-      action !== "replace" &&
-      getRequestURL(location) === getRequestURL(this.view.lastRenderedLocation) &&
-      (isRestorationToTop || (anchor != null && anchor !== currentAnchor))
-    )
-  }
-
-  visitScrolledToSamePageLocation(oldURL, newURL) {
-    this.delegate.visitScrolledToSamePageLocation(oldURL, newURL)
+    return false
   }
 
   // Visits
@@ -151,7 +165,13 @@ export class Navigator {
     return this.history.restorationIdentifier
   }
 
-  getActionForFormSubmission({ submitter, formElement }) {
-    return getVisitAction(submitter, formElement) || "advance"
+  #getActionForFormSubmission(formSubmission, fetchResponse) {
+    const { submitter, formElement } = formSubmission
+    return getVisitAction(submitter, formElement) || this.#getDefaultAction(fetchResponse)
+  }
+
+  #getDefaultAction(fetchResponse) {
+    const sameLocationRedirect = fetchResponse.redirected && fetchResponse.location.href === this.location?.href
+    return sameLocationRedirect ? "replace" : "advance"
   }
 }

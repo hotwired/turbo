@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Left</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <link rel="stylesheet" type="text/css" href="/src/tests/fixtures/stylesheets/common.css" data-turbo-track="dynamic">
+    <link rel="stylesheet" type="text/css" href="/src/tests/fixtures/stylesheets/left.css" data-turbo-track="dynamic">
+
+    <style data-turbo-track="dynamic">
+      body { margin-left: 20px; }
+      .left { margin-left: 20px; }
+    </style>
+
+    <script type="text/javascript">
+      document.head.insertAdjacentHTML("beforeend", `<style id="added-style">body{background:red}</style>`)
+      document.head.insertAdjacentHTML("beforeend", `<link id="added-link" rel="stylesheet" type="text/css" href="/src/tests/fixtures/test.css">`)
+    </script>
+  </head>
+
+  <body></body>
+    <h1>Left</h1>
+    <p><a id="go-right" href="/src/tests/fixtures/stylesheets/right.html">go right</a></p>
+  </body>
+</html>

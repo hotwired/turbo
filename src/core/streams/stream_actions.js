@@ -1,5 +1,9 @@
+import { session } from "../"
+import { morphElements, morphChildren } from "../morphing"
+
 export const StreamActions = {
   after() {
+    this.removeDuplicateTargetSiblings()
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))
   },
 
@@ -9,6 +13,7 @@ export const StreamActions = {
   },
 
   before() {
+    this.removeDuplicateTargetSiblings()
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e))
   },
 
@@ -22,13 +27,35 @@ export const StreamActions = {
   },
 
   replace() {
-    this.targetElements.forEach((e) => e.replaceWith(this.templateContent))
+    const method = this.getAttribute("method")
+
+    this.targetElements.forEach((targetElement) => {
+      if (method === "morph") {
+        morphElements(targetElement, this.templateContent)
+      } else {
+        targetElement.replaceWith(this.templateContent)
+      }
+    })
   },
 
   update() {
+    const method = this.getAttribute("method")
+
     this.targetElements.forEach((targetElement) => {
-      targetElement.innerHTML = ""
-      targetElement.append(this.templateContent)
+      if (method === "morph") {
+        morphChildren(targetElement, this.templateContent)
+      } else {
+        targetElement.innerHTML = ""
+        targetElement.append(this.templateContent)
+      }
     })
+  },
+
+  refresh() {
+    const method = this.getAttribute("method")
+    const requestId = this.requestId
+    const scroll = this.getAttribute("scroll")
+
+    session.refresh(this.baseURI, { method, requestId, scroll })
   }
 }

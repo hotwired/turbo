@@ -14,8 +14,8 @@ export class View {
   scrollToAnchor(anchor) {
     const element = this.snapshot.getElementForAnchor(anchor)
     if (element) {
-      this.scrollToElement(element)
       this.focusElement(element)
+      this.scrollToElement(element)
     } else {
       this.scrollToPosition({ x: 0, y: 0 })
     }
@@ -42,7 +42,7 @@ export class View {
   }
 
   scrollToPosition({ x, y }) {
-    this.scrollRoot.scrollTo(x, y)
+    this.scrollRoot.scrollTo({ left: x, top: y, behavior: "instant" })
   }
 
   scrollToTop() {
@@ -56,7 +56,12 @@ export class View {
   // Rendering
 
   async render(renderer) {
-    const { isPreview, shouldRender, newSnapshot: snapshot } = renderer
+    const { isPreview, shouldRender, willRender, newSnapshot: snapshot } = renderer
+
+    // A workaround to ignore tracked element mismatch reloads when performing
+    // a promoted Visit from a frame navigation
+    const shouldInvalidate = willRender
+
     if (shouldRender) {
       try {
         this.renderPromise = new Promise((resolve) => (this.#resolveRenderPromise = resolve))
@@ -64,12 +69,12 @@ export class View {
         await this.prepareToRenderSnapshot(renderer)
 
         const renderInterception = new Promise((resolve) => (this.#resolveInterceptionPromise = resolve))
-        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement }
-        const immediateRender = this.delegate.allowsImmediateRender(snapshot, isPreview, options)
+        const options = { resume: this.#resolveInterceptionPromise, render: this.renderer.renderElement, renderMethod: this.renderer.renderMethod }
+        const immediateRender = this.delegate.allowsImmediateRender(snapshot, options)
         if (!immediateRender) await renderInterception
 
         await this.renderSnapshot(renderer)
-        this.delegate.viewRenderedSnapshot(snapshot, isPreview)
+        this.delegate.viewRenderedSnapshot(snapshot, isPreview, this.renderer.renderMethod)
         this.delegate.preloadOnLoadLinksForView(this.element)
         this.finishRenderingSnapshot(renderer)
       } finally {
@@ -77,7 +82,7 @@ export class View {
         this.#resolveRenderPromise(undefined)
         delete this.renderPromise
       }
-    } else {
+    } else if (shouldInvalidate) {
       this.invalidate(renderer.reloadReason)
     }
   }
@@ -97,6 +102,14 @@ export class View {
     } else {
       this.element.removeAttribute("data-turbo-preview")
     }
+  }
+
+  markVisitDirection(direction) {
+    this.element.setAttribute("data-turbo-visit-direction", direction)
+  }
+
+  unmarkVisitDirection() {
+    this.element.removeAttribute("data-turbo-visit-direction")
   }
 
   async renderSnapshot(renderer) {

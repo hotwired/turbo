@@ -1,7 +1,9 @@
 import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe } from "../../http/fetch_request"
 import { expandURL } from "../url"
-import { dispatch, getAttribute, getMetaContent, hasAttribute } from "../../util"
+import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
+import { prefetchCache } from "./prefetch_cache"
+import { config } from "../config"
 
 export const FormSubmissionState = {
   initialized: "initialized",
@@ -21,7 +23,7 @@ export const FormEnctype = {
 export class FormSubmission {
   state = FormSubmissionState.initialized
 
-  static confirmMethod(message, _element, _submitter) {
+  static confirmMethod(message) {
     return Promise.resolve(confirm(message))
   }
 
@@ -77,7 +79,11 @@ export class FormSubmission {
     const confirmationMessage = getAttribute("data-turbo-confirm", this.submitter, this.formElement)
 
     if (typeof confirmationMessage === "string") {
-      const answer = await FormSubmission.confirmMethod(confirmationMessage, this.formElement, this.submitter)
+      const confirmMethod = typeof config.forms.confirm === "function" ?
+        config.forms.confirm :
+        FormSubmission.confirmMethod
+
+      const answer = await confirmMethod(confirmationMessage, this.formElement, this.submitter)
       if (!answer) {
         return
       }
@@ -113,10 +119,12 @@ export class FormSubmission {
     }
   }
 
-  requestStarted(_request) {
+  requestStarted(request) {
     this.state = FormSubmissionState.waiting
-    this.submitter?.setAttribute("disabled", "")
+    if (!request.isSafe) prefetchCache.pause(request)
+    if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
     this.setSubmitsWith()
+    markAsBusy(this.formElement)
     dispatch("turbo:submit-start", {
       target: this.formElement,
       detail: { formSubmission: this }
@@ -125,13 +133,24 @@ export class FormSubmission {
   }
 
   requestPreventedHandlingResponse(request, response) {
+    prefetchCache.clear()
+
     this.result = { success: response.succeeded, fetchResponse: response }
+
+    if (response.succeeded && !this.isSafe && response.contentType?.startsWith(StreamMessage.contentType)) {
+      this.delegate.formSubmissionSucceededWithStreamResponse?.(this, response)
+    }
   }
 
   requestSucceededWithResponse(request, response) {
     if (response.clientError || response.serverError) {
       this.delegate.formSubmissionFailedWithResponse(this, response)
-    } else if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response)) {
+      return
+    }
+
+    prefetchCache.clear()
+
+    if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response)) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
     } else {
@@ -151,10 +170,12 @@ export class FormSubmission {
     this.delegate.formSubmissionErrored(this, error)
   }
 
-  requestFinished(_request) {
+  requestFinished(request) {
     this.state = FormSubmissionState.stopped
-    this.submitter?.removeAttribute("disabled")
+    prefetchCache.resume(request)
+    if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
     this.resetSubmitterText()
+    clearBusyState(this.formElement)
     dispatch("turbo:submit-end", {
       target: this.formElement,
       detail: { formSubmission: this, ...this.result }

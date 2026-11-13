@@ -1,10 +1,8 @@
-import { Router } from "express"
-import express from "express"
+import express, { Router } from "express"
 import bodyParser from "body-parser"
 import multer from "multer"
 import path from "path"
-import url from "url"
-import { fileURLToPath } from 'url'
+import url, { fileURLToPath } from "url"
 import fs from "fs"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -51,9 +49,28 @@ router.get("/redirect", (request, response) => {
   response.redirect(301, url.format({ pathname, query }))
 })
 
+router.post("/refresh", (request, response) => {
+  const { sleep } = request.body
+  setTimeout(() => response.redirect("back"), parseInt(sleep || "0", 10))
+})
+
 router.post("/reject/tall", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/422_tall.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.post("/reject/morph", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_morph.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.post("/reject/view-transition", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/form_view_transition_${status}.html`)
 
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
@@ -65,6 +82,14 @@ router.post("/reject", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.get("/error_scroll/:status/:scroll", (request, response) => {
+  const isVisit = request.get("X-Turbo-Request-Id") !== undefined
+  const fixture = path.join(__dirname, `fixtures/error_scroll_${isVisit ? "destination" : "source"}.html`)
+  const html = fs.readFileSync(fixture, "utf8").replace("$SCROLL_MODE", request.params.scroll)
+
+  response.type("html").status(isVisit ? parseInt(request.params.status, 10) : 200).send(html)
+})
+
 router.get("/headers", (request, response) => {
   const template = fs.readFileSync("src/tests/fixtures/headers.html").toString()
   response
@@ -73,9 +98,66 @@ router.get("/headers", (request, response) => {
     .send(template.replace("$HEADERS", JSON.stringify(request.headers, null, 4)))
 })
 
+for (const name of ["source", "destination"]) {
+  router.get(`/csp_nonce/${name}`, (_request, response) => {
+    const fixture = path.join(__dirname, `fixtures/csp_nonce_${name}.html`)
+    response.set(
+      "Content-Security-Policy",
+      "script-src 'nonce-turbo-test-nonce' 'nonce-explicit-test-nonce'; style-src 'unsafe-inline'"
+    )
+    response.sendFile(fixture)
+  })
+}
+
+router.get("/content_security_policy/:policy", (request, response) => {
+  const base = "default-src 'none'; script-src 'self'; connect-src 'self'"
+  const policies = {
+    none: "default-src 'none'",
+    scripts: base,
+    self: `${base}; style-src 'self'`,
+    inline: `${base}; style-src 'unsafe-inline'`,
+    nonce: `${base}; style-src 'nonce-123'`
+  }
+  if (request.params.policy === "hash") {
+    const hash = request.query.hash
+    if (typeof hash !== "string" || !/^[A-Za-z0-9+/]{43}=$/.test(hash)) return response.sendStatus(400)
+    policies.hash = `${base}; style-src 'sha256-${hash}'`
+  }
+  const policy = policies[request.params.policy]
+  if (typeof policy !== "string") return response.sendStatus(404)
+
+  response.set("Content-Security-Policy", policy)
+  response.sendFile(path.join(__dirname, "fixtures/content_security_policy.html"))
+})
+
 router.get("/delayed_response", (request, response) => {
+  const { status } = request.query
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
-  setTimeout(() => response.status(200).sendFile(fixture), 1000)
+  setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
+})
+
+router.get("/interrupted_response", (request, response) => {
+  const { status } = request.query
+  response.type("html").status(parseInt(status || "200")).write("<!DOCTYPE html><html><head><title>Interrupted</title></head><body>")
+  setTimeout(() => response.destroy(), 100)
+})
+
+router.get("/delayed_response_body", (request, response) => {
+  const { status, disconnect } = request.query
+  const fixture = fs.readFileSync(path.join(__dirname, "fixtures/frames/frame.html"), "utf8")
+  const [head, body] = fixture.split("<body>")
+
+  response.type("html").status(parseInt(status || "200", 10))
+  response.write(`${head}<body>`)
+
+  const timeout = setTimeout(() => {
+    if (disconnect) {
+      response.destroy()
+    } else {
+      response.end(body)
+    }
+  }, 1000)
+  response.on("close", () => clearTimeout(timeout))
 })
 
 router.post("/messages", (request, response) => {
@@ -91,6 +173,28 @@ router.post("/messages", (request, response) => {
     }
   } else {
     response.sendStatus(422)
+  }
+})
+
+router.post("/refreshes", (request, response) => {
+  const params = { ...request.body, ...request.query }
+  const { requestId } = params
+
+  if(acceptsStreams(request)){
+    response.type("text/vnd.turbo-stream.html; charset=utf-8")
+    response.send(renderPageRefresh(requestId))
+  } else {
+    response.sendStatus(201)
+  }
+})
+
+router.get("/request_id_header", (request, response) => {
+  const turboRequestHeader = request.get("X-Turbo-Request-Id")
+
+  if (turboRequestHeader) {
+    response.send(turboRequestHeader);
+  } else {
+    response.status(404).send("X-Turbo-Request header not found")
   }
 })
 
@@ -142,6 +246,24 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
+router.get("/file.unknown_svg", (request, response) => {
+  response.set({
+    "Content-Type": "image/svg+xml"
+  })
+  response.sendFile(path.join(__dirname, "../../src/tests/fixtures/svg.svg"))
+})
+
+router.get("/file.unknown_html", (request, response) => {
+  response.set({
+    "Content-Type": "text/html"
+  })
+  response.sendFile(path.join(__dirname, "../../src/tests/fixtures/visit.html"))
+})
+
+router.get("/download", (request, response) => {
+  response.download(path.join(__dirname, "../../src/tests/fixtures/svg.svg"))
+})
+
 function receiveMessage(content, id, target) {
   const data = renderSSEData(renderMessage(content, id, target))
   for (const response of streamResponses) {
@@ -166,6 +288,12 @@ function renderMessageForTargets(content, id, targets) {
   `
 }
 
+function renderPageRefresh(requestId) {
+  return `
+    <turbo-stream action="refresh" request-id="${requestId}"></turbo-stream>
+  `
+}
+
 function acceptsStreams(request) {
   return !!request.accepts("text/vnd.turbo-stream.html")
 }
@@ -183,13 +311,6 @@ function escapeHTML(html) {
   return html.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 }
 const app = express()
-
-app.use((request, response, next) => {
-  if (request.query['Content-Security-Policy']) {
-    response.setHeader('Content-Security-Policy', request.query['Content-Security-Policy'])
-  }
-  next()
-})
 
 app.use(json({ limit: "1mb" }), urlencoded({ extended: true }))
 app.use(express.static("."))

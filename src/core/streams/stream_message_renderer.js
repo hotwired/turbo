@@ -1,6 +1,6 @@
 import { Bardo } from "../bardo"
 import { getPermanentElementById, queryPermanentElementsAll } from "../snapshot"
-import { around, elementIsFocusable, nextAnimationFrame, queryAutofocusableElement, uuid } from "../../util"
+import { around, elementIsFocusable, nextRepaint, queryAutofocusableElement, uuid } from "../../util"
 
 export class StreamMessageRenderer {
   render({ fragment }) {
@@ -57,7 +57,7 @@ async function withAutofocusFromFragment(fragment, callback) {
   }
 
   callback()
-  await nextAnimationFrame()
+  await nextRepaint()
 
   const hasNoActiveElement = document.activeElement == null || document.activeElement == document.body
 
@@ -78,7 +78,7 @@ async function withPreservedFocus(callback) {
 
   const restoreFocusTo = activeElementBeforeRender && activeElementBeforeRender.id
 
-  if (restoreFocusTo) {
+  if (restoreFocusTo && (activeElementAfterRender == null || activeElementAfterRender == document.body)) {
     const elementToFocus = document.getElementById(restoreFocusTo)
 
     if (elementIsFocusable(elementToFocus) && elementToFocus != activeElementAfterRender) {

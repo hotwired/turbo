@@ -7,8 +7,9 @@ const config = {
       use: {
         ...devices["Desktop Chrome"],
         contextOptions: {
-          timeout: 60000
-        }
+          timeout: 10000
+        },
+        hasTouch: true
       }
     },
     {
@@ -16,19 +17,21 @@ const config = {
       use: {
         ...devices["Desktop Firefox"],
         contextOptions: {
-          timeout: 60000
-        }
+          timeout: 10000
+        },
+        hasTouch: true
       }
     }
   ],
-  browserStartTimeout: 60000,
+  timeout: 10000,
+  browserStartTimeout: 10000,
   retries: 2,
   testDir: "./src/tests/",
   testMatch: /(functional|integration)\/.*_tests\.js/,
   webServer: {
     command: "yarn start",
     url: "http://localhost:9000/src/tests/fixtures/test.js",
-    timeout: 120 * 1000,
+    timeout: 10000,
     // eslint-disable-next-line no-undef
     reuseExistingServer: !process.env.CI
   },

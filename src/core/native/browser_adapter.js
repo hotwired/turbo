@@ -1,6 +1,7 @@
 import { ProgressBar } from "../drive/progress_bar"
-import { SystemStatusCode } from "../drive/visit"
+import { SystemStatusCode, VisitState } from "../drive/visit"
 import { uuid, dispatch } from "../../util"
+import { locationIsVisitable } from "../url"
 
 export class BrowserAdapter {
   progressBar = new ProgressBar()
@@ -10,23 +11,36 @@ export class BrowserAdapter {
   }
 
   visitProposedToLocation(location, options) {
-    this.navigator.startVisit(location, options?.restorationIdentifier || uuid(), options)
+    if (locationIsVisitable(location, this.navigator.rootLocation)) {
+      this.navigator.startVisit(location, options?.restorationIdentifier || uuid(), options)
+    } else {
+      window.location.href = location.toString()
+    }
   }
 
   visitStarted(visit) {
     this.location = visit.location
+    this.redirectedToLocation = null
+
     visit.loadCachedSnapshot()
     visit.issueRequest()
-    visit.goToSamePageAnchor()
   }
 
   visitRequestStarted(visit) {
     this.progressBar.setValue(0)
-    this.showVisitProgressBarAfterDelay()
+    if (visit.hasCachedSnapshot() || visit.action != "restore") {
+      this.showVisitProgressBarAfterDelay(visit)
+    } else {
+      this.showProgressBar()
+    }
   }
 
   visitRequestCompleted(visit) {
     visit.loadResponse()
+
+    if (visit.response.redirected) {
+      this.redirectedToLocation = visit.redirectedToLocation
+    }
   }
 
   visitRequestFailedWithStatusCode(visit, statusCode) {
@@ -34,31 +48,41 @@ export class BrowserAdapter {
       case SystemStatusCode.networkFailure:
       case SystemStatusCode.timeoutFailure:
       case SystemStatusCode.contentTypeMismatch:
-        return this.reload({
+        this.reload({
           reason: "request_failed",
           context: {
             statusCode
           }
         })
+        return visit.fail()
       default:
         return visit.loadResponse()
     }
   }
 
-  visitRequestFinished(_visit) {
+  visitRequestFinished(_visit) {}
+
+  visitCompleted(_visit) {
     this.progressBar.setValue(1)
     this.hideVisitProgressBar()
   }
-
-  visitCompleted(_visit) {}
 
   pageInvalidated(reason) {
     this.reload(reason)
   }
 
-  visitFailed(_visit) {}
+  visitFailed(_visit) {
+    this.progressBar.setValue(1)
+    this.hideVisitProgressBar()
+  }
 
   visitRendered(_visit) {}
+
+  // Link prefetching
+
+  linkPrefetchingIsEnabledForLocation(location) {
+    return true
+  }
 
   // Form Submission Delegate
 
@@ -74,8 +98,10 @@ export class BrowserAdapter {
 
   // Private
 
-  showVisitProgressBarAfterDelay() {
-    this.visitProgressBarTimeout = window.setTimeout(this.showProgressBar, this.session.progressBarDelay)
+  showVisitProgressBarAfterDelay(visit) {
+    this.visitProgressBarTimeout = window.setTimeout(() => {
+      if (visit.state == VisitState.started) this.showProgressBar()
+    }, this.session.progressBarDelay)
   }
 
   hideVisitProgressBar() {
@@ -107,7 +133,7 @@ export class BrowserAdapter {
   reload(reason) {
     dispatch("turbo:reload", { detail: reason })
 
-    window.location.href = this.location?.toString() || window.location.href
+    window.location.href = (this.redirectedToLocation || this.location)?.toString() || window.location.href
   }
 
   get navigator() {
