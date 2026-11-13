@@ -284,6 +284,10 @@ export class FrameController {
     }
   }
 
+  formSubmissionSucceededWithStreamResponse(_formSubmission, _fetchResponse) {
+    session.clearCache()
+  }
+
   formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
     this.element.delegate.loadResponse(fetchResponse, formSubmission.fetchRequest.url)
     session.clearCache()

@@ -136,6 +136,10 @@ export class FormSubmission {
     prefetchCache.clear()
 
     this.result = { success: response.succeeded, fetchResponse: response }
+
+    if (response.succeeded && !this.isSafe && response.contentType?.startsWith(StreamMessage.contentType)) {
+      this.delegate.formSubmissionSucceededWithStreamResponse?.(this, response)
+    }
   }
 
   requestSucceededWithResponse(request, response) {
