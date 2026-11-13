@@ -1,10 +1,8 @@
-import { Router } from "express"
-import express from "express"
+import express, { Router } from "express"
 import bodyParser from "body-parser"
 import multer from "multer"
 import path from "path"
-import url from "url"
-import { fileURLToPath } from "url"
+import url, { fileURLToPath } from "url"
 import fs from "fs"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -63,11 +61,33 @@ router.post("/reject/tall", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.post("/reject/morph", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/422_morph.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.post("/reject/view-transition", (request, response) => {
+  const { status } = request.body
+  const fixture = path.join(__dirname, `../../src/tests/fixtures/form_view_transition_${status}.html`)
+
+  response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
 router.post("/reject", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/${status}.html`)
 
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
+})
+
+router.get("/error_scroll/:status/:scroll", (request, response) => {
+  const isVisit = request.get("X-Turbo-Request-Id") !== undefined
+  const fixture = path.join(__dirname, `fixtures/error_scroll_${isVisit ? "destination" : "source"}.html`)
+  const html = fs.readFileSync(fixture, "utf8").replace("$SCROLL_MODE", request.params.scroll)
+
+  response.type("html").status(isVisit ? parseInt(request.params.status, 10) : 200).send(html)
 })
 
 router.get("/headers", (request, response) => {
@@ -78,10 +98,45 @@ router.get("/headers", (request, response) => {
     .send(template.replace("$HEADERS", JSON.stringify(request.headers, null, 4)))
 })
 
+for (const name of ["source", "destination"]) {
+  router.get(`/csp_nonce/${name}`, (_request, response) => {
+    const fixture = path.join(__dirname, `fixtures/csp_nonce_${name}.html`)
+    response.set(
+      "Content-Security-Policy",
+      "script-src 'nonce-turbo-test-nonce' 'nonce-explicit-test-nonce'; style-src 'unsafe-inline'"
+    )
+    response.sendFile(fixture)
+  })
+}
+
 router.get("/delayed_response", (request, response) => {
   const { status } = request.query
   const fixture = path.join(__dirname, "../../src/tests/fixtures/one.html")
   setTimeout(() => response.status(parseInt(status || "200")).sendFile(fixture), 1000)
+})
+
+router.get("/interrupted_response", (request, response) => {
+  const { status } = request.query
+  response.type("html").status(parseInt(status || "200")).write("<!DOCTYPE html><html><head><title>Interrupted</title></head><body>")
+  setTimeout(() => response.destroy(), 100)
+})
+
+router.get("/delayed_response_body", (request, response) => {
+  const { status, disconnect } = request.query
+  const fixture = fs.readFileSync(path.join(__dirname, "fixtures/frames/frame.html"), "utf8")
+  const [head, body] = fixture.split("<body>")
+
+  response.type("html").status(parseInt(status || "200", 10))
+  response.write(`${head}<body>`)
+
+  const timeout = setTimeout(() => {
+    if (disconnect) {
+      response.destroy()
+    } else {
+      response.end(body)
+    }
+  }, 1000)
+  response.on("close", () => clearTimeout(timeout))
 })
 
 router.post("/messages", (request, response) => {
@@ -168,6 +223,20 @@ router.get("/messages", (request, response) => {
   response.flushHeaders()
   response.write("data:\n\n")
   streamResponses.add(response)
+})
+
+router.get("/file.unknown_svg", (request, response) => {
+  response.set({
+    "Content-Type": "image/svg+xml"
+  })
+  response.sendFile(path.join(__dirname, "../../src/tests/fixtures/svg.svg"))
+})
+
+router.get("/file.unknown_html", (request, response) => {
+  response.set({
+    "Content-Type": "text/html"
+  })
+  response.sendFile(path.join(__dirname, "../../src/tests/fixtures/visit.html"))
 })
 
 function receiveMessage(content, id, target) {

@@ -1,4 +1,6 @@
-import { unindent, getMetaContent } from "../../util"
+import { unindent, getCspNonce } from "../../util"
+
+export const ProgressBarID = "turbo-progress-bar"
 
 export class ProgressBar {
   static animationDuration = 300 /*ms*/
@@ -106,8 +108,9 @@ export class ProgressBar {
     const element = document.createElement("style")
     element.type = "text/css"
     element.textContent = ProgressBar.defaultCSS
-    if (this.cspNonce) {
-      element.nonce = this.cspNonce
+    const cspNonce = getCspNonce()
+    if (cspNonce) {
+      element.nonce = cspNonce
     }
     return element
   }
@@ -116,9 +119,5 @@ export class ProgressBar {
     const element = document.createElement("div")
     element.className = "turbo-progress-bar"
     return element
-  }
-
-  get cspNonce() {
-    return getMetaContent("csp-nonce")
   }
 }

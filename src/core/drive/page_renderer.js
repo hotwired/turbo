@@ -1,5 +1,5 @@
+import { activateScriptElement, elementIsStylesheet, waitForLoad } from "../../util"
 import { Renderer } from "../renderer"
-import { activateScriptElement, waitForLoad } from "../../util"
 
 export class PageRenderer extends Renderer {
   static renderElement(currentElement, newElement) {
@@ -60,12 +60,17 @@ export class PageRenderer extends Renderer {
 
   #setLanguage() {
     const { documentElement } = this.currentSnapshot
-    const { lang } = this.newSnapshot
+    const { dir, lang } = this.newSnapshot
 
     if (lang) {
       documentElement.setAttribute("lang", lang)
     } else {
       documentElement.removeAttribute("lang")
+    }
+    if (dir) {
+      documentElement.setAttribute("dir", dir)
+    } else {
+      documentElement.removeAttribute("dir")
     }
   }
 
@@ -73,8 +78,13 @@ export class PageRenderer extends Renderer {
     const mergedHeadElements = this.mergeProvisionalElements()
     const newStylesheetElements = this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
+
     await mergedHeadElements
     await newStylesheetElements
+
+    if (this.willRender) {
+      this.removeUnusedDynamicStylesheetElements()
+    }
   }
 
   async replaceBody() {
@@ -103,6 +113,12 @@ export class PageRenderer extends Renderer {
   copyNewHeadScriptElements() {
     for (const element of this.newHeadScriptElements) {
       document.head.appendChild(activateScriptElement(element))
+    }
+  }
+
+  removeUnusedDynamicStylesheetElements() {
+    for (const element of this.unusedDynamicStylesheetElements) {
+      document.head.removeChild(element)
     }
   }
 
@@ -157,7 +173,18 @@ export class PageRenderer extends Renderer {
 
   activateNewBody() {
     document.adoptNode(this.newElement)
+    this.deactivateNoscriptStylesheetElements()
     this.activateNewBodyScriptElements()
+  }
+
+  deactivateNoscriptStylesheetElements() {
+    for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
+      for (const child of [...noscriptElement.children]) {
+        if (elementIsStylesheet(child)) {
+          child.remove()
+        }
+      }
+    }
   }
 
   activateNewBodyScriptElements() {
@@ -169,6 +196,16 @@ export class PageRenderer extends Renderer {
 
   async assignNewBody() {
     await this.renderElement(this.currentElement, this.newElement)
+  }
+
+  get unusedDynamicStylesheetElements() {
+    return this.oldHeadStylesheetElements.filter((element) => {
+      return element.getAttribute("data-turbo-track") === "dynamic"
+    })
+  }
+
+  get oldHeadStylesheetElements() {
+    return this.currentHeadSnapshot.getStylesheetElementsNotInSnapshot(this.newHeadSnapshot)
   }
 
   get newHeadStylesheetElements() {
