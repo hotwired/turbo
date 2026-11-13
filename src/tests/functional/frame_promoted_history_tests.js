@@ -19,7 +19,11 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.afterEach(async ({ page }) => {
-  for (const gate of heldRequests.get(page)) gate.release()
+  if (!page.isClosed()) await page.evaluate(() => window.restoreFrameExtraction?.())
+
+  const requests = heldRequests.get(page)
+  for (const request of requests) request.release()
+  await Promise.all(requests.map((request) => request.finished))
 })
 
 test("a promoted frame preserves both history snapshots while a Drive response is pending", async ({ page }) => {
@@ -145,43 +149,44 @@ test("a reentrant frame navigation keeps its own promotion after the previous fr
 
 test("a promoted frame waiting for an earlier render cannot change a completed Drive visit", async ({ page }) => {
   const previousPath = `${framePath}?render=previous`
-  await preparePromotedIdentityProbe(page)
-  await page.evaluate((path) => window.promotedIdentityFrame.src = path, previousPath)
-  await page.waitForFunction(() => window.promotedIdentityPaused)
+  await pauseNextFrameRender(page)
+  await observeSecondFrameExtraction(page)
+  await page.evaluate((path) => window.pausedFrame.src = path, previousPath)
+  await page.waitForFunction(() => window.frameRenderPaused)
 
   await page.click("#link-outside-frame-action-advance")
   // Observe extraction so the promoted response is already waiting for the
   // paused previous render before Drive replaces the original body.
-  await page.waitForFunction(() => window.promotedIdentityExtracted)
-  await completeIdentityDriveVisit(page)
+  await page.waitForFunction(() => window.secondFrameExtracted)
+  await completePageVisit(page)
 
-  await resumePromotedIdentityRender(page, 2)
+  await resumeFrameRender(page, 2)
 
   await expect(page).toHaveURL(nextPath)
   await expect(page.locator("h1")).toHaveText("One")
-  expect(await page.evaluate(() => document.body.contains(window.promotedIdentityFrame))).toEqual(false)
-  expect(await page.evaluate(() => window.promotedIdentityFrame.querySelector("h2").textContent)).toEqual("Frame: Loaded")
-  expect(await cachedIdentityFrameText(page, framePath)).toEqual(null)
+  expect(await page.evaluate(() => document.body.contains(window.pausedFrame))).toEqual(false)
+  expect(await page.evaluate(() => window.pausedFrame.querySelector("h2").textContent)).toEqual("Frame: Loaded")
+  expect(await cachedFrameText(page, framePath)).toEqual(null)
 })
 
 test("a promoted permanent frame caches its rendered content after Drive moves it to another body", async ({ page }) => {
   const destination = "/src/tests/fixtures/frames/permanent_drive.html"
   await page.locator("#frame").evaluate((frame) => frame.setAttribute("data-turbo-permanent", ""))
-  await preparePromotedIdentityProbe(page)
+  await pauseNextFrameRender(page)
 
   await page.click("#link-outside-frame-action-advance")
-  await page.waitForFunction(() => window.promotedIdentityPaused)
+  await page.waitForFunction(() => window.frameRenderPaused)
   await expect(page).toHaveURL(framePath)
-  await completeIdentityDriveVisit(page, destination)
-  expect(await page.evaluate(() => document.body.contains(window.promotedIdentityFrame))).toEqual(true)
+  await completePageVisit(page, destination)
+  expect(await page.evaluate(() => document.body.contains(window.pausedFrame))).toEqual(true)
 
-  await resumePromotedIdentityRender(page)
+  await resumeFrameRender(page)
 
   await expect(page).toHaveURL(destination)
   await expect(page.locator("h1")).toHaveText("One")
   await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
-  expect(await cachedIdentityFrameText(page, framePath)).toEqual("Frame: Loaded")
-  expect(await cachedIdentityFrameText(page, sourcePath)).toEqual("Frames: #frame")
+  expect(await cachedFrameText(page, framePath)).toEqual("Frame: Loaded")
+  expect(await cachedFrameText(page, sourcePath)).toEqual("Frames: #frame")
 
   await page.locator("#frame").evaluate((frame) => frame.removeAttribute("data-turbo-permanent"))
   await page.goBack()
@@ -243,9 +248,12 @@ async function holdRequest(page, url) {
   const gate = { arrived, release }
   heldRequests.get(page).push(gate)
   await page.route(url, async (route) => {
+    gate.finished = (async () => {
+      await released
+      if (!route.request().failure()) await route.continue()
+    })()
     arrive()
-    await released
-    await route.continue()
+    await gate.finished
   })
   return gate
 }
@@ -306,47 +314,51 @@ async function expectNoTemporaryElements(page) {
   await expect(page.locator("[data-turbo-temporary]")).toHaveCount(0)
 }
 
-async function preparePromotedIdentityProbe(page) {
+async function pauseNextFrameRender(page) {
   await page.evaluate(() => {
-    const frame = window.promotedIdentityFrame = document.getElementById("frame")
-    window.promotedIdentityLoads = []
-    window.promotedIdentityFrameLoads = 0
-    addEventListener("turbo:load", ({ detail: { url } }) => window.promotedIdentityLoads.push(new URL(url).pathname))
+    const frame = window.pausedFrame = document.getElementById("frame")
+    window.pausedFrameLoads = 0
     addEventListener("turbo:frame-load", ({ target }) => {
-      if (target === frame || target === document.documentElement) window.promotedIdentityFrameLoads++
+      if (target === frame || target === document.documentElement) window.pausedFrameLoads++
     })
     frame.addEventListener("turbo:before-frame-render", (event) => {
       event.preventDefault()
-      window.promotedIdentityPaused = true
-      window.promotedIdentityResume = event.detail.resume
+      window.frameRenderPaused = true
+      window.resumeFrameRender = event.detail.resume
     }, { once: true })
+  })
+}
 
+async function observeSecondFrameExtraction(page) {
+  await page.evaluate(() => {
+    const frame = document.getElementById("frame")
     let extracted = 0
     const extract = frame.delegate.extractForeignFrameElement
+    window.restoreFrameExtraction = () => frame.delegate.extractForeignFrameElement = extract
     frame.delegate.extractForeignFrameElement = async function (...args) {
       const incomingFrame = await extract.apply(this, args)
       if (++extracted === 2) {
-        window.promotedIdentityExtracted = true
-        frame.delegate.extractForeignFrameElement = extract
+        window.secondFrameExtracted = true
+        window.restoreFrameExtraction()
       }
       return incomingFrame
     }
   })
 }
 
-async function completeIdentityDriveVisit(page, path = nextPath) {
+async function completePageVisit(page, path = nextPath) {
   await page.evaluate((path) => window.Turbo.visit(path), path)
-  await page.waitForFunction((path) => window.promotedIdentityLoads.includes(path), path)
+  await waitForPageLoad(page, path)
   await expect(page.locator("h1")).toHaveText("One")
 }
 
-async function resumePromotedIdentityRender(page, count = 1) {
-  await page.evaluate(() => window.promotedIdentityResume())
-  await page.waitForFunction((count) => window.promotedIdentityFrameLoads >= count &&
-    window.promotedIdentityFrame.querySelector("h2")?.textContent === "Frame: Loaded", count)
+async function resumeFrameRender(page, count = 1) {
+  await page.evaluate(() => window.resumeFrameRender())
+  await page.waitForFunction((count) => window.pausedFrameLoads >= count &&
+    window.pausedFrame.querySelector("h2")?.textContent === "Frame: Loaded", count)
 }
 
-async function cachedIdentityFrameText(page, path) {
+async function cachedFrameText(page, path) {
   return page.evaluate((path) => {
     const snapshot = window.Turbo.session.view.getCachedSnapshotForLocation(new URL(path, location.href))
     return snapshot?.element.querySelector("#frame h2")?.textContent ?? null

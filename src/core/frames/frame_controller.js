@@ -149,12 +149,16 @@ export class FrameController {
     if (proposedVisit) proposedVisit.location = expandURL(this.sourceURL || requestURL)
 
     try {
-      const html = await fetchResponse.responseHTML
-      if (html) {
+      const responseHTML = await fetchResponse.responseHTML
+      if (responseHTML) {
         if (proposedVisit) {
-          proposedVisit.response = { statusCode: fetchResponse.statusCode, redirected: fetchResponse.redirected, responseHTML: html }
+          proposedVisit.response = {
+            statusCode: fetchResponse.statusCode,
+            redirected: fetchResponse.redirected,
+            responseHTML
+          }
         }
-        const document = parseHTMLDocument(html)
+        const document = parseHTMLDocument(responseHTML)
         const pageSnapshot = PageSnapshot.fromDocument(document)
 
         if (pageSnapshot.isVisitable) {
@@ -262,8 +266,9 @@ export class FrameController {
 
   formSubmissionSucceededWithResponse(formSubmission, response) {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
+    const action = getVisitAction(formSubmission.submitter, formSubmission.formElement, frame)
+    const proposedVisit = frame.delegate.proposeVisitIfNavigatedWithAction(frame, action)
 
-    const proposedVisit = frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
     frame.delegate.loadResponse(response, formSubmission.fetchRequest.url, proposedVisit)
 
     if (!formSubmission.isSafe) {
@@ -354,20 +359,7 @@ export class FrameController {
       await this.view.render(renderer)
       this.complete = true
       if (proposedVisit) {
-        const cachedFrame = proposedVisit.snapshot.element.querySelector(`#${CSS.escape(this.id)}`)
-        if (cachedFrame && proposedVisit.previousFrameElement) {
-          cachedFrame.replaceChildren(...proposedVisit.previousFrameElement.children)
-        }
-        delete proposedVisit.previousFrameElement
-        proposedVisit.advancedSnapshot = proposedVisit.liveSnapshot.clone()
-        if (!proposedVisit.liveSnapshot.element.contains(this.element)) {
-          // A permanent frame can move to another page while rendering. Clone it
-          // with the same form-state rules as the rest of the cached snapshot.
-          const { documentElement, headSnapshot } = proposedVisit.liveSnapshot
-          const frameSnapshot = new PageSnapshot(documentElement, this.element, headSnapshot).clone()
-          const advancedFrame = proposedVisit.advancedSnapshot.element.querySelector(`#${CSS.escape(this.id)}`)
-          advancedFrame?.replaceWith(frameSnapshot.element)
-        }
+        this.#prepareSnapshotsForVisit(proposedVisit)
         await this.#cachePromotedVisitIfNeeded(proposedVisit)
       }
       session.frameRendered(fetchResponse, this.element)
@@ -448,32 +440,60 @@ export class FrameController {
     if (visit?.state === VisitState.started && visit.willRender) return visit
   }
 
+  #prepareSnapshotsForVisit(proposedVisit) {
+    const frameSelector = `#${CSS.escape(this.id)}`
+    const cachedFrame = proposedVisit.snapshot.element.querySelector(frameSelector)
+    if (cachedFrame && proposedVisit.previousFrameElement) {
+      cachedFrame.replaceChildren(...proposedVisit.previousFrameElement.children)
+    }
+    delete proposedVisit.previousFrameElement
+
+    proposedVisit.advancedSnapshot = proposedVisit.liveSnapshot.clone()
+    if (!proposedVisit.liveSnapshot.element.contains(this.element)) {
+      // A permanent frame can move to another page while rendering. Clone it
+      // with the same form-state rules as the rest of the cached snapshot.
+      const { documentElement, headSnapshot } = proposedVisit.liveSnapshot
+      const frameSnapshot = new PageSnapshot(documentElement, this.element, headSnapshot).clone()
+      const advancedFrame = proposedVisit.advancedSnapshot.element.querySelector(frameSelector)
+      advancedFrame?.replaceWith(frameSnapshot.element)
+    }
+  }
+
+  #shouldVisitFrameResponse(proposedVisit, pageVisit) {
+    return (
+      !pageVisit &&
+      document.body === proposedVisit.liveSnapshot.element &&
+      session.location.href === proposedVisit.location.href &&
+      this.sourceURL === proposedVisit.location.href
+    )
+  }
+
   async #cachePromotedVisitIfNeeded(proposedVisit) {
     const pageVisit = this.#pageVisitInProgress()
     proposedVisit.shouldCacheSnapshot &&= pageVisit?.shouldCacheSnapshot !== false
     const ownsPage = document.body === proposedVisit.liveSnapshot.element
     const ownsHistory = session.location.href === proposedVisit.location.href
 
-    if (pageVisit || !ownsPage || !ownsHistory || this.sourceURL !== proposedVisit.location.href) {
+    if (!this.#shouldVisitFrameResponse(proposedVisit, pageVisit)) {
       if (ownsPage && ownsHistory) session.view.lastRenderedLocation = proposedVisit.location
 
       if (proposedVisit.shouldCacheSnapshot) {
-        await session.view.cacheSnapshotAtLocation(proposedVisit.snapshot, proposedVisit.originLocation, (snapshot) => {
-          removeTemporaryElementsFrom(snapshot.element)
-        })
+        await this.#cachePromotedSnapshot(proposedVisit.snapshot, proposedVisit.originLocation)
         if (proposedVisit.historyChanged) {
-          await session.view.cacheSnapshotAtLocation(proposedVisit.advancedSnapshot, proposedVisit.location, (snapshot) => {
-            removeTemporaryElementsFrom(snapshot.element)
-          })
+          await this.#cachePromotedSnapshot(proposedVisit.advancedSnapshot, proposedVisit.location)
         }
       }
-      return true
     }
-    return false
+  }
+
+  #cachePromotedSnapshot(snapshot, location) {
+    removeTemporaryElementsFrom(snapshot.element)
+    return session.view.cacheSnapshotAtLocation(snapshot, location)
   }
 
   async #visitFrameResponse(proposedVisit) {
-    if (this.#pageVisitInProgress() || document.body !== proposedVisit.liveSnapshot.element || session.location.href !== proposedVisit.location.href || this.sourceURL !== proposedVisit.location.href) {
+    const pageVisit = this.#pageVisitInProgress()
+    if (!this.#shouldVisitFrameResponse(proposedVisit, pageVisit)) {
       await this.#cachePromotedVisitIfNeeded(proposedVisit)
       return
     }

@@ -8,9 +8,7 @@ test("an explicit snapshot repairs a normal cache write already pending at the s
   const source = createSnapshot("Original")
   const location = new URL(view.lastRenderedLocation)
   const pending = view.cacheSnapshot(source)
-  const repair = view.cacheSnapshotAtLocation(source, location, (snapshot) => {
-    snapshot.element.dataset.repaired = "true"
-  })
+  const repair = view.cacheSnapshotAtLocation(source, location)
 
   source.element.textContent = "Intermediate"
   location.pathname = "/changed-after-capture"
@@ -19,7 +17,6 @@ test("an explicit snapshot repairs a normal cache write already pending at the s
   assert.equal((await repair).element.textContent, "Original")
   const cached = view.getCachedSnapshotForLocation(view.lastRenderedLocation)
   assert.equal(cached.element.textContent, "Original")
-  assert.equal(cached.element.dataset.repaired, "true")
   assert.isUndefined(view.getCachedSnapshotForLocation(location))
   assert.equal(notifications, 1)
 })
@@ -93,23 +90,6 @@ test("explicit clone failures reach the caller and do not block a later cache wr
   assert.strictEqual(await failure, error)
   await recovery
   assert.equal(view.getCachedSnapshotForLocation(view.lastRenderedLocation).element.textContent, "Recovered")
-})
-
-test("preparation failures reach the caller without writing or blocking later snapshots", async () => {
-  const view = createView()
-  const initial = view.cacheSnapshot(createSnapshot("Initial"), false)
-  const error = new Error("Cannot prepare snapshot")
-  const failure = view.cacheSnapshotAtLocation(createSnapshot("Broken"), view.lastRenderedLocation, () => {
-    throw error
-  }).catch((error) => error)
-  const recoveryLocation = new URL("/recovered", location.href)
-  const recovery = view.cacheSnapshotAtLocation(createSnapshot("Recovered"), recoveryLocation)
-
-  await initial
-  assert.strictEqual(await failure, error)
-  await recovery
-  assert.equal(view.getCachedSnapshotForLocation(view.lastRenderedLocation).element.textContent, "Initial")
-  assert.equal(view.getCachedSnapshotForLocation(recoveryLocation).element.textContent, "Recovered")
 })
 
 function createView(viewWillCacheSnapshot = () => {}) {

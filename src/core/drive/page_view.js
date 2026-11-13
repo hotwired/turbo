@@ -8,7 +8,7 @@ import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 
 export class PageView extends View {
-  #cacheSnapshotWrites = Promise.resolve()
+  #lastSnapshotWrite = Promise.resolve()
 
   snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
@@ -53,11 +53,11 @@ export class PageView extends View {
     }
   }
 
-  async cacheSnapshotAtLocation(snapshot, location, prepareSnapshot) {
+  async cacheSnapshotAtLocation(snapshot, location) {
     if (snapshot.isCacheable) {
       const cacheLocation = expandURL(location)
       const cachedSnapshot = snapshot.clone()
-      return this.#cacheSnapshot(cacheLocation, Promise.resolve(cachedSnapshot), prepareSnapshot)
+      return this.#cacheSnapshot(cacheLocation, Promise.resolve(cachedSnapshot))
     }
   }
 
@@ -81,22 +81,23 @@ export class PageView extends View {
     return PageSnapshot.fromElement(this.element)
   }
 
-  #cacheSnapshot(location, snapshotPromise, prepareSnapshot) {
+  // Private
+
+  #cacheSnapshot(location, snapshotPromise) {
     const snapshotResult = snapshotPromise.then(
       (snapshot) => ({ snapshot }),
       (error) => ({ error })
     )
 
-    const write = this.#cacheSnapshotWrites.then(async () => {
+    const write = this.#lastSnapshotWrite.then(async () => {
       const result = await snapshotResult
       if ("error" in result) throw result.error
       const { snapshot } = result
-      prepareSnapshot?.(snapshot)
       this.snapshotCache.put(location, snapshot)
       return snapshot
     })
 
-    this.#cacheSnapshotWrites = write.then(
+    this.#lastSnapshotWrite = write.then(
       () => undefined,
       () => undefined
     )
