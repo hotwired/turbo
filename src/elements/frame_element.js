@@ -96,6 +96,16 @@ export class FrameElement extends HTMLElement {
   }
 
   /**
+   * Gets the frame's morph-refresh policy.
+   *
+   * When "manual", the frame is not refreshed by a page or ancestor-frame morph;
+   * the application owns its refresh and teardown.
+   */
+  get refreshPolicy() {
+    return this.getAttribute("data-turbo-refresh-policy")
+  }
+
+  /**
    * Determines if the element is loading
    */
   get loading() {
