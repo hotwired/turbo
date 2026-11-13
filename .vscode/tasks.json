@@ -10,10 +10,7 @@
       "group": {
         "kind": "build",
         "isDefault": true
-      },
-      "problemMatcher": [
-        "$tsc"
-      ]
+      }
     },
     {
       "label": "Turbo: Run tests",

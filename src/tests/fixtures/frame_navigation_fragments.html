@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Frame fragments</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Frame fragment navigation</h1>
+
+    <a id="link-with-fragment" href="/src/tests/fixtures/frames/frame.html#link-fragment" data-turbo-frame="frame" data-turbo-action="advance">Navigate with a fragment</a>
+    <a id="link-without-fragment" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame" data-turbo-action="advance">Navigate without a fragment</a>
+
+    <form id="form-with-fragment" method="get" action="/src/tests/fixtures/frames/frame.html#form-fragment" data-turbo-frame="frame" data-turbo-action="advance">
+      <input type="hidden" name="query" value="form">
+      <button>Submit with a fragment</button>
+    </form>
+    <form id="form-without-fragment" method="get" action="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame" data-turbo-action="advance">
+      <input type="hidden" name="query" value="form">
+      <button>Submit without a fragment</button>
+    </form>
+    <form id="redirecting-form" method="get" action="/__turbo/redirect#request-fragment" data-turbo-frame="frame" data-turbo-action="advance">
+      <input type="hidden" name="path" value="/src/tests/fixtures/frames/frame.html">
+      <button>Submit through a redirect</button>
+    </form>
+
+    <turbo-frame id="frame" src="/src/tests/fixtures/frames.html#old-fragment">
+      <h2>Frame: Waiting</h2>
+    </turbo-frame>
+  </body>
+</html>

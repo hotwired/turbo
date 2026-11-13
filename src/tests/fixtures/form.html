@@ -15,7 +15,7 @@
   <body>
     <h1>Form</h1>
     <div id="standard">
-      <form action="/__turbo/redirect" method="post" class="redirect">
+      <form id="standard-form" action="/__turbo/redirect" method="post" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="hidden" name="greeting" value="Hello from a redirect">
         <input id="standard-post-form-submit" type="submit" value="form[method=post]">
@@ -25,6 +25,10 @@
         <input type="hidden" name="greeting" value="Hello from a redirect">
         <input id="standard-get-form-submit" type="submit" value="form[method=get]">
       </form>
+      <form action="/__turbo/redirect" method="post" class="redirect" data-turbo-frame="_top">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <button>form[data-turbo-frame=_top]</button>
+      </form>
       <form action="/__turbo/redirect" method="get" data-turbo-stream class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <input type="hidden" name="greeting" value="Hello from a redirect">
@@ -33,6 +37,17 @@
       <form action="/__turbo/redirect" class="redirect">
         <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
         <button id="standard-get-form-with-stream-opt-in-submitter" data-turbo-stream>form[method=get] button[data-turbo-stream]</button>
+      </form>
+      <form action="/__turbo/redirect" method="post" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <input id="submits-with-form-input" type="submit" value="Save" data-turbo-submits-with="Saving...">
+      </form>
+      <form action="/__turbo/redirect" method="post" class="redirect">
+        <input type="hidden" name="path" value="/src/tests/fixtures/form.html">
+        <input type="hidden" name="sleep" value="200">
+        <input type="hidden" name="greeting" value="Hello from a redirect">
+        <button id="submits-with-form-button" type="submit" data-turbo-submits-with="Saving...">Save</button>
       </form>
       <hr>
       <form>
@@ -123,11 +138,11 @@
     </div>
     <hr>
     <div id="reject">
-      <form class="unprocessable_entity" action="/__turbo/reject" method="post" style="margin-top:100vh">
+      <form class="unprocessable_content" action="/__turbo/reject" method="post" style="margin-top:100vh">
         <input type="hidden" name="status" value="422">
         <input type="submit">
       </form>
-      <form class="unprocessable_entity_with_tall_form" action="/__turbo/reject/tall" method="post">
+      <form class="unprocessable_content_with_tall_form" action="/__turbo/reject/tall" method="post">
         <input type="hidden" name="status" value="422">
         <input type="submit" style="margin-top:1000vh">
       </form>
@@ -235,6 +250,10 @@
         <input type="hidden" name="path" value="/src/tests/fixtures/frames/form.html">
         <input type="submit">
       </form>
+      <form action="/__turbo/redirect" method="post" class="redirect" data-turbo-frame="_top">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/form.html">
+        <button>#frame form[data-turbo-frame=_top]</button>
+      </form>
       <form action="/__turbo/messages" method="post" class="created">
         <input type="hidden" name="content" value="Hello!">
         <input type="submit" style="">
@@ -244,16 +263,12 @@
         <input type="hidden" name="status" value="204">
         <input type="submit" style="">
       </form>
-      <form class="unprocessable_entity" action="/__turbo/reject" method="post">
+      <form class="unprocessable_content" action="/__turbo/reject" method="post">
         <input type="hidden" name="status" value="422">
         <input type="submit">
       </form>
       <form class="internal_server_error" action="/__turbo/reject" method="post">
         <input type="hidden" name="status" value="500">
-        <input type="submit">
-      </form>
-      <form action="/__turbo/messages" method="get" class="get">
-        <input type="hidden" name="path" value="/src/tests/fixtures/frames/form.html">
         <input type="submit">
       </form>
       <form action="/__turbo/redirect" method="post" data-turbo="false">
@@ -292,8 +307,15 @@
         <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
         <button type="submit" data-turbo-frame="_top">Break-out of Frame with POST</button>
       </form>
+      <form action="/src/tests/fixtures/frames/hello.html" method="get" data-turbo-frame="hello">
+        <button type="submit">Navigate other Frame with GET</button>
+      </form>
       <form action="/src/tests/fixtures/frames/hello.html" method="get">
         <button type="submit" data-turbo-frame="hello">Navigate other Frame with GET</button>
+      </form>
+      <form action="/__turbo/redirect" method="post" data-turbo-frame="hello">
+        <input type="hidden" name="path" value="/src/tests/fixtures/frames/hello.html">
+        <button type="submit">Navigate other Frame with POST</button>
       </form>
       <form action="/__turbo/redirect" method="post">
         <input type="hidden" name="path" value="/src/tests/fixtures/frames/hello.html">
@@ -305,6 +327,11 @@
       <select id="external-select" form="form-with-external-inputs" name="greeting">
         <option selected>Hello from a replace Visit</option>
       </select>
+      <form id="form-with-buttons-triggered-by-js" action="/__turbo/redirect" data-turbo-frame="_top" method="post">
+        <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+        <button type="submit" formaction="/src/tests/fixtures/frames/hello.html" formmethod="get" id="button-triggered-by-js" data-turbo-action="replace" data-turbo-frame="hello">Navigate other Frame with GET</button>
+        <button type="button" onclick="this.form.requestSubmit(document.getElementById('button-triggered-by-js'))" id="request-submit-trigger">Trigger Navigate other Frame with GET</button>
+      </form>
     </turbo-frame>
     <a href="/src/tests/fixtures/frames/hello.html" data-turbo-method="get" id="link-method-outside-frame">Method link outside frame</a><br />
     <a href="/__turbo/messages?content=Link!&type=stream" data-turbo-method="post" id="stream-link-method-outside-frame">Stream link outside frame</a>
@@ -317,6 +344,8 @@
       <button id="submit-external">POST to https://httpbin.org/post</button>
     </form>
      <a href="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fframes%2Fhello.html" data-turbo-method="post" data-turbo-frame="hello" id="turbo-method-post-to-targeted-frame">Turbo method post to targeted frame</a>
+     <a href="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fframes%2Fhello.html" data-turbo-method="post" data-turbo-frame="hello" target="" id="turbo-method-post-empty-target">Turbo method post with empty target</a>
+     <a href="/__turbo/redirect?path=%2Fsrc%2Ftests%2Ffixtures%2Fframes%2Fhello.html" data-turbo-method="post" data-turbo-frame="hello" target id="turbo-method-post-bare-target">Turbo method post with bare target</a>
     <turbo-frame id="hello"></turbo-frame>
     <hr>
 

@@ -15,7 +15,7 @@
       })
     </script>
     <script>
-      Turbo.session.drive = false
+      Turbo.config.drive.enabled = false
     </script>
   </head>
   <body>
@@ -42,6 +42,9 @@
       <form action="/src/tests/fixtures/drive_disabled.html">
         <button>Navigate #frame</button>
       </form>
+      <custom-link-element link="/src/tests/fixtures/frames/frame.html">
+        <span id="frame-navigation-with-slot">Link in slot</span>
+      </custom-link-element>
     </turbo-frame>
   </body>
 </html>
