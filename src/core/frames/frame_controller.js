@@ -615,7 +615,7 @@ export class FrameController {
       return false
     }
 
-    if (submitter && !session.elementIsNavigatable(submitter)) {
+    if (submitter && !session.submitterIsNavigatable(submitter)) {
       return false
     }
 
