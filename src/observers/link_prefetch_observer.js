@@ -62,7 +62,7 @@ export class LinkPrefetchObserver {
     if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
-    const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
+    const isLink = target.matches && target.matches("a[href]:not([download])")
 
     if (isLink && this.#isPrefetchable(target)) {
       const link = target
@@ -81,7 +81,7 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
+        prefetchCache.putLater(fetchRequest.url, fetchRequest, this.#cacheTtl)
       }
     }
   }
@@ -114,7 +114,11 @@ export class LinkPrefetchObserver {
     request.headers["X-Sec-Purpose"] = "prefetch"
 
     const turboFrame = link.closest("turbo-frame")
-    const turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+    let turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+
+    if (turboFrameTarget === "_self") {
+      turboFrameTarget = turboFrame?.id
+    }
 
     if (turboFrameTarget && turboFrameTarget !== "_top") {
       request.headers["Turbo-Frame"] = turboFrameTarget
@@ -155,7 +159,13 @@ export class LinkPrefetchObserver {
 }
 
 const unfetchableLink = (link) => {
-  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+  const target = link.getAttribute("target")
+
+  return (
+    link.origin !== document.location.origin ||
+    !["http:", "https:"].includes(link.protocol) ||
+    (target && target !== "_self")
+  )
 }
 
 const linkToTheSamePage = (link) => {

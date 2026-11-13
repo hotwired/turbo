@@ -565,9 +565,15 @@ test("invalid form submission with server error status", async ({ page }) => {
 })
 
 test("form submission with network error", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error))
+
   await page.context().setOffline(true)
   await page.click("#reject-form [type=submit]")
   await nextEventOnTarget(page, "reject-form", "turbo:fetch-request-error")
+  await nextBeat()
+
+  expect(errors, "does not raise an unhandled rejection").toEqual([])
 })
 
 test("submitter form submission reads button attributes", async ({ page }) => {

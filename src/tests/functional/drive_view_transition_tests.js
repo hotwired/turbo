@@ -7,7 +7,8 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(`
     document.startViewTransition = (callback) => {
       window.startViewTransitionCalled = true
-      callback()
+      const updateCallbackDone = Promise.resolve().then(callback)
+      return { ready: updateCallbackDone, updateCallbackDone, finished: updateCallbackDone }
     }
   `)
 })
@@ -35,4 +36,29 @@ test("navigating does not trigger a view transition when meta tag not present", 
 
   const called = await page.evaluate(`window.startViewTransitionCalled`)
   expect(called).toEqual(undefined)
+})
+
+test("navigating does not leak an unhandled rejection when the view transition is skipped", async ({ page }) => {
+  await page.evaluate(`
+    window.unhandledRejections = []
+    addEventListener("unhandledrejection", (event) => {
+      window.unhandledRejections.push(String(event.reason))
+    })
+
+    document.startViewTransition = (callback) => {
+      window.startViewTransitionCalled = true
+      const updateCallbackDone = Promise.resolve(callback())
+      return {
+        ready: Promise.reject(new DOMException("Transition was aborted because of invalid state", "InvalidStateError")),
+        finished: updateCallbackDone,
+        updateCallbackDone
+      }
+    }
+  `)
+
+  await page.locator("#go-right").click()
+  await nextBody(page)
+
+  expect(await page.evaluate(`window.startViewTransitionCalled`)).toEqual(true)
+  expect(await page.evaluate(`window.unhandledRejections`)).toEqual([])
 })
