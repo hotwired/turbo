@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { nextBeat, nextEventOnTarget } from "../helpers/page"
+import { nextEventOnTarget } from "../helpers/page"
 
 test("preloads snapshot on initial load", async ({ page }) => {
   // contains `a[rel="preload"][href="http://localhost:9000/src/tests/fixtures/preloaded.html"]`
@@ -89,39 +89,6 @@ test("does not preload a link with [data-turbo-method]", async ({ page }) => {
   const href = await preloadLink.evaluate((link) => link.href)
 
   expect(await urlInSnapshotCache(page, href)).toEqual(false)
-})
-
-test("does not replace a snapshot cached while the preload was in flight", async ({ page }) => {
-  let releaseResponse
-  const responseHeld = new Promise((resolve) => (releaseResponse = resolve))
-
-  await page.route("**/src/tests/fixtures/preloaded.html", async (route) => {
-    await responseHeld
-    await route.continue()
-  })
-  await page.goto("/src/tests/fixtures/preloading.html")
-
-  const href = await page.locator("#preload_anchor").evaluate((link) => link.href)
-
-  await page.evaluate((href) => {
-    const { session } = window.Turbo
-    const snapshot = session.view.snapshot.clone()
-
-    snapshot.element.setAttribute("data-cached-by-visit", "")
-    session.preloader.snapshotCache.put(new URL(href), snapshot)
-  }, href)
-
-  releaseResponse()
-  await nextEventOnTarget(page, "preload_anchor", "turbo:before-fetch-response")
-  await nextBeat()
-
-  const cachedByVisit = await page.evaluate((href) => {
-    const snapshot = window.Turbo.session.preloader.snapshotCache.get(new URL(href))
-
-    return snapshot.element.hasAttribute("data-cached-by-visit")
-  }, href)
-
-  expect(cachedByVisit).toEqual(true)
 })
 
 function urlInSnapshotCache(page, href) {

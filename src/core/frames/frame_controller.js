@@ -14,7 +14,7 @@ import {
 } from "../../util"
 import { FormSubmission } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
-import { getAction, expandURL, urlsAreEqual, locationIsVisitable } from "../url"
+import { getAction, expandURL, getRequestURL, locationIsVisitable } from "../url"
 import { FormSubmitObserver } from "../../observers/form_submit_observer"
 import { FrameView } from "./frame_view"
 import { LinkInterceptor } from "./link_interceptor"
@@ -34,6 +34,7 @@ export class FrameController {
   #hasBeenLoaded = false
   #ignoredAttributes = new Set()
   #shouldMorphFrame = false
+  #formSubmissions = new Set()
   action = null
 
   constructor(element) {
@@ -72,6 +73,12 @@ export class FrameController {
 
       if (!this.element.hasAttribute("recurse")) {
         this.#currentFetchRequest?.cancel()
+
+        if (!this.element.isConnected) {
+          for (const formSubmission of this.#formSubmissions) {
+            if (formSubmission.isSafe) formSubmission.stop()
+          }
+        }
       }
     }
   }
@@ -129,9 +136,13 @@ export class FrameController {
     }
   }
 
-  async loadResponse(fetchResponse) {
+  async loadResponse(fetchResponse, requestURL) {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
-      this.sourceURL = fetchResponse.response.url
+      const responseURL = expandURL(fetchResponse.response.url)
+      if (!fetchResponse.redirected && !responseURL.hash && requestURL) {
+        responseURL.hash = requestURL.hash
+      }
+      this.sourceURL = responseURL.href
     }
 
     try {
@@ -197,7 +208,7 @@ export class FrameController {
     const frame = this.#findFrameElement(element, submitter)
 
     this.prepareRequest(fetchRequest, frame)
-    this.formSubmission.start()
+    this.#startFormSubmission(this.formSubmission, frame)
   }
 
   // Fetch request delegate
@@ -219,12 +230,12 @@ export class FrameController {
   }
 
   async requestSucceededWithResponse(request, response) {
-    await this.loadResponse(response)
+    await this.loadResponse(response, request.url)
     this.#resolveVisitPromise()
   }
 
   async requestFailedWithResponse(request, response) {
-    await this.loadResponse(response)
+    await this.loadResponse(response, request.url)
     this.#resolveVisitPromise()
   }
 
@@ -247,7 +258,7 @@ export class FrameController {
     const frame = this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(formSubmission.submitter, formSubmission.formElement, frame))
-    frame.delegate.loadResponse(response)
+    frame.delegate.loadResponse(response, formSubmission.fetchRequest.url)
 
     if (!formSubmission.isSafe) {
       session.clearCache()
@@ -255,7 +266,7 @@ export class FrameController {
   }
 
   formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
-    this.element.delegate.loadResponse(fetchResponse)
+    this.element.delegate.loadResponse(fetchResponse, formSubmission.fetchRequest.url)
     session.clearCache()
   }
 
@@ -321,6 +332,22 @@ export class FrameController {
   }
 
   // Private
+
+  async #startFormSubmission(formSubmission, frame) {
+    const controller = frame.delegate
+    const { abortSignal } = formSubmission.fetchRequest
+    const unregister = () => controller.#formSubmissions.delete(formSubmission)
+
+    controller.#formSubmissions.add(formSubmission)
+    abortSignal.addEventListener("abort", unregister, { once: true })
+
+    try {
+      await formSubmission.start()
+    } finally {
+      abortSignal.removeEventListener("abort", unregister)
+      unregister()
+    }
+  }
 
   async #loadFrameResponse(fetchResponse, document) {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
@@ -605,7 +632,7 @@ export class FrameController {
 function activateElement(element, currentURL) {
   if (element) {
     const src = element.getAttribute("src")
-    if (src != null && currentURL != null && urlsAreEqual(src, currentURL)) {
+    if (src != null && currentURL != null && getRequestURL(expandURL(src)) == getRequestURL(expandURL(currentURL))) {
       throw new Error(`Matching <turbo-frame id="${element.id}"> element has a source URL which references itself`)
     }
     if (element.ownerDocument !== document) {

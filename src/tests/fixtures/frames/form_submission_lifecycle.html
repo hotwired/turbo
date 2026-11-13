@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Frame form submission lifecycle</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <form id="external-form" action="/src/tests/fixtures/frames/form_submission_target.html" data-turbo-frame="destination" data-turbo-action="advance">
+      <input type="hidden" name="source" value="external">
+      <button>Submit outside the frame</button>
+    </form>
+
+    <turbo-frame id="source-a">
+      <form id="form-a" action="/src/tests/fixtures/frames/form_submission_target.html" data-turbo-frame="destination" data-turbo-action="advance">
+        <input type="hidden" name="source" value="a">
+        <button>Submit from A</button>
+      </form>
+    </turbo-frame>
+
+    <turbo-frame id="source-c">
+      <form id="form-c" action="/src/tests/fixtures/frames/form_submission_target.html" data-turbo-frame="destination" data-turbo-action="advance">
+        <input type="hidden" name="source" value="c">
+        <button>Submit from C</button>
+      </form>
+    </turbo-frame>
+
+    <turbo-frame id="destination"><h2>Original destination</h2></turbo-frame>
+    <div id="moved-frames"></div>
+    <div id="messages"></div>
+
+    <form id="post-form" method="post" action="/__turbo/messages" data-turbo-frame="destination">
+      <input type="hidden" name="content" value="POST applied">
+      <input type="hidden" name="type" value="stream">
+      <input type="hidden" name="target" value="messages">
+      <button>Submit a Turbo Stream</button>
+    </form>
+  </body>
+</html>
