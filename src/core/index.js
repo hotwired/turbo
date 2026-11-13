@@ -4,11 +4,14 @@ import { PageSnapshot } from "./drive/page_snapshot"
 import { FrameRenderer } from "./frames/frame_renderer"
 import { fetch, recentRequests } from "../http/fetch"
 import { config } from "./config"
+
 import { MorphingPageRenderer } from "./drive/morphing_page_renderer"
 import { MorphingFrameRenderer } from "./frames/morphing_frame_renderer"
 
+import { offline } from "./offline"
+
 export { morphChildren, morphElements } from "./morphing"
-export { PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
+export { PageRenderer, PageSnapshot, FrameRenderer, fetch, config, offline }
 
 const session = new Session(recentRequests)
 
