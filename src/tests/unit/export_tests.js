@@ -10,7 +10,6 @@ test("Turbo interface", () => {
   assert.equal(typeof Turbo.connectStreamSource, "function")
   assert.equal(typeof Turbo.disconnectStreamSource, "function")
   assert.equal(typeof Turbo.renderStreamMessage, "function")
-  assert.equal(typeof Turbo.clearCache, "function")
   assert.equal(typeof Turbo.setProgressBarDelay, "function")
   assert.equal(typeof Turbo.setConfirmMethod, "function")
   assert.equal(typeof Turbo.setFormMode, "function")
@@ -22,6 +21,10 @@ test("Turbo interface", () => {
   assert.equal(typeof Turbo.session.drive, "boolean")
   assert.equal(typeof Turbo.session.formMode, "string")
   assert.equal(typeof Turbo.fetch, "function")
+  assert.equal(typeof Turbo.morphElements, "function")
+  assert.equal(typeof Turbo.morphChildren, "function")
+  assert.equal(typeof Turbo.morphBodyElements, "function")
+  assert.equal(typeof Turbo.morphTurboFrameElements, "function")
 })
 
 test("Session interface", () => {

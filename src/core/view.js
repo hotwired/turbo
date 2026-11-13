@@ -14,8 +14,8 @@ export class View {
   scrollToAnchor(anchor) {
     const element = this.snapshot.getElementForAnchor(anchor)
     if (element) {
-      this.scrollToElement(element)
       this.focusElement(element)
+      this.scrollToElement(element)
     } else {
       this.scrollToPosition({ x: 0, y: 0 })
     }
@@ -42,7 +42,7 @@ export class View {
   }
 
   scrollToPosition({ x, y }) {
-    this.scrollRoot.scrollTo(x, y)
+    this.scrollRoot.scrollTo({ left: x, top: y, behavior: "instant" })
   }
 
   scrollToTop() {

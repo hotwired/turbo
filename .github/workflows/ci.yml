@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: '16'
+        node-version: '22'
         cache: 'yarn'
     - run: yarn install --frozen-lockfile
     - run: yarn run playwright install --with-deps
@@ -35,7 +35,7 @@ jobs:
     - name: Firefox Test
       run: yarn test:browser --project=firefox
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: turbo-dist
         path: dist/*

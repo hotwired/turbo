@@ -40,6 +40,9 @@ test("navigating a frame with a turbo-frame targeting the frame autofocuses [aut
 })
 
 test("receiving a Turbo Stream message with an [autofocus] element when the activeElement is the document", async ({ page }) => {
+  // Ensure the [autofocus] element has been processed before blurring
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+
   await page.evaluate(() => {
     document.activeElement.blur()
     window.Turbo.renderStreamMessage(`
@@ -48,10 +51,14 @@ test("receiving a Turbo Stream message with an [autofocus] element when the acti
       </turbo-stream>
     `)
   })
+
   await expect(page.locator("#autofocus-from-stream")).toBeFocused()
 })
 
 test("autofocus from a Turbo Stream message does not leak a placeholder [id]", async ({ page }) => {
+  // Ensure the [autofocus] element has been processed before blurring
+  await expect(page.locator("#first-autofocus-element")).toBeFocused()
+
   await page.evaluate(() => {
     document.activeElement.blur()
     window.Turbo.renderStreamMessage(`
@@ -62,7 +69,6 @@ test("autofocus from a Turbo Stream message does not leak a placeholder [id]", a
   })
 
   await expect(page.locator("#container-from-stream input")).toBeFocused()
-
 })
 
 test("receiving a Turbo Stream message with an [autofocus] element when an element within the document has focus", async ({ page }) => {
@@ -87,9 +93,7 @@ test("don't focus on [autofocus] elements on page refreshes with morphing", asyn
   await expect(button).toBeFocused()
   await expect(input).not.toBeFocused()
 
-  await page.evaluate(() => {
-    document.querySelector("#form").requestSubmit()
-  })
+  await page.locator("#form").evaluate((form) => form.requestSubmit())
 
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
   await nextPageRefresh(page)

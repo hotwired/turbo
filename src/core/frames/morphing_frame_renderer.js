@@ -1,5 +1,5 @@
 import { FrameRenderer } from "./frame_renderer"
-import { morphChildren } from "../morphing"
+import { morphChildren, shouldRefreshFrameWithMorphing, closestFrameReloadableWithMorphing } from "../morphing"
 import { dispatch } from "../../util"
 
 export class MorphingFrameRenderer extends FrameRenderer {
@@ -9,10 +9,24 @@ export class MorphingFrameRenderer extends FrameRenderer {
       detail: { currentElement, newElement }
     })
 
-    morphChildren(currentElement, newElement)
+    morphChildren(currentElement, newElement, {
+      callbacks: {
+        beforeNodeMorphed: (node, newNode) => {
+          if (
+            shouldRefreshFrameWithMorphing(node, newNode) &&
+              closestFrameReloadableWithMorphing(node) === currentElement
+          ) {
+            node.reload()
+            return false
+          }
+          return true
+        }
+      }
+    })
   }
 
   async preservingPermanentElements(callback) {
     return await callback()
   }
 }
+

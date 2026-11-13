@@ -1,8 +1,9 @@
+import { getLocationForLink } from "../core/url"
 import {
   dispatch,
-  getLocationForLink,
   getMetaContent,
-  findClosestRecursively
+  findClosestRecursively,
+  getLinkHrefString
 } from "../util"
 
 import { FetchMethod, FetchRequest } from "../http/fetch_request"
@@ -61,7 +62,7 @@ export class LinkPrefetchObserver {
     if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
-    const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
+    const isLink = target.matches && target.matches("a[href]:not([download])")
 
     if (isLink && this.#isPrefetchable(target)) {
       const link = target
@@ -78,7 +79,9 @@ export class LinkPrefetchObserver {
           target
         )
 
-        prefetchCache.setLater(location.toString(), fetchRequest, this.#cacheTtl)
+        fetchRequest.fetchOptions.priority = "low"
+
+        prefetchCache.putLater(fetchRequest.url, fetchRequest, this.#cacheTtl)
       }
     }
   }
@@ -94,7 +97,7 @@ export class LinkPrefetchObserver {
 
   #tryToUsePrefetchedRequest = (event) => {
     if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
-      const cached = prefetchCache.get(event.detail.url.toString())
+      const cached = prefetchCache.get(event.detail.url)
 
       if (cached) {
         // User clicked link, use cache response
@@ -111,7 +114,11 @@ export class LinkPrefetchObserver {
     request.headers["X-Sec-Purpose"] = "prefetch"
 
     const turboFrame = link.closest("turbo-frame")
-    const turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+    let turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+
+    if (turboFrameTarget === "_self") {
+      turboFrameTarget = turboFrame?.id
+    }
 
     if (turboFrameTarget && turboFrameTarget !== "_top") {
       request.headers["Turbo-Frame"] = turboFrameTarget
@@ -152,11 +159,17 @@ export class LinkPrefetchObserver {
 }
 
 const unfetchableLink = (link) => {
-  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+  const target = link.getAttribute("target")
+
+  return (
+    link.origin !== document.location.origin ||
+    !["http:", "https:"].includes(link.protocol) ||
+    (target && target !== "_self")
+  )
 }
 
 const linkToTheSamePage = (link) => {
-  return (link.pathname + link.search === document.location.pathname + document.location.search) || link.href.startsWith("#")
+  return (link.pathname + link.search === document.location.pathname + document.location.search) || getLinkHrefString(link).startsWith("#")
 }
 
 const linkOptsOut = (link) => {

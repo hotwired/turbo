@@ -1,5 +1,4 @@
-import { test } from "@playwright/test"
-import { assert } from "chai"
+import { expect, test } from "@playwright/test"
 import { nextBeat } from "../helpers/page"
 
 test.beforeEach(async ({ page }) => {
@@ -8,31 +7,32 @@ test.beforeEach(async ({ page }) => {
 
 test("pauses and resumes request", async ({ page }) => {
   page.once("dialog", (dialog) => {
-    assert.strictEqual(dialog.message(), "Continue request?")
+    expect(dialog.message()).toEqual("Continue request?")
     dialog.accept()
   })
 
   await page.click("#link")
-  await nextBeat()
 
-  assert.equal(await page.textContent("h1"), "One")
+  await expect(page.locator("h1")).toHaveText("One")
 })
 
 test("aborts request", async ({ page }) => {
-  page.once("dialog", (dialog) => {
-    assert.strictEqual(dialog.message(), "Continue request?")
-    dialog.dismiss()
+  const dialogMessages = []
+
+  page.on("dialog", async (dialog) => {
+    dialogMessages.push(dialog.message())
+    if (dialog.message() === "Continue request?") {
+      await dialog.dismiss()
+    } else {
+      await dialog.accept()
+    }
   })
 
   await page.click("#link")
   await nextBeat()
-
-  page.once("dialog", (dialog) => {
-    assert.strictEqual(dialog.message(), "Request aborted")
-    dialog.accept()
-  })
-
   await nextBeat()
 
-  assert.equal(await page.textContent("h1"), "Pausable Requests")
+  expect(dialogMessages).toContain("Continue request?")
+  expect(dialogMessages).toContain("Request aborted")
+  await expect(page.locator("h1")).toHaveText("Pausable Requests")
 })

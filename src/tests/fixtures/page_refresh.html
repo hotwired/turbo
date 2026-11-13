@@ -104,6 +104,10 @@
       </turbo-frame>
     </div>
 
+    <dialog id="modal-dialog">
+      <p>Modal dialog</p>
+    </dialog>
+
     <div id="stimulus-controller" data-controller="test" data-action="input->test#capture">
       <h3>Element with Stimulus controller</h3>
 
@@ -132,7 +136,7 @@
     <button id="add-new-assets">Add new assets</button>
 
     <div id="reject">
-      <form class="unprocessable_entity" action="/__turbo/reject/morph" method="post" style="margin-top:100vh">
+      <form class="unprocessable_content" action="/__turbo/reject/morph" method="post" style="margin-top:100vh">
         <input type="hidden" name="status" value="422">
         <input type="submit">
       </form>

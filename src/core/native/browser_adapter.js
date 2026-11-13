@@ -1,5 +1,5 @@
 import { ProgressBar } from "../drive/progress_bar"
-import { SystemStatusCode } from "../drive/visit"
+import { SystemStatusCode, VisitState } from "../drive/visit"
 import { uuid, dispatch } from "../../util"
 import { locationIsVisitable } from "../url"
 
@@ -20,15 +20,16 @@ export class BrowserAdapter {
 
   visitStarted(visit) {
     this.location = visit.location
+    this.redirectedToLocation = null
+
     visit.loadCachedSnapshot()
     visit.issueRequest()
-    visit.goToSamePageAnchor()
   }
 
   visitRequestStarted(visit) {
     this.progressBar.setValue(0)
     if (visit.hasCachedSnapshot() || visit.action != "restore") {
-      this.showVisitProgressBarAfterDelay()
+      this.showVisitProgressBarAfterDelay(visit)
     } else {
       this.showProgressBar()
     }
@@ -36,6 +37,10 @@ export class BrowserAdapter {
 
   visitRequestCompleted(visit) {
     visit.loadResponse()
+
+    if (visit.response.redirected) {
+      this.redirectedToLocation = visit.redirectedToLocation
+    }
   }
 
   visitRequestFailedWithStatusCode(visit, statusCode) {
@@ -73,6 +78,12 @@ export class BrowserAdapter {
 
   visitRendered(_visit) {}
 
+  // Link prefetching
+
+  linkPrefetchingIsEnabledForLocation(location) {
+    return true
+  }
+
   // Form Submission Delegate
 
   formSubmissionStarted(_formSubmission) {
@@ -87,8 +98,10 @@ export class BrowserAdapter {
 
   // Private
 
-  showVisitProgressBarAfterDelay() {
-    this.visitProgressBarTimeout = window.setTimeout(this.showProgressBar, this.session.progressBarDelay)
+  showVisitProgressBarAfterDelay(visit) {
+    this.visitProgressBarTimeout = window.setTimeout(() => {
+      if (visit.state == VisitState.started) this.showProgressBar()
+    }, this.session.progressBarDelay)
   }
 
   hideVisitProgressBar() {
@@ -120,7 +133,7 @@ export class BrowserAdapter {
   reload(reason) {
     dispatch("turbo:reload", { detail: reason })
 
-    window.location.href = this.location?.toString() || window.location.href
+    window.location.href = (this.redirectedToLocation || this.location)?.toString() || window.location.href
   }
 
   get navigator() {

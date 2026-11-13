@@ -1,4 +1,5 @@
 import { nextEventLoopTick } from "../../util"
+import { expandURL } from "../url"
 import { View } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { MorphingPageRenderer } from "./morphing_page_renderer"
@@ -7,6 +8,8 @@ import { PageSnapshot } from "./page_snapshot"
 import { SnapshotCache } from "./snapshot_cache"
 
 export class PageView extends View {
+  #lastSnapshotWrite = Promise.resolve()
+
   snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
@@ -16,7 +19,7 @@ export class PageView extends View {
   }
 
   renderPage(snapshot, isPreview = false, willRender = true, visit) {
-    const shouldMorphPage = this.isPageRefresh(visit) && this.snapshot.shouldMorphPage
+    const shouldMorphPage = this.isPageRefresh(visit) && (visit?.refresh?.method || this.snapshot.refreshMethod) === "morph"
     const rendererClass = shouldMorphPage ? MorphingPageRenderer : PageRenderer
 
     const renderer = new rendererClass(this.snapshot, snapshot, isPreview, willRender)
@@ -24,6 +27,7 @@ export class PageView extends View {
     if (!renderer.shouldRender) {
       this.forceReloaded = true
     } else {
+      this.forceReloaded = false
       visit?.changeHistory()
     }
 
@@ -40,19 +44,25 @@ export class PageView extends View {
     this.snapshotCache.clear()
   }
 
-  async cacheSnapshot(snapshot = this.snapshot) {
+  async cacheSnapshot(snapshot = this.snapshot, shouldNotifyApplication = true) {
     if (snapshot.isCacheable) {
-      this.delegate.viewWillCacheSnapshot()
-      const { lastRenderedLocation: location } = this
-      await nextEventLoopTick()
+      if (shouldNotifyApplication) this.delegate.viewWillCacheSnapshot()
+      const location = expandURL(this.lastRenderedLocation)
+      const cachedSnapshot = nextEventLoopTick().then(() => snapshot.clone())
+      return this.#cacheSnapshot(location, cachedSnapshot)
+    }
+  }
+
+  async cacheSnapshotAtLocation(snapshot, location) {
+    if (snapshot.isCacheable) {
+      const cacheLocation = expandURL(location)
       const cachedSnapshot = snapshot.clone()
-      this.snapshotCache.put(location, cachedSnapshot)
-      return cachedSnapshot
+      return this.#cacheSnapshot(cacheLocation, Promise.resolve(cachedSnapshot))
     }
   }
 
   getCachedSnapshotForLocation(location) {
-    return this.snapshotCache.get(location)
+    return this.snapshotCache.get(location)?.clone()
   }
 
   isPageRefresh(visit) {
@@ -60,10 +70,37 @@ export class PageView extends View {
   }
 
   shouldPreserveScrollPosition(visit) {
-    return this.isPageRefresh(visit) && this.snapshot.shouldPreserveScrollPosition
+    if (visit?.scroll) {
+      return visit.scroll === "preserve"
+    } else {
+      return this.isPageRefresh(visit) && (visit?.refresh?.scroll || this.snapshot.refreshScroll) === "preserve"
+    }
   }
 
   get snapshot() {
     return PageSnapshot.fromElement(this.element)
+  }
+
+  // Private
+
+  #cacheSnapshot(location, snapshotPromise) {
+    const snapshotResult = snapshotPromise.then(
+      (snapshot) => ({ snapshot }),
+      (error) => ({ error })
+    )
+
+    const write = this.#lastSnapshotWrite.then(async () => {
+      const result = await snapshotResult
+      if ("error" in result) throw result.error
+      const { snapshot } = result
+      this.snapshotCache.put(location, snapshot)
+      return snapshot
+    })
+
+    this.#lastSnapshotWrite = write.then(
+      () => undefined,
+      () => undefined
+    )
+    return write
   }
 }
