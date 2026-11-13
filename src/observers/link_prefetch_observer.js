@@ -121,18 +121,11 @@ export class LinkPrefetchObserver {
     }
   }
 
-  #usePrefetchedRequest(detail) {
-    const cached = prefetchCache.get(detail.url)
-
-    if (cached && !cached.abortSignal.aborted) {
-      // The navigation now owns this request, so prefetching must not cancel it.
-      this.#pendingFetchRequests.delete(cached)
-      detail.fetchRequest = cached
-    }
-  }
+  // Fetch request delegate
 
   prepareRequest(request) {
     this.#trackPendingFetchRequest(request)
+
     const link = request.target
 
     request.headers["X-Sec-Purpose"] = "prefetch"
@@ -148,8 +141,6 @@ export class LinkPrefetchObserver {
       request.headers["Turbo-Frame"] = turboFrameTarget
     }
   }
-
-  // Fetch request interface
 
   requestSucceededWithResponse() {}
 
@@ -180,6 +171,16 @@ export class LinkPrefetchObserver {
     }
 
     this.#pendingFetchRequests.set(fetchRequest, fetchRequest.url)
+  }
+
+  #usePrefetchedRequest(detail) {
+    const cached = prefetchCache.get(detail.url)
+
+    if (cached && !cached.abortSignal.aborted) {
+      // Once adopted, the request must not be canceled by this observer.
+      this.#pendingFetchRequests.delete(cached)
+      detail.fetchRequest = cached
+    }
   }
 
   #isPrefetchable(link) {
