@@ -538,14 +538,18 @@ export class FrameController {
     const ownsPage = document.body === proposedVisit.liveSnapshot.element
     const ownsHistory = session.location.href === proposedVisit.location.href
 
-    if (!this.#shouldVisitFrameResponse(proposedVisit, pageVisit)) {
-      if (ownsPage && ownsHistory) session.view.lastRenderedLocation = proposedVisit.location
+    if (ownsPage && ownsHistory) session.view.lastRenderedLocation = proposedVisit.location
 
-      if (proposedVisit.shouldCacheSnapshot) {
-        await this.#cachePromotedSnapshot(proposedVisit.snapshot, proposedVisit.originLocation)
-        if (proposedVisit.historyChanged) {
-          await this.#cachePromotedSnapshot(proposedVisit.advancedSnapshot, proposedVisit.location)
-        }
+    if (proposedVisit.shouldCacheSnapshot) {
+      await this.#cachePromotedSnapshot(proposedVisit.snapshot, proposedVisit.originLocation)
+      const currentPageVisit = this.#pageVisitInProgress()
+      proposedVisit.shouldCacheSnapshot &&= currentPageVisit?.shouldCacheSnapshot !== false
+
+      if (
+        proposedVisit.shouldCacheSnapshot && proposedVisit.historyChanged &&
+        !this.#shouldVisitFrameResponse(proposedVisit, currentPageVisit)
+      ) {
+        await this.#cachePromotedSnapshot(proposedVisit.advancedSnapshot, proposedVisit.location)
       }
     }
   }
@@ -562,13 +566,15 @@ export class FrameController {
       return
     }
 
+    // The origin snapshot is already cached under its own URL.
     session.visit(proposedVisit.location, {
       action: proposedVisit.action,
+      referrer: proposedVisit.originLocation,
       response: proposedVisit.response,
       willRender: false,
       updateHistory: false,
       restorationIdentifier: proposedVisit.restorationIdentifier,
-      snapshot: proposedVisit.snapshot
+      shouldCacheSnapshot: false
     })
   }
 

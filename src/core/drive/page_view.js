@@ -66,7 +66,11 @@ export class PageView extends View {
   }
 
   isPageRefresh(visit) {
-    return !visit || (this.lastRenderedLocation.pathname === visit.location.pathname && visit.action === "replace")
+    const previousLocation = visit?.willRender === false && visit.referrer ?
+      expandURL(visit.referrer) :
+      this.lastRenderedLocation
+
+    return !visit || (previousLocation.pathname === visit.location.pathname && visit.action === "replace")
   }
 
   shouldPreserveScrollPosition(visit) {
