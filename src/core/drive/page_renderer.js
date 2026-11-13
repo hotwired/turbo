@@ -11,7 +11,7 @@ export class PageRenderer extends Renderer {
   }
 
   get shouldRender() {
-    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
+    return this.newSnapshot.isVisitable && (!this.willRender || this.trackedElementsAreIdentical)
   }
 
   get reloadReason() {
@@ -64,12 +64,12 @@ export class PageRenderer extends Renderer {
 
     if (lang) {
       documentElement.setAttribute("lang", lang)
-    } else {
+    } else if (this.willRender) {
       documentElement.removeAttribute("lang")
     }
     if (dir) {
       documentElement.setAttribute("dir", dir)
-    } else {
+    } else if (this.willRender) {
       documentElement.removeAttribute("dir")
     }
   }
@@ -127,13 +127,19 @@ export class PageRenderer extends Renderer {
 
     for (const element of this.currentHeadProvisionalElements) {
       if (!this.isCurrentElementInElementList(element, newHeadElements)) {
-        document.head.removeChild(element)
+        if (this.willRender || this.#isSupersededTitle(element, newHeadElements)) {
+          document.head.removeChild(element)
+        }
       }
     }
 
     for (const element of newHeadElements) {
       document.head.appendChild(element)
     }
+  }
+
+  #isSupersededTitle(element, newHeadElements) {
+    return element.tagName == "TITLE" && newHeadElements.some(({ tagName }) => tagName == "TITLE")
   }
 
   isCurrentElementInElementList(element, elementList) {
