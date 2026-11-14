@@ -62,3 +62,21 @@ test("navigating does not leak an unhandled rejection when the view transition i
   expect(await page.evaluate(`window.startViewTransitionCalled`)).toEqual(true)
   expect(await page.evaluate(`window.unhandledRejections`)).toEqual([])
 })
+
+test("navigating a frame with data-turbo-action does not trigger a view transition", async ({ page }) => {
+  await page.evaluate(() => {
+    window.initialBody = document.body
+    window.frameVisitCompleted = new Promise(resolve => {
+      document.addEventListener("turbo:load", () => resolve(), { once: true })
+    })
+  })
+
+  await page.locator("#go-frame").click()
+  await page.evaluate(() => window.frameVisitCompleted.then(() => {}))
+
+  await expect(page.locator("#frame h2")).toHaveText("Loaded")
+  await expect(page).toHaveURL("/src/tests/fixtures/transitions/frame.html")
+  await expect(page.locator("h1")).toHaveText("Left")
+  expect(await page.evaluate(() => document.body === window.initialBody)).toEqual(true)
+  expect(await page.evaluate(() => window.startViewTransitionCalled)).toEqual(undefined)
+})
