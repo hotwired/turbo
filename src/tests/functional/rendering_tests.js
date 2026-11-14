@@ -608,6 +608,43 @@ test("rendering a redirect response replaces the body once and only once", async
   expect(await noNextBodyMutation(page), "replaces <body> element once").toEqual(true)
 })
 
+test("a download without a download attribute finishes the visit and hides its progress bar", async ({ page }) => {
+  const location = page.url()
+  let releaseResponse
+  const responseHeld = new Promise((resolve) => (releaseResponse = resolve))
+
+  await page.route("**/__turbo/download", async (route) => {
+    if (!route.request().isNavigationRequest()) await responseHeld
+    if (!route.request().failure()) await route.continue()
+  })
+
+  try {
+    await page.evaluate(() => {
+      window.Turbo.config.drive.progressBarDelay = 0
+      window.downloadDocument = document
+    })
+    await page.click("#download-link")
+
+    await expect(page.locator(".turbo-progress-bar")).toBeVisible()
+    await expect(page.locator("html")).toHaveAttribute("aria-busy", "true")
+
+    const downloaded = page.waitForEvent("download")
+    releaseResponse()
+    const download = await downloaded
+
+    expect(download.suggestedFilename()).toEqual("svg.svg")
+    expect(await download.failure()).toBeNull()
+    await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
+    await expect(page.locator("html")).not.toHaveAttribute("aria-busy")
+    await expect(page.locator("h1")).toHaveText("Rendering")
+    await expect(page).toHaveURL(location)
+    expect(await page.evaluate(() => window.downloadDocument === document)).toEqual(true)
+  } finally {
+    releaseResponse()
+    await page.unrouteAll({ behavior: "wait" })
+  }
+})
+
 function deepElementsEqual(page, left, right) {
   return page.evaluate(
     ([left, right]) => left.length == right.length && left.every((element) => right.includes(element)),

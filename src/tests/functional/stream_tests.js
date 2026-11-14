@@ -168,6 +168,67 @@ test("receiving a remove stream message preserves focus blurs the activeElement"
   await expect(page.locator(":focus")).not.toBeAttached()
 })
 
+test("an unrelated stream message does not steal focus from a newly focused input", async ({ page }) => {
+  const activeElementId = await page.evaluate(async () => {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<div id="modal" tabindex="-1"><input id="email"></div><span id="notification">Before</span>`
+    )
+
+    document.getElementById("modal").focus()
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="update" target="notification">
+        <template>After</template>
+      </turbo-stream>
+    `)
+    document.getElementById("email").focus()
+
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    return document.activeElement.id
+  })
+
+  expect(activeElementId).toEqual("email")
+  await expect(page.locator("#notification")).toHaveText("After")
+})
+
+test("replacing the focused input with another input with the same id restores focus", async ({ page }) => {
+  const activeElementId = await page.evaluate(async () => {
+    document.getElementById("container-element").focus()
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" target="container-element">
+        <template><input id="container-element"></template>
+      </turbo-stream>
+    `)
+
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    return document.activeElement.id
+  })
+
+  expect(activeElementId).toEqual("container-element")
+})
+
+test("replacing the focused input after focus has moved elsewhere keeps the new target", async ({ page }) => {
+  const activeElementId = await page.evaluate(async () => {
+    document.body.insertAdjacentHTML("beforeend", `<input id="moved-focus">`)
+
+    document.getElementById("container-element").focus()
+    window.Turbo.renderStreamMessage(`
+      <turbo-stream action="replace" target="container-element">
+        <template><input id="container-element"></template>
+      </turbo-stream>
+    `)
+    document.getElementById("moved-focus").focus()
+
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    return document.activeElement.id
+  })
+
+  expect(activeElementId).toEqual("moved-focus")
+})
+
 test("dispatches a turbo:before-morph-element & turbo:morph-element for each morph stream action", async ({ page }) => {
   await page.evaluate(() => {
     window.Turbo.renderStreamMessage(`

@@ -1,4 +1,4 @@
-import { getLocationForLink } from "../core/url"
+import { expandURL, getLocationForLink, toCacheKey } from "../core/url"
 import {
   dispatch,
   getMetaContent,
@@ -12,6 +12,7 @@ import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 export class LinkPrefetchObserver {
   started = false
   #prefetchedLink = null
+  #pendingFetchRequests = new Map()
 
   constructor(delegate, eventTarget) {
     this.delegate = delegate
@@ -41,6 +42,12 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
+    this.eventTarget.removeEventListener("turbo:visit", this.#cancelPendingFetchRequests, true)
+    this.#cancelPrefetchRequest()
+    for (const fetchRequest of this.#pendingFetchRequests.keys()) {
+      fetchRequest.cancel()
+    }
+    this.#pendingFetchRequests.clear()
     this.started = false
   }
 
@@ -55,6 +62,7 @@ export class LinkPrefetchObserver {
     })
 
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
+    this.eventTarget.addEventListener("turbo:visit", this.#cancelPendingFetchRequests, true)
     this.started = true
   }
 
@@ -62,7 +70,7 @@ export class LinkPrefetchObserver {
     if (getMetaContent("turbo-prefetch") === "false") return
 
     const target = event.target
-    const isLink = target.matches && target.matches("a[href]:not([target^=_]):not([download])")
+    const isLink = target.matches && target.matches("a[href]:not([download])")
 
     if (isLink && this.#isPrefetchable(target)) {
       const link = target
@@ -81,7 +89,18 @@ export class LinkPrefetchObserver {
 
         fetchRequest.fetchOptions.priority = "low"
 
-        prefetchCache.putLater(location, fetchRequest, this.#cacheTtl)
+        prefetchCache.putLater(fetchRequest.url, fetchRequest, this.#cacheTtl)
+      }
+    }
+  }
+
+  #cancelPendingFetchRequests = (event) => {
+    const key = toCacheKey(expandURL(event.detail.url))
+
+    for (const [fetchRequest, location] of this.#pendingFetchRequests) {
+      if (toCacheKey(location) !== key) {
+        fetchRequest.cancel()
+        this.#pendingFetchRequests.delete(fetchRequest)
       }
     }
   }
@@ -97,31 +116,31 @@ export class LinkPrefetchObserver {
 
   #tryToUsePrefetchedRequest = (event) => {
     if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
-      const cached = prefetchCache.get(event.detail.url)
-
-      if (cached) {
-        // User clicked link, use cache response
-        event.detail.fetchRequest = cached
-      }
-
+      this.#usePrefetchedRequest(event.detail)
       prefetchCache.clear()
     }
   }
 
+  // Fetch request delegate
+
   prepareRequest(request) {
+    this.#trackPendingFetchRequest(request)
+
     const link = request.target
 
     request.headers["X-Sec-Purpose"] = "prefetch"
 
     const turboFrame = link.closest("turbo-frame")
-    const turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+    let turboFrameTarget = link.getAttribute("data-turbo-frame") || turboFrame?.getAttribute("target") || turboFrame?.id
+
+    if (turboFrameTarget === "_self") {
+      turboFrameTarget = turboFrame?.id
+    }
 
     if (turboFrameTarget && turboFrameTarget !== "_top") {
       request.headers["Turbo-Frame"] = turboFrameTarget
     }
   }
-
-  // Fetch request interface
 
   requestSucceededWithResponse() {}
 
@@ -129,7 +148,9 @@ export class LinkPrefetchObserver {
 
   requestErrored(fetchRequest) {}
 
-  requestFinished(fetchRequest) {}
+  requestFinished(fetchRequest) {
+    this.#pendingFetchRequests.delete(fetchRequest)
+  }
 
   requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
 
@@ -137,6 +158,29 @@ export class LinkPrefetchObserver {
 
   get #cacheTtl() {
     return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
+  }
+
+  #trackPendingFetchRequest(fetchRequest) {
+    const key = toCacheKey(fetchRequest.url)
+
+    for (const [pendingFetchRequest, location] of this.#pendingFetchRequests) {
+      if (toCacheKey(location) === key) {
+        pendingFetchRequest.cancel()
+        this.#pendingFetchRequests.delete(pendingFetchRequest)
+      }
+    }
+
+    this.#pendingFetchRequests.set(fetchRequest, fetchRequest.url)
+  }
+
+  #usePrefetchedRequest(detail) {
+    const cached = prefetchCache.get(detail.url)
+
+    if (cached && !cached.abortSignal.aborted) {
+      // Once adopted, the request must not be canceled by this observer.
+      this.#pendingFetchRequests.delete(cached)
+      detail.fetchRequest = cached
+    }
   }
 
   #isPrefetchable(link) {
@@ -155,7 +199,13 @@ export class LinkPrefetchObserver {
 }
 
 const unfetchableLink = (link) => {
-  return link.origin !== document.location.origin || !["http:", "https:"].includes(link.protocol) || link.hasAttribute("target")
+  const target = link.getAttribute("target")
+
+  return (
+    link.origin !== document.location.origin ||
+    !["http:", "https:"].includes(link.protocol) ||
+    (target && target !== "_self")
+  )
 }
 
 const linkToTheSamePage = (link) => {
