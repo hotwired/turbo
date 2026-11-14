@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import {
-  nextBeat, nextEventNamed, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget,
+  nextBeat, nextEventOnTarget, noNextEventNamed, noNextEventOnTarget,
   sleep, listenForEventOnTarget, readEventLogs
 } from "../helpers/page"
 import fs from "fs"
@@ -258,6 +258,119 @@ test("it cancels the prefetch request if the link is no longer hovered", async (
   })
 })
 
+for (const prefetchNextPage of [false, true]) {
+  test(`it cancels an adopted prefetch when another navigation starts${prefetchNextPage ? " using a prefetch" : ""}`, async ({ page }) => {
+    const held = await holdPrefetchResponse(page)
+
+    try {
+      await page.hover("#anchor_for_prefetch_other_href")
+      await held.started(1)
+      await followPendingPrefetch(page)
+
+      if (prefetchNextPage) {
+        const response = page.waitForResponse("**/src/tests/fixtures/prefetched.html")
+        await page.hover("#anchor_for_prefetch")
+        await (await response).finished()
+      }
+      await page.locator("#anchor_for_prefetch").evaluate(link => link.click())
+
+      await page.waitForFunction(() => window.adoptedPrefetch.abortSignal.aborted)
+      await expect(page).toHaveTitle("Prefetched Page")
+      await expect(page).toHaveURL("/src/tests/fixtures/prefetched.html")
+      held.release()
+      await held.finished()
+      await expect(page).toHaveURL("/src/tests/fixtures/prefetched.html")
+    } finally {
+      held.release()
+      await held.finished()
+    }
+  })
+}
+
+test("it cancels an unadopted prefetch when the same link is hovered again", async ({ page }) => {
+  const held = await holdPrefetchResponse(page)
+
+  try {
+    await page.hover("#anchor_for_prefetch_other_href")
+    await held.started(1)
+    await page.mouse.move(0, 0)
+    await page.hover("#anchor_for_prefetch_other_href")
+    await held.started(2)
+
+    expect(await page.evaluate(() => window.pendingPrefetches.map(signal => signal.aborted))).toEqual([true, false])
+    expect(held.requests).toHaveLength(2)
+  } finally {
+    held.release()
+    await held.finished()
+  }
+})
+
+test("it adopts the running prefetch without issuing another request", async ({ page }) => {
+  const held = await holdPrefetchResponse(page)
+
+  try {
+    await page.hover("#anchor_for_prefetch_other_href")
+    await held.started(1)
+    await followPendingPrefetch(page)
+
+    expect(await page.evaluate(() => window.adoptedPrefetch.abortSignal === window.pendingPrefetches[0])).toBe(true)
+    expect(await page.evaluate(() => window.adoptedPrefetch.abortSignal.aborted)).toBe(false)
+    held.release()
+
+    await expect(page).toHaveTitle("Prefetched Page")
+    await expect(page).toHaveURL("/src/tests/fixtures/prefetched.html?slow=true")
+    expect(held.requests).toHaveLength(1)
+  } finally {
+    held.release()
+    await held.finished()
+  }
+})
+
+test("rehovering does not abort the prefetch adopted by a navigation", async ({ page }) => {
+  const held = await holdPrefetchResponse(page)
+
+  try {
+    await page.hover("#anchor_for_prefetch_other_href")
+    await held.started(1)
+    await followPendingPrefetch(page)
+    await page.mouse.move(0, 0)
+    await page.hover("#anchor_for_prefetch_other_href")
+    await held.started(2)
+
+    expect(await page.evaluate(() => window.adoptedPrefetch.abortSignal.aborted)).toBe(false)
+    held.release()
+
+    await expect(page).toHaveTitle("Prefetched Page")
+    await expect(page).toHaveURL("/src/tests/fixtures/prefetched.html?slow=true")
+    expect(held.requests).toHaveLength(2)
+  } finally {
+    held.release()
+    await held.finished()
+  }
+})
+
+test("it adopts a pending prefetch when the navigation changes only its fragment", async ({ page }) => {
+  const held = await holdPrefetchResponse(page)
+
+  try {
+    await page.locator("#anchor_for_prefetch_other_href").evaluate(link => link.hash = "first")
+    await page.hover("#anchor_for_prefetch_other_href")
+    await held.started(1)
+    await page.locator("#anchor_for_prefetch_other_href").evaluate(link => link.hash = "second")
+    await followPendingPrefetch(page)
+
+    expect(await page.evaluate(() => window.adoptedPrefetch.abortSignal.aborted)).toBe(false)
+    held.release()
+
+    await expect(page).toHaveTitle("Prefetched Page")
+    await expect(page).toHaveURL("/src/tests/fixtures/prefetched.html?slow=true#second")
+    expect(held.requests).toHaveLength(1)
+  } finally {
+    held.release()
+    await held.finished()
+  }
+})
+
 test("it resets the cache when a link is hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
@@ -332,8 +445,7 @@ test("it doesn't prefetch the page while a POST form submission is in progress",
     if (request.headers()["x-sec-purpose"] === "prefetch") prefetchRequests.push(request.url())
   })
 
-  await page.click("#form_over_anchor button")
-  await nextEventNamed(page, "turbo:submit-end")
+  await submitFormAndWait(page, () => page.click("#form_over_anchor button"))
 
   const { prefetchDelayElapsed, responded } = await page.evaluate(() => window.timings)
   expect(prefetchDelayElapsed).toBeLessThan(responded)
@@ -348,7 +460,7 @@ test("it cancels a scheduled prefetch when a POST form submission starts", async
     if (request.headers()["x-sec-purpose"] === "prefetch") prefetchRequests.push(request.url())
   })
 
-  await page.evaluate(() => {
+  await submitFormAndWait(page, () => page.evaluate(() => {
     window.timings = {}
     const record = (name) => () => (window.timings[name] ??= performance.now())
     document.getElementById("form_over_anchor").addEventListener("turbo:before-fetch-response", record("responded"))
@@ -357,8 +469,7 @@ test("it cancels a scheduled prefetch when a POST form submission starts", async
     // Runs after the prefetch timer that LinkPrefetchObserver has just scheduled
     setTimeout(record("prefetchDelayElapsed"), 100)
     document.getElementById("form_over_anchor").requestSubmit()
-  })
-  await nextEventNamed(page, "turbo:submit-end")
+  }))
 
   const { prefetchDelayElapsed, responded } = await page.evaluate(() => window.timings)
   expect(prefetchDelayElapsed).toBeLessThan(responded)
@@ -367,9 +478,7 @@ test("it cancels a scheduled prefetch when a POST form submission starts", async
 
 test("it prefetches the page again after a POST form submission finishes", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
-  await page.click("#form_over_anchor button")
-  await nextEventNamed(page, "turbo:submit-end")
-  await nextEventNamed(page, "turbo:load")
+  await submitFormAndWait(page, () => page.click("#form_over_anchor button"), ["turbo:submit-end", "turbo:load"])
 
   const link = page.locator("#anchor_for_prefetch")
   await link.hover()
@@ -514,4 +623,57 @@ async function prefetchAndFollowLink(page, selector) {
   await link.click()
 
   return { requests, prefetchedRequest: response.request() }
+}
+
+async function holdPrefetchResponse(page) {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+  await page.locator("#anchor_for_prefetch_other_href").evaluate(link => {
+    link.href = "/src/tests/fixtures/prefetched.html?slow=true"
+  })
+  await page.evaluate(() => {
+    window.pendingPrefetches = []
+    document.addEventListener("turbo:before-fetch-request", event => {
+      if (event.detail.fetchOptions.headers["X-Sec-Purpose"] === "prefetch") {
+        window.pendingPrefetches.push(event.detail.fetchOptions.signal)
+      }
+      if (event.detail.fetchRequest && !window.adoptedPrefetch) window.adoptedPrefetch = event.detail.fetchRequest
+    })
+  })
+
+  let release
+  const released = new Promise(resolve => release = resolve)
+  const requests = []
+  const pendingResponses = []
+  await page.route("**/src/tests/fixtures/prefetched.html?slow=true", route => {
+    const request = route.request()
+    requests.push(request)
+    const response = (async () => {
+      await released
+      if (!request.failure()) await route.continue()
+    })()
+    pendingResponses.push(response)
+    return response
+  })
+
+  return {
+    release,
+    requests,
+    started: count => expect.poll(() => requests.length).toBe(count),
+    finished: () => Promise.all(pendingResponses)
+  }
+}
+
+async function followPendingPrefetch(page) {
+  await page.locator("#anchor_for_prefetch_other_href").evaluate(link => link.click())
+  await page.waitForFunction(() => !!window.adoptedPrefetch)
+}
+
+async function submitFormAndWait(page, submit, events = ["turbo:submit-end"]) {
+  await page.evaluate(eventNames => {
+    window.formSubmissionCompleted = Promise.all(eventNames.map(eventName => new Promise(resolve => {
+      document.addEventListener(eventName, () => resolve(), { once: true })
+    })))
+  }, events)
+  await submit()
+  await page.evaluate(() => window.formSubmissionCompleted.then(() => {}))
 }

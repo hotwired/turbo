@@ -46,6 +46,7 @@ export const FetchEnctype = {
 export class FetchRequest {
   abortController = new AbortController()
   #resolveRequestPromise = (_value) => {}
+  #adoptedRequest = null
 
   constructor(delegate, method, location, requestBody = new URLSearchParams(), target = null, enctype = FetchEnctype.urlEncoded) {
     const [url, body] = buildResourceAndBody(expandURL(location), method, requestBody, enctype)
@@ -116,6 +117,7 @@ export class FetchRequest {
 
   cancel() {
     this.abortController.abort()
+    this.#adoptedRequest?.cancel()
   }
 
   async perform() {
@@ -126,12 +128,15 @@ export class FetchRequest {
       this.delegate.requestStarted(this)
 
       if (event.detail.fetchRequest) {
-        this.response = event.detail.fetchRequest.response
+        this.#adoptedRequest = event.detail.fetchRequest
+        if (this.abortSignal.aborted) this.#adoptedRequest.cancel()
+        this.response = this.#adoptedRequest.response
       } else {
         this.response = fetch(this.url.href, fetchOptions)
       }
 
       const response = await this.response
+      if (this.#adoptedRequest && this.abortSignal.aborted) return
       return await this.receive(response)
     } catch (error) {
       if (error.name !== "AbortError") {
