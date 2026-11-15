@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-prefetch" content="false">
+    <title>Lazy frame loading</title>
+    <script>
+      window.frameRequests = {}
+      document.addEventListener("turbo:before-fetch-request", event => {
+        if (event.target.localName === "turbo-frame") {
+          const { id } = event.target
+          window.frameRequests[id] = (window.frameRequests[id] || 0) + 1
+        }
+      })
+    </script>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+  </head>
+  <body>
+    <details id="lazy-menu">
+      <summary>Open lazy frame</summary>
+      <turbo-frame id="frame" src="/src/tests/fixtures/frame_lazy.html?frame=frame&amp;version=A" loading="lazy">
+        <form id="target-form" action="/src/tests/fixtures/frame_lazy.html" data-turbo-frame="other-frame">
+          <input type="hidden" name="form" value="success">
+          <button>Submit GET</button>
+        </form>
+        <form id="rejected-form" action="/src/tests/fixtures/frame_lazy.html" data-turbo-frame="other-frame">
+          <input type="hidden" name="form" value="rejected">
+          <button>Submit rejected GET</button>
+        </form>
+      </turbo-frame>
+      <turbo-frame id="other-frame" loading="lazy"></turbo-frame>
+    </details>
+    <script>
+      const frame = document.getElementById("frame")
+      window.initialFrameLoad = frame.loaded
+      window.initialLoadSettled = false
+      window.initialFrameLoad.then(() => {
+        window.initialLoadSettled = true
+        frame.querySelector("input")?.focus()
+      })
+    </script>
+  </body>
+</html>

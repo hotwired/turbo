@@ -35,6 +35,7 @@ export class FrameController {
   #pendingMorphRefresh = false
   #connected = false
   #hasBeenLoaded = false
+  #resolveLazyLoadPromise = null
   #ignoredAttributes = new Set()
   #formSubmissions = new Set()
   #formSubmissionContexts = new WeakMap()
@@ -55,7 +56,7 @@ export class FrameController {
     if (!this.#connected) {
       this.#connected = true
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
-        this.appearanceObserver.start()
+        this.#observeLazyLoad()
       } else {
         this.#loadSourceURL()
       }
@@ -92,6 +93,8 @@ export class FrameController {
       this.#cancelFetchRequest()
     } else if (this.loadingStyle == FrameLoadingStyle.eager) {
       this.#loadSourceURL()
+    } else {
+      this.#observeLazyLoad()
     }
   }
 
@@ -101,6 +104,7 @@ export class FrameController {
     this.#pendingMorphRefresh = false
 
     if (!this.sourceURL) {
+      this.#resolveLazyLoadPromise = null
       this.#cancelFetchRequest()
     }
 
@@ -110,6 +114,8 @@ export class FrameController {
 
     if (this.loadingStyle == FrameLoadingStyle.eager || this.#hasBeenLoaded) {
       this.#loadSourceURL()
+    } else if (!this.#currentFetchRequest) {
+      this.#observeLazyLoad()
     }
   }
 
@@ -131,7 +137,7 @@ export class FrameController {
 
   loadingStyleChanged() {
     if (this.loadingStyle == FrameLoadingStyle.lazy) {
-      this.appearanceObserver.start()
+      this.#observeLazyLoad()
     } else {
       this.appearanceObserver.stop()
       this.#loadSourceURL()
@@ -140,9 +146,14 @@ export class FrameController {
 
   async #loadSourceURL(options = {}) {
     if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
-      this.element.loaded = this.#visit(expandURL(this.sourceURL), options)
+      const resolveLazyLoadPromise = this.#resolveLazyLoadPromise
+      this.#resolveLazyLoadPromise = null
+
+      const loaded = this.#visit(expandURL(this.sourceURL), options)
+      this.element.loaded = loaded
+      resolveLazyLoadPromise?.(loaded)
       this.appearanceObserver.stop()
-      await this.element.loaded
+      await loaded
     }
   }
 
@@ -319,6 +330,7 @@ export class FrameController {
     const proposedVisit = context?.proposedVisit
 
     frame.delegate.#pendingMorphRefresh = false
+    frame.delegate.#resolveLazyLoadPromise = null
     frame.delegate.loadResponse(response, formSubmission.fetchRequest.url, { proposedVisit })
 
     if (!formSubmission.isSafe) {
@@ -332,6 +344,7 @@ export class FrameController {
 
   formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
     this.#pendingMorphRefresh = false
+    this.#resolveLazyLoadPromise = null
     this.element.delegate.loadResponse(fetchResponse, formSubmission.fetchRequest.url)
     session.clearCache()
   }
@@ -375,6 +388,22 @@ export class FrameController {
   viewInvalidated() {}
 
   // Private
+
+  #observeLazyLoad() {
+    if (this.isActive) {
+      if (
+        !this.#resolveLazyLoadPromise && !this.#currentFetchRequest && this.enabled &&
+        this.element.isConnected && !this.complete && this.sourceURL
+      ) {
+        this.element.loaded = new Promise((resolve) => {
+          this.#resolveLazyLoadPromise = resolve
+        })
+      }
+
+      this.appearanceObserver.stop()
+      this.appearanceObserver.start()
+    }
+  }
 
   #reload({ isMorphRefresh = false } = {}) {
     const { refresh, src } = this.element
