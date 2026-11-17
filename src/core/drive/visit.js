@@ -1,5 +1,5 @@
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
-import { getAnchor } from "../url"
+import { getAnchor, locationIsVisitable } from "../url"
 import { PageSnapshot } from "./page_snapshot"
 import { getHistoryMethodForAction, removeTemporaryElementsFrom, uuid } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
@@ -173,7 +173,7 @@ export class Visit {
     if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
       const method = getHistoryMethodForAction(actionForHistory)
-      this.history.update(method, this.location, this.restorationIdentifier, { documentIdentifier: this.#documentIdentifier })
+      this.history.update(method, this.#locationForHistory, this.restorationIdentifier, { documentIdentifier: this.#documentIdentifier })
       this.historyChanged = true
     }
   }
@@ -407,6 +407,15 @@ export class Visit {
   }
 
   // Private
+
+  get #locationForHistory() {
+    const { redirectedToLocation } = this
+    if (redirectedToLocation && locationIsVisitable(redirectedToLocation, this.view.snapshot.rootLocation)) {
+      return redirectedToLocation
+    } else {
+      return this.location
+    }
+  }
 
   hasPreloadedResponse() {
     return typeof this.response == "object"

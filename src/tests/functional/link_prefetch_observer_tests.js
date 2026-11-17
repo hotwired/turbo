@@ -233,28 +233,32 @@ test("doesn't include turbo-frame header when the link with a data-turbo-frame=_
 
 test("it prefetches links with a delay", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
+  await page.clock.install()
+  await page.clock.pauseAt(Date.now() + 1000)
 
   await assertRequestNotMade(page, async () => {
     await page.hover("#anchor_for_prefetch")
-    await sleep(75)
+    await page.clock.runFor(75)
   })
 
-  await assertRequestMade(page, async () => {
-    await sleep(100)
-  })
+  const request = page.waitForRequest("**/src/tests/fixtures/prefetched.html")
+  await page.clock.runFor(100)
+  await request
 })
 
 test("it cancels the prefetch request if the link is no longer hovered", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
+  await page.clock.install()
+  await page.clock.pauseAt(Date.now() + 1000)
 
   await assertRequestNotMade(page, async () => {
     await page.hover("#anchor_for_prefetch")
-    await sleep(75)
+    await page.clock.runFor(75)
   })
 
   await assertRequestNotMade(page, async () => {
     await page.mouse.move(0, 0)
-    await sleep(100)
+    await page.clock.runFor(100)
   })
 })
 
