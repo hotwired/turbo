@@ -515,6 +515,14 @@ export class FrameController {
 
       await this.view.render(renderer)
       this.complete = true
+      if (
+        proposedVisit?.documentIdentifier &&
+        this.element.ownerDocument.body === proposedVisit.liveSnapshot.element &&
+        session.history.entryDocumentIdentifier === proposedVisit.documentIdentifier
+      ) {
+        session.history.adoptDocument(proposedVisit.documentIdentifier)
+        session.view.lastRenderedLocation = session.history.location
+      }
       if (proposedVisit) {
         this.#prepareSnapshotsForVisit(proposedVisit)
         await this.#cachePromotedVisitIfNeeded(proposedVisit)
@@ -568,6 +576,7 @@ export class FrameController {
       if (document.body === proposedVisit.liveSnapshot.element && !pageVisit?.historyChanged) {
         const method = getHistoryMethodForAction(proposedVisit.action)
         session.history.update(method, proposedVisit.location, proposedVisit.restorationIdentifier)
+        proposedVisit.documentIdentifier = session.history.entryDocumentIdentifier
         proposedVisit.historyChanged = true
         if (pageVisit) session.view.lastRenderedLocation = proposedVisit.location
       }

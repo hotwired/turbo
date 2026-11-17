@@ -250,10 +250,11 @@ test("following a link to a page with a matching frame does not dispatch a turbo
   page
 }) => {
   await page.click("#link-frame")
+  await page.locator("#frame").evaluate(frame => frame.loaded)
 
-  expect(await noNextEventNamed(page, "turbo:frame-missing")).toBeTruthy()
-
-  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+  const events = await readEventLogs(page)
+  expect(events.some(([name, _detail, target]) => name === "turbo:frame-load" && target === "frame")).toEqual(true)
+  expect(events.some(([name]) => name === "turbo:frame-missing")).toEqual(false)
 
   const src = await attributeForSelector(page, "#frame", "src")
   expect(
@@ -520,12 +521,13 @@ test("following a link with data-turbo-frame='_parent' when parent frame is disa
 test("following a link to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
   page
 }) => {
+  await page.locator("#recursive").evaluate(frame => frame.loaded)
+  await readEventLogs(page)
   await page.click("#recursive summary")
 
   await expect(page.locator("#recursive details")).toHaveAttribute("open")
 
   await page.click("#recursive a")
-  await nextEventOnTarget(page, "recursive", "turbo:frame-load")
   await nextEventOnTarget(page, "composer", "turbo:frame-load")
 
   await expect(page.locator("#recursive details")).not.toHaveAttribute("open")
@@ -534,12 +536,13 @@ test("following a link to a page with a <turbo-frame recurse> which lazily loads
 test("submitting a form that redirects to a page with a <turbo-frame recurse> which lazily loads a matching frame", async ({
   page
 }) => {
+  await page.locator("#recursive").evaluate(frame => frame.loaded)
+  await readEventLogs(page)
   await page.click("#recursive summary")
 
   await expect(page.locator("#recursive details")).toHaveAttribute("open")
 
   await page.click("#recursive input[type=submit]")
-  await nextEventOnTarget(page, "recursive", "turbo:frame-load")
   await nextEventOnTarget(page, "composer", "turbo:frame-load")
 
   await expect(page.locator("#recursive details")).not.toHaveAttribute("open")

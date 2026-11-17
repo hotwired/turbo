@@ -255,6 +255,7 @@ for (const outcome of ["success", "rejected"]) {
     await saveFrameLoad(page, "other-frame", "other-frame")
     await page.locator(outcome === "success" ? "#target-form" : "#rejected-form").evaluate(form => form.requestSubmit())
     await expect(page.locator(`#${renderedFrame} h2`)).toHaveText("Submitted frame")
+    await expect(page.locator(`#${renderedFrame}`)).toHaveAttribute("complete")
 
     await openMenu(page)
     await finishRequest(page, 1, waitingFrame)

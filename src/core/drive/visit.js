@@ -45,6 +45,8 @@ export const Direction = {
 }
 
 export class Visit {
+  #documentIdentifier
+
   identifier = uuid() // Required by turbo-ios
   timingMetrics = {}
 
@@ -89,6 +91,18 @@ export class Visit {
     this.response = response
     this.willRender = willRender
     this.isPageRefresh = this.view.isPageRefresh(this)
+    if (
+      action === "restore" && historyChanged &&
+      this.restorationIdentifier === this.history.restorationIdentifier
+    ) {
+      this.#documentIdentifier = this.history.entryDocumentIdentifier || uuid()
+    } else if (!willRender) {
+      this.#documentIdentifier = this.history.entryDocumentIdentifier || this.history.renderedDocumentIdentifier
+    } else if (this.isPageRefresh && this.location.href === this.referrer?.href) {
+      this.#documentIdentifier = this.history.renderedDocumentIdentifier
+    } else {
+      this.#documentIdentifier = uuid()
+    }
     this.visitCachedSnapshot = visitCachedSnapshot
     this.updateHistory = updateHistory
     this.scrolled = !willRender
@@ -159,8 +173,14 @@ export class Visit {
     if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
       const method = getHistoryMethodForAction(actionForHistory)
-      this.history.update(method, this.location, this.restorationIdentifier)
+      this.history.update(method, this.location, this.restorationIdentifier, { documentIdentifier: this.#documentIdentifier })
       this.historyChanged = true
+    }
+  }
+
+  recordDocument() {
+    if (this.willRender || this.history.entryDocumentIdentifier === this.#documentIdentifier) {
+      this.history.adoptDocument(this.#documentIdentifier)
     }
   }
 

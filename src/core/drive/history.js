@@ -1,6 +1,10 @@
 import { uuid } from "../../util"
 
 export class History {
+  // The current entry can change before a paused render replaces the visible document.
+  #renderedDocumentIdentifier = uuid()
+  #entryDocumentIdentifier = this.#renderedDocumentIdentifier
+
   location
   restorationIdentifier = uuid()
   restorationData = {}
@@ -14,9 +18,14 @@ export class History {
   start() {
     if (!this.started) {
       addEventListener("popstate", this.onPopState, false)
-      this.currentIndex = history.state?.turbo?.restorationIndex || 0
+      const state = history.state?.turbo
+      this.currentIndex = state?.restorationIndex || 0
+      this.#renderedDocumentIdentifier = state?.documentIdentifier || this.#renderedDocumentIdentifier
       this.started = true
-      this.replace(new URL(window.location.href))
+      this.update(history.replaceState, new URL(window.location.href), state?.restorationIdentifier || this.restorationIdentifier, {
+        documentIdentifier: this.#renderedDocumentIdentifier,
+        preserveState: true
+      })
     }
   }
 
@@ -35,13 +44,36 @@ export class History {
     this.update(history.replaceState, location, restorationIdentifier)
   }
 
-  update(method, location, restorationIdentifier = uuid()) {
-    if (method === history.pushState) ++this.currentIndex
+  update(method, location, restorationIdentifier = uuid(), { documentIdentifier = uuid(), preserveState = false } = {}) {
+    if (method === history.pushState) {
+      // A router can create an entry without emitting popstate before a Drive visit leaves it.
+      if (!history.state?.turbo?.documentIdentifier) {
+        this.update(history.replaceState, new URL(window.location.href), history.state?.turbo?.restorationIdentifier || uuid(), {
+          documentIdentifier: this.#entryDocumentIdentifier || this.#renderedDocumentIdentifier,
+          preserveState: true
+        })
+      }
+      ++this.currentIndex
+    }
 
-    const state = { turbo: { restorationIdentifier, restorationIndex: this.currentIndex } }
+    const state = preserveState && typeof history.state === "object" && history.state !== null ? { ...history.state } : {}
+    state.turbo = { ...state.turbo, restorationIdentifier, restorationIndex: this.currentIndex, documentIdentifier }
     method.call(history, state, "", location.href)
     this.location = location
     this.restorationIdentifier = restorationIdentifier
+    this.#entryDocumentIdentifier = documentIdentifier
+  }
+
+  get renderedDocumentIdentifier() {
+    return this.#renderedDocumentIdentifier
+  }
+
+  get entryDocumentIdentifier() {
+    return this.#entryDocumentIdentifier
+  }
+
+  adoptDocument(documentIdentifier) {
+    this.#renderedDocumentIdentifier = documentIdentifier
   }
 
   // Restoration data
@@ -84,16 +116,27 @@ export class History {
 
   onPopState = (event) => {
     const { turbo } = event.state || {}
+    const previousEntryDocumentIdentifier = this.#entryDocumentIdentifier
     this.location = new URL(window.location.href)
 
     if (turbo) {
-      const { restorationIdentifier, restorationIndex } = turbo
+      const { restorationIdentifier, restorationIndex, documentIdentifier = uuid() } = turbo
       this.restorationIdentifier = restorationIdentifier
+      this.#entryDocumentIdentifier = documentIdentifier
       const direction = restorationIndex > this.currentIndex ? "forward" : "back"
-      this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(this.location, restorationIdentifier, direction)
+      const isSameDocument = documentIdentifier === this.#renderedDocumentIdentifier &&
+        previousEntryDocumentIdentifier === this.#renderedDocumentIdentifier
       this.currentIndex = restorationIndex
+      if (!turbo.documentIdentifier) {
+        this.update(history.replaceState, this.location, restorationIdentifier, { documentIdentifier, preserveState: true })
+      }
+      this.delegate.historyPoppedToLocationWithRestorationIdentifierAndDirection(this.location, restorationIdentifier, direction, isSameDocument)
     } else {
       this.currentIndex++
+      this.update(history.replaceState, this.location, uuid(), {
+        documentIdentifier: this.#entryDocumentIdentifier || this.#renderedDocumentIdentifier,
+        preserveState: true
+      })
       this.delegate.historyPoppedWithEmptyState(this.location)
     }
   }

@@ -244,15 +244,13 @@ test("following a same-origin POST link with data-turbo-action=replace", async (
 })
 
 test("following a same-origin data-turbo=false link", async ({ page }) => {
-  await page.click("#same-origin-false-link")
-  await page.waitForEvent("load")
+  await Promise.all([page.waitForEvent("load"), page.click("#same-origin-false-link")])
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
   expect(await visitAction(page)).toEqual("load")
 })
 
 test("following a same-origin unannotated link inside a data-turbo=false container", async ({ page }) => {
-  await page.click("#same-origin-unannotated-link-inside-false-container")
-  await page.waitForEvent("load")
+  await Promise.all([page.waitForEvent("load"), page.click("#same-origin-unannotated-link-inside-false-container")])
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
   expect(await visitAction(page)).toEqual("load")
 })
@@ -292,7 +290,7 @@ test("following a cross-origin unannotated link", async ({ page }) => {
 test("following a same-origin [target] link", async ({ page }) => {
   const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#same-origin-targeted-link")])
 
-  expect(pathname(popup.url())).toEqual("/src/tests/fixtures/one.html")
+  await expect(popup).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
   expect(await visitAction(page)).toEqual("load")
 })
 
@@ -496,10 +494,17 @@ test("same-page anchor visits do not trigger visit events", async ({ page }) => 
     "turbo:load"
   ]
 
-  for (const eventName in events) {
-    await page.goto("/src/tests/fixtures/navigation.html")
-    await page.click('a[href="#main"]')
-    expect(await noNextEventNamed(page, eventName), `same-page links do not trigger ${eventName} events`).toEqual(true)
+  await page.evaluate(() => {
+    window.anchorNavigation = new Promise(resolve => {
+      addEventListener("hashchange", () => resolve(), { once: true })
+    })
+  })
+  await page.click('a[href="#main"]')
+  await page.evaluate(() => window.anchorNavigation)
+
+  const emittedEvents = (await readEventLogs(page)).map(([name]) => name)
+  for (const eventName of events) {
+    expect(emittedEvents, `same-page links do not trigger ${eventName} events`).not.toContain(eventName)
   }
 })
 

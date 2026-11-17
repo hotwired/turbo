@@ -11,6 +11,7 @@ export class PageView extends View {
   #lastSnapshotWrite = Promise.resolve()
   #cacheRequestsByBody = new WeakMap()
   #cacheRequestsByRenderer = new WeakMap()
+  #visitsByRenderer = new WeakMap()
 
   snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
@@ -21,6 +22,7 @@ export class PageView extends View {
     const rendererClass = shouldMorphPage ? MorphingPageRenderer : PageRenderer
 
     const renderer = new rendererClass(this.snapshot, snapshot, isPreview, willRender)
+    if (visit) this.#visitsByRenderer.set(renderer, visit)
 
     if (!renderer.shouldRender) {
       this.forceReloaded = true
@@ -35,6 +37,7 @@ export class PageView extends View {
   renderError(snapshot, visit) {
     visit?.changeHistory()
     const renderer = new ErrorRenderer(this.snapshot, snapshot, false)
+    if (visit) this.#visitsByRenderer.set(renderer, visit)
     return this.render(renderer)
   }
 
@@ -59,6 +62,7 @@ export class PageView extends View {
 
     try {
       await super.renderSnapshot(renderer)
+      this.#visitsByRenderer.get(renderer)?.recordDocument()
     } finally {
       if (cacheRequest) {
         await this.#repairSnapshotCache(cacheRequest)
