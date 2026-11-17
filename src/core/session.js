@@ -8,6 +8,7 @@ import { LinkClickObserver } from "../observers/link_click_observer"
 import { FormLinkClickObserver } from "../observers/form_link_click_observer"
 import { getAction, expandURL, locationIsVisitable } from "./url"
 import { Navigator } from "./drive/navigator"
+import { VisitState } from "./drive/visit"
 import { PageObserver } from "../observers/page_observer"
 import { ScrollObserver } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
@@ -202,8 +203,17 @@ export class Session {
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifierAndDirection(location, restorationIdentifier, direction) {
-    if (this.enabled) {
+  historyPoppedToLocationWithRestorationIdentifierAndDirection(location, restorationIdentifier, direction, isSameDocument = false) {
+    // Pending visits must keep the normal cancellation and render ordering.
+    if (isSameDocument && this.navigator.currentVisit?.state !== VisitState.started) {
+      this.view.lastRenderedLocation = location
+      const { scrollPosition } = this.history.getRestorationDataForIdentifier(restorationIdentifier)
+      if (scrollPosition) {
+        this.view.scrollToPosition(scrollPosition)
+      } else {
+        this.view.scrollToAnchorFromLocation(location)
+      }
+    } else if (this.enabled) {
       this.navigator.startVisit(location, restorationIdentifier, {
         action: "restore",
         historyChanged: true,
@@ -217,8 +227,9 @@ export class Session {
   }
 
   historyPoppedWithEmptyState(location) {
-    this.history.replace(location)
-    this.view.lastRenderedLocation = location
+    if (this.history.entryDocumentIdentifier === this.history.renderedDocumentIdentifier) {
+      this.view.lastRenderedLocation = location
+    }
   }
 
   // Scroll observer delegate
@@ -439,7 +450,7 @@ export class Session {
     if (config.forms.mode == "off") {
       return false
     } else {
-      const submitterIsNavigatable = submitter ? this.elementIsNavigatable(submitter) : true
+      const submitterIsNavigatable = this.submitterIsNavigatable(submitter)
 
       if (config.forms.mode == "optin") {
         return submitterIsNavigatable && form.closest('[data-turbo="true"]') != null
@@ -447,6 +458,16 @@ export class Session {
         return submitterIsNavigatable && this.elementIsNavigatable(form)
       }
     }
+  }
+
+  submitterIsNavigatable(submitter) {
+    if (!submitter) return true
+
+    if (submitter.hasAttribute("form") && submitter.form instanceof HTMLFormElement) {
+      return submitter.getAttribute("data-turbo") != "false"
+    }
+
+    return this.elementIsNavigatable(submitter)
   }
 
   elementIsNavigatable(element) {

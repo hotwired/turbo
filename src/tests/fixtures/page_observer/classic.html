@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Classic Turbo</title>
+    <script>
+      window.pageObserverEvents = []
+      for (const name of ["turbo:load", "DOMContentLoaded", "load"]) {
+        const target = name === "load" ? window : document
+        target.addEventListener(name, () => {
+          window.pageObserverEvents.push({
+            name,
+            readyState: document.readyState,
+            applicationReady: window.applicationReady === true
+          })
+        })
+      }
+    </script>
+    <script src="/dist/turbo.es2017-umd.js"></script>
+    <script src="/src/tests/fixtures/page_observer/application.js"></script>
+  </head>
+  <body>
+    <h1>Classic Turbo</h1>
+    <img id="held-image" src="/src/tests/fixtures/svg.svg" alt="" />
+  </body>
+</html>

@@ -85,7 +85,15 @@ class DefaultIdiomorphCallbacks {
       detail: { attributeName, mutationType }
     })
 
-    return !event.defaultPrevented
+    if (event.defaultPrevented) return false
+
+    // Removing [open] would hide a modal <dialog> but leave it in the top layer, blocking the page
+    if (target instanceof HTMLDialogElement && attributeName === "open" && mutationType === "remove") {
+      target.close()
+      return false
+    }
+
+    return true
   }
 
   beforeNodeRemoved = (node) => {

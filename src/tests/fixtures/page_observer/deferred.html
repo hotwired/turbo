@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Deferred Turbo</title>
+    <script>
+      window.pageObserverEvents = []
+      for (const name of ["turbo:load", "DOMContentLoaded", "load"]) {
+        const target = name === "load" ? window : document
+        target.addEventListener(name, () => {
+          window.pageObserverEvents.push({
+            name,
+            readyState: document.readyState,
+            applicationReady: window.applicationReady === true
+          })
+        })
+      }
+    </script>
+    <script defer src="/dist/turbo.es2017-umd.js"></script>
+    <script defer src="/src/tests/fixtures/page_observer/application.js"></script>
+  </head>
+  <body>
+    <h1>Deferred Turbo</h1>
+    <img id="held-image" src="/src/tests/fixtures/svg.svg" alt="" />
+  </body>
+</html>

@@ -1,6 +1,6 @@
-export class CacheObserver {
-  selector = "[data-turbo-temporary]"
+import { removeTemporaryElementsFrom } from "../util"
 
+export class CacheObserver {
   started = false
 
   start() {
@@ -18,12 +18,6 @@ export class CacheObserver {
   }
 
   removeTemporaryElements = (_event) => {
-    for (const element of this.temporaryElements) {
-      element.remove()
-    }
-  }
-
-  get temporaryElements() {
-    return [...document.querySelectorAll(this.selector)]
+    removeTemporaryElementsFrom(document)
   }
 }

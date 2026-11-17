@@ -174,3 +174,87 @@ test("disconnecting and reconnecting a frame does not reload the frame", async (
   const requestLogs = eventLogs.filter(([name]) => name == "turbo:before-fetch-request")
   expect(requestLogs.length).toEqual(0)
 })
+
+test("a restored visible lazy frame loads its next navigation", async ({ page }) => {
+  const location = page.url()
+  const frame = await restoreLoadedLazyFrame(page, false)
+  await frame.scrollIntoViewIfNeeded()
+  await waitForFrameVisibility(frame, true)
+  await recordFrameRequests(frame)
+
+  await page.click("#link-lazy-frame")
+
+  expect(await page.evaluate(() => window.lazyFrameRequests)).toEqual(["/src/tests/fixtures/frames.html"])
+  await expect(frame.locator("h2")).toHaveText("Frames: #hello")
+  await expect(frame).toHaveAttribute("complete")
+  await expect(page).toHaveURL(location)
+  expect(await page.evaluate(() => window.lazyRestorationDocument === document)).toEqual(true)
+})
+
+test("a restored hidden lazy frame defers its next navigation until visible", async ({ page }) => {
+  const location = page.url()
+  const frame = await restoreLoadedLazyFrame(page, true)
+  await waitForFrameVisibility(frame, false)
+  await recordFrameRequests(frame)
+
+  await page.click("#link-lazy-frame")
+
+  expect(await page.evaluate(() => window.lazyFrameRequests)).toEqual([])
+  await expect(frame).toHaveAttribute("src", new URL("/src/tests/fixtures/frames.html", location).href)
+  await expect(frame).not.toHaveAttribute("complete")
+  await expect(frame.locator("h2")).toHaveText("Hello from a frame")
+
+  await page.click("#loading-lazy summary")
+
+  await expect(frame.locator("h2")).toHaveText("Frames: #hello")
+  await expect(frame).toHaveAttribute("complete")
+  expect(await page.evaluate(() => window.lazyFrameRequests)).toEqual(["/src/tests/fixtures/frames.html"])
+  await expect(page).toHaveURL(location)
+  expect(await page.evaluate(() => window.lazyRestorationDocument === document)).toEqual(true)
+})
+
+async function restoreLoadedLazyFrame(page, hidden) {
+  const location = page.url()
+  const frame = page.locator("#hello")
+  await page.click("#loading-lazy summary")
+  await expect(frame.locator("h2")).toHaveText("Hello from a frame")
+  await expect(frame).toHaveAttribute("complete")
+  await frame.locator("h2").evaluate((heading) => heading.setAttribute("data-client-state", "cached"))
+  await page.evaluate(() => window.lazyRestorationDocument = document)
+
+  if (hidden) await page.click("#loading-lazy summary")
+
+  await page.click("#one")
+  await expect(page.locator("h1")).toHaveText("One")
+  expect(await page.evaluate(() => window.lazyRestorationDocument === document)).toEqual(true)
+
+  await page.goBack()
+
+  await expect(page).toHaveURL(location)
+  await expect(frame.locator("h2")).toHaveText("Hello from a frame")
+  await expect(frame.locator("h2")).toHaveAttribute("data-client-state", "cached")
+  await expect(frame).toHaveAttribute("complete")
+  expect(await page.evaluate(() => window.lazyRestorationDocument === document)).toEqual(true)
+  return frame
+}
+
+function waitForFrameVisibility(frame, visible) {
+  return frame.evaluate((frame, visible) => new Promise((resolve) => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting === visible)) {
+        observer.disconnect()
+        requestAnimationFrame(() => resolve())
+      }
+    })
+    observer.observe(frame)
+  }), visible)
+}
+
+function recordFrameRequests(frame) {
+  return frame.evaluate((frame) => {
+    window.lazyFrameRequests = []
+    frame.addEventListener("turbo:before-fetch-request", (event) => {
+      if (event.target === frame) window.lazyFrameRequests.push(event.detail.url.pathname)
+    })
+  })
+}

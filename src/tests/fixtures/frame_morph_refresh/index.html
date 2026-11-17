@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-prefetch" content="false">
+    <meta name="turbo-refresh-method" content="morph">
+    <title>Frame morph refresh</title>
+    <script>
+      window.frameRequests = {}
+      window.frameMorphs = {}
+      window.pageMorphs = 0
+      document.addEventListener("turbo:before-fetch-request", event => {
+        if (event.target.localName === "turbo-frame") {
+          const { id } = event.target
+          window.frameRequests[id] = (window.frameRequests[id] || 0) + 1
+        }
+      })
+      document.addEventListener("turbo:before-frame-morph", event => {
+        const { id } = event.target
+        window.frameMorphs[id] = (window.frameMorphs[id] || 0) + 1
+      })
+      document.addEventListener("turbo:morph", () => window.pageMorphs++)
+    </script>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+  </head>
+  <body>
+    <h1>Frame morph refresh</h1>
+    <turbo-frame id="parent" refresh="morph">
+      <turbo-frame id="frame" refresh="morph">
+        <h2 id="frame-title">Waiting</h2>
+        <form id="target-form" action="/src/tests/fixtures/frame_morph_refresh/index.html" data-turbo-frame="other-frame">
+          <input type="hidden" name="form" value="success">
+          <button>Submit GET</button>
+        </form>
+        <form id="rejected-form" action="/src/tests/fixtures/frame_morph_refresh/index.html" data-turbo-frame="other-frame">
+          <input type="hidden" name="form" value="rejected">
+          <button>Submit rejected GET</button>
+        </form>
+      </turbo-frame>
+      <turbo-frame id="other-frame" refresh="morph">
+        <h2>Other frame</h2>
+      </turbo-frame>
+    </turbo-frame>
+  </body>
+</html>

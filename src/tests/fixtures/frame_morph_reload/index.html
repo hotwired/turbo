@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="turbo-prefetch" content="false" />
+    <title>Frame morph reload</title>
+    <script>
+      window.frameLoads = 0
+      window.frameMorphs = 0
+      window.frameRequests = []
+      document.addEventListener("turbo:frame-load", event => {
+        if (event.target.id === "frame") window.frameLoads++
+      })
+      document.addEventListener("turbo:before-frame-morph", event => {
+        if (event.target.id === "frame") window.frameMorphs++
+      })
+      document.addEventListener("turbo:before-fetch-request", event => {
+        if (event.target.id === "frame") window.frameRequests.push(event.detail.url.href)
+      })
+    </script>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+  </head>
+  <body>
+    <h1>Frame morph reload</h1>
+    <turbo-frame id="frame" src="/src/tests/fixtures/frame_morph_reload/initial.html" refresh="morph"></turbo-frame>
+  </body>
+</html>

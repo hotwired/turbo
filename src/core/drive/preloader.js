@@ -3,6 +3,7 @@ import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 
 export class Preloader {
   selector = "a[data-turbo-preload]"
+  #requestGenerations = new WeakMap()
 
   constructor(delegate, snapshotCache) {
     this.delegate = delegate
@@ -48,7 +49,10 @@ export class Preloader {
 
   async requestSucceededWithResponse(fetchRequest, fetchResponse) {
     try {
+      const generation = this.#requestGenerations.get(fetchRequest)
       const responseHTML = await fetchResponse.responseHTML
+      if (generation !== this.snapshotCache.generation || this.snapshotCache.has(fetchRequest.url)) return
+
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
 
       this.snapshotCache.put(fetchRequest.url, snapshot)
@@ -57,7 +61,9 @@ export class Preloader {
     }
   }
 
-  requestStarted(fetchRequest) {}
+  requestStarted(fetchRequest) {
+    this.#requestGenerations.set(fetchRequest, this.snapshotCache.generation)
+  }
 
   requestErrored(fetchRequest) {}
 

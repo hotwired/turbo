@@ -1,7 +1,7 @@
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { getAnchor } from "../url"
 import { PageSnapshot } from "./page_snapshot"
-import { getHistoryMethodForAction, uuid } from "../../util"
+import { getHistoryMethodForAction, removeTemporaryElementsFrom, uuid } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
 
@@ -13,7 +13,8 @@ const defaultOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
-  refresh: {}
+  refresh: {},
+  scroll: undefined
 }
 
 export const TimingMetric = {
@@ -44,6 +45,8 @@ export const Direction = {
 }
 
 export class Visit {
+  #documentIdentifier
+
   identifier = uuid() // Required by turbo-ios
   timingMetrics = {}
 
@@ -74,7 +77,8 @@ export class Visit {
       shouldCacheSnapshot,
       acceptsStreamResponse,
       direction,
-      refresh
+      refresh,
+      scroll
     } = {
       ...defaultOptions,
       ...options
@@ -85,15 +89,28 @@ export class Visit {
     this.snapshot = snapshot
     this.snapshotHTML = snapshotHTML
     this.response = response
-    this.isPageRefresh = this.view.isPageRefresh(this)
-    this.visitCachedSnapshot = visitCachedSnapshot
     this.willRender = willRender
+    this.isPageRefresh = this.view.isPageRefresh(this)
+    if (
+      action === "restore" && historyChanged &&
+      this.restorationIdentifier === this.history.restorationIdentifier
+    ) {
+      this.#documentIdentifier = this.history.entryDocumentIdentifier || uuid()
+    } else if (!willRender) {
+      this.#documentIdentifier = this.history.entryDocumentIdentifier || this.history.renderedDocumentIdentifier
+    } else if (this.isPageRefresh && this.location.href === this.referrer?.href) {
+      this.#documentIdentifier = this.history.renderedDocumentIdentifier
+    } else {
+      this.#documentIdentifier = uuid()
+    }
+    this.visitCachedSnapshot = visitCachedSnapshot
     this.updateHistory = updateHistory
     this.scrolled = !willRender
     this.shouldCacheSnapshot = shouldCacheSnapshot
     this.acceptsStreamResponse = acceptsStreamResponse
     this.direction = direction || Direction[action]
     this.refresh = refresh
+    this.scroll = scroll
   }
 
   get adapter() {
@@ -156,8 +173,14 @@ export class Visit {
     if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
       const method = getHistoryMethodForAction(actionForHistory)
-      this.history.update(method, this.location, this.restorationIdentifier)
+      this.history.update(method, this.location, this.restorationIdentifier, { documentIdentifier: this.#documentIdentifier })
       this.historyChanged = true
+    }
+  }
+
+  recordDocument() {
+    if (this.willRender || this.history.entryDocumentIdentifier === this.#documentIdentifier) {
+      this.history.adoptDocument(this.#documentIdentifier)
     }
   }
 
@@ -215,6 +238,7 @@ export class Visit {
           this.complete()
         } else {
           await this.view.renderError(PageSnapshot.fromHTMLString(responseHTML), this)
+          this.performScroll()
           this.adapter.visitRendered(this)
           this.fail()
         }
@@ -247,7 +271,7 @@ export class Visit {
     if (snapshot) {
       const isPreview = this.shouldIssueRequest()
       this.render(async () => {
-        this.cacheSnapshot()
+        if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.isPageRefresh) {
           this.adapter.visitRendered(this)
         } else {
@@ -291,7 +315,12 @@ export class Visit {
   requestPreventedHandlingResponse(_request, _response) {}
 
   async requestSucceededWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -305,7 +334,12 @@ export class Visit {
   }
 
   async requestFailedWithResponse(request, response) {
-    const responseHTML = await response.responseHTML
+    let responseHTML
+    try {
+      responseHTML = await response.responseHTML
+    } catch (error) {
+      return this.#responseBodyErrored(request, error)
+    }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
       this.recordResponse({
@@ -326,6 +360,10 @@ export class Visit {
 
   requestFinished() {
     this.finishRequest()
+  }
+
+  #responseBodyErrored(request, error) {
+    if (!request.abortSignal.aborted) this.requestErrored(request, error)
   }
 
   // Scrolling
@@ -384,7 +422,18 @@ export class Visit {
 
   cacheSnapshot() {
     if (!this.snapshotCached) {
-      this.view.cacheSnapshot(this.snapshot).then((snapshot) => snapshot && this.visitCachedSnapshot(snapshot))
+      // Cache notifications prepare the live document. They cannot affect a supplied
+      // snapshot and would instead mutate the page that remains visible.
+      const shouldNotifyApplication = !this.snapshot
+      this.view.cacheSnapshot(this.snapshot, shouldNotifyApplication).then((snapshot) => {
+        if (snapshot) {
+          this.visitCachedSnapshot(snapshot)
+
+          // The callback can restore temporary elements with the previous frame contents,
+          // so remove them only after the cached snapshot has been prepared.
+          removeTemporaryElementsFrom(snapshot.element)
+        }
+      })
       this.snapshotCached = true
     }
   }
@@ -400,7 +449,7 @@ export class Visit {
   }
 
   async renderPageSnapshot(snapshot, isPreview) {
-    await this.viewTransitioner.renderChange(this.view.shouldTransitionTo(snapshot), async () => {
+    await this.viewTransitioner.renderChange(this.willRender && this.view.shouldTransitionTo(snapshot), async () => {
       await this.view.renderPage(snapshot, isPreview, this.willRender, this)
       this.performScroll()
     })

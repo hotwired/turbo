@@ -1,0 +1,11 @@
+<turbo-frame id="frame">
+  <h2 id="frame-title">Initial frame</h2>
+  <input id="permanent-input" data-turbo-permanent />
+  <a id="navigate-frame" href="/src/tests/fixtures/frame_morph_reload/next.html">Navigate frame</a>
+  <form id="navigate-form" action="/src/tests/fixtures/frame_morph_reload/next.html">
+    <button>Submit GET</button>
+  </form>
+  <form id="rejected-form" method="post" action="/src/tests/fixtures/frame_morph_reload/rejected.html">
+    <button>Submit POST</button>
+  </form>
+</turbo-frame>

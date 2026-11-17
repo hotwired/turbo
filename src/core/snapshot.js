@@ -18,7 +18,18 @@ export class Snapshot {
   }
 
   getElementForAnchor(anchor) {
-    return anchor ? this.element.querySelector(`[id='${anchor}'], a[name='${anchor}']`) : null
+    if (!anchor) return null
+
+    const element = this.#findElementForAnchor(anchor)
+    if (element) return element
+
+    // Keep "+" and "&" literal while using the tolerant URLSearchParams decoder.
+    const queryValue = anchor.replace(/\+/g, "%2B").replace(/&/g, "%26")
+    const decodedAnchor = new URLSearchParams(`anchor=${queryValue}`).get("anchor")
+    // CSS.escape turns NUL into U+FFFD, which could select a different target.
+    if (decodedAnchor === anchor || decodedAnchor.includes("\0")) return null
+
+    return this.#findElementForAnchor(decodedAnchor)
   }
 
   get isConnected() {
@@ -49,6 +60,11 @@ export class Snapshot {
     }
 
     return permanentElementMap
+  }
+
+  #findElementForAnchor(anchor) {
+    const id = CSS.escape(anchor)
+    return this.element.querySelector(`[id=${id}]`) || this.element.querySelector(`a[name=${id}]`)
   }
 }
 

@@ -1,7 +1,7 @@
 import { StreamElement } from "../../elements"
 import { nextAnimationFrame } from "../../util"
 import { DOMTestCase } from "../helpers/dom_test_case"
-import { assert } from "@open-wc/testing"
+import { assert, waitUntil } from "@open-wc/testing"
 import { sleep } from "../helpers/page"
 import * as Turbo from "../../index"
 
@@ -248,9 +248,18 @@ test("test action=refresh", async () => {
   assert.ok(document.body.hasAttribute("data-modified"))
 
   const element = createStreamElement("refresh")
-  subject.append(element)
+  let refreshCompleted = false
+  const onLoad = () => {
+    refreshCompleted = true
+  }
+  document.addEventListener("turbo:load", onLoad, { once: true })
 
-  await sleep(250)
+  try {
+    subject.append(element)
+    await waitUntil(() => refreshCompleted, "refresh did not finish", { timeout: 1500 })
+  } finally {
+    document.removeEventListener("turbo:load", onLoad)
+  }
 
   assert.notOk(document.body.hasAttribute("data-modified"))
 })

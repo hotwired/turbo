@@ -10,6 +10,7 @@ import {
   pathname,
   pathnameForIFrame,
   readEventLogs,
+  sleep,
   visitAction,
   willChangeBody,
   withHash,
@@ -43,12 +44,49 @@ test("navigating does not render a progress bar before expiring the delay", asyn
   await expect(page.locator(".turbo-progress-bar"), "does not show progress bar before delay").not.toBeAttached()
 })
 
+test("navigating does not render the progress bar of a cancelled visit", async ({ page }) => {
+  await page.evaluate(() => window.Turbo.setProgressBarDelay(500))
+  await page.click("#delayed-link")
+  await nextEventNamed(page, "turbo:before-fetch-request")
+  await page.click("#same-origin-unannotated-link")
+  await nextEventNamed(page, "turbo:load")
+  await sleep(600)
+
+  await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
+})
+
 test("navigating hides the progress bar on failure", async ({ page }) => {
   await page.evaluate(() => window.Turbo.setProgressBarDelay(0))
   await page.click("#delayed-failure-link")
 
   await expect(page.locator(".turbo-progress-bar")).toBeAttached()
   await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
+})
+
+test("navigating reloads the page when the response body cannot be read", async ({ page }) => {
+  await page.evaluate(() => {
+    const link = document.createElement("a")
+    link.id = "interrupted-response-link"
+    link.href = "/__turbo/interrupted_response"
+    link.textContent = "Interrupted response"
+    document.body.append(link)
+  })
+  await page.click("#interrupted-response-link")
+
+  await expect.poll(() => pathname(page.url())).toEqual("/__turbo/interrupted_response")
+})
+
+test("navigating reloads the page when an error response body cannot be read", async ({ page }) => {
+  await page.evaluate(() => {
+    const link = document.createElement("a")
+    link.id = "interrupted-error-response-link"
+    link.href = "/__turbo/interrupted_response?status=500"
+    link.textContent = "Interrupted error response"
+    document.body.append(link)
+  })
+  await page.click("#interrupted-error-response-link")
+
+  await expect.poll(() => pathname(page.url())).toEqual("/__turbo/interrupted_response")
 })
 
 test("after loading the page", async ({ page }) => {
@@ -206,15 +244,13 @@ test("following a same-origin POST link with data-turbo-action=replace", async (
 })
 
 test("following a same-origin data-turbo=false link", async ({ page }) => {
-  await page.click("#same-origin-false-link")
-  await page.waitForEvent("load")
+  await Promise.all([page.waitForEvent("load"), page.click("#same-origin-false-link")])
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
   expect(await visitAction(page)).toEqual("load")
 })
 
 test("following a same-origin unannotated link inside a data-turbo=false container", async ({ page }) => {
-  await page.click("#same-origin-unannotated-link-inside-false-container")
-  await page.waitForEvent("load")
+  await Promise.all([page.waitForEvent("load"), page.click("#same-origin-unannotated-link-inside-false-container")])
   await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
   expect(await visitAction(page)).toEqual("load")
 })
@@ -254,7 +290,7 @@ test("following a cross-origin unannotated link", async ({ page }) => {
 test("following a same-origin [target] link", async ({ page }) => {
   const [popup] = await Promise.all([page.waitForEvent("popup"), page.click("#same-origin-targeted-link")])
 
-  expect(pathname(popup.url())).toEqual("/src/tests/fixtures/one.html")
+  await expect(popup).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
   expect(await visitAction(page)).toEqual("load")
 })
 
@@ -410,6 +446,28 @@ test("navigating back to anchored URL", async ({ page }) => {
   expect(await isScrolledToSelector(page, "#main"), "scrolled to #main").toEqual(true)
 })
 
+test("reusing a cached snapshot keeps document.body connected during rendering", async ({ page }) => {
+  const bodyWasDisconnected = await page.evaluate(async () => {
+    // Cached snapshots must stay detached so subsequent transitions never reuse the same body element.
+    let bodyWasDisconnected = false
+    const adoptNode = document.adoptNode
+    document.adoptNode = function (node) {
+      const adoptedNode = adoptNode.call(this, node)
+      if (!document.body) bodyWasDisconnected = true
+      return adoptedNode
+    }
+
+    const view = window.Turbo.session.view
+    await view.cacheSnapshot()
+    await view.renderPage(view.getCachedSnapshotForLocation(location))
+    await view.renderPage(view.getCachedSnapshotForLocation(location))
+
+    return bodyWasDisconnected
+  })
+
+  expect(bodyWasDisconnected, "keeps document.body connected").toEqual(false)
+})
+
 test("following a redirection", async ({ page }) => {
   await page.click("#redirection-link")
 
@@ -436,11 +494,17 @@ test("same-page anchor visits do not trigger visit events", async ({ page }) => 
     "turbo:load"
   ]
 
+  await page.evaluate(() => {
+    window.anchorNavigation = new Promise(resolve => {
+      addEventListener("hashchange", () => resolve(), { once: true })
+    })
+  })
+  await page.click('a[href="#main"]')
+  await page.evaluate(() => window.anchorNavigation)
+
+  const emittedEvents = (await readEventLogs(page)).map(([name]) => name)
   for (const eventName of events) {
-    await page.goto("/src/tests/fixtures/navigation.html")
-    await readEventLogs(page)
-    await page.click('a[href="#main"]')
-    expect(await noNextEventNamed(page, eventName), `same-page links do not trigger ${eventName} events`).toEqual(true)
+    expect(emittedEvents, `same-page links do not trigger ${eventName} events`).not.toContain(eventName)
   }
 })
 

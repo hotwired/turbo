@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test"
 import {
+  listenForEventOnTarget,
   nextEventNamed,
   nextEventOnTarget,
   noNextEventOnTarget,
@@ -14,6 +15,35 @@ test("renders a page refresh with morphing", async ({ page }) => {
   await page.click("#form-submit")
   await nextEventNamed(page, "turbo:before-render", { renderMethod: "morph" })
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+})
+
+test("does not throw when a saved focus id matches a non-input element after morphing", async ({ page }) => {
+  let requestCount = 0
+  const pageErrors = []
+
+  page.on("pageerror", (error) => pageErrors.push(error))
+  await page.route("**/src/tests/fixtures/page_refresh_focus.html", async (route) => {
+    requestCount += 1
+
+    if (requestCount === 1) {
+      await route.continue()
+    } else {
+      const response = await route.fetch()
+      const body = await response.text()
+
+      await route.fulfill({
+        response,
+        body: body.replace(`<input id="title">`, `<div id="title">Saved</div>`)
+      })
+    }
+  })
+
+  await page.goto("/src/tests/fixtures/page_refresh_focus.html")
+  await page.locator("#title").fill("Morph me")
+  await refreshWithStream(page)
+
+  await expect(page.locator("#title")).toHaveText("Saved")
+  expect(pageErrors).toEqual([])
 })
 
 test("async page refresh with turbo-stream", async ({ page }) => {
@@ -98,10 +128,24 @@ test("turbo:before-morph-attribute Stimulus listeners can handle morphing attrib
 
   const { mutationType } = await nextEventOnTarget(page, "stimulus-controller", "turbo:before-morph-attribute", { attributeName: "data-test-state-value" })
 
-  await expect(mutationType).toEqual("update")
+  await expect(mutationType).toEqual("remove")
   await expect(controller).toHaveAttribute("data-test-state-value", "controller state")
   await expect(page.locator("#form-text")).toHaveValue("")
   await expect(page.locator("#test-output")).toHaveText("connected")
+})
+
+test("page refreshes close a modal dialog that the new page renders closed", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+  const dialog = page.locator("#modal-dialog")
+  await listenForEventOnTarget(page, "modal-dialog", "close")
+  await dialog.evaluate((dialog) => dialog.showModal())
+  await expect(dialog).toBeVisible()
+
+  await refreshWithStream(page)
+
+  await nextEventOnTarget(page, "modal-dialog", "close")
+  await expect(dialog).toBeHidden()
+  await expect(page.locator(":modal")).toHaveCount(0)
 })
 
 test("page refreshes cause a reload when assets change", async ({ page }) => {
@@ -309,6 +353,43 @@ test("it resets the scroll position when the turbo-refresh-scroll meta tag is 'r
 
   // not using page.locator("#form-submit").click() because it can reset the scroll position
   await page.evaluate(() => document.getElementById("form-submit")?.click())
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await assertPageScroll(page, 0, 0)
+})
+
+test("it preserves the scroll position when visiting another page with the scroll: 'preserve' option", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => window.Turbo.visit("/src/tests/fixtures/page_refresh_scroll_reset.html", { scroll: "preserve" }))
+  await nextEventNamed(page, "turbo:render", { renderMethod: "replace" })
+
+  await expect(page).toHaveURL(/page_refresh_scroll_reset\.html$/)
+  await assertPageScroll(page, 10, 10)
+})
+
+test("it preserves the scroll position on a page refresh with the scroll: 'preserve' option, despite the turbo-refresh-scroll meta tag being 'reset'", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh_scroll_reset.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => window.Turbo.visit(window.location.href, { action: "replace", scroll: "preserve" }))
+  await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+
+  await assertPageScroll(page, 10, 10)
+})
+
+test("it resets the scroll position on a page refresh with the scroll: 'reset' option, despite the turbo-refresh-scroll meta tag being 'preserve'", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/page_refresh.html")
+
+  await page.evaluate(() => window.scrollTo(10, 10))
+  await assertPageScroll(page, 10, 10)
+
+  await page.evaluate(() => window.Turbo.visit(window.location.href, { action: "replace", scroll: "reset" }))
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
 
   await assertPageScroll(page, 0, 0)

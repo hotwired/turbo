@@ -46,6 +46,7 @@ export const FetchEnctype = {
 export class FetchRequest {
   abortController = new AbortController()
   #resolveRequestPromise = (_value) => {}
+  #adoptedRequest = null
 
   constructor(delegate, method, location, requestBody = new URLSearchParams(), target = null, enctype = FetchEnctype.urlEncoded) {
     const [url, body] = buildResourceAndBody(expandURL(location), method, requestBody, enctype)
@@ -116,6 +117,7 @@ export class FetchRequest {
 
   cancel() {
     this.abortController.abort()
+    this.#adoptedRequest?.cancel()
   }
 
   async perform() {
@@ -126,19 +128,21 @@ export class FetchRequest {
       this.delegate.requestStarted(this)
 
       if (event.detail.fetchRequest) {
-        this.response = event.detail.fetchRequest.response
+        this.#adoptedRequest = event.detail.fetchRequest
+        if (this.abortSignal.aborted) this.#adoptedRequest.cancel()
+        this.response = this.#adoptedRequest.response
       } else {
         this.response = fetch(this.url.href, fetchOptions)
       }
 
       const response = await this.response
+      if (this.#adoptedRequest && this.abortSignal.aborted) return
       return await this.receive(response)
     } catch (error) {
       if (error.name !== "AbortError") {
         if (this.#willDelegateErrorHandling(error)) {
           this.delegate.requestErrored(this, error)
         }
-        throw error
       }
     } finally {
       this.delegate.requestFinished(this)
@@ -152,13 +156,17 @@ export class FetchRequest {
       detail: { fetchResponse },
       target: this.target
     })
+    let responseHandling
     if (event.defaultPrevented) {
-      this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
     } else if (fetchResponse.succeeded) {
-      this.delegate.requestSucceededWithResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestSucceededWithResponse(this, fetchResponse)
     } else {
-      this.delegate.requestFailedWithResponse(this, fetchResponse)
+      responseHandling = this.delegate.requestFailedWithResponse(this, fetchResponse)
     }
+    Promise.resolve(responseHandling).catch((error) => {
+      if (error?.name !== "AbortError") throw error
+    })
     return fetchResponse
   }
 
@@ -214,7 +222,9 @@ export function isSafe(fetchMethod) {
 
 function buildResourceAndBody(resource, method, requestBody, enctype) {
   const searchParams =
-    Array.from(requestBody).length > 0 ? new URLSearchParams(entriesExcludingFiles(requestBody)) : resource.searchParams
+    Array.from(requestBody).length > 0
+      ? new URLSearchParams(entriesExcludingFiles(requestBody))
+      : new URLSearchParams(resource.searchParams)
 
   if (isSafe(method)) {
     return [mergeIntoURLSearchParams(resource, searchParams), null]

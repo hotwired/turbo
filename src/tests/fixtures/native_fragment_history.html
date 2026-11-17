@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html id="native-fragment-history">
+  <head>
+    <meta charset="utf-8">
+    <meta name="turbo-prefetch" content="false">
+    <title>Native fragment history</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <script>
+      if (!window.nativeFragmentAppInstalled) {
+        window.nativeFragmentAppInstalled = true
+
+        document.addEventListener("turbo:load", () => {
+          const widget = document.getElementById("widget")
+          if (widget && !widget.mounted) {
+            widget.mounted = true
+            const runtimeElement = document.createElement("span")
+            runtimeElement.setAttribute("data-widget-runtime", "")
+            runtimeElement.textContent = "Mounted widget"
+            widget.append(runtimeElement)
+          }
+        })
+
+        document.addEventListener("turbo:before-cache", () => {
+          const widget = document.getElementById("widget")
+          if (widget) {
+            widget.querySelectorAll("[data-widget-runtime]").forEach(element => element.remove())
+            widget.mounted = false
+          }
+
+          const marker = document.getElementById("client-marker")
+          if (marker) marker.textContent = "Prepared client state"
+        })
+      }
+    </script>
+    <style>
+      body { margin: 0; }
+      nav { position: fixed; top: 0; padding: 1em; background: white; }
+      main { padding-top: 4em; }
+      section { height: 900px; }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a id="link-one" href="#one">First fragment</a>
+      <a id="link-two" href="#two">Second fragment</a>
+      <a id="drive-link" href="/src/tests/fixtures/one.html">Leave through Drive</a>
+      <a id="promoted-frame-link" href="/src/tests/fixtures/frames/frame.html" data-turbo-frame="frame" data-turbo-action="advance">Advance a frame</a>
+    </nav>
+    <main>
+      <h1>Native fragment history</h1>
+      <div id="widget"></div>
+      <label>Client input <input id="client-input" value=""></label>
+      <div id="temporary" data-turbo-temporary>Temporary UI</div>
+      <turbo-frame id="frame"><h2>Original frame</h2></turbo-frame>
+      <section id="one"><h2>First fragment</h2></section>
+      <section id="two"><h2>Second fragment</h2></section>
+      <section><h2>End of page</h2></section>
+    </main>
+  </body>
+</html>

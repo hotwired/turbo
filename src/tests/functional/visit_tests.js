@@ -287,12 +287,18 @@ test("can scroll to element after history-initiated turbo:visit", async ({ page 
 })
 
 test("Visit with network error", async ({ page }) => {
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error))
+
   await page.evaluate(() => {
     addEventListener("turbo:fetch-request-error", (event) => event.preventDefault())
   })
   await page.context().setOffline(true)
   await page.click("#same-origin-link")
   await nextEventNamed(page, "turbo:fetch-request-error")
+  await nextBeat()
+
+  expect(errors, "does not raise an unhandled rejection").toEqual([])
 })
 
 test("Visit direction data attribute when clicking a link", async ({ page }) => {

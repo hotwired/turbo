@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Frame Scroll</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+    <style>
+      body { margin: 0; font: 16px/1.5 system-ui, sans-serif; }
+      main { max-width: 72rem; margin: 0 auto; padding: 2rem; }
+      header { min-height: 32vh; display: grid; align-content: end; border-bottom: 1px solid #ddd; margin-bottom: 2rem; }
+      form { display: grid; grid-template-columns: minmax(16rem, 1fr) 12rem 12rem 8rem auto; gap: .75rem; padding: 1rem; border: 1px solid #ddd; border-radius: .75rem; margin-bottom: 2rem; }
+      input, select, button, a { font: inherit; }
+      input, select { min-height: 2.5rem; }
+      .grid { min-height: 16rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+      article { min-height: 8rem; border: 1px solid #ddd; border-radius: .75rem; padding: 1rem; }
+      nav { margin-top: 2rem; display: flex; justify-content: center; gap: .5rem; border-top: 1px solid #ddd; padding-top: 1.5rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header><h1>Task manager</h1></header>
+
+      <form action="/src/tests/fixtures/frame_scroll.html" method="get" data-turbo-frame="results">
+        <input name="search" placeholder="Search">
+        <select name="due"><option>Any due date</option><option>Today</option></select>
+        <select name="per_page"><option>12 / page</option><option>24 / page</option></select>
+        <button type="submit">Apply</button>
+      </form>
+
+      <turbo-frame id="results">
+        <strong id="page-marker">Page 1</strong>
+        <div class="grid">
+          <article>Task 1.1</article>
+          <article>Task 1.2</article>
+          <article>Task 1.3</article>
+          <article>Task 1.4</article>
+          <article>Task 1.5</article>
+          <article>Task 1.6</article>
+          <article>Task 1.7</article>
+          <article>Task 1.8</article>
+          <article>Task 1.9</article>
+          <article>Task 1.10</article>
+          <article>Task 1.11</article>
+          <article>Task 1.12</article>
+        </div>
+        <nav>
+          <a id="next-page" href="/src/tests/fixtures/frames/scroll.html">Next</a>
+        </nav>
+      </turbo-frame>
+    </main>
+  </body>
+</html>
