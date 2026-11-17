@@ -476,6 +476,37 @@ test("following a redirection", async ({ page }) => {
   await expect(page.locator(".turbo-progress-bar")).not.toBeAttached()
 })
 
+for (const prefetch of [false, true]) {
+  test(`a ${prefetch ? "prefetched " : ""}redirected visit resolves a relative frame src against the response URL`, async ({ page }) => {
+    const targetPath = "/src/tests/fixtures/redirect_relative_frame.html"
+    const requests = []
+    page.on("request", request => {
+      if (new URL(request.url()).pathname === targetPath) requests.push(request)
+    })
+
+    const link = page.locator("#redirect-relative-frame")
+    if (prefetch) {
+      const response = page.waitForResponse(response => new URL(response.url()).pathname === targetPath)
+      await link.hover()
+      const prefetchedResponse = await response
+      await prefetchedResponse.finished()
+      const headers = await prefetchedResponse.request().allHeaders()
+      expect(headers["x-sec-purpose"]).toEqual("prefetch")
+    } else {
+      await link.evaluate(link => link.setAttribute("data-turbo-prefetch", "false"))
+    }
+
+    const frameRequest = page.waitForRequest(request => new URL(request.url()).pathname.endsWith("/frame.html"))
+    await link.click()
+
+    const requestedPath = new URL((await frameRequest).url()).pathname
+    expect(requestedPath).toEqual("/src/tests/fixtures/frames/frame.html")
+    await expect(page).toHaveURL(withPathname(targetPath))
+    await expect(page.locator("#frame h2")).toHaveText("Frame: Loaded")
+    expect(requests).toHaveLength(1)
+  })
+}
+
 test("clicking the back button after redirection", async ({ page }) => {
   await page.click("#redirection-link")
   await nextBody(page)
