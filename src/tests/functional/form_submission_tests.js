@@ -1001,6 +1001,8 @@ test("frame form submission within a frame submits the Turbo-Frame header", asyn
 })
 
 test("invalid frame form submission with unprocessable content status", async ({ page }) => {
+  // Replacing the frame can move a link under the pointer and start an unrelated prefetch.
+  await page.locator("html").evaluate(html => html.setAttribute("data-turbo-prefetch", "false"))
   await page.click("#frame form.unprocessable_content input[type=submit]")
 
   expect(await formSubmitStarted(page), "fires turbo:submit-start").toEqual("true")

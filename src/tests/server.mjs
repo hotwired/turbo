@@ -54,6 +54,8 @@ router.post("/refresh", (request, response) => {
   setTimeout(() => response.redirect("back"), parseInt(sleep || "0", 10))
 })
 
+router.route("/native_form_history").get(renderNativeFormHistory).post(renderNativeFormHistory)
+
 router.post("/reject/tall", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/422_tall.html`)
@@ -303,6 +305,18 @@ function receiveMessage(content, id, target) {
     console.log("delivering message to stream", response.socket?.remotePort)
     response.write(data)
   }
+}
+
+function renderNativeFormHistory(request, response) {
+  const fixture = path.join(__dirname, "fixtures/native_form_history.html")
+  const turboScript = request.query.turbo === "false" ? "" : '<script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>'
+  const message = typeof request.body.message === "string" ? request.body.message : ""
+  const html = fs.readFileSync(fixture, "utf8")
+    .replace("$TURBO_SCRIPT", turboScript)
+    .replace("$REQUEST_METHOD", request.method)
+    .replace("$SUBMITTED_MESSAGE", escapeHTML(message))
+
+  response.type("html").send(html)
 }
 
 function renderMessage(content, id, target = "messages") {

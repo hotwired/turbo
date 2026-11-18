@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Native form history</title>
+    $TURBO_SCRIPT
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Native form history</h1>
+    <p>Request method: <output id="request-method">$REQUEST_METHOD</output></p>
+    <p>Submitted message: <output id="submitted-message">$SUBMITTED_MESSAGE</output></p>
+    <form method="post" data-turbo="false">
+      <label>Message <input name="message"></label>
+      <button type="submit">Submit without Turbo</button>
+    </form>
+  </body>
+</html>

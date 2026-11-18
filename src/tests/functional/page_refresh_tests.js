@@ -489,12 +489,15 @@ test("renders unprocessable content responses with morphing", async ({ page }) =
 
 test("doesn't render previews when morphing", async ({ page }) => {
   await page.goto("/src/tests/fixtures/page_refresh.html")
+  await nextEventNamed(page, "turbo:load")
 
   await page.click("#link")
+  await nextEventNamed(page, "turbo:load")
   await page.click("#page-refresh-link")
+  await nextEventNamed(page, "turbo:load")
   await page.click("#refresh-link")
   await nextEventNamed(page, "turbo:render", { renderMethod: "morph" })
-  await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })
+  expect(await noNextEventNamed(page, "turbo:render", { renderMethod: "morph" })).toBeTruthy()
 
   const title = page.locator("h1")
   await expect(title).toHaveText("Page to be refreshed")
