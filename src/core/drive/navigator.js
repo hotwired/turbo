@@ -1,5 +1,5 @@
 import { getVisitAction } from "../../util"
-import { FormSubmission } from "./form_submission"
+import { FormSubmission, FormSubmissionState } from "./form_submission"
 import { expandURL } from "../url"
 import { Visit } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
@@ -58,6 +58,12 @@ export class Navigator {
 
   get history() {
     return this.delegate.history
+  }
+
+  get isFormSubmissionInFlight() {
+    const state = this.formSubmission?.state
+    const { requesting, waiting, receiving } = FormSubmissionState
+    return state === requesting || state === waiting || state === receiving
   }
 
   // Form submission delegate
