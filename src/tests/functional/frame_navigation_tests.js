@@ -82,6 +82,35 @@ test("frame navigation with data-turbo-action", async ({ page }) => {
   await expect(titleText).toHaveText("Frame navigation tests")
 })
 
+test("navigating back after promoting a frame-only response restores the original contents", async ({ page }) => {
+  const fragmentPath = "/__turbo/frame-navigation/empty-head-fragment"
+  const heading = page.locator("h1")
+  const frameHeading = page.locator("#empty-head h2")
+
+  await page.goto(frameNavigationPath)
+  await page.click("#link-to-frame-fragment")
+  await nextEventOnTarget(page, "empty-head", "turbo:frame-load")
+
+  await expect(page).toHaveURL(withPathname(fragmentPath))
+  await expect(heading).toHaveText("Frame navigation tests")
+  await expect(frameHeading).toHaveText("Frame updated")
+
+  await page.evaluate(() => window.Turbo.visit("/src/tests/fixtures/one.html"))
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  await expect(heading).toHaveText("One")
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname(fragmentPath))
+  await expect(heading).toHaveText("Frame navigation tests")
+  await expect(frameHeading).toHaveText("Frame updated")
+
+  await page.goBack()
+  await expect(page).toHaveURL(withPathname(frameNavigationPath))
+  await expect(heading).toHaveText("Frame navigation tests")
+  await expect(page.locator("#empty-head #link-to-frame-fragment")).toBeVisible()
+  await expect(frameHeading).not.toBeAttached()
+})
+
 test("frame navigation emits fetch-request-error event when offline", async ({ page }) => {
   const errors = []
   page.on("pageerror", (error) => errors.push(error))

@@ -246,6 +246,10 @@ router.get("/messages", (request, response) => {
   streamResponses.add(response)
 })
 
+router.get("/frame-navigation/empty-head-fragment", (_request, response) => {
+  response.type("html").send('<turbo-frame id="empty-head"><h2>Frame updated</h2></turbo-frame>')
+})
+
 router.get("/file.unknown_svg", (request, response) => {
   response.set({
     "Content-Type": "image/svg+xml"
