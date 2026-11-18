@@ -111,7 +111,8 @@ export class Navigator {
           if (this.#shouldRenderError(snapshot, fetchResponse)) {
             await this.view.renderError(snapshot, this.currentVisit)
           } else {
-            await this.view.renderPage(snapshot, false, true, this.currentVisit)
+            const reloadLocation = formSubmission.isSafe ? fetchResponse.location : undefined
+            await this.view.renderPage(snapshot, false, true, this.currentVisit, reloadLocation)
           }
           if (snapshot.refreshScroll !== "preserve") {
             this.view.scrollToTop()

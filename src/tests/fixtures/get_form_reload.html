@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html data-page="source" data-skip-event-details="turbo:submit-start turbo:submit-end">
+  <head>
+    <meta charset="utf-8">
+    <title>GET form reload</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script id="form-reload-version" data-turbo-track="reload">window.formReloadVersion = "source"</script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>GET form source</h1>
+
+    <form id="get-form" action="/__turbo/get-form-reload-error" method="get">
+      <input name="query" value="invalid">
+      <input type="hidden" name="path" value="/__turbo/get-form-reload-error" disabled>
+      <input type="hidden" name="compatible" value="true" disabled>
+      <input type="hidden" name="reload" value="true" disabled>
+      <button id="get-submit" type="submit">Submit GET</button>
+    </form>
+
+    <form id="post-form" action="/__turbo/reject/tracked-assets" method="post">
+      <button id="post-submit" type="submit">Submit POST</button>
+    </form>
+  </body>
+</html>

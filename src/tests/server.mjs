@@ -73,6 +73,23 @@ router.post("/reject/tracked-assets", (_request, response) => {
   response.status(422).sendFile(fixture)
 })
 
+router.get("/get-form-reload-error", (request, response) => {
+  const fixture = path.join(__dirname, "fixtures/get_form_reload_error.html")
+  let html = fs.readFileSync(fixture, "utf8")
+
+  if (request.query.compatible === "true") {
+    html = html.replace(
+      /<script id="form-reload-version"[\s\S]*?<\/script>/,
+      '<script id="form-reload-version" data-turbo-track="reload">window.formReloadVersion = "source"</script>'
+    )
+  }
+  if (request.query.reload === "true") {
+    html = html.replace("</head>", '<meta name="turbo-visit-control" content="reload"></head>')
+  }
+
+  response.type("html").status(422).send(html)
+})
+
 router.post("/reject/morph", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/422_morph.html`)

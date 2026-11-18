@@ -153,9 +153,7 @@ test("page refreshes cause a reload when assets change", async ({ page }) => {
 
   await page.click("#add-new-assets")
   await expect(page.locator("#new-stylesheet")).toHaveCount(1)
-  await page.click("#form-submit")
-
-  await nextEventNamed(page, "turbo:load")
+  await Promise.all([page.waitForEvent("load"), page.click("#form-submit")])
   await expect(page.locator("#new-stylesheet")).toHaveCount(0)
 })
 

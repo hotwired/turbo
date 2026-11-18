@@ -133,7 +133,8 @@ export class BrowserAdapter {
   reload(reason) {
     dispatch("turbo:reload", { detail: reason })
 
-    window.location.href = (this.redirectedToLocation || this.location)?.toString() || window.location.href
+    const location = reason?.context?.location || this.redirectedToLocation || this.location
+    window.location.href = location?.toString() || window.location.href
   }
 
   get navigator() {

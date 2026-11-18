@@ -17,11 +17,11 @@ export class PageView extends View {
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 
-  renderPage(snapshot, isPreview = false, willRender = true, visit) {
+  renderPage(snapshot, isPreview = false, willRender = true, visit, reloadLocation) {
     const shouldMorphPage = this.isPageRefresh(visit) && (visit?.refresh?.method || this.snapshot.refreshMethod) === "morph"
     const rendererClass = shouldMorphPage ? MorphingPageRenderer : PageRenderer
 
-    const renderer = new rendererClass(this.snapshot, snapshot, isPreview, willRender)
+    const renderer = new rendererClass(this.snapshot, snapshot, isPreview, willRender, reloadLocation)
     if (visit) this.#visitsByRenderer.set(renderer, visit)
 
     if (!renderer.shouldRender) {
