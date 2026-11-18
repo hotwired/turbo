@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html id="html">
   <head>
     <meta charset="utf-8" />
     <title>Hover to Prefetch</title>
@@ -73,7 +73,7 @@
     </div>
 
     <turbo-frame id="frame_for_prefetch">
-      <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame">Hover to prefetch me</a>
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame">Hover to prefetch /prefetched.html frame</a>
     </turbo-frame>
 
     <turbo-frame id="frame_for_prefetch_query">
@@ -82,7 +82,7 @@
     </turbo-frame>
 
     <turbo-frame id="frame_for_prefetch_top" target="_top">
-      <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame_target_top">Hover to prefetch me</a>
+      <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_in_frame_target_top">Hover to prefetch /prefetched.html page</a>
     </turbo-frame>
 
     <a href="/src/tests/fixtures/prefetched.html" id="anchor_for_prefetch_out_of_frame_target_self" data-turbo-frame="_self">Hover to prefetch me</a>
