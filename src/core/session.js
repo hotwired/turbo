@@ -112,7 +112,7 @@ export class Session {
     const { method, requestId, scroll } = options
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
     const isCurrentUrl = url === document.baseURI
-    if (!isRecentRequest && !this.navigator.currentVisit && isCurrentUrl) {
+    if (!isRecentRequest && !this.navigator.currentVisit && !this.navigator.isFormSubmissionInFlight && isCurrentUrl) {
       this.visit(url, { action: "replace", shouldCacheSnapshot: false, refresh: { method, scroll } })
     }
   }

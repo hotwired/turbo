@@ -36,6 +36,77 @@ test("standard form submission renders a progress bar", async ({ page }) => {
   await expect(page.locator(".turbo-progress-bar"), "hides progress bar").not.toBeAttached()
 })
 
+test("a page refresh does not abort an in-flight form submission", async ({ page }) => {
+  const failures = []
+  let receiveRequest
+  const request = new Promise(resolve => receiveRequest = resolve)
+
+  await page.route("**/__turbo/redirect", route => {
+    if (route.request().method() == "POST") {
+      receiveRequest(route)
+    } else {
+      return route.continue()
+    }
+  })
+
+  page.on("requestfailed", (request) => {
+    if (new URL(request.url()).pathname == "/__turbo/redirect") failures.push(request.failure()?.errorText)
+  })
+
+  await page.locator("#standard-form input[name=path]").evaluate((input) => {
+    input.value = "/src/tests/fixtures/one.html"
+  })
+  await page.click("#standard-post-form-submit")
+  const heldRequest = await request
+  const submission = await page.evaluateHandle(() => window.Turbo.session.navigator.formSubmission)
+
+  try {
+    await refreshWithStreamAndWaitForAttempt(page)
+    expect(await submission.evaluate(submission => ({
+      aborted: submission.fetchRequest.abortSignal.aborted,
+      current: submission === window.Turbo.session.navigator.formSubmission,
+      state: submission.state
+    }))).toEqual({ aborted: false, current: true, state: "waiting" })
+  } finally {
+    if (!heldRequest.request().failure()) await heldRequest.continue()
+    await submission.dispose()
+  }
+
+  await expect(page).toHaveURL(withPathname("/src/tests/fixtures/one.html"))
+  await expect(page.locator("h1")).toHaveText("One")
+  await nextEventNamed(page, "turbo:load")
+  expect(failures).toEqual([])
+
+  const refresh = page.waitForRequest((request) => new URL(request.url()).pathname == "/src/tests/fixtures/one.html")
+  await refreshWithStreamAndWaitForAttempt(page)
+  await refresh
+  await nextEventNamed(page, "turbo:load")
+})
+
+test("a page refresh runs after a retained form submission has stopped", async ({ page }) => {
+  await page.click("#standard form.no-content input[type=submit]")
+  await nextEventNamed(page, "turbo:submit-end")
+
+  expect(await page.evaluate(() => window.Turbo.session.navigator.formSubmission?.state)).toEqual("stopped")
+
+  const refresh = page.waitForRequest(request => new URL(request.url()).pathname == "/src/tests/fixtures/form.html")
+  await refreshWithStreamAndWaitForAttempt(page)
+  await refresh
+  await nextEventNamed(page, "turbo:load")
+})
+
+test("a page refresh runs after a form confirmation is cancelled", async ({ page }) => {
+  page.once("dialog", dialog => dialog.dismiss())
+  await page.click("#standard form.confirm input[type=submit]")
+
+  expect(await page.evaluate(() => window.Turbo.session.navigator.formSubmission?.state)).toEqual("initialized")
+
+  const refresh = page.waitForRequest(request => new URL(request.url()).pathname == "/src/tests/fixtures/form.html")
+  await refreshWithStreamAndWaitForAttempt(page)
+  await refresh
+  await nextEventNamed(page, "turbo:load")
+})
+
 test("form submission with confirmation confirmed", async ({ page }) => {
   page.on("dialog", (alert) => {
     expect(alert.message()).toEqual("Are you sure?")
@@ -1259,4 +1330,32 @@ function formSubmitStarted(page) {
 
 function formSubmitEnded(page) {
   return getFromLocalStorage(page, "formSubmitEnded")
+}
+
+function refreshWithStreamAndWaitForAttempt(page) {
+  return page.evaluate(async () => {
+    const session = window.Turbo.session
+    const refresh = session.debouncedRefresh
+    const debouncePeriod = session.pageRefreshDebouncePeriod
+    const attempted = new Promise((resolve, reject) => {
+      session.debouncedRefresh = function (...args) {
+        try {
+          const result = refresh.apply(this, args)
+          resolve()
+          return result
+        } catch (error) {
+          reject(error)
+        }
+      }
+    })
+    session.pageRefreshDebouncePeriod = 0
+
+    try {
+      document.body.insertAdjacentHTML("beforeend", `<turbo-stream action="refresh"></turbo-stream>`)
+      await attempted
+    } finally {
+      session.debouncedRefresh = refresh
+      session.pageRefreshDebouncePeriod = debouncePeriod
+    }
+  })
 }
