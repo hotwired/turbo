@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html data-page="destination" data-skip-event-details="turbo:submit-start turbo:submit-end">
+  <head>
+    <meta charset="utf-8">
+    <title>GET form error</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script id="form-reload-version" data-turbo-track="reload">
+      window.formReloadVersion = "destination"
+      const documents = JSON.parse(sessionStorage.getItem("getFormReloadDocuments") || "[]")
+      documents.push(document.documentElement.dataset.page)
+      sessionStorage.setItem("getFormReloadDocuments", JSON.stringify(documents))
+    </script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>GET form error</h1>
+    <form id="post-form" action="/__turbo/reject/tracked-assets" method="post">
+      <button id="post-submit" type="submit">Submit POST</button>
+    </form>
+  </body>
+</html>

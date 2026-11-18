@@ -2,6 +2,8 @@ import { activateScriptElement, elementIsStylesheet, waitForLoad } from "../../u
 import { Renderer } from "../renderer"
 
 export class PageRenderer extends Renderer {
+  #reloadLocation
+
   static renderElement(currentElement, newElement) {
     if (document.body && newElement instanceof HTMLBodyElement) {
       document.body.replaceWith(newElement)
@@ -10,21 +12,22 @@ export class PageRenderer extends Renderer {
     }
   }
 
+  constructor(currentSnapshot, newSnapshot, isPreview, willRender = true, reloadLocation) {
+    super(currentSnapshot, newSnapshot, isPreview, willRender)
+    this.#reloadLocation = reloadLocation
+  }
+
   get shouldRender() {
     return this.newSnapshot.isVisitable && this.#hasCompatibleTrackedElements
   }
 
   get reloadReason() {
     if (!this.newSnapshot.isVisitable) {
-      return {
-        reason: "turbo_visit_control_is_reload"
-      }
+      return this.#getReloadReason("turbo_visit_control_is_reload")
     }
 
     if (!this.#hasCompatibleTrackedElements) {
-      return {
-        reason: "tracked_element_mismatch"
-      }
+      return this.#getReloadReason("tracked_element_mismatch")
     }
   }
 
@@ -227,6 +230,14 @@ export class PageRenderer extends Renderer {
         return !tracked || outerHTML in currentElements
       })
     }
+  }
+
+  #getReloadReason(reason) {
+    const reloadReason = { reason }
+    if (this.#reloadLocation) {
+      reloadReason.context = { location: this.#reloadLocation }
+    }
+    return reloadReason
   }
 
   #setLanguage() {
