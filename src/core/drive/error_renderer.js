@@ -9,6 +9,7 @@ export class ErrorRenderer extends Renderer {
   }
 
   async render() {
+    this.#setLanguage()
     this.replaceHeadAndBody()
     this.activateScriptElements()
   }
@@ -35,5 +36,20 @@ export class ErrorRenderer extends Renderer {
 
   get scriptElements() {
     return document.documentElement.querySelectorAll("script")
+  }
+
+  // Private
+
+  #setLanguage() {
+    const { documentElement } = this.currentSnapshot
+
+    for (const attribute of ["lang", "dir"]) {
+      const value = this.newSnapshot[attribute]
+      if (value) {
+        documentElement.setAttribute(attribute, value)
+      } else {
+        documentElement.removeAttribute(attribute)
+      }
+    }
   }
 }
