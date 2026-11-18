@@ -5,6 +5,9 @@ export class History {
   #renderedDocumentIdentifier = uuid()
   #entryDocumentIdentifier = this.#renderedDocumentIdentifier
 
+  // replaceState on startup would turn a native POST entry into a GET entry.
+  #initialEntries = new Map()
+
   location
   restorationIdentifier = uuid()
   restorationData = {}
@@ -18,14 +21,31 @@ export class History {
   start() {
     if (!this.started) {
       addEventListener("popstate", this.onPopState, false)
-      const state = history.state?.turbo
+      const state = this.#getEntryState(history.state)
       this.currentIndex = state?.restorationIndex || 0
       this.#renderedDocumentIdentifier = state?.documentIdentifier || this.#renderedDocumentIdentifier
+      const location = new URL(window.location.href)
+      const entryId = window.navigation?.currentEntry?.id
+      const shouldPreserveEntry = Boolean(entryId) && !history.state?.turbo
+      const restorationIdentifier = state?.restorationIdentifier ||
+        (shouldPreserveEntry && this.location ? uuid() : this.restorationIdentifier)
       this.started = true
-      this.update(history.replaceState, new URL(window.location.href), state?.restorationIdentifier || this.restorationIdentifier, {
-        documentIdentifier: this.#renderedDocumentIdentifier,
-        preserveState: true
-      })
+
+      if (shouldPreserveEntry) {
+        this.#initialEntries.set(entryId, {
+          restorationIdentifier,
+          restorationIndex: this.currentIndex,
+          documentIdentifier: this.#renderedDocumentIdentifier
+        })
+        this.location = location
+        this.restorationIdentifier = restorationIdentifier
+        this.#entryDocumentIdentifier = this.#renderedDocumentIdentifier
+      } else {
+        this.update(history.replaceState, location, restorationIdentifier, {
+          documentIdentifier: this.#renderedDocumentIdentifier,
+          preserveState: true
+        })
+      }
     }
   }
 
@@ -47,7 +67,7 @@ export class History {
   update(method, location, restorationIdentifier = uuid(), { documentIdentifier = uuid(), preserveState = false } = {}) {
     if (method === history.pushState) {
       // A router can create an entry without emitting popstate before a Drive visit leaves it.
-      if (!history.state?.turbo?.documentIdentifier) {
+      if (!this.#getEntryState(history.state)?.documentIdentifier) {
         this.update(history.replaceState, new URL(window.location.href), history.state?.turbo?.restorationIdentifier || uuid(), {
           documentIdentifier: this.#entryDocumentIdentifier || this.#renderedDocumentIdentifier,
           preserveState: true
@@ -115,7 +135,7 @@ export class History {
   // Event handlers
 
   onPopState = (event) => {
-    const { turbo } = event.state || {}
+    const turbo = this.#getEntryState(event.state)
     const previousEntryDocumentIdentifier = this.#entryDocumentIdentifier
     this.location = new URL(window.location.href)
 
@@ -139,5 +159,11 @@ export class History {
       })
       this.delegate.historyPoppedWithEmptyState(this.location)
     }
+  }
+
+  // Private
+
+  #getEntryState(state) {
+    return state?.turbo || this.#initialEntries.get(window.navigation?.currentEntry?.id)
   }
 }
