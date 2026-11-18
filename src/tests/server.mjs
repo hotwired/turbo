@@ -61,6 +61,18 @@ router.post("/reject/tall", (request, response) => {
   response.status(parseInt(status || "422", 10)).sendFile(fixture)
 })
 
+router.post("/reject/exceptional", (_request, response) => {
+  const fixture = path.join(__dirname, "fixtures/422_exceptional.html")
+
+  response.status(422).sendFile(fixture)
+})
+
+router.post("/reject/tracked-assets", (_request, response) => {
+  const fixture = path.join(__dirname, "fixtures/422_tracked_assets.html")
+
+  response.status(422).sendFile(fixture)
+})
+
 router.post("/reject/morph", (request, response) => {
   const { status } = request.body
   const fixture = path.join(__dirname, `../../src/tests/fixtures/422_morph.html`)

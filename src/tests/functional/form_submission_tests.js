@@ -611,10 +611,112 @@ test("input named action with action attribute", async ({ page }) => {
 })
 
 test("invalid form submission with unprocessable content status", async ({ page }) => {
+  await page.evaluate(() => {
+    window.originalTurbo = window.Turbo
+    window.originalTurboScript = document.querySelector('script[src="/dist/turbo.es2017-umd.js"]')
+  })
+
   await page.click("#reject form.unprocessable_content input[type=submit]")
 
   await expect(page.locator("h1"), "renders the response HTML").toHaveText("Unprocessable Content")
   await expect(page.locator("#frame form.reject"), "replaces entire page").not.toBeAttached()
+  expect(await page.evaluate(() => window.Turbo === window.originalTurbo)).toBe(true)
+  expect(await page.evaluate(() => document.querySelector('script[src="/dist/turbo.es2017-umd.js"]') === window.originalTurboScript)).toBe(true)
+})
+
+test("invalid form submission renders an exception response without tracked assets", async ({ page }) => {
+  const navigations = []
+  page.on("request", request => {
+    if (request.isNavigationRequest()) navigations.push(request.url())
+  })
+  await page.evaluate(() => window.originalDocument = document)
+
+  await page.click("#reject form.unprocessable_content_exceptional button")
+
+  await expect(page.locator("h1"), "renders the POST response instead of reloading with GET").toHaveText("Exception page with no head script")
+  await expect.poll(() => formSubmitEnded(page)).toEqual("true")
+  await expect(page).toHaveTitle("Unprocessable Content (Exceptional)")
+  await expect(page.locator("#exception")).toHaveCSS("color", "rgb(180, 0, 0)")
+  expect(await page.evaluate(() => document === window.originalDocument)).toBe(true)
+  expect(navigations).toEqual([])
+})
+
+for (const status of [422, 500]) {
+  for (const { description, attributes, expected } of [
+    { description: "applies supplied", attributes: 'lang="fr" dir="rtl"', expected: { lang: "fr", dir: "rtl" } },
+    { description: "removes omitted", attributes: "", expected: { lang: null, dir: null } },
+    { description: "removes empty", attributes: 'lang="" dir=""', expected: { lang: null, dir: null } }
+  ]) {
+    test(`a ${status} exception response ${description} document language and direction`, async ({ page }) => {
+      await page.route("**/__turbo/reject/exceptional", async route => {
+        const response = await route.fetch()
+        const body = (await response.text()).replace("<html>", `<html ${attributes}>`)
+        await route.fulfill({ response, status, body })
+      })
+      await page.locator("html").evaluate(element => {
+        element.lang = "en"
+        element.dir = "ltr"
+      })
+
+      await page.click("#reject form.unprocessable_content_exceptional button")
+
+      await expect(page.locator("h1")).toHaveText("Exception page with no head script")
+      expect(await page.locator("html").evaluate(element => ({
+        lang: element.getAttribute("lang"), dir: element.getAttribute("dir")
+      }))).toEqual(expected)
+    })
+  }
+}
+
+test("an exception response from an invalid form submission respects visit-control reload", async ({ page }) => {
+  await page.route("**/__turbo/reject/exceptional", async route => {
+    const response = await route.fetch()
+    const body = (await response.text()).replace("</head>", '<meta name="turbo-visit-control" content="reload"></head>')
+    await route.fulfill({ response, body })
+  })
+  await page.evaluate(() => {
+    addEventListener("turbo:reload", ({ detail }) => localStorage.setItem("reloadReason", detail.reason), { once: true })
+  })
+
+  await Promise.all([page.waitForEvent("load"), page.click("#reject form.unprocessable_content_exceptional button")])
+
+  await expect(page.locator("h1")).toHaveText("Form")
+  expect(await getFromLocalStorage(page, "reloadReason")).toEqual("turbo_visit_control_is_reload")
+})
+
+test("a failed form submission with a 300 response retains tracked asset validation", async ({ page }) => {
+  await page.route("**/__turbo/reject/exceptional", async route => {
+    const response = await route.fetch()
+    await route.fulfill({ response, status: 300 })
+  })
+  await page.evaluate(() => {
+    addEventListener("turbo:reload", ({ detail }) => localStorage.setItem("reloadReason", detail.reason), { once: true })
+  })
+
+  await Promise.all([page.waitForEvent("load"), page.click("#reject form.unprocessable_content_exceptional button")])
+
+  await expect(page.locator("h1")).toHaveText("Form")
+  expect(await getFromLocalStorage(page, "reloadReason")).toEqual("tracked_element_mismatch")
+})
+
+test("an exception response from an invalid form submission can preserve scroll", async ({ page }) => {
+  await page.route("**/__turbo/reject/exceptional", async route => {
+    const response = await route.fetch()
+    const body = (await response.text()).replace("</head>", `
+      <meta name="turbo-refresh-scroll" content="preserve">
+      <style>body { min-height: 2000vh; }</style>
+    </head>`)
+    await route.fulfill({ response, body })
+  })
+  await scrollToSelector(page, "#reject form.unprocessable_content_exceptional button")
+  const scrollY = await page.evaluate(() => window.scrollY)
+  expect(scrollY).toBeGreaterThan(0)
+
+  await page.click("#reject form.unprocessable_content_exceptional button")
+
+  await expect(page.locator("h1")).toHaveText("Exception page with no head script")
+  await expect.poll(() => formSubmitEnded(page)).toEqual("true")
+  expect(await page.evaluate(() => window.scrollY)).toEqual(scrollY)
 })
 
 test("invalid form submission with long form", async ({ page }) => {

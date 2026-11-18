@@ -108,7 +108,7 @@ export class Navigator {
       await new ViewTransitioner().renderChange(
         this.view.shouldTransitionTo(snapshot),
         async () => {
-          if (fetchResponse.serverError) {
+          if (this.#shouldRenderError(snapshot, fetchResponse)) {
             await this.view.renderError(snapshot, this.currentVisit)
           } else {
             await this.view.renderPage(snapshot, false, true, this.currentVisit)
@@ -179,5 +179,13 @@ export class Navigator {
   #getDefaultAction(fetchResponse) {
     const sameLocationRedirect = fetchResponse.redirected && fetchResponse.location.href === this.location?.href
     return sameLocationRedirect ? "replace" : "advance"
+  }
+
+  #shouldRenderError(snapshot, fetchResponse) {
+    const currentSignature = this.view.snapshot.headSnapshot.trackedElementSignature
+    const newSignature = snapshot.headSnapshot.trackedElementSignature
+
+    return fetchResponse.serverError ||
+      (fetchResponse.clientError && snapshot.isVisitable && currentSignature !== "" && newSignature === "")
   }
 }

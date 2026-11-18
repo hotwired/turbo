@@ -65,6 +65,7 @@ test("reloads when tracked elements change", async ({ page }) => {
 })
 
 test("reloads when tracked elements change due to failed form submission", async ({ page }) => {
+  await page.evaluate(() => sessionStorage.removeItem("changedTrackedAssetActivated"))
   await Promise.all([page.waitForEvent("load"), page.click("#tracked-asset-change-form button")])
 
   await page.evaluate(() => {
@@ -94,6 +95,7 @@ test("reloads when tracked elements change due to failed form submission", async
   expect(await visitAction(page)).toEqual("load")
   expect(reason).toEqual("tracked_element_mismatch")
   expect(unloaded).toEqual("true")
+  expect(await page.evaluate(() => sessionStorage.getItem("changedTrackedAssetActivated"))).toEqual(null)
 })
 
 test("before-render event supports custom render function", async ({ page }) => {
