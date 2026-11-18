@@ -11,7 +11,7 @@ export class PageRenderer extends Renderer {
   }
 
   get shouldRender() {
-    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
+    return this.newSnapshot.isVisitable && this.#hasCompatibleTrackedElements
   }
 
   get reloadReason() {
@@ -21,7 +21,7 @@ export class PageRenderer extends Renderer {
       }
     }
 
-    if (!this.trackedElementsAreIdentical) {
+    if (!this.#hasCompatibleTrackedElements) {
       return {
         reason: "tracked_element_mismatch"
       }
@@ -56,22 +56,6 @@ export class PageRenderer extends Renderer {
 
   get newElement() {
     return this.newSnapshot.element
-  }
-
-  #setLanguage() {
-    const { documentElement } = this.currentSnapshot
-    const { dir, lang } = this.newSnapshot
-
-    if (lang) {
-      documentElement.setAttribute("lang", lang)
-    } else {
-      documentElement.removeAttribute("lang")
-    }
-    if (dir) {
-      documentElement.setAttribute("dir", dir)
-    } else {
-      documentElement.removeAttribute("dir")
-    }
   }
 
   async mergeHead() {
@@ -123,16 +107,20 @@ export class PageRenderer extends Renderer {
   }
 
   async mergeProvisionalElements() {
-    const newHeadElements = [...this.newHeadProvisionalElements]
+    if (this.willRender) {
+      const newHeadElements = [...this.newHeadProvisionalElements]
 
-    for (const element of this.currentHeadProvisionalElements) {
-      if (!this.isCurrentElementInElementList(element, newHeadElements)) {
-        document.head.removeChild(element)
+      for (const element of this.currentHeadProvisionalElements) {
+        if (!this.isCurrentElementInElementList(element, newHeadElements)) {
+          document.head.removeChild(element)
+        }
       }
-    }
 
-    for (const element of newHeadElements) {
-      document.head.appendChild(element)
+      for (const element of newHeadElements) {
+        document.head.appendChild(element)
+      }
+    } else {
+      this.#mergePartialProvisionalElements()
     }
   }
 
@@ -226,5 +214,101 @@ export class PageRenderer extends Renderer {
 
   get newBodyScriptElements() {
     return this.newElement.querySelectorAll("script")
+  }
+
+  // Private
+
+  get #hasCompatibleTrackedElements() {
+    if (this.willRender) {
+      return this.trackedElementsAreIdentical
+    } else {
+      const currentElements = this.currentHeadSnapshot.detailsByOuterHTML
+      return Object.entries(this.newHeadSnapshot.detailsByOuterHTML).every(([outerHTML, { tracked }]) => {
+        return !tracked || outerHTML in currentElements
+      })
+    }
+  }
+
+  #setLanguage() {
+    const { documentElement } = this.currentSnapshot
+    const { dir, lang } = this.newSnapshot
+
+    if (lang || (!this.willRender && lang !== null)) {
+      documentElement.setAttribute("lang", lang)
+    } else if (this.willRender) {
+      documentElement.removeAttribute("lang")
+    }
+    if (dir || (!this.willRender && dir !== null)) {
+      documentElement.setAttribute("dir", dir)
+    } else if (this.willRender) {
+      documentElement.removeAttribute("dir")
+    }
+  }
+
+  #mergePartialProvisionalElements() {
+    const currentElements = this.#getProvisionalElementsInDocumentOrder(this.currentHeadSnapshot)
+    const suppliedElements = this.#getProvisionalElementsInDocumentOrder(this.newHeadSnapshot)
+    const unusedElements = [...currentElements]
+    const mergedElements = suppliedElements.map((element) => {
+      const index = unusedElements.findIndex((currentElement) => currentElement.isEqualNode(element))
+      return index < 0 ? element : unusedElements.splice(index, 1)[0]
+    })
+
+    for (const element of unusedElements) {
+      if (suppliedElements.some((suppliedElement) => this.#hasSameProvisionalElementIdentity(element, suppliedElement))) {
+        document.head.removeChild(element)
+      }
+    }
+
+    const currentSuppliedElements = currentElements.filter((element) => mergedElements.includes(element))
+    const hasCorrectOrder = currentSuppliedElements.length === mergedElements.length &&
+      currentSuppliedElements.every((element, index) => element === mergedElements[index])
+
+    if (!hasCorrectOrder) {
+      for (const element of mergedElements) {
+        document.head.appendChild(element)
+      }
+    }
+  }
+
+  #getProvisionalElementsInDocumentOrder(headSnapshot) {
+    const elements = headSnapshot.provisionalElements
+    return headSnapshot.children.filter((element) => elements.includes(element))
+  }
+
+  #hasSameProvisionalElementIdentity(element, otherElement) {
+    if (element.tagName === otherElement.tagName) {
+      switch (element.tagName) {
+        case "TITLE":
+        case "BASE":
+          return true
+        case "META": {
+          const attribute = ["name", "property", "http-equiv", "itemprop"].find((name) => {
+            return element.hasAttribute(name) && otherElement.hasAttribute(name)
+          })
+          let hasSameName
+          if (attribute === "http-equiv") {
+            hasSameName = element.httpEquiv.toLowerCase() === otherElement.httpEquiv.toLowerCase()
+          } else if (attribute) {
+            hasSameName = element.getAttribute(attribute) === otherElement.getAttribute(attribute)
+          } else {
+            hasSameName = element.hasAttribute("charset") && otherElement.hasAttribute("charset")
+          }
+          return hasSameName && (element.getAttribute("media") || "") === (otherElement.getAttribute("media") || "")
+        }
+        case "LINK": {
+          const relations = [...element.relList].map((relation) => relation.toLowerCase())
+          const otherRelations = [...otherElement.relList].map((relation) => relation.toLowerCase())
+          if (["canonical", "manifest"].some((relation) => relations.includes(relation) && otherRelations.includes(relation))) {
+            return true
+          } else if (relations.includes("icon") && otherRelations.includes("icon")) {
+            return ["type", "sizes", "media"].every((name) => {
+              return (element.getAttribute(name) || "") === (otherElement.getAttribute(name) || "")
+            })
+          }
+        }
+      }
+    }
+    return false
   }
 }

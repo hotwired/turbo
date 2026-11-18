@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr" dir="rtl" data-head-page="destination">
+  <head>
+    <meta charset="utf-8">
+    <title>Complete promoted frame title</title>
+    <base href="/src/tests/fixtures/">
+    <meta name="csrf-token" content="old-token">
+    <meta name="description" content="Description from the page">
+    <meta name="turbo-prefetch" content="false">
+    <meta property="og:image" content="first-image">
+    <meta property="og:image:width" content="100">
+    <meta property="og:image" content="second-image">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="dark-color">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="light-color">
+    <meta http-equiv="content-language" content="en">
+    <meta itemprop="description" content="Original item description">
+    <link rel="canonical" href="/original-page">
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Original%22%7D">
+    <link rel="icon" type="image/png" sizes="16x16" media="all" href="data:;base64,iVBORw0KGgo=#old-16">
+    <link rel="icon" type="image/png" sizes="32x32" media="all" href="data:;base64,iVBORw0KGgo=#old-32">
+    <script src="/dist/turbo.es2017-umd.js"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Complete promoted frame page</h1>
+    <turbo-frame id="promoted">
+      <h2>Frame: Full head</h2>
+    </turbo-frame>
+  </body>
+</html>

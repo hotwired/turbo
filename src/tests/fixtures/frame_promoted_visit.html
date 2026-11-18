@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-head-page="origin">
+  <head>
+    <meta charset="utf-8">
+    <title>Promoted frame visits</title>
+    <base href="/src/tests/fixtures/">
+    <meta name="csrf-token" content="old-token">
+    <meta name="description" content="Description from the page">
+    <meta name="turbo-prefetch" content="false">
+    <meta property="og:image" content="first-image">
+    <meta property="og:image:width" content="100">
+    <meta property="og:image" content="second-image">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="dark-color">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="light-color">
+    <meta http-equiv="content-language" content="en">
+    <meta itemprop="description" content="Original item description">
+    <link rel="canonical" href="/original-page">
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Original%22%7D">
+    <link rel="icon" type="image/png" sizes="16x16" media="all" href="data:;base64,iVBORw0KGgo=#old-16">
+    <link rel="icon" type="image/png" sizes="32x32" media="all" href="data:;base64,iVBORw0KGgo=#old-32">
+    <script src="/dist/turbo.es2017-umd.js"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Promoted frame visits</h1>
+    <a id="drive-away" href="/src/tests/fixtures/frame_promoted_destination.html">Leave with Turbo Drive</a>
+
+    <turbo-frame id="promoted" data-turbo-action="advance">
+      <h2>Frame: Not Loaded</h2>
+      <a id="to-no-head" href="/src/tests/fixtures/frames/promoted_no_head.html">Response without a head</a>
+      <a id="to-partial-head" href="/src/tests/fixtures/frames/promoted_partial_head.html">Response with a partial head</a>
+      <a id="to-full-head" href="/src/tests/fixtures/frames/promoted_full_head.html">Response with a full head</a>
+    </turbo-frame>
+
+    <form action="/__turbo/redirect" method="post">
+      <input type="hidden" name="path" value="/src/tests/fixtures/one.html">
+      <button id="submit-token">Submit</button>
+    </form>
+  </body>
+</html>

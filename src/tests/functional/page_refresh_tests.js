@@ -159,7 +159,7 @@ test("page refreshes cause a reload when assets change", async ({ page }) => {
   await expect(page.locator("#new-stylesheet")).toHaveCount(0)
 })
 
-test("reloading when assets change uses the response URL of a prior redirect", async ({page}) => {
+test("reloading when assets change uses the response URL of a prior redirect", async ({ page }) => {
   const destinations = []
 
   page.on("request", (request) => {
@@ -177,7 +177,7 @@ test("reloading when assets change uses the response URL of a prior redirect", a
 
   await page.waitForURL("/src/tests/fixtures/link_redirect_target.html")
 
-  expect(destinations, "redirects once").toEqual(expect.arrayContaining(["redirect", "target", "target"]))
+  expect(destinations, "redirects once and reloads the destination once").toEqual(["redirect", "target", "target"])
 })
 
 test("renders a page refresh with morphing when the paths are the same but search params are different", async ({ page }) => {

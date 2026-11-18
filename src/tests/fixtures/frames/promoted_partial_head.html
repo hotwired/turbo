@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Promoted frame title</title>
+    <base href="/src/tests/fixtures/frames/">
+    <meta name="csrf-token" content="new-token">
+    <meta name="description" content="Description from the response">
+    <meta name="turbo-prefetch" content="true">
+    <meta property="og:image" content="second-image">
+    <meta property="og:image:width" content="100">
+    <meta property="og:image" content="first-image">
+    <meta property="og:image" content="second-image">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="new-light-color">
+    <meta http-equiv="CONTENT-LANGUAGE" content="fr">
+    <meta itemprop="description" content="Updated item description">
+    <link rel="canonical" href="/promoted-page">
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Promoted%22%7D">
+    <link rel=" shortcut  icon " type="image/png" sizes="16x16" media="all" href="data:;base64,iVBORw0KGgo=#new-16-first">
+    <link rel="icon" type="image/png" sizes="16x16" media="all" href="data:;base64,iVBORw0KGgo=#new-16-second">
+  </head>
+  <body>
+    <turbo-frame id="promoted">
+      <h2>Frame: Partial head</h2>
+    </turbo-frame>
+  </body>
+</html>
