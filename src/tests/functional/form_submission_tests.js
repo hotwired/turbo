@@ -219,6 +219,7 @@ test("standard POST form submission events", async ({ page }) => {
   expect(fetchOptions.headers["Accept"]).toContain("text/vnd.turbo-stream.html")
 
   await nextEventNamed(page, "turbo:before-fetch-response")
+  await nextEventNamed(page, "turbo:submit-end")
 
   expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
 
@@ -405,6 +406,7 @@ test("standard GET form submission events", async ({ page }) => {
   expect(fetchOptions.headers["Accept"]).not.toContain("text/vnd.turbo-stream.html")
 
   await nextEventNamed(page, "turbo:before-fetch-response")
+  await nextEventNamed(page, "turbo:submit-end")
 
   expect(await formSubmitEnded(page), "fires turbo:submit-end").toEqual("true")
 
@@ -937,7 +939,9 @@ test("frame form submission with redirect response", async ({ page }) => {
 
   const button = await page.locator("#frame form.redirect input[type=submit]")
   await button.click()
-  await nextEventOnTarget(page, "frame", "turbo:frame-load")
+  await nextEventNamed(page, "turbo:submit-end")
+  await nextEventNamed(page, "turbo:frame-render")
+  await nextEventNamed(page, "turbo:frame-load")
 
   await expect(page.locator("#frame form.redirect")).not.toBeAttached()
   await expect(page.locator("#frame div.message")).toHaveText("Frame redirected")

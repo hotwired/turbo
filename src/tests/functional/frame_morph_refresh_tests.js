@@ -207,7 +207,7 @@ test("removing refresh drops the pending morph refresh", async ({ page }) => {
   await expectRequestCount(page, 3)
 })
 
-test("a superseded response retains its morph context when fetch ignores abort", async ({ page }) => {
+test("a response canceled at headers is not rendered even when fetch ignores abort", async ({ page }) => {
   await startFrame(page)
   await page.evaluate(() => {
     const frame = document.getElementById("frame")
@@ -227,15 +227,18 @@ test("a superseded response retains its morph context when fetch ignores abort",
     const navigate = event => {
       if (event.target === frame) {
         document.removeEventListener("turbo:before-fetch-response", navigate)
+        window.canceledRequestFinished = event.detail.fetchResponse.requestFinished
         frame.src += "&navigation=true"
       }
     }
     document.addEventListener("turbo:before-fetch-response", navigate)
   })
-  await finishRequest(page, 2)
+  await deliverRequest(page, 2)
+  await page.evaluate(() => window.canceledRequestFinished)
   await waitForRequest(page, 3)
 
-  expect(await page.evaluate(() => window.frameMorphs.frame)).toEqual(1)
+  expect(await page.evaluate(() => window.frameMorphs.frame || 0)).toEqual(0)
+  await expect(page.locator("#frame h2")).toHaveText("Waiting")
   expect(await page.evaluate(() => document.getElementById("frame-title") === window.previousHeading)).toEqual(true)
   expect(await page.locator("#frame").evaluate(frame => frame.complete)).toEqual(false)
 
@@ -260,22 +263,12 @@ test("morphing does not start an unloaded lazy frame outside the viewport", asyn
 
 test("aborting the first lazy response body does not mark the frame as loaded", async ({ page }) => {
   await page.locator("#frame").evaluate(async (frame, src) => {
-    let finish, abort
-    const finished = new Promise(resolve => finish = resolve)
-    const aborted = new Promise(resolve => abort = resolve)
-    const requestSucceeded = frame.delegate.requestSucceededWithResponse
-    frame.delegate.requestSucceededWithResponse = async function(...args) {
-      try {
-        return await requestSucceeded.apply(this, args)
-      } finally {
-        finish()
-      }
-    }
-    frame.addEventListener("turbo:before-fetch-request", event => {
-      event.detail.fetchOptions.signal.addEventListener("abort", () => abort(), { once: true })
-    }, { once: true })
+    let finished
     const headersReceived = new Promise(resolve => {
-      frame.addEventListener("turbo:before-fetch-response", () => resolve(), { once: true })
+      frame.addEventListener("turbo:before-fetch-response", event => {
+        finished = event.detail.fetchResponse.requestFinished
+        resolve()
+      }, { once: true })
     })
     frame.loading = "lazy"
     frame.style.display = "block"
@@ -284,9 +277,7 @@ test("aborting the first lazy response body does not mark the frame as loaded", 
     window.canceledLoadSettled = false
     frame.loaded.then(() => window.canceledLoadSettled = true)
     frame.disabled = true
-    await aborted
     await finished
-    frame.delegate.requestSucceededWithResponse = requestSucceeded
 
     frame.style.marginTop = "10000px"
     frame.disabled = false

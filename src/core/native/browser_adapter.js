@@ -5,6 +5,7 @@ import { locationIsVisitable } from "../url"
 
 export class BrowserAdapter {
   progressBar = new ProgressBar()
+  #formSubmission = null
 
   constructor(session) {
     this.session = session
@@ -19,6 +20,9 @@ export class BrowserAdapter {
   }
 
   visitStarted(visit) {
+    this.#formSubmission = null
+    window.clearTimeout(this.formProgressBarTimeout)
+    delete this.formProgressBarTimeout
     this.location = visit.location
     this.redirectedToLocation = null
 
@@ -86,14 +90,18 @@ export class BrowserAdapter {
 
   // Form Submission Delegate
 
-  formSubmissionStarted(_formSubmission) {
+  formSubmissionStarted(formSubmission) {
+    this.#formSubmission = formSubmission
     this.progressBar.setValue(0)
     this.showFormProgressBarAfterDelay()
   }
 
-  formSubmissionFinished(_formSubmission) {
-    this.progressBar.setValue(1)
-    this.hideFormProgressBar()
+  formSubmissionFinished(formSubmission) {
+    if (formSubmission == this.#formSubmission) {
+      this.#formSubmission = null
+      this.progressBar.setValue(1)
+      this.hideFormProgressBar()
+    }
   }
 
   // Private

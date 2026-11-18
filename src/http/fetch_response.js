@@ -1,8 +1,16 @@
 import { expandURL } from "../core/url"
 
 export class FetchResponse {
-  constructor(response) {
+  #requestFinished
+  #responseText
+
+  constructor(response, requestFinished = Promise.resolve()) {
     this.response = response
+    this.#requestFinished = requestFinished
+  }
+
+  get requestFinished() {
+    return this.#requestFinished
   }
 
   get succeeded() {
@@ -42,12 +50,16 @@ export class FetchResponse {
   }
 
   get responseText() {
-    return this.response.clone().text()
+    try {
+      return (this.#responseText ??= this.response.clone().text())
+    } catch (error) {
+      return (this.#responseText = Promise.reject(error))
+    }
   }
 
   get responseHTML() {
     if (this.isHTML) {
-      return this.response.clone().text()
+      return this.responseText
     } else {
       return Promise.resolve(undefined)
     }

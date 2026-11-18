@@ -45,8 +45,10 @@ export const FetchEnctype = {
 
 export class FetchRequest {
   abortController = new AbortController()
+  #requestFinished
   #resolveRequestPromise = (_value) => {}
   #adoptedRequest = null
+  #resolveRequestFinished = () => {}
 
   constructor(delegate, method, location, requestBody = new URLSearchParams(), target = null, enctype = FetchEnctype.urlEncoded) {
     const [url, body] = buildResourceAndBody(expandURL(location), method, requestBody, enctype)
@@ -54,6 +56,9 @@ export class FetchRequest {
     this.delegate = delegate
     this.url = url
     this.target = target
+    this.#requestFinished = new Promise((resolve) => {
+      this.#resolveRequestFinished = resolve
+    })
     this.fetchOptions = {
       credentials: "same-origin",
       redirect: "follow",
@@ -125,7 +130,7 @@ export class FetchRequest {
     this.delegate.prepareRequest(this)
     const event = await this.#allowRequestToBeIntercepted(fetchOptions)
     try {
-      this.delegate.requestStarted(this)
+      if (!this.abortSignal.aborted) this.delegate.requestStarted(this)
 
       if (event.detail.fetchRequest) {
         this.#adoptedRequest = event.detail.fetchRequest
@@ -137,25 +142,33 @@ export class FetchRequest {
 
       const response = await this.response
       if (this.#adoptedRequest && this.abortSignal.aborted) return
-      return await this.receive(response)
+
+      const fetchResponse = new FetchResponse(response, this.#requestFinished)
+      // Read a clone before interceptors can consume the native response body.
+      const responseHTML = fetchResponse.responseHTML
+      const responseEvent = dispatch("turbo:before-fetch-response", {
+        cancelable: true,
+        detail: { fetchResponse },
+        target: this.target
+      })
+      if (fetchResponse.isHTML) await responseHTML
+      if (this.abortSignal.aborted) return
+
+      // Finish before asynchronous response handlers propose visits or render.
+      this.receive(fetchResponse, responseEvent)
+      return fetchResponse
     } catch (error) {
-      if (error.name !== "AbortError") {
+      if (!this.abortSignal.aborted && error.name !== "AbortError") {
         if (this.#willDelegateErrorHandling(error)) {
           this.delegate.requestErrored(this, error)
         }
       }
     } finally {
-      this.delegate.requestFinished(this)
+      this.#finishRequest()
     }
   }
 
-  async receive(response) {
-    const fetchResponse = new FetchResponse(response)
-    const event = dispatch("turbo:before-fetch-response", {
-      cancelable: true,
-      detail: { fetchResponse },
-      target: this.target
-    })
+  receive(fetchResponse, event) {
     let responseHandling
     if (event.defaultPrevented) {
       responseHandling = this.delegate.requestPreventedHandlingResponse(this, fetchResponse)
@@ -167,7 +180,6 @@ export class FetchRequest {
     Promise.resolve(responseHandling).catch((error) => {
       if (error?.name !== "AbortError") throw error
     })
-    return fetchResponse
   }
 
   get defaultHeaders() {
@@ -213,6 +225,14 @@ export class FetchRequest {
     })
 
     return !event.defaultPrevented
+  }
+
+  #finishRequest() {
+    try {
+      this.delegate.requestFinished(this)
+    } finally {
+      this.#resolveRequestFinished()
+    }
   }
 }
 

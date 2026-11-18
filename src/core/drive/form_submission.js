@@ -20,6 +20,8 @@ export const FormEnctype = {
   plain: "text/plain"
 }
 
+const activeFormSubmissions = new WeakMap()
+
 export class FormSubmission {
   state = FormSubmissionState.initialized
 
@@ -123,6 +125,9 @@ export class FormSubmission {
     this.delegate.formSubmissionWillStart?.(this)
     this.state = FormSubmissionState.waiting
     if (!request.isSafe) prefetchCache.pause(request)
+    const previousFormSubmission = activeFormSubmissions.get(this.formElement)
+    activeFormSubmissions.set(this.formElement, this)
+    if (previousFormSubmission && previousFormSubmission != this) previousFormSubmission.#finishSubmitter()
     if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
     this.setSubmitsWith()
     markAsBusy(this.formElement)
@@ -174,9 +179,11 @@ export class FormSubmission {
   requestFinished(request) {
     this.state = FormSubmissionState.stopped
     prefetchCache.resume(request)
-    if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
-    this.resetSubmitterText()
-    clearBusyState(this.formElement)
+    if (activeFormSubmissions.get(this.formElement) == this) {
+      activeFormSubmissions.delete(this.formElement)
+      this.#finishSubmitter()
+      clearBusyState(this.formElement)
+    }
     dispatch("turbo:submit-end", {
       target: this.formElement,
       detail: { formSubmission: this, ...this.result }
@@ -185,6 +192,11 @@ export class FormSubmission {
   }
 
   // Private
+
+  #finishSubmitter() {
+    if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
+    this.resetSubmitterText()
+  }
 
   setSubmitsWith() {
     if (!this.submitter || !this.submitsWith) return

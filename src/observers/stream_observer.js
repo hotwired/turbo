@@ -56,10 +56,16 @@ export class StreamObserver {
   }
 
   async receiveMessageResponse(response) {
-    const html = await response.responseHTML
-    if (html) {
-      this.receiveMessageHTML(html)
+    let html
+    try {
+      html = await response.responseHTML
+      await response.requestFinished
+    } catch (_) {
+      // FetchRequest reports body read errors.
+      return
     }
+
+    if (this.#started && html) this.receiveMessageHTML(html)
   }
 
   receiveMessageHTML(html) {

@@ -32,6 +32,38 @@ test("dispatches a turbo:before-stream-render event", async ({ page }) => {
   expect(newStream).toContain(`target="messages"`)
 })
 
+test("finishes a form submission after receiving its Turbo Stream body and before rendering it", async ({ page }) => {
+  await page.evaluate(() => {
+    const form = document.querySelector("#delayed-stream-form")
+    window.delayedStreamEvents = []
+
+    form.addEventListener("turbo:submit-end", (event) => {
+      window.delayedStreamEvents.push({ event: "turbo:submit-end", connected: form.isConnected })
+      // Internal sequencing must not depend on the public submit-end event propagating.
+      event.stopImmediatePropagation()
+    })
+
+    document.addEventListener("turbo:before-stream-render", ({ target }) => {
+      if (target.getAttribute("target") == form.id) {
+        window.delayedStreamEvents.push("turbo:before-stream-render")
+      }
+    })
+  })
+
+  await page.click("#delayed-stream-form button")
+  await nextEventOnTarget(page, "delayed-stream-form", "turbo:before-fetch-response")
+
+  await expect(page.locator("#delayed-stream-form"), "keeps the form busy while receiving the response body").toHaveAttribute("aria-busy", "true")
+  await expect(page.locator("#delayed-stream-result")).not.toBeAttached()
+
+  await expect(page.locator("#delayed-stream-result")).toHaveText("Stream loaded")
+  expect(await page.evaluate(() => window.delayedStreamEvents)).toEqual([
+    { event: "turbo:submit-end", connected: true },
+    "turbo:before-stream-render"
+  ])
+  await expect(page.locator("#delayed-stream-form")).not.toBeAttached()
+})
+
 test("receiving a stream message with css selector target", async ({ page }) => {
   const messages2 = page.locator("#messages_2 .message")
   const messages3 = page.locator("#messages_3 .message")

@@ -179,6 +179,7 @@ router.get("/delayed_response_body", (request, response) => {
   const [head, body] = fixture.split("<body>")
 
   response.type("html").status(parseInt(status || "200", 10))
+  response.set("Content-Length", Buffer.byteLength(fixture))
   response.write(`${head}<body>`)
 
   const timeout = setTimeout(() => {
@@ -188,6 +189,29 @@ router.get("/delayed_response_body", (request, response) => {
       response.end(body)
     }
   }, 1000)
+  response.on("close", () => clearTimeout(timeout))
+})
+
+router.post("/delayed-stream", (request, response) => {
+  const delay = parseInt(request.body.delay || "0", 10)
+
+  response.type("text/vnd.turbo-stream.html; charset=utf-8")
+  response.flushHeaders()
+  response.write(`
+    <turbo-stream action="replace" target="delayed-stream-form">
+      <template>
+  `)
+
+  const timeout = setTimeout(() => {
+    if (!response.writableEnded) {
+      response.end(`
+          <div id="delayed-stream-result">Stream loaded</div>
+        </template>
+      </turbo-stream>
+      `)
+    }
+  }, delay)
+
   response.on("close", () => clearTimeout(timeout))
 })
 
