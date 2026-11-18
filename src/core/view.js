@@ -55,10 +55,6 @@ export class View {
   async render(renderer) {
     const { isPreview, shouldRender, willRender, newSnapshot: snapshot } = renderer
 
-    // A workaround to ignore tracked element mismatch reloads when performing
-    // a promoted Visit from a frame navigation
-    const shouldInvalidate = willRender
-
     if (shouldRender) {
       const previousRender = this.renderPromise
       let resolveRenderPromise
@@ -85,8 +81,9 @@ export class View {
         resolveRenderPromise(undefined)
         if (this.renderPromise === renderPromise) delete this.renderPromise
       }
-    } else if (shouldInvalidate) {
-      this.invalidate(renderer.reloadReason)
+    } else {
+      const { reloadReason } = renderer
+      if (willRender || reloadReason) this.invalidate(reloadReason)
     }
   }
 

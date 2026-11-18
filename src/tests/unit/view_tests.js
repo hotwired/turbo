@@ -162,12 +162,17 @@ test("a renderer that should not render preserves immediate invalidation and the
     invalid.shouldRender = false
     invalid.reloadReason = { reason: "tracked_element_mismatch" }
     await view.render(invalid)
+    const promoted = createRenderer("promoted")
+    promoted.shouldRender = false
+    promoted.willRender = false
+    promoted.reloadReason = { reason: "tracked_element_mismatch" }
+    await view.render(promoted)
     const ignored = createRenderer("ignored")
     ignored.shouldRender = false
     ignored.willRender = false
     await view.render(ignored)
 
-    assert.deepEqual(invalidations, [invalid.reloadReason])
+    assert.deepEqual(invalidations, [invalid.reloadReason, promoted.reloadReason])
     assert.strictEqual(view.renderer, active)
     assert.strictEqual(view.renderPromise, completion)
   } finally {

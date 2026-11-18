@@ -289,7 +289,7 @@ export class Visit {
   }
 
   followRedirect() {
-    if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected) {
+    if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected && !this.view.forceReloaded) {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
         action: "replace",
         response: this.response,
