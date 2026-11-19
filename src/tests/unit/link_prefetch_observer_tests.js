@@ -2,6 +2,7 @@ import { assert } from "@open-wc/testing"
 import { LinkPrefetchObserver } from "../../observers/link_prefetch_observer"
 import { FetchMethod, FetchRequest } from "../../http/fetch_request"
 import { prefetchCache } from "../../core/drive/prefetch_cache"
+import { config } from "../../core/config"
 
 let observer, container, link, originalFetch, nextFetch, requests
 
@@ -25,7 +26,7 @@ setup(() => {
   window.fetch = (url, options) => new Promise((resolve, reject) => {
     let finish
     const finished = new Promise(resolve => { finish = resolve })
-    const request = { url, options, resolve, finished, finish }
+    const request = { url, options, resolve, reject, finished, finish }
     requests.push(request)
     const abort = () => reject(new DOMException("Aborted", "AbortError"))
     if (options.signal.aborted) {
@@ -72,12 +73,79 @@ test("an aborted cached prefetch is not adopted", async () => {
   assert.isUndefined(prefetchCache.get(new URL(link.href)))
 })
 
-test("rehovering still cancels an unadopted request for the same URL", async () => {
+test("rehovering reuses an unadopted request for the same URL", async () => {
+  const pending = await hover()
+  leave()
+  await rehover()
+
+  assert.isFalse(pending.abortSignal.aborted)
+  assert.lengthOf(requests, 1)
+  assert.strictEqual(usePrefetch().fetchRequest, pending)
+})
+
+test("hovering another link to the same URL does not reuse the request", async () => {
   const obsolete = await hover()
   leave()
+  const replacement = await hover(otherLink(link.href))
+
+  assert.isTrue(obsolete.abortSignal.aborted)
+  assert.isFalse(replacement.abortSignal.aborted)
+  assert.lengthOf(requests, 2)
+})
+
+test("a new prefetch of the same URL cancels an unadopted older request", async () => {
+  const obsolete = await hover()
+  leave()
+  await hover(otherLink())
   const replacement = await hover()
 
   assert.isTrue(obsolete.abortSignal.aborted)
+  assert.isFalse(replacement.abortSignal.aborted)
+})
+
+test("a failed prefetch is not reused", async () => {
+  nextFetch = request => request.reject(new TypeError("Failed to fetch"))
+  link.dispatchEvent(new MouseEvent("mouseenter"))
+  await new Promise(resolve => setTimeout(resolve, config.drive.prefetchDelay + 50))
+  leave()
+  const replacement = await hover()
+
+  assert.lengthOf(requests, 2)
+  assert.isFalse(replacement.abortSignal.aborted)
+})
+
+test("a failed prefetch is not reused when its error event is canceled", async () => {
+  container.addEventListener("turbo:fetch-request-error", event => event.preventDefault(), { once: true })
+  nextFetch = request => request.reject(new TypeError("Failed to fetch"))
+  link.dispatchEvent(new MouseEvent("mouseenter"))
+  await new Promise(resolve => setTimeout(resolve, config.drive.prefetchDelay + 50))
+  leave()
+  const replacement = await hover()
+
+  assert.lengthOf(requests, 2)
+  assert.isFalse(replacement.abortSignal.aborted)
+})
+
+test("a prefetch that receives an error response is not reused", async () => {
+  nextFetch = request => request.resolve(new Response("Not Found", { status: 404 }))
+  link.dispatchEvent(new MouseEvent("mouseenter"))
+  await new Promise(resolve => setTimeout(resolve, config.drive.prefetchDelay + 50))
+  leave()
+  const replacement = await hover()
+
+  assert.lengthOf(requests, 2)
+  assert.isFalse(replacement.abortSignal.aborted)
+})
+
+test("a prefetch that receives an error response is not reused when its response event is canceled", async () => {
+  container.addEventListener("turbo:before-fetch-response", event => event.preventDefault(), { once: true })
+  nextFetch = request => request.resolve(new Response("Not Found", { status: 404 }))
+  link.dispatchEvent(new MouseEvent("mouseenter"))
+  await new Promise(resolve => setTimeout(resolve, config.drive.prefetchDelay + 50))
+  leave()
+  const replacement = await hover()
+
+  assert.lengthOf(requests, 2)
   assert.isFalse(replacement.abortSignal.aborted)
 })
 
@@ -112,6 +180,7 @@ test("a prevented visit does not cancel a pending prefetch", async () => {
 test("finishing an older request does not untrack its replacement", async () => {
   const old = await hover()
   leave()
+  await hover(otherLink())
   const replacement = await hover()
   observer.requestFinished(old)
   visit(new URL("/other", document.baseURI).href)
@@ -221,10 +290,22 @@ test("visiting another fragment keeps a pending prefetch for the same resource",
   assert.strictEqual(usePrefetch(link, FetchMethod.get, destination).fetchRequest, pending)
 })
 
-test("rehovering another fragment cancels the older request for the same resource", async () => {
+test("rehovering another fragment reuses the request for the same resource", async () => {
+  link.hash = "first"
+  const pending = await hover()
+  leave()
+  link.hash = "second"
+  await rehover()
+
+  assert.isFalse(pending.abortSignal.aborted)
+  assert.lengthOf(requests, 1)
+})
+
+test("a new prefetch of another fragment cancels the older request for the same resource", async () => {
   link.hash = "first"
   const obsolete = await hover()
   leave()
+  await hover(otherLink())
   link.hash = "second"
   const replacement = await hover()
 
@@ -376,6 +457,18 @@ async function hover(target = link) {
   target.dispatchEvent(new MouseEvent("mouseenter"))
   await fetched
   return prefetchCache.get(new URL(target.href))
+}
+
+async function rehover(target = link) {
+  target.dispatchEvent(new MouseEvent("mouseenter"))
+  await new Promise(resolve => setTimeout(resolve, config.drive.prefetchDelay + 50))
+}
+
+function otherLink(href = "/prefetch-ownership-other") {
+  const other = document.createElement("a")
+  other.href = href
+  container.append(other)
+  return other
 }
 
 function leave(target = link) {

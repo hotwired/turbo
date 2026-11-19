@@ -291,7 +291,7 @@ for (const prefetchNextPage of [false, true]) {
   })
 }
 
-test("it cancels an unadopted prefetch when the same link is hovered again", async ({ page }) => {
+test("it reuses a prefetch still in flight when the same link is hovered again", async ({ page }) => {
   const held = await holdPrefetchResponse(page)
 
   try {
@@ -299,10 +299,20 @@ test("it cancels an unadopted prefetch when the same link is hovered again", asy
     await held.started(1)
     await page.mouse.move(0, 0)
     await page.hover("#anchor_for_prefetch_other_href")
-    await held.started(2)
+    await sleep(200)
+    await page.mouse.move(0, 0)
+    await page.hover("#anchor_for_prefetch_other_href")
+    await sleep(200)
 
-    expect(await page.evaluate(() => window.pendingPrefetches.map(signal => signal.aborted))).toEqual([true, false])
-    expect(held.requests).toHaveLength(2)
+    expect(await page.evaluate(() => window.pendingPrefetches.map(signal => signal.aborted))).toEqual([false])
+    expect(held.requests).toHaveLength(1)
+
+    await followPendingPrefetch(page)
+    expect(await page.evaluate(() => window.adoptedPrefetch.abortSignal === window.pendingPrefetches[0])).toBe(true)
+    held.release()
+
+    await expect(page).toHaveTitle("Prefetched Page")
+    expect(held.requests).toHaveLength(1)
   } finally {
     held.release()
     await held.finished()
@@ -375,7 +385,7 @@ test("it adopts a pending prefetch when the navigation changes only its fragment
   }
 })
 
-test("it resets the cache when a link is hovered", async ({ page }) => {
+test("it keeps the prefetched response when the pointer leaves the link", async ({ page }) => {
   await goTo({ page, path: "/hover_to_prefetch.html" })
 
   let requestCount = 0
@@ -390,7 +400,80 @@ test("it resets the cache when a link is hovered", async ({ page }) => {
   await page.hover("#anchor_for_prefetch")
   await sleep(200)
 
-  expect(requestCount).toEqual(2)
+  expect(requestCount).toEqual(1)
+  await assertRequestNotMadeOnClick({ page, selector: "#anchor_for_prefetch" })
+  await expect(page.locator("body")).toHaveText("Prefetched Page Content")
+})
+
+test("it does not reuse a frame link's prefetch for a link to the same URL outside the frame", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const turboFrameHeaders = []
+  page.on("request", request => {
+    if (request.url().endsWith("/prefetched.html")) turboFrameHeaders.push(request.headers()["turbo-frame"] ?? null)
+  })
+
+  await page.hover("#anchor_for_prefetch_in_frame")
+  await expect.poll(() => turboFrameHeaders).toEqual(["frame_for_prefetch"])
+  await page.mouse.move(0, 0)
+
+  await page.hover("#anchor_for_prefetch")
+  await expect.poll(() => turboFrameHeaders).toEqual(["frame_for_prefetch", null])
+  await assertRequestNotMadeOnClick({ page, selector: "#anchor_for_prefetch" })
+  await expect(page.locator("body")).toHaveText("Prefetched Page Content")
+})
+
+test("it does not reuse a frame link's prefetch for a visit to the same URL outside the frame", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const turboFrameHeaders = []
+  page.on("request", request => {
+    if (request.url().endsWith("/prefetched.html")) turboFrameHeaders.push(request.headers()["turbo-frame"] ?? null)
+  })
+
+  await page.hover("#anchor_for_prefetch_in_frame")
+  await expect.poll(() => turboFrameHeaders).toEqual(["frame_for_prefetch"])
+  await page.mouse.move(0, 0)
+
+  await page.evaluate(() => window.Turbo.visit("/src/tests/fixtures/prefetched.html"))
+  await expect.poll(() => turboFrameHeaders).toEqual(["frame_for_prefetch", null])
+  await expect(page.locator("body")).toHaveText("Prefetched Page Content")
+})
+
+test("it prefetches the link again after its prefetch failed", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const requests = []
+  await page.route("**/src/tests/fixtures/prefetched.html", route => {
+    requests.push(route.request())
+    return route.abort("failed")
+  })
+
+  await page.hover("#anchor_for_prefetch")
+  await expect.poll(() => requests.length).toBe(1)
+  await sleep(100)
+  await page.mouse.move(0, 0)
+
+  await page.hover("#anchor_for_prefetch")
+  await expect.poll(() => requests.length).toBe(2)
+})
+
+test("it prefetches the link again after its prefetch received an error response", async ({ page }) => {
+  await goTo({ page, path: "/hover_to_prefetch.html" })
+
+  const requests = []
+  await page.route("**/src/tests/fixtures/prefetched.html", route => {
+    requests.push(route.request())
+    return route.fulfill({ status: 500, contentType: "text/html", body: "Internal Server Error" })
+  })
+
+  await page.hover("#anchor_for_prefetch")
+  await expect.poll(() => requests.length).toBe(1)
+  await sleep(100)
+  await page.mouse.move(0, 0)
+
+  await page.hover("#anchor_for_prefetch")
+  await expect.poll(() => requests.length).toBe(2)
 })
 
 test("it does not make a network request when clicking on a link that has been prefetched", async ({ page }) => {
