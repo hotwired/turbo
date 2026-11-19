@@ -43,7 +43,13 @@ class PrefetchCache extends LRUCache {
 
   clear() {
     super.clear()
+    this.cancelPendingPrefetch()
+  }
+
+  // Stops a prefetch that hasn't been sent yet. One already sent stays cached until it expires.
+  cancelPendingPrefetch() {
     if (this.#prefetchTimeout) clearTimeout(this.#prefetchTimeout)
+    this.#prefetchTimeout = null
   }
 
   evict(key) {

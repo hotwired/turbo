@@ -43,6 +43,7 @@ export class LinkPrefetchObserver {
 
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.eventTarget.removeEventListener("turbo:visit", this.#cancelPendingFetchRequests, true)
+    this.eventTarget.removeEventListener("turbo:fetch-request-error", this.#evictErroredPrefetch, true)
     this.#cancelPrefetchRequest()
     for (const fetchRequest of this.#pendingFetchRequests.keys()) {
       fetchRequest.cancel()
@@ -63,6 +64,7 @@ export class LinkPrefetchObserver {
 
     this.eventTarget.addEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.eventTarget.addEventListener("turbo:visit", this.#cancelPendingFetchRequests, true)
+    this.eventTarget.addEventListener("turbo:fetch-request-error", this.#evictErroredPrefetch, true)
     this.started = true
   }
 
@@ -78,6 +80,8 @@ export class LinkPrefetchObserver {
 
       if (this.delegate.canPrefetchRequestToLocation(link, location)) {
         this.#prefetchedLink = link
+
+        if (this.#reusePrefetchFor(link, location)) return
 
         const fetchRequest = new FetchRequest(
           this,
@@ -106,7 +110,10 @@ export class LinkPrefetchObserver {
   }
 
   #cancelRequestIfObsolete = (event) => {
-    if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
+    if (event.target === this.#prefetchedLink) {
+      prefetchCache.cancelPendingPrefetch()
+      this.#prefetchedLink = null
+    }
   }
 
   #cancelPrefetchRequest = () => {
@@ -119,6 +126,10 @@ export class LinkPrefetchObserver {
       this.#usePrefetchedRequest(event.detail)
       prefetchCache.clear()
     }
+  }
+
+  #evictErroredPrefetch = (event) => {
+    this.#evictPrefetch(event.detail.request)
   }
 
   // Fetch request delegate
@@ -152,9 +163,13 @@ export class LinkPrefetchObserver {
     this.#pendingFetchRequests.delete(fetchRequest)
   }
 
-  requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
+  requestPreventedHandlingResponse(fetchRequest, fetchResponse) {
+    if (!fetchResponse.succeeded) this.#evictPrefetch(fetchRequest)
+  }
 
-  requestFailedWithResponse(fetchRequest, fetchResponse) {}
+  requestFailedWithResponse(fetchRequest, fetchResponse) {
+    this.#evictPrefetch(fetchRequest)
+  }
 
   get #cacheTtl() {
     return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
@@ -173,10 +188,29 @@ export class LinkPrefetchObserver {
     this.#pendingFetchRequests.set(fetchRequest, fetchRequest.url)
   }
 
+  // The link's own prefetch, cached or still in flight, is reused rather than restarted.
+  // Another link's prefetch of the same URL may carry a different Turbo-Frame header, so
+  // it is dropped instead.
+  #reusePrefetchFor(link, location) {
+    const cached = prefetchCache.get(location)
+
+    if (cached?.target === link && !cached.abortSignal.aborted) return true
+    if (cached) prefetchCache.clear()
+
+    return false
+  }
+
+  #evictPrefetch(fetchRequest) {
+    if (prefetchCache.read(fetchRequest.url) === fetchRequest) {
+      prefetchCache.evict(toCacheKey(fetchRequest.url))
+    }
+  }
+
   #usePrefetchedRequest(detail) {
     const cached = prefetchCache.get(detail.url)
+    const sameFrame = cached?.headers["Turbo-Frame"] === detail.fetchOptions.headers["Turbo-Frame"]
 
-    if (cached && !cached.abortSignal.aborted) {
+    if (cached && sameFrame && !cached.abortSignal.aborted) {
       // Once adopted, the request must not be canceled by this observer.
       this.#pendingFetchRequests.delete(cached)
       detail.fetchRequest = cached
