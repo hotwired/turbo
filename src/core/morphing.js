@@ -39,6 +39,30 @@ export function shouldRefreshFrameWithMorphing(currentFrame, newFrame) {
     !currentFrame.closest("[data-turbo-permanent]")
 }
 
+// Whether an application has opted a refresh="morph" frame out of being
+// refreshed by a page or ancestor-frame morph. Evaluated at the morph decision
+// point, before compatibility is checked, so it covers every path a morph would
+// otherwise take for the frame — matched-compatible (reload), matched-incompatible
+// (morph in place), and missing-from-response (preserve). A frame opts out
+// either declaratively with data-turbo-refresh-policy="manual" or imperatively
+// by canceling the turbo:before-frame-refresh event. The application then owns
+// the frame's refresh and teardown, exactly as with data-turbo-permanent, but
+// scoped to morph refreshes rather than all navigation. `source` is "page-morph"
+// or "frame-morph"; `newFrame` is the incoming counterpart, or undefined when the
+// frame is absent from the new content.
+export function shouldPreserveFrameDuringMorphRefresh(currentFrame, newFrame, source) {
+  if (!(currentFrame instanceof FrameElement) || !currentFrame.shouldReloadWithMorph) return false
+  if (currentFrame.refreshPolicy === "manual") return true
+
+  const event = dispatch("turbo:before-frame-refresh", {
+    target: currentFrame,
+    cancelable: true,
+    detail: { newFrame, source }
+  })
+
+  return event.defaultPrevented
+}
+
 function areFramesCompatibleForRefreshing(currentFrame, newFrame) {
   // newFrame cannot yet be an instance of FrameElement because custom
   // elements don't get initialized until they're attached to the DOM, so
