@@ -1,4 +1,4 @@
-import { elementIsStylesheet, parseHTMLDocument } from "../../util"
+import { parseHTMLDocument } from "../../util"
 import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
@@ -36,14 +36,6 @@ export class PageSnapshot extends Snapshot {
 
     for (const clonedPasswordInput of clonedElement.querySelectorAll('input[type="password"]')) {
       clonedPasswordInput.value = ""
-    }
-
-    for (const clonedNoscriptElement of clonedElement.querySelectorAll("noscript")) {
-      for (const child of [...clonedNoscriptElement.children]) {
-        if (elementIsStylesheet(child)) {
-          child.remove()
-        }
-      }
     }
 
     return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)
