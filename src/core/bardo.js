@@ -1,3 +1,5 @@
+import { dispatch } from "../util"
+
 export class Bardo {
   static async preservingPermanentElements(delegate, permanentElementMap, callback) {
     const bardo = new this(delegate, permanentElementMap)
@@ -21,8 +23,12 @@ export class Bardo {
 
   leave() {
     for (const id in this.permanentElementMap) {
-      const [currentPermanentElement] = this.permanentElementMap[id]
-      this.replaceCurrentPermanentElementWithClone(currentPermanentElement)
+      const [currentPermanentElement, newPermanentElement] = this.permanentElementMap[id]
+      const event = dispatch("turbo:before-permanent-element-render", {
+        detail: { render: this.replaceCurrentPermanentElementWithClone }
+      })
+
+      event.detail.render(currentPermanentElement, newPermanentElement)
       this.replacePlaceholderWithPermanentElement(currentPermanentElement)
       this.delegate.leavingBardo(currentPermanentElement)
     }
@@ -33,7 +39,7 @@ export class Bardo {
     permanentElement.replaceWith(placeholder)
   }
 
-  replaceCurrentPermanentElementWithClone(permanentElement) {
+  replaceCurrentPermanentElementWithClone = (permanentElement, _newElement) => {
     const clone = permanentElement.cloneNode(true)
     permanentElement.replaceWith(clone)
   }
