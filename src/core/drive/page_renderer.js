@@ -1,4 +1,4 @@
-import { activateScriptElement, elementIsStylesheet, waitForLoad } from "../../util"
+import { activateScriptElement, waitForLoad } from "../../util"
 import { Renderer } from "../renderer"
 
 export class PageRenderer extends Renderer {
@@ -163,18 +163,16 @@ export class PageRenderer extends Renderer {
   }
 
   activateNewBody() {
+    this.deactivateNoscriptElements()
     document.adoptNode(this.newElement)
-    this.deactivateNoscriptStylesheetElements()
     this.activateNewBodyScriptElements()
   }
 
-  deactivateNoscriptStylesheetElements() {
+  // DOMParser parses <noscript> contents as elements. Turn them into text before
+  // adopting the body, because adopting an <img> starts loading it.
+  deactivateNoscriptElements() {
     for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
-      for (const child of [...noscriptElement.children]) {
-        if (elementIsStylesheet(child)) {
-          child.remove()
-        }
-      }
+      noscriptElement.textContent = noscriptElement.innerHTML
     }
   }
 

@@ -273,7 +273,14 @@ test("preserves noscript elements with non-style content after navigation", asyn
   expect(noscriptCount).toEqual(1)
 })
 
-test("removes only stylesheet elements from noscript with mixed content", async ({ page }) => {
+test("keeps the contents of noscript elements as text after navigation", async ({ page }) => {
+  await page.click("#body-noscript-content-link")
+  await nextEventNamed(page, "turbo:render")
+
+  expect(await page.locator("#lazy-load-noscript").textContent()).toContain("<img")
+})
+
+test("does not evaluate stylesheet elements inside noscript elements with mixed content", async ({ page }) => {
   await page.click("#body-noscript-content-link")
   await nextEventNamed(page, "turbo:render")
 
@@ -283,7 +290,7 @@ test("removes only stylesheet elements from noscript with mixed content", async 
   expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
 })
 
-test("removes alternate stylesheet elements from noscript", async ({ page }) => {
+test("does not evaluate alternate stylesheet elements inside noscript elements", async ({ page }) => {
   await page.click("#body-noscript-content-link")
   await nextEventNamed(page, "turbo:render")
 
@@ -291,6 +298,18 @@ test("removes alternate stylesheet elements from noscript", async ({ page }) => 
   expect(noscriptExists).toEqual(1)
 
   expect(await isNoscriptStylesheetEvaluated(page)).toEqual(false)
+})
+
+test("does not load iframes inside noscript elements", async ({ page }) => {
+  const requests = await visitAndCollectNoscriptRequests(page)
+
+  expect(requests.filter((path) => path.endsWith("?noscript-tag-manager"))).toEqual([])
+})
+
+test("does not load images inside noscript elements", async ({ page }) => {
+  const requests = await visitAndCollectNoscriptRequests(page)
+
+  expect(requests.filter((path) => path.endsWith("?noscript-tracking-pixel"))).toEqual([])
 })
 
 test("waits for CSS to be loaded before rendering", async ({ page }) => {
@@ -670,6 +689,19 @@ function isNoscriptStylesheetEvaluated(page) {
   return page.evaluate(
     () => getComputedStyle(document.body).getPropertyValue("--black-if-noscript-evaluated").trim() === "black"
   )
+}
+
+async function visitAndCollectNoscriptRequests(page) {
+  const requests = []
+  page.on("request", (request) => {
+    const { pathname, search } = new URL(request.url())
+    if (search.startsWith("?noscript-")) requests.push(pathname + search)
+  })
+
+  await page.click("#body-noscript-tracking-link")
+  await nextEventNamed(page, "turbo:load")
+
+  return requests
 }
 
 function modifyBodyAfterRemoval(page) {

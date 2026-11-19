@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Body noscript with tracking tags</title>
+    <script src="/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+    <script src="/src/tests/fixtures/test.js"></script>
+  </head>
+  <body>
+    <h1>Body noscript with tracking tags</h1>
+    <p><a id="back-link" href="/src/tests/fixtures/rendering.html">Go back</a></p>
+    <noscript id="tracking-pixel-noscript">
+      <img src="/src/tests/fixtures/svg.svg?noscript-tracking-pixel" height="1" width="1" style="display:none" alt="">
+    </noscript>
+    <noscript id="tag-manager-noscript">
+      <iframe src="/src/tests/fixtures/one.html?noscript-tag-manager" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+  </body>
+</html>
