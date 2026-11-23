@@ -191,6 +191,16 @@ router.get("/delayed_response_body", (request, response) => {
   response.on("close", () => clearTimeout(timeout))
 })
 
+router.get("/windows1252_response", (request, response) => {
+  const body = Buffer.from(
+    '<!DOCTYPE html><html><head><title>Windows-1252</title></head><body><turbo-frame id="frame">caf\xe9</turbo-frame></body></html>',
+    "latin1"
+  )
+
+  response.set("Content-Type", "text/html; charset=windows-1252")
+  response.status(200).send(body)
+})
+
 router.post("/messages", (request, response) => {
   const params = { ...request.body, ...request.query }
   const { content, id, status, type, target, targets } = params
