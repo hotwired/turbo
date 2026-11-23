@@ -390,6 +390,16 @@ for (const status of [200, 422]) {
   })
 }
 
+test("renders a frame response in the charset the response declares", async ({ page }) => {
+  await page.goto("/src/tests/fixtures/frames/charset.html")
+
+  await page.locator("#frame").evaluate((frame) => {
+    frame.src = "/__turbo/windows1252_response"
+  })
+
+  await expect(page.locator("#frame")).toHaveText("café")
+})
+
 test("following a link within a descendant frame whose ancestor declares a target set navigates the descendant frame", async ({
   page
 }) => {
