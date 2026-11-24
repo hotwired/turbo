@@ -281,7 +281,7 @@ export function getLinkHrefString(link: Element): string {
   return link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""
 }
 
-export function findLinkFromClickTarget(target: EventTarget | null): HTMLAnchorElement | SVGAElement | null {
+export function findLinkFromClickTarget(target: EventTarget | null | undefined): HTMLAnchorElement | SVGAElement | null {
   const link = findClosestRecursively<HTMLAnchorElement | SVGAElement>(target, "a[href], a[xlink\\:href]")
 
   if (!link) return null

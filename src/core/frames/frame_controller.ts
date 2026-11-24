@@ -1,7 +1,7 @@
 import { FrameElement, FrameLoadingStyle } from "../../elements/frame_element"
-import { FetchMethod, FetchRequest } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, type FetchRequestDelegate } from "../../http/fetch_request"
 import { FetchResponse } from "../../http/fetch_response"
-import { AppearanceObserver } from "../../observers/appearance_observer"
+import { AppearanceObserver, type AppearanceObserverDelegate } from "../../observers/appearance_observer"
 import {
   clearBusyState,
   dispatch,
@@ -13,34 +13,95 @@ import {
   getVisitAction,
   removeTemporaryElementsFrom
 } from "../../util"
-import { FormSubmission, FormSubmissionState } from "../drive/form_submission"
+import { FormSubmission, FormSubmissionState, type FormSubmissionDelegate } from "../drive/form_submission"
 import { Snapshot } from "../snapshot"
 import { getAction, expandURL, getRequestURL, locationIsVisitable } from "../url"
-import { FormSubmitObserver } from "../../observers/form_submit_observer"
-import { FrameView } from "./frame_view"
-import { LinkInterceptor } from "./link_interceptor"
-import { FormLinkClickObserver } from "../../observers/form_link_click_observer"
+import { FormSubmitObserver, type FormSubmitObserverDelegate } from "../../observers/form_submit_observer"
+import { FrameView, type FrameViewDelegate } from "./frame_view"
+import { LinkInterceptor, type LinkInterceptorDelegate } from "./link_interceptor"
+import { FormLinkClickObserver, type FormLinkClickObserverDelegate } from "../../observers/form_link_click_observer"
 import { FrameRenderer } from "./frame_renderer"
 import { MorphingFrameRenderer } from "./morphing_frame_renderer"
 import { session } from "../index"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
 import { TurboFrameMissingError } from "../errors"
-import { VisitState } from "../drive/visit"
+import { VisitState, type Visit, type VisitOptions, type VisitResponse } from "../drive/visit"
+import type { ViewRenderOptions } from "../view"
+import type { RenderMethod } from "../renderer"
+import type { Action } from "../types"
 
-export class FrameController {
-  #currentFetchRequest = null
-  #fetchRequests = new WeakMap()
-  #proposedVisit = null
+type ProposedVisit = {
+  action: Action
+  liveSnapshot: PageSnapshot
+  snapshot: PageSnapshot
+  originLocation: URL
+  restorationIdentifier: string
+  shouldCacheSnapshot: boolean
+  location?: URL
+  response?: VisitResponse
+  previousFrameElement?: Element
+  advancedSnapshot?: PageSnapshot
+  documentIdentifier?: string
+  historyChanged?: boolean
+}
+
+type FetchRequestContext = {
+  proposedVisit: ProposedVisit | null
+  shouldMorphFrame: boolean
+  isMorphRefresh: boolean
+  resolve: (value: void) => void
+}
+
+type FormSubmissionContext = {
+  frame: FrameElement
+  initialBody?: HTMLElement
+  initialLocation?: string
+  previous?: { formSubmission: FormSubmission; frame: FrameElement; proposedVisit: ProposedVisit }
+  proposedVisit?: ProposedVisit | null
+}
+
+type LoadSourceURLOptions = { shouldMorphFrame?: boolean; isMorphRefresh?: boolean }
+
+export type TurboFrameMissingEvent = CustomEvent<{
+  response: Response
+  visit: (url: URL | string | Response, options?: Partial<VisitOptions>) => Promise<void>
+}>
+
+export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & ViewRenderOptions<FrameElement>>
+
+export class FrameController
+  implements
+    AppearanceObserverDelegate<FrameElement>,
+    FetchRequestDelegate,
+    FormLinkClickObserverDelegate,
+    FormSubmitObserverDelegate,
+    FormSubmissionDelegate,
+    FrameViewDelegate,
+    LinkInterceptorDelegate
+{
+  #currentFetchRequest: FetchRequest | null = null
+  #fetchRequests = new WeakMap<FetchRequest, FetchRequestContext>()
+  #proposedVisit: ProposedVisit | null = null
   #pendingMorphRefresh = false
   #connected = false
   #hasBeenLoaded = false
-  #resolveLazyLoadPromise = null
-  #ignoredAttributes = new Set()
-  #formSubmissions = new Set()
-  #formSubmissionContexts = new WeakMap()
+  #resolveLazyLoadPromise: ((value: Promise<void>) => void) | null = null
+  #ignoredAttributes = new Set<string>()
+  #formSubmissions = new Set<FormSubmission>()
+  #formSubmissionContexts = new WeakMap<FormSubmission, FormSubmissionContext>()
 
-  constructor(element) {
+  declare readonly element: FrameElement
+  declare readonly view: FrameView
+  declare readonly appearanceObserver: AppearanceObserver<FrameElement>
+  declare readonly formLinkClickObserver: FormLinkClickObserver
+  declare readonly linkInterceptor: LinkInterceptor
+  declare readonly restorationIdentifier: string
+  declare readonly formSubmitObserver: FormSubmitObserver
+  declare formSubmission?: FormSubmission
+  declare currentNavigationElement?: Element
+
+  constructor(element: FrameElement) {
     this.element = element
     this.view = new FrameView(this, this.element)
     this.appearanceObserver = new AppearanceObserver(this, this.element)
@@ -52,7 +113,7 @@ export class FrameController {
 
   // Frame delegate
 
-  connect() {
+  connect(): void {
     if (!this.#connected) {
       this.#connected = true
       if (this.loadingStyle == FrameLoadingStyle.lazy) {
@@ -66,7 +127,7 @@ export class FrameController {
     }
   }
 
-  disconnect() {
+  disconnect(): void {
     if (this.#connected) {
       this.#connected = false
       this.#pendingMorphRefresh = false
@@ -87,7 +148,7 @@ export class FrameController {
     }
   }
 
-  disabledChanged() {
+  disabledChanged(): void {
     if (this.disabled) {
       this.#pendingMorphRefresh = false
       this.#cancelFetchRequest()
@@ -98,7 +159,7 @@ export class FrameController {
     }
   }
 
-  sourceURLChanged() {
+  sourceURLChanged(): void {
     if (this.#isIgnoringChangesTo("src")) return
 
     this.#pendingMorphRefresh = false
@@ -119,13 +180,13 @@ export class FrameController {
     }
   }
 
-  sourceURLReloaded() {
+  sourceURLReloaded(): Promise<void> {
     return this.#reload()
   }
 
-  refreshForMorph() {
+  refreshForMorph(): void {
     if (this.element.shouldReloadWithMorph) {
-      const context = this.#fetchRequests.get(this.#currentFetchRequest)
+      const context = this.#fetchRequests.get(this.#currentFetchRequest!)
 
       if (context?.isMorphRefresh) {
         this.#pendingMorphRefresh = true
@@ -135,7 +196,7 @@ export class FrameController {
     }
   }
 
-  loadingStyleChanged() {
+  loadingStyleChanged(): void {
     if (this.loadingStyle == FrameLoadingStyle.lazy) {
       this.#observeLazyLoad()
     } else {
@@ -144,7 +205,7 @@ export class FrameController {
     }
   }
 
-  async #loadSourceURL(options = {}) {
+  async #loadSourceURL(options: LoadSourceURLOptions = {}): Promise<void> {
     if (this.enabled && this.isActive && !this.complete && this.sourceURL) {
       const resolveLazyLoadPromise = this.#resolveLazyLoadPromise
       this.#resolveLazyLoadPromise = null
@@ -157,7 +218,11 @@ export class FrameController {
     }
   }
 
-  async loadResponse(fetchResponse, requestURL, { proposedVisit = null, shouldMorphFrame = false } = {}) {
+  async loadResponse(
+    fetchResponse: FetchResponse,
+    requestURL?: URL,
+    { proposedVisit = null, shouldMorphFrame = false }: Partial<FetchRequestContext> = {}
+  ): Promise<void> {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       const responseURL = expandURL(fetchResponse.response.url)
       if (!fetchResponse.redirected && !responseURL.hash && requestURL) {
@@ -165,7 +230,7 @@ export class FrameController {
       }
       this.sourceURL = responseURL.href
     }
-    if (proposedVisit) proposedVisit.location = expandURL(this.sourceURL || requestURL)
+    if (proposedVisit) proposedVisit.location = expandURL(this.sourceURL || requestURL!)
 
     try {
       const responseHTML = await fetchResponse.responseHTML
@@ -193,7 +258,7 @@ export class FrameController {
 
   // Appearance observer delegate
 
-  elementAppearedInViewport(element) {
+  elementAppearedInViewport(element: FrameElement): void {
     if (!this.isActive) return
 
     if (this.complete) {
@@ -208,36 +273,36 @@ export class FrameController {
 
   // Form link click observer delegate
 
-  willSubmitFormLinkToLocation(link) {
+  willSubmitFormLinkToLocation(link: Element): boolean {
     return this.#shouldInterceptNavigation(link)
   }
 
-  submittedFormLinkToLocation(link, _location, form) {
+  submittedFormLinkToLocation(link: Element, _location: URL, form: HTMLFormElement): void {
     const frame = this.#findFrameElement(link)
     if (frame) form.setAttribute("data-turbo-frame", frame.id)
   }
 
   // Link interceptor delegate
 
-  shouldInterceptLinkClick(element, _location, _event) {
+  shouldInterceptLinkClick(element: Element, _location: string, _event?: MouseEvent): boolean {
     return this.#shouldInterceptNavigation(element)
   }
 
-  linkClickIntercepted(element, location) {
+  linkClickIntercepted(element: Element, location: string): void {
     this.#navigateFrame(element, location)
   }
 
   // Form submit observer delegate
 
-  willSubmitForm(element, submitter) {
+  willSubmitForm(element: HTMLFormElement, submitter?: HTMLElement): boolean {
     return element.closest("turbo-frame") == this.element && this.#shouldInterceptNavigation(element, submitter)
   }
 
-  formSubmitted(element, submitter) {
+  formSubmitted(element: HTMLFormElement, submitter?: HTMLElement): void {
     const previousSubmission = this.formSubmission
-    const previousContext = this.#formSubmissionContexts.get(previousSubmission)
+    const previousContext = this.#formSubmissionContexts.get(previousSubmission!)
     const previous = previousContext?.proposedVisit ? {
-      formSubmission: previousSubmission,
+      formSubmission: previousSubmission!,
       frame: previousContext.frame,
       proposedVisit: previousContext.proposedVisit
     } : previousContext?.previous
@@ -261,7 +326,7 @@ export class FrameController {
 
   // Fetch request delegate
 
-  prepareRequest(request, frame = this) {
+  prepareRequest(request: FetchRequest, frame: { id: string } = this): void {
     request.headers["Turbo-Frame"] = frame.id
 
     if (this.currentNavigationElement?.hasAttribute("data-turbo-stream")) {
@@ -269,15 +334,15 @@ export class FrameController {
     }
   }
 
-  requestStarted(_request) {
+  requestStarted(_request: FetchRequest): void {
     markAsBusy(this.element)
   }
 
-  requestPreventedHandlingResponse(request, _response) {
+  requestPreventedHandlingResponse(request: FetchRequest, _response: FetchResponse): void {
     this.#finishRequest(request)
   }
 
-  async requestSucceededWithResponse(request, response) {
+  async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): Promise<void> {
     let responseError
 
     try {
@@ -290,7 +355,7 @@ export class FrameController {
     }
   }
 
-  async requestFailedWithResponse(request, response) {
+  async requestFailedWithResponse(request: FetchRequest, response: FetchResponse): Promise<void> {
     let responseError
 
     try {
@@ -303,28 +368,28 @@ export class FrameController {
     }
   }
 
-  requestErrored(request, error) {
+  requestErrored(request: FetchRequest, error: Error): void {
     console.error(error)
     this.#finishRequest(request)
   }
 
-  requestFinished(request) {
+  requestFinished(request: FetchRequest): void {
     if (!this.#currentFetchRequest || this.#currentFetchRequest === request) clearBusyState(this.element)
   }
 
   // Form submission delegate
 
-  formSubmissionWillStart(formSubmission) {
+  formSubmissionWillStart(formSubmission: FormSubmission): void {
     const context = this.#formSubmissionContexts.get(formSubmission)
     if (context) this.#prepareFormSubmissionVisit(formSubmission, context)
   }
 
-  formSubmissionStarted(formSubmission) {
+  formSubmissionStarted(formSubmission: FormSubmission): void {
     const frame = this.#formSubmissionContexts.get(formSubmission)?.frame
     markAsBusy(formSubmission.formElement, frame || this.#findFrameElement(formSubmission.formElement))
   }
 
-  formSubmissionSucceededWithResponse(formSubmission, response) {
+  formSubmissionSucceededWithResponse(formSubmission: FormSubmission, response: FetchResponse): void {
     const context = this.#formSubmissionContexts.get(formSubmission)
     const frame = context?.frame || this.#findFrameElement(formSubmission.formElement, formSubmission.submitter)
     const proposedVisit = context?.proposedVisit
@@ -338,30 +403,30 @@ export class FrameController {
     }
   }
 
-  formSubmissionSucceededWithStreamResponse(_formSubmission, _fetchResponse) {
+  formSubmissionSucceededWithStreamResponse(_formSubmission: FormSubmission, _fetchResponse: FetchResponse): void {
     session.clearCache()
   }
 
-  formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
+  formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse): void {
     this.#pendingMorphRefresh = false
     this.#resolveLazyLoadPromise = null
     this.element.delegate.loadResponse(fetchResponse, formSubmission.fetchRequest.url)
     session.clearCache()
   }
 
-  formSubmissionErrored(formSubmission, error) {
+  formSubmissionErrored(_formSubmission: FormSubmission, error: Error): void {
     console.error(error)
   }
 
-  formSubmissionFinished(formSubmission) {
+  formSubmissionFinished(formSubmission: FormSubmission): void {
     const frame = this.#formSubmissionContexts.get(formSubmission)?.frame
     clearBusyState(formSubmission.formElement, frame || this.#findFrameElement(formSubmission.formElement))
   }
 
   // View delegate
 
-  allowsImmediateRender({ element: newFrame }, options) {
-    const event = dispatch("turbo:before-frame-render", {
+  allowsImmediateRender({ element: newFrame }: Snapshot<FrameElement>, options: ViewRenderOptions<FrameElement>): boolean {
+    const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
       cancelable: true
@@ -379,17 +444,17 @@ export class FrameController {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, _isPreview, _renderMethod) {}
+  viewRenderedSnapshot(_snapshot: Snapshot<FrameElement>, _isPreview: boolean, _renderMethod: RenderMethod): void {}
 
-  preloadOnLoadLinksForView(element) {
+  preloadOnLoadLinksForView(element: Element): void {
     session.preloadOnLoadLinksForView(element)
   }
 
-  viewInvalidated() {}
+  viewInvalidated(): void {}
 
   // Private
 
-  #observeLazyLoad() {
+  #observeLazyLoad(): void {
     if (this.isActive) {
       if (
         !this.#resolveLazyLoadPromise && !this.#currentFetchRequest && this.enabled &&
@@ -405,7 +470,7 @@ export class FrameController {
     }
   }
 
-  #reload({ isMorphRefresh = false } = {}) {
+  #reload({ isMorphRefresh = false }: { isMorphRefresh?: boolean } = {}): Promise<void> {
     const { refresh, src } = this.element
     const hadActiveRequest = this.#currentFetchRequest !== null
 
@@ -422,7 +487,7 @@ export class FrameController {
     return this.element.loaded
   }
 
-  #cancelFetchRequest() {
+  #cancelFetchRequest(): void {
     const request = this.#currentFetchRequest
     request?.cancel()
 
@@ -431,10 +496,10 @@ export class FrameController {
     }
   }
 
-  #finishRequest(request, responseError) {
+  #finishRequest(request: FetchRequest, responseError?: unknown): void {
     const context = this.#fetchRequests.get(request)
     const isCurrentRequest = this.#currentFetchRequest === request
-    const aborted = responseError?.name === "AbortError"
+    const aborted = (responseError as Error | undefined)?.name === "AbortError"
     const shouldRefresh = !aborted && isCurrentRequest && context?.isMorphRefresh && this.#pendingMorphRefresh
 
     if (isCurrentRequest) {
@@ -452,12 +517,12 @@ export class FrameController {
     if (shouldRefresh) this.refreshForMorph()
   }
 
-  #prepareFormSubmissionVisit(formSubmission, context) {
+  #prepareFormSubmissionVisit(formSubmission: FormSubmission, context: FormSubmissionContext): void {
     const { formElement, submitter } = formSubmission
     const { frame, initialBody, initialLocation, previous } = context
 
     if (frame.ownerDocument.body === initialBody && session.location.href === initialLocation) {
-      const action = getVisitAction(submitter, formElement, frame)
+      const action = getVisitAction(submitter, formElement, frame)!
       const proposedVisit = frame.delegate.#createProposedVisit(frame, action)
 
       // A reentrant submission can start before the replaced one clears its busy state.
@@ -477,7 +542,7 @@ export class FrameController {
     delete context.previous
   }
 
-  async #startFormSubmission(formSubmission, frame) {
+  async #startFormSubmission(formSubmission: FormSubmission, frame: FrameElement): Promise<void> {
     const controller = frame.delegate
     const { abortSignal } = formSubmission.fetchRequest
     const onAbort = () => {
@@ -498,15 +563,20 @@ export class FrameController {
     }
   }
 
-  async #loadFrameResponse(fetchResponse, document, proposedVisit, shouldMorphFrame) {
+  async #loadFrameResponse(
+    fetchResponse: FetchResponse,
+    document: Document,
+    proposedVisit: ProposedVisit | null,
+    shouldMorphFrame: boolean
+  ): Promise<void> {
     const newFrameElement = await this.extractForeignFrameElement(document.body)
     const rendererClass = shouldMorphFrame ? MorphingFrameRenderer : FrameRenderer
 
     if (newFrameElement) {
       const snapshot = new Snapshot(newFrameElement)
       const delegate = {
-        willRenderFrame: (currentElement) => {
-          if (proposedVisit) proposedVisit.previousFrameElement = currentElement.cloneNode(true)
+        willRenderFrame: (currentElement: FrameElement) => {
+          if (proposedVisit) proposedVisit.previousFrameElement = currentElement.cloneNode(true) as Element
         }
       }
       const renderer = new rendererClass(delegate, this.view.snapshot, snapshot, false, false)
@@ -535,13 +605,13 @@ export class FrameController {
     }
   }
 
-  async #visit(url, { shouldMorphFrame = false, isMorphRefresh = false } = {}) {
+  async #visit(url: URL, { shouldMorphFrame = false, isMorphRefresh = false }: LoadSourceURLOptions = {}): Promise<void> {
     const request = new FetchRequest(this, FetchMethod.get, url, new URLSearchParams(), this.element)
 
     this.#cancelFetchRequest()
     this.#currentFetchRequest = request
 
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       this.#fetchRequests.set(request, {
         proposedVisit: this.#proposedVisit,
         shouldMorphFrame,
@@ -553,7 +623,7 @@ export class FrameController {
     })
   }
 
-  #navigateFrame(element, url, submitter) {
+  #navigateFrame(element: Element, url: string, submitter?: HTMLElement): void {
     const frame = this.#findFrameElement(element, submitter)
 
     frame.delegate.proposeVisitIfNavigatedWithAction(frame, getVisitAction(submitter, element, frame))
@@ -563,27 +633,27 @@ export class FrameController {
     })
   }
 
-  proposeVisitIfNavigatedWithAction(frame, action = null) {
+  proposeVisitIfNavigatedWithAction(frame: FrameElement, action: Action | null = null): ProposedVisit | null {
     this.#proposedVisit = this.#createProposedVisit(frame, action)
     return this.#proposedVisit
   }
 
-  changeHistory(proposedVisit) {
+  changeHistory(proposedVisit: ProposedVisit | null): void {
     if (proposedVisit) {
       const pageVisit = this.#pageVisitInProgress()
       proposedVisit.shouldCacheSnapshot &&= pageVisit?.shouldCacheSnapshot !== false
 
       if (document.body === proposedVisit.liveSnapshot.element && !pageVisit?.historyChanged) {
-        const method = getHistoryMethodForAction(proposedVisit.action)
-        session.history.update(method, proposedVisit.location, proposedVisit.restorationIdentifier)
+        const method = getHistoryMethodForAction(proposedVisit.action)!
+        session.history.update(method, proposedVisit.location!, proposedVisit.restorationIdentifier)
         proposedVisit.documentIdentifier = session.history.entryDocumentIdentifier
         proposedVisit.historyChanged = true
-        if (pageVisit) session.view.lastRenderedLocation = proposedVisit.location
+        if (pageVisit) session.view.lastRenderedLocation = proposedVisit.location!
       }
     }
   }
 
-  #createProposedVisit(frame, action) {
+  #createProposedVisit(frame: FrameElement, action: Action | null): ProposedVisit | null {
     if (action && frame.ownerDocument.body.contains(frame)) {
       const liveSnapshot = PageSnapshot.fromElement(frame)
       const pageVisit = this.#pageVisitInProgress()
@@ -600,12 +670,12 @@ export class FrameController {
     return null
   }
 
-  #pageVisitInProgress() {
+  #pageVisitInProgress(): Visit | undefined {
     const visit = session.navigator.currentVisit
     if (visit?.state === VisitState.started && visit.willRender) return visit
   }
 
-  #prepareSnapshotsForVisit(proposedVisit) {
+  #prepareSnapshotsForVisit(proposedVisit: ProposedVisit): void {
     const frameSelector = `#${CSS.escape(this.id)}`
     const cachedFrame = proposedVisit.snapshot.element.querySelector(frameSelector)
     if (cachedFrame && proposedVisit.previousFrameElement) {
@@ -618,28 +688,30 @@ export class FrameController {
       // A permanent frame can move to another page while rendering. Clone it
       // with the same form-state rules as the rest of the cached snapshot.
       const { documentElement, headSnapshot } = proposedVisit.liveSnapshot
-      const frameSnapshot = new PageSnapshot(documentElement, this.element, headSnapshot).clone()
-      const advancedFrame = proposedVisit.advancedSnapshot.element.querySelector(frameSelector)
+      // TODO(types): PageSnapshot is used here to wrap a frame rather than a <body>.
+      const frameSnapshot = new PageSnapshot(documentElement, this.element as unknown as HTMLBodyElement, headSnapshot).clone()
+
+      const advancedFrame = proposedVisit.advancedSnapshot!.element.querySelector(frameSelector)
       advancedFrame?.replaceWith(frameSnapshot.element)
     }
   }
 
-  #shouldVisitFrameResponse(proposedVisit, pageVisit) {
+  #shouldVisitFrameResponse(proposedVisit: ProposedVisit, pageVisit?: Visit): boolean {
     return (
       !pageVisit &&
       document.body === proposedVisit.liveSnapshot.element &&
-      session.location.href === proposedVisit.location.href &&
-      this.sourceURL === proposedVisit.location.href
+      session.location.href === proposedVisit.location!.href &&
+      this.sourceURL === proposedVisit.location!.href
     )
   }
 
-  async #cachePromotedVisitIfNeeded(proposedVisit) {
+  async #cachePromotedVisitIfNeeded(proposedVisit: ProposedVisit): Promise<void> {
     const pageVisit = this.#pageVisitInProgress()
     proposedVisit.shouldCacheSnapshot &&= pageVisit?.shouldCacheSnapshot !== false
     const ownsPage = document.body === proposedVisit.liveSnapshot.element
-    const ownsHistory = session.location.href === proposedVisit.location.href
+    const ownsHistory = session.location.href === proposedVisit.location!.href
 
-    if (ownsPage && ownsHistory) session.view.lastRenderedLocation = proposedVisit.location
+    if (ownsPage && ownsHistory) session.view.lastRenderedLocation = proposedVisit.location!
 
     if (proposedVisit.shouldCacheSnapshot) {
       await this.#cachePromotedSnapshot(proposedVisit.snapshot, proposedVisit.originLocation)
@@ -650,17 +722,17 @@ export class FrameController {
         proposedVisit.shouldCacheSnapshot && proposedVisit.historyChanged &&
         !this.#shouldVisitFrameResponse(proposedVisit, currentPageVisit)
       ) {
-        await this.#cachePromotedSnapshot(proposedVisit.advancedSnapshot, proposedVisit.location)
+        await this.#cachePromotedSnapshot(proposedVisit.advancedSnapshot!, proposedVisit.location!)
       }
     }
   }
 
-  #cachePromotedSnapshot(snapshot, location) {
+  #cachePromotedSnapshot(snapshot: PageSnapshot, location: URL): Promise<PageSnapshot | undefined> {
     removeTemporaryElementsFrom(snapshot.element)
     return session.view.cacheSnapshotAtLocation(snapshot, location)
   }
 
-  async #visitFrameResponse(proposedVisit) {
+  async #visitFrameResponse(proposedVisit: ProposedVisit): Promise<void> {
     const pageVisit = this.#pageVisitInProgress()
     if (!this.#shouldVisitFrameResponse(proposedVisit, pageVisit)) {
       await this.#cachePromotedVisitIfNeeded(proposedVisit)
@@ -668,7 +740,7 @@ export class FrameController {
     }
 
     // The origin snapshot is already cached under its own URL.
-    session.visit(proposedVisit.location, {
+    session.visit(proposedVisit.location!, {
       action: proposedVisit.action,
       referrer: proposedVisit.originLocation,
       response: proposedVisit.response,
@@ -679,7 +751,7 @@ export class FrameController {
     })
   }
 
-  async #handleUnvisitableFrameResponse(fetchResponse) {
+  async #handleUnvisitableFrameResponse(fetchResponse: FetchResponse): Promise<void> {
     console.warn(
       `The response (${fetchResponse.statusCode}) from <turbo-frame id="${this.element.id}"> is performing a full page visit due to turbo-visit-control.`
     )
@@ -687,11 +759,11 @@ export class FrameController {
     await this.#visitResponse(fetchResponse.response)
   }
 
-  #willHandleFrameMissingFromResponse(fetchResponse) {
+  #willHandleFrameMissingFromResponse(fetchResponse: FetchResponse): boolean {
     this.element.setAttribute("complete", "")
 
     const response = fetchResponse.response
-    const visit = async (url, options) => {
+    const visit = async (url: URL | string | Response, options?: Partial<VisitOptions>) => {
       if (url instanceof Response) {
         this.#visitResponse(url)
       } else {
@@ -699,7 +771,7 @@ export class FrameController {
       }
     }
 
-    const event = dispatch("turbo:frame-missing", {
+    const event = dispatch<TurboFrameMissingEvent>("turbo:frame-missing", {
       target: this.element,
       detail: { response, visit },
       cancelable: true
@@ -708,17 +780,17 @@ export class FrameController {
     return !event.defaultPrevented
   }
 
-  #handleFrameMissingFromResponse(fetchResponse) {
+  #handleFrameMissingFromResponse(fetchResponse: FetchResponse): void {
     this.view.missing()
     this.#throwFrameMissingError(fetchResponse)
   }
 
-  #throwFrameMissingError(fetchResponse) {
+  #throwFrameMissingError(fetchResponse: FetchResponse): never {
     const message = `The response (${fetchResponse.statusCode}) did not contain the expected <turbo-frame id="${this.element.id}"> and will be ignored. To perform a full page visit instead, set turbo-visit-control to reload.`
     throw new TurboFrameMissingError(message)
   }
 
-  async #visitResponse(response) {
+  async #visitResponse(response: Response): Promise<void> {
     const wrapped = new FetchResponse(response)
     const responseHTML = await wrapped.responseHTML
     const { location, redirected, statusCode } = wrapped
@@ -726,24 +798,24 @@ export class FrameController {
     return session.visit(location, { response: { redirected, statusCode, responseHTML } })
   }
 
-  #findFrameElement(element, submitter) {
+  #findFrameElement(element: Element, submitter?: HTMLElement): FrameElement {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
     const target = this.#getFrameElementById(id)
 
     return target instanceof FrameElement ? target : this.element
   }
 
-  async extractForeignFrameElement(container) {
-    let element
+  async extractForeignFrameElement(container: ParentNode): Promise<FrameElement | null> {
+    let element: FrameElement | undefined
     const id = CSS.escape(this.id)
 
     try {
-      element = activateElement(container.querySelector(`turbo-frame#${id}`), this.sourceURL)
+      element = activateElement(container.querySelector<FrameElement>(`turbo-frame#${id}`), this.sourceURL)
       if (element) {
         return element
       }
 
-      element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`), this.sourceURL)
+      element = activateElement(container.querySelector<FrameElement>(`turbo-frame[src][recurse~=${id}]`), this.sourceURL)
       if (element) {
         await element.loaded
         return await this.extractForeignFrameElement(element)
@@ -756,13 +828,13 @@ export class FrameController {
     return null
   }
 
-  #formActionIsVisitable(form, submitter) {
+  #formActionIsVisitable(form: HTMLFormElement, submitter?: HTMLElement): boolean {
     const action = getAction(form, submitter)
 
     return locationIsVisitable(expandURL(action), this.rootLocation)
   }
 
-  #shouldInterceptNavigation(element, submitter) {
+  #shouldInterceptNavigation(element: Element, submitter?: HTMLElement): boolean {
     const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target")
 
     if (element instanceof HTMLFormElement && !this.#formActionIsVisitable(element, submitter)) {
@@ -795,43 +867,43 @@ export class FrameController {
 
   // Computed properties
 
-  get id() {
+  get id(): string {
     return this.element.id
   }
 
-  get disabled() {
+  get disabled(): boolean {
     return this.element.disabled
   }
 
-  get enabled() {
+  get enabled(): boolean {
     return !this.disabled
   }
 
-  get sourceURL() {
+  get sourceURL(): string | undefined {
     if (this.element.src) {
       return this.element.src
     }
   }
 
-  set sourceURL(sourceURL) {
+  set sourceURL(sourceURL: string | null | undefined) {
     this.#ignoringChangesToAttribute("src", () => {
       this.element.src = sourceURL ?? null
     })
   }
 
-  get loadingStyle() {
+  get loadingStyle(): FrameLoadingStyle {
     return this.element.loading
   }
 
-  get isLoading() {
+  get isLoading(): boolean {
     return this.formSubmission !== undefined || this.#currentFetchRequest !== null
   }
 
-  get complete() {
+  get complete(): boolean {
     return this.element.hasAttribute("complete")
   }
 
-  set complete(value) {
+  set complete(value: boolean) {
     if (value) {
       this.element.setAttribute("complete", "")
     } else {
@@ -839,36 +911,36 @@ export class FrameController {
     }
   }
 
-  get isActive() {
+  get isActive(): boolean {
     return this.element.isActive && this.#connected
   }
 
-  get rootLocation() {
-    const meta = this.element.ownerDocument.querySelector(`meta[name="turbo-root"]`)
+  get rootLocation(): URL {
+    const meta = this.element.ownerDocument.querySelector<HTMLMetaElement>(`meta[name="turbo-root"]`)
     const root = meta?.content ?? "/"
     return expandURL(root)
   }
 
-  #isIgnoringChangesTo(attributeName) {
+  #isIgnoringChangesTo(attributeName: string): boolean {
     return this.#ignoredAttributes.has(attributeName)
   }
 
-  #ignoringChangesToAttribute(attributeName, callback) {
+  #ignoringChangesToAttribute(attributeName: string, callback: () => void): void {
     this.#ignoredAttributes.add(attributeName)
     callback()
     this.#ignoredAttributes.delete(attributeName)
   }
 
-  #withCurrentNavigationElement(element, callback) {
+  #withCurrentNavigationElement(element: Element, callback: () => void): void {
     this.currentNavigationElement = element
     callback()
     delete this.currentNavigationElement
   }
 
-  #getFrameElementById(id) {
+  #getFrameElementById(id: string | null): FrameElement | undefined {
     if (id != null) {
       const element = id === "_parent" ?
-        this.element.parentElement.closest("turbo-frame") :
+        this.element.parentElement!.closest("turbo-frame") :
         document.getElementById(id)
       if (element instanceof FrameElement) {
         return element
@@ -877,7 +949,7 @@ export class FrameController {
   }
 }
 
-function activateElement(element, currentURL) {
+function activateElement(element: FrameElement | null, currentURL: string | undefined): FrameElement | undefined {
   if (element) {
     const src = element.getAttribute("src")
     if (src != null && currentURL != null && getRequestURL(expandURL(src)) == getRequestURL(expandURL(currentURL))) {

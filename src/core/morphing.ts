@@ -26,10 +26,10 @@ export interface MorphOptions {
  */
 export function morphElements(
   currentElement: Element,
-  newElement: Element | NodeListOf<ChildNode> | ChildNode[],
+  newElement: Element | DocumentFragment | NodeListOf<ChildNode> | ChildNode[],
   { callbacks, ...options }: MorphOptions = {}
 ): void {
-  // NOTE(types): idiomorph's Config omits NodeList, which it accepts at runtime
+  // TODO(types): idiomorph's types omit NodeList and DocumentFragment, which it accepts at runtime
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Idiomorph.morph(currentElement, newElement as any, {
     ...options,
@@ -45,7 +45,7 @@ export function morphElements(
  * @param currentElement Element destination of morphing children changes
  * @param newElement Element source of morphing children changes
  */
-export function morphChildren(currentElement: Element, newElement: Element, options: MorphOptions = {}): void {
+export function morphChildren(currentElement: Element, newElement: Element | DocumentFragment, options: MorphOptions = {}): void {
   morphElements(currentElement, newElement.childNodes, {
     ...options,
     morphStyle: "innerHTML"

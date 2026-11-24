@@ -1,9 +1,10 @@
 import { FrameRenderer } from "./frame_renderer"
 import { morphChildren, shouldRefreshFrameWithMorphing, closestFrameReloadableWithMorphing } from "../morphing"
 import { dispatch } from "../../util"
+import type { FrameElement } from "../../elements/frame_element"
 
 export class MorphingFrameRenderer extends FrameRenderer {
-  static renderElement(currentElement, newElement) {
+  static renderElement(currentElement: Element, newElement: Element): void {
     dispatch("turbo:before-frame-morph", {
       target: currentElement,
       detail: { currentElement, newElement }
@@ -16,7 +17,7 @@ export class MorphingFrameRenderer extends FrameRenderer {
             shouldRefreshFrameWithMorphing(node, newNode) &&
               closestFrameReloadableWithMorphing(node) === currentElement
           ) {
-            node.delegate.refreshForMorph()
+            (node as FrameElement).delegate.refreshForMorph()
             return false
           }
           return true
@@ -25,7 +26,7 @@ export class MorphingFrameRenderer extends FrameRenderer {
     })
   }
 
-  async preservingPermanentElements(callback) {
+  async preservingPermanentElements(callback: () => void | Promise<void>): Promise<void> {
     return await callback()
   }
 }

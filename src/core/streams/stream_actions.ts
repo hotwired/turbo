@@ -1,7 +1,23 @@
 import { session } from "../"
 import { morphElements, morphChildren } from "../morphing"
+import type { StreamElement } from "../../elements/stream_element"
 
-export const StreamActions = {
+export type TurboStreamAction = (this: StreamElement) => void | Promise<void>
+
+export interface TurboStreamActions {
+  after: TurboStreamAction
+  append: TurboStreamAction
+  before: TurboStreamAction
+  prepend: TurboStreamAction
+  remove: TurboStreamAction
+  replace: TurboStreamAction
+  update: TurboStreamAction
+  refresh: TurboStreamAction
+  /** Custom actions registered by applications. */
+  [action: string]: TurboStreamAction | undefined
+}
+
+export const StreamActions: TurboStreamActions = {
   after() {
     this.removeDuplicateTargetSiblings()
     this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling))

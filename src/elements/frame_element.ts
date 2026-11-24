@@ -1,7 +1,11 @@
+import type { FrameController } from "../core/frames/frame_controller"
+
 export const FrameLoadingStyle = {
   eager: "eager",
   lazy: "lazy"
-}
+} as const
+
+export type FrameLoadingStyle = (typeof FrameLoadingStyle)[keyof typeof FrameLoadingStyle]
 
 /**
  * Contains a fragment of HTML which is updated based on navigation within
@@ -20,32 +24,33 @@ export const FrameLoadingStyle = {
  *   </turbo-frame>
  */
 export class FrameElement extends HTMLElement {
-  static delegateConstructor = undefined
+  static delegateConstructor: (new (element: FrameElement) => FrameController) | undefined = undefined
 
-  loaded = Promise.resolve()
+  loaded: Promise<void> = Promise.resolve()
+  declare readonly delegate: FrameController
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return ["disabled", "loading", "src"]
   }
 
   constructor() {
     super()
-    this.delegate = new FrameElement.delegateConstructor(this)
+    this.delegate = new FrameElement.delegateConstructor!(this)
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     this.delegate.connect()
   }
 
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     this.delegate.disconnect()
   }
 
-  reload() {
+  reload(): Promise<void> {
     return this.delegate.sourceURLReloaded()
   }
 
-  attributeChangedCallback(name) {
+  attributeChangedCallback(name: string): void {
     if (name == "loading") {
       this.delegate.loadingStyleChanged()
     } else if (name == "src") {
@@ -58,14 +63,14 @@ export class FrameElement extends HTMLElement {
   /**
    * Gets the URL to lazily load source HTML from
    */
-  get src() {
+  get src(): string | null {
     return this.getAttribute("src")
   }
 
   /**
    * Sets the URL to lazily load source HTML from
    */
-  set src(value) {
+  set src(value: string | null | undefined) {
     if (value) {
       this.setAttribute("src", value)
     } else {
@@ -76,14 +81,14 @@ export class FrameElement extends HTMLElement {
   /**
    * Gets the refresh mode for the frame.
    */
-  get refresh() {
+  get refresh(): string | null {
     return this.getAttribute("refresh")
   }
 
   /**
    * Sets the refresh mode for the frame.
    */
-  set refresh(value) {
+  set refresh(value: string | null | undefined) {
     if (value) {
       this.setAttribute("refresh", value)
     } else {
@@ -91,21 +96,22 @@ export class FrameElement extends HTMLElement {
     }
   }
 
-  get shouldReloadWithMorph() {
+  // Falsy values other than false (null, "") are returned as-is.
+  get shouldReloadWithMorph(): boolean | "" | null {
     return this.src && this.refresh === "morph"
   }
 
   /**
    * Determines if the element is loading
    */
-  get loading() {
+  get loading(): FrameLoadingStyle {
     return frameLoadingStyleFromString(this.getAttribute("loading") || "")
   }
 
   /**
    * Sets the value of if the element is loading
    */
-  set loading(value) {
+  set loading(value: FrameLoadingStyle | string | null | undefined) {
     if (value) {
       this.setAttribute("loading", value)
     } else {
@@ -118,7 +124,7 @@ export class FrameElement extends HTMLElement {
    *
    * If disabled, no requests will be intercepted by the frame.
    */
-  get disabled() {
+  get disabled(): boolean {
     return this.hasAttribute("disabled")
   }
 
@@ -127,7 +133,7 @@ export class FrameElement extends HTMLElement {
    *
    * If disabled, no requests will be intercepted by the frame.
    */
-  set disabled(value) {
+  set disabled(value: boolean) {
     if (value) {
       this.setAttribute("disabled", "")
     } else {
@@ -140,7 +146,7 @@ export class FrameElement extends HTMLElement {
    *
    * If true, the frame will be scrolled into view automatically on update.
    */
-  get autoscroll() {
+  get autoscroll(): boolean {
     return this.hasAttribute("autoscroll")
   }
 
@@ -149,7 +155,7 @@ export class FrameElement extends HTMLElement {
    *
    * If true, the frame will be scrolled into view automatically on update.
    */
-  set autoscroll(value) {
+  set autoscroll(value: boolean) {
     if (value) {
       this.setAttribute("autoscroll", "")
     } else {
@@ -160,7 +166,7 @@ export class FrameElement extends HTMLElement {
   /**
    * Determines if the element has finished loading
    */
-  get complete() {
+  get complete(): boolean {
     return !this.delegate.isLoading
   }
 
@@ -169,7 +175,7 @@ export class FrameElement extends HTMLElement {
    *
    * If inactive, source changes will not be observed.
    */
-  get isActive() {
+  get isActive(): boolean {
     return this.ownerDocument === document && !this.isPreview
   }
 
@@ -178,12 +184,12 @@ export class FrameElement extends HTMLElement {
    *
    * If inactive, source changes will not be observed.
    */
-  get isPreview() {
+  get isPreview(): boolean {
     return this.ownerDocument?.documentElement?.hasAttribute("data-turbo-preview")
   }
 }
 
-function frameLoadingStyleFromString(style) {
+function frameLoadingStyleFromString(style: string): FrameLoadingStyle {
   switch (style.toLowerCase()) {
     case "lazy":
       return FrameLoadingStyle.lazy

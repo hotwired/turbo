@@ -1,15 +1,15 @@
 import { connectStreamSource, disconnectStreamSource } from "../core/index"
 
 export class StreamSourceElement extends HTMLElement {
-  streamSource = null
+  streamSource: WebSocket | EventSource | null = null
 
-  connectedCallback() {
+  connectedCallback(): void {
     this.streamSource = this.src.match(/^ws{1,2}:/) ? new WebSocket(this.src) : new EventSource(this.src)
 
     connectStreamSource(this.streamSource)
   }
 
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     if (this.streamSource) {
       this.streamSource.close()
 
@@ -17,7 +17,7 @@ export class StreamSourceElement extends HTMLElement {
     }
   }
 
-  get src() {
+  get src(): string {
     return this.getAttribute("src") || ""
   }
 }
