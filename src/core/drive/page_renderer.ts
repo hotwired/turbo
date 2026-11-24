@@ -1,10 +1,13 @@
 import { activateScriptElement, elementIsStylesheet, waitForLoad } from "../../util"
 import { Renderer } from "../renderer"
+import type { PageSnapshot } from "./page_snapshot"
+import type { HeadSnapshot } from "./head_snapshot"
+import type { ReloadReason, StructuredReason } from "../types"
 
-export class PageRenderer extends Renderer {
-  #reloadLocation
+export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
+  #reloadLocation: URL | undefined
 
-  static renderElement(currentElement, newElement) {
+  static renderElement(_currentElement: Element, newElement: Element): void {
     if (document.body && newElement instanceof HTMLBodyElement) {
       document.body.replaceWith(newElement)
     } else {
@@ -12,16 +15,22 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  constructor(currentSnapshot, newSnapshot, isPreview, willRender = true, reloadLocation) {
+  constructor(
+    currentSnapshot: PageSnapshot,
+    newSnapshot: PageSnapshot,
+    isPreview: boolean,
+    willRender = true,
+    reloadLocation?: URL
+  ) {
     super(currentSnapshot, newSnapshot, isPreview, willRender)
     this.#reloadLocation = reloadLocation
   }
 
-  get shouldRender() {
+  get shouldRender(): boolean {
     return this.newSnapshot.isVisitable && this.#hasCompatibleTrackedElements
   }
 
-  get reloadReason() {
+  get reloadReason(): ReloadReason {
     if (!this.newSnapshot.isVisitable) {
       return this.#getReloadReason("turbo_visit_control_is_reload")
     }
@@ -31,37 +40,37 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  async prepareToRender() {
+  async prepareToRender(): Promise<void> {
     this.#setLanguage()
     await this.mergeHead()
   }
 
-  async render() {
+  async render(): Promise<void> {
     if (this.willRender) {
       await this.replaceBody()
     }
   }
 
-  finishRendering() {
+  finishRendering(): void {
     super.finishRendering()
     if (!this.isPreview) {
       this.focusFirstAutofocusableElement()
     }
   }
 
-  get currentHeadSnapshot() {
+  get currentHeadSnapshot(): HeadSnapshot {
     return this.currentSnapshot.headSnapshot
   }
 
-  get newHeadSnapshot() {
+  get newHeadSnapshot(): HeadSnapshot {
     return this.newSnapshot.headSnapshot
   }
 
-  get newElement() {
+  get newElement(): HTMLBodyElement {
     return this.newSnapshot.element
   }
 
-  async mergeHead() {
+  async mergeHead(): Promise<void> {
     const mergedHeadElements = this.mergeProvisionalElements()
     const newStylesheetElements = this.copyNewHeadStylesheetElements()
     this.copyNewHeadScriptElements()
@@ -74,19 +83,19 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  async replaceBody() {
+  async replaceBody(): Promise<void> {
     await this.preservingPermanentElements(async () => {
       this.activateNewBody()
       await this.assignNewBody()
     })
   }
 
-  get trackedElementsAreIdentical() {
+  get trackedElementsAreIdentical(): boolean {
     return this.currentHeadSnapshot.trackedElementSignature == this.newHeadSnapshot.trackedElementSignature
   }
 
-  async copyNewHeadStylesheetElements() {
-    const loadingElements = []
+  async copyNewHeadStylesheetElements(): Promise<void> {
+    const loadingElements: Promise<void>[] = []
 
     for (const element of this.newHeadStylesheetElements) {
       loadingElements.push(waitForLoad(element))
@@ -97,19 +106,19 @@ export class PageRenderer extends Renderer {
     await Promise.all(loadingElements)
   }
 
-  copyNewHeadScriptElements() {
+  copyNewHeadScriptElements(): void {
     for (const element of this.newHeadScriptElements) {
       document.head.appendChild(activateScriptElement(element))
     }
   }
 
-  removeUnusedDynamicStylesheetElements() {
+  removeUnusedDynamicStylesheetElements(): void {
     for (const element of this.unusedDynamicStylesheetElements) {
       document.head.removeChild(element)
     }
   }
 
-  async mergeProvisionalElements() {
+  async mergeProvisionalElements(): Promise<void> {
     if (this.willRender) {
       const newHeadElements = [...this.newHeadProvisionalElements]
 
@@ -127,7 +136,7 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  isCurrentElementInElementList(element, elementList) {
+  isCurrentElementInElementList(element: Element, elementList: Element[]): boolean {
     for (const [index, newElement] of elementList.entries()) {
       // if title element...
       if (element.tagName == "TITLE") {
@@ -150,25 +159,25 @@ export class PageRenderer extends Renderer {
     return false
   }
 
-  removeCurrentHeadProvisionalElements() {
+  removeCurrentHeadProvisionalElements(): void {
     for (const element of this.currentHeadProvisionalElements) {
       document.head.removeChild(element)
     }
   }
 
-  copyNewHeadProvisionalElements() {
+  copyNewHeadProvisionalElements(): void {
     for (const element of this.newHeadProvisionalElements) {
       document.head.appendChild(element)
     }
   }
 
-  activateNewBody() {
+  activateNewBody(): void {
     document.adoptNode(this.newElement)
     this.deactivateNoscriptStylesheetElements()
     this.activateNewBodyScriptElements()
   }
 
-  deactivateNoscriptStylesheetElements() {
+  deactivateNoscriptStylesheetElements(): void {
     for (const noscriptElement of this.newElement.querySelectorAll("noscript")) {
       for (const child of [...noscriptElement.children]) {
         if (elementIsStylesheet(child)) {
@@ -178,50 +187,50 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  activateNewBodyScriptElements() {
+  activateNewBodyScriptElements(): void {
     for (const inertScriptElement of this.newBodyScriptElements) {
       const activatedScriptElement = activateScriptElement(inertScriptElement)
       inertScriptElement.replaceWith(activatedScriptElement)
     }
   }
 
-  async assignNewBody() {
+  async assignNewBody(): Promise<void> {
     await this.renderElement(this.currentElement, this.newElement)
   }
 
-  get unusedDynamicStylesheetElements() {
+  get unusedDynamicStylesheetElements(): HTMLElement[] {
     return this.oldHeadStylesheetElements.filter((element) => {
       return element.getAttribute("data-turbo-track") === "dynamic"
     })
   }
 
-  get oldHeadStylesheetElements() {
+  get oldHeadStylesheetElements(): HTMLElement[] {
     return this.currentHeadSnapshot.getStylesheetElementsNotInSnapshot(this.newHeadSnapshot)
   }
 
-  get newHeadStylesheetElements() {
+  get newHeadStylesheetElements(): HTMLElement[] {
     return this.newHeadSnapshot.getStylesheetElementsNotInSnapshot(this.currentHeadSnapshot)
   }
 
-  get newHeadScriptElements() {
+  get newHeadScriptElements(): HTMLScriptElement[] {
     return this.newHeadSnapshot.getScriptElementsNotInSnapshot(this.currentHeadSnapshot)
   }
 
-  get currentHeadProvisionalElements() {
+  get currentHeadProvisionalElements(): Element[] {
     return this.currentHeadSnapshot.provisionalElements
   }
 
-  get newHeadProvisionalElements() {
+  get newHeadProvisionalElements(): Element[] {
     return this.newHeadSnapshot.provisionalElements
   }
 
-  get newBodyScriptElements() {
+  get newBodyScriptElements(): NodeListOf<HTMLScriptElement> {
     return this.newElement.querySelectorAll("script")
   }
 
   // Private
 
-  get #hasCompatibleTrackedElements() {
+  get #hasCompatibleTrackedElements(): boolean {
     if (this.willRender) {
       return this.trackedElementsAreIdentical
     } else {
@@ -232,31 +241,31 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  #getReloadReason(reason) {
-    const reloadReason = { reason }
+  #getReloadReason(reason: string): StructuredReason {
+    const reloadReason: StructuredReason = { reason }
     if (this.#reloadLocation) {
       reloadReason.context = { location: this.#reloadLocation }
     }
     return reloadReason
   }
 
-  #setLanguage() {
+  #setLanguage(): void {
     const { documentElement } = this.currentSnapshot
     const { dir, lang } = this.newSnapshot
 
     if (lang || (!this.willRender && lang !== null)) {
-      documentElement.setAttribute("lang", lang)
+      documentElement.setAttribute("lang", lang!)
     } else if (this.willRender) {
       documentElement.removeAttribute("lang")
     }
     if (dir || (!this.willRender && dir !== null)) {
-      documentElement.setAttribute("dir", dir)
+      documentElement.setAttribute("dir", dir!)
     } else if (this.willRender) {
       documentElement.removeAttribute("dir")
     }
   }
 
-  #mergePartialProvisionalElements() {
+  #mergePartialProvisionalElements(): void {
     const currentElements = this.#getProvisionalElementsInDocumentOrder(this.currentHeadSnapshot)
     const suppliedElements = this.#getProvisionalElementsInDocumentOrder(this.newHeadSnapshot)
     const unusedElements = [...currentElements]
@@ -282,12 +291,12 @@ export class PageRenderer extends Renderer {
     }
   }
 
-  #getProvisionalElementsInDocumentOrder(headSnapshot) {
+  #getProvisionalElementsInDocumentOrder(headSnapshot: HeadSnapshot): Element[] {
     const elements = headSnapshot.provisionalElements
     return headSnapshot.children.filter((element) => elements.includes(element))
   }
 
-  #hasSameProvisionalElementIdentity(element, otherElement) {
+  #hasSameProvisionalElementIdentity(element: Element, otherElement: Element): boolean {
     if (element.tagName === otherElement.tagName) {
       switch (element.tagName) {
         case "TITLE":
@@ -299,7 +308,8 @@ export class PageRenderer extends Renderer {
           })
           let hasSameName
           if (attribute === "http-equiv") {
-            hasSameName = element.httpEquiv.toLowerCase() === otherElement.httpEquiv.toLowerCase()
+            hasSameName =
+              (element as HTMLMetaElement).httpEquiv.toLowerCase() === (otherElement as HTMLMetaElement).httpEquiv.toLowerCase()
           } else if (attribute) {
             hasSameName = element.getAttribute(attribute) === otherElement.getAttribute(attribute)
           } else {
@@ -308,8 +318,9 @@ export class PageRenderer extends Renderer {
           return hasSameName && (element.getAttribute("media") || "") === (otherElement.getAttribute("media") || "")
         }
         case "LINK": {
-          const relations = [...element.relList].map((relation) => relation.toLowerCase())
-          const otherRelations = [...otherElement.relList].map((relation) => relation.toLowerCase())
+          const relations = [...(element as HTMLLinkElement).relList].map((relation) => relation.toLowerCase())
+          const otherRelations = [...(otherElement as HTMLLinkElement).relList].map((relation) => relation.toLowerCase())
+
           if (["canonical", "manifest"].some((relation) => relations.includes(relation) && otherRelations.includes(relation))) {
             return true
           } else if (relations.includes("icon") && otherRelations.includes("icon")) {

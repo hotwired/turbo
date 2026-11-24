@@ -14,3 +14,10 @@ export type StreamSource = {
     options?: boolean | EventListenerOptions
   ): void
 }
+
+export interface StructuredReason {
+  reason: string
+  context?: { [key: string]: unknown }
+}
+
+export type ReloadReason = StructuredReason | undefined

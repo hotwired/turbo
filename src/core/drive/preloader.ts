@@ -1,16 +1,24 @@
 import { PageSnapshot } from "./page_snapshot"
-import { FetchMethod, FetchRequest } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, type FetchRequestDelegate } from "../../http/fetch_request"
+import type { FetchResponse } from "../../http/fetch_response"
+import type { SnapshotCache } from "./snapshot_cache"
 
-export class Preloader {
+export interface PreloaderDelegate {
+  shouldPreloadLink(link: HTMLAnchorElement): boolean
+}
+
+export class Preloader implements FetchRequestDelegate {
   selector = "a[data-turbo-preload]"
-  #requestGenerations = new WeakMap()
+  #requestGenerations = new WeakMap<FetchRequest, number>()
+  declare readonly delegate: PreloaderDelegate
+  declare readonly snapshotCache: SnapshotCache
 
-  constructor(delegate, snapshotCache) {
+  constructor(delegate: PreloaderDelegate, snapshotCache: SnapshotCache) {
     this.delegate = delegate
     this.snapshotCache = snapshotCache
   }
 
-  start() {
+  start(): void {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", this.#preloadAll)
     } else {
@@ -18,19 +26,19 @@ export class Preloader {
     }
   }
 
-  stop() {
+  stop(): void {
     document.removeEventListener("DOMContentLoaded", this.#preloadAll)
   }
 
-  preloadOnLoadLinksForView(element) {
-    for (const link of element.querySelectorAll(this.selector)) {
+  preloadOnLoadLinksForView(element: Element): void {
+    for (const link of element.querySelectorAll<HTMLAnchorElement>(this.selector)) {
       if (this.delegate.shouldPreloadLink(link)) {
         this.preloadURL(link)
       }
     }
   }
 
-  async preloadURL(link) {
+  async preloadURL(link: HTMLAnchorElement): Promise<void> {
     const location = new URL(link.href)
 
     if (this.snapshotCache.has(location)) {
@@ -43,11 +51,11 @@ export class Preloader {
 
   // Fetch request delegate
 
-  prepareRequest(fetchRequest) {
+  prepareRequest(fetchRequest: FetchRequest): void {
     fetchRequest.headers["X-Sec-Purpose"] = "prefetch"
   }
 
-  async requestSucceededWithResponse(fetchRequest, fetchResponse) {
+  async requestSucceededWithResponse(fetchRequest: FetchRequest, fetchResponse: FetchResponse): Promise<void> {
     try {
       const generation = this.#requestGenerations.get(fetchRequest)
       const responseHTML = await fetchResponse.responseHTML
@@ -61,17 +69,17 @@ export class Preloader {
     }
   }
 
-  requestStarted(fetchRequest) {
+  requestStarted(fetchRequest: FetchRequest): void {
     this.#requestGenerations.set(fetchRequest, this.snapshotCache.generation)
   }
 
-  requestErrored(fetchRequest) {}
+  requestErrored(_fetchRequest: FetchRequest): void {}
 
-  requestFinished(fetchRequest) {}
+  requestFinished(_fetchRequest: FetchRequest): void {}
 
-  requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
+  requestPreventedHandlingResponse(_fetchRequest: FetchRequest, _fetchResponse: FetchResponse): void {}
 
-  requestFailedWithResponse(fetchRequest, fetchResponse) {}
+  requestFailedWithResponse(_fetchRequest: FetchRequest, _fetchResponse: FetchResponse): void {}
 
   #preloadAll = () => {
     this.preloadOnLoadLinksForView(document.body)

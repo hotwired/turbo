@@ -1,7 +1,20 @@
-import { Idiomorph } from "idiomorph"
+import { Idiomorph, type ConfigCallbacks as IdiomorphCallbacks } from "idiomorph"
+
 import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
 import { urlsAreEqual } from "./url"
+
+/**
+ * Options for morphing elements. Declared here rather than re-exported from
+ * idiomorph, which is bundled and not installed alongside Turbo.
+ */
+export interface MorphOptions {
+  callbacks?: {
+    // Also called with no newElement when a node is about to be removed.
+    beforeNodeMorphed?(currentElement: Element, newElement: Element): boolean
+  }
+  morphStyle?: "innerHTML" | "outerHTML"
+}
 
 /**
  * Morph the state of the currentElement based on the attributes and contents of
@@ -11,10 +24,16 @@ import { urlsAreEqual } from "./url"
  * @param currentElement Element destination of morphing changes
  * @param newElement Element source of morphing changes
  */
-export function morphElements(currentElement, newElement, { callbacks, ...options } = {}) {
-  Idiomorph.morph(currentElement, newElement, {
+export function morphElements(
+  currentElement: Element,
+  newElement: Element | NodeListOf<ChildNode> | ChildNode[],
+  { callbacks, ...options }: MorphOptions = {}
+): void {
+  // NOTE(types): idiomorph's Config omits NodeList, which it accepts at runtime
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Idiomorph.morph(currentElement, newElement as any, {
     ...options,
-    callbacks: new DefaultIdiomorphCallbacks(callbacks)
+    callbacks: new DefaultIdiomorphCallbacks(callbacks) as IdiomorphCallbacks
   })
 }
 
@@ -26,45 +45,47 @@ export function morphElements(currentElement, newElement, { callbacks, ...option
  * @param currentElement Element destination of morphing children changes
  * @param newElement Element source of morphing children changes
  */
-export function morphChildren(currentElement, newElement, options = {}) {
+export function morphChildren(currentElement: Element, newElement: Element, options: MorphOptions = {}): void {
   morphElements(currentElement, newElement.childNodes, {
     ...options,
     morphStyle: "innerHTML"
   })
 }
 
-export function shouldRefreshFrameWithMorphing(currentFrame, newFrame) {
+export function shouldRefreshFrameWithMorphing(currentFrame: Element | null, newFrame?: Element | null) {
   return currentFrame instanceof FrameElement &&
     currentFrame.shouldReloadWithMorph && (!newFrame || areFramesCompatibleForRefreshing(currentFrame, newFrame)) &&
     !currentFrame.closest("[data-turbo-permanent]")
 }
 
-function areFramesCompatibleForRefreshing(currentFrame, newFrame) {
+function areFramesCompatibleForRefreshing(currentFrame: FrameElement, newFrame: Element): boolean {
   // newFrame cannot yet be an instance of FrameElement because custom
   // elements don't get initialized until they're attached to the DOM, so
   // test its Element#nodeName instead
   return newFrame instanceof Element && newFrame.nodeName === "TURBO-FRAME" && currentFrame.id === newFrame.id &&
-  (!newFrame.getAttribute("src") || urlsAreEqual(currentFrame.src, newFrame.getAttribute("src")))
+  (!newFrame.getAttribute("src") || urlsAreEqual(currentFrame.src!, newFrame.getAttribute("src")!))
 }
 
-export function closestFrameReloadableWithMorphing(node) {
-  return node.parentElement.closest("turbo-frame[src][refresh=morph]")
+export function closestFrameReloadableWithMorphing(node: Element): FrameElement | null {
+  return node.parentElement!.closest<FrameElement>("turbo-frame[src][refresh=morph]")
 }
 
 class DefaultIdiomorphCallbacks {
-  #beforeNodeMorphed
+  #beforeNodeMorphed: (currentElement: Element, newElement: Element) => boolean
 
-  constructor({ beforeNodeMorphed } = {}) {
+  constructor({ beforeNodeMorphed }: NonNullable<MorphOptions["callbacks"]> = {}) {
     this.#beforeNodeMorphed = beforeNodeMorphed || (() => true)
   }
 
-  beforeNodeAdded = (node) => {
-    return !(node.id && node.hasAttribute("data-turbo-permanent") && document.getElementById(node.id))
+  beforeNodeAdded = (node: Node): boolean => {
+    return !((node as Element).id && (node as Element).hasAttribute("data-turbo-permanent") && document.getElementById((node as Element).id))
   }
 
-  beforeNodeMorphed = (currentElement, newElement) => {
+  // Returns undefined for non-element nodes; idiomorph only treats `false` as a veto.
+  beforeNodeMorphed = (currentElement: Node, newElement?: Node): boolean | undefined => {
     if (currentElement instanceof Element) {
-      if (!currentElement.hasAttribute("data-turbo-permanent") && this.#beforeNodeMorphed(currentElement, newElement)) {
+      // TODO(types): newElement is undefined when called from beforeNodeRemoved
+      if (!currentElement.hasAttribute("data-turbo-permanent") && this.#beforeNodeMorphed(currentElement, newElement as Element)) {
         const event = dispatch("turbo:before-morph-element", {
           cancelable: true,
           target: currentElement,
@@ -78,7 +99,7 @@ class DefaultIdiomorphCallbacks {
     }
   }
 
-  beforeAttributeUpdated = (attributeName, target, mutationType) => {
+  beforeAttributeUpdated = (attributeName: string, target: Element, mutationType: "update" | "remove"): boolean => {
     const event = dispatch("turbo:before-morph-attribute", {
       cancelable: true,
       target,
@@ -96,11 +117,11 @@ class DefaultIdiomorphCallbacks {
     return true
   }
 
-  beforeNodeRemoved = (node) => {
+  beforeNodeRemoved = (node: Node): boolean | undefined => {
     return this.beforeNodeMorphed(node)
   }
 
-  afterNodeMorphed = (currentElement, newElement) => {
+  afterNodeMorphed = (currentElement: Node, newElement: Node): void => {
     if (currentElement instanceof Element) {
       dispatch("turbo:morph-element", {
         target: currentElement,

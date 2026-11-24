@@ -2,7 +2,7 @@ export class ViewTransitioner {
   #viewTransitionStarted = false
   #lastOperation = Promise.resolve()
 
-  renderChange(useViewTransition, render) {
+  renderChange(useViewTransition: boolean, render: () => void | Promise<void>): Promise<void> {
     if (useViewTransition && this.viewTransitionsAvailable && !this.#viewTransitionStarted) {
       this.#viewTransitionStarted = true
       this.#lastOperation = this.#lastOperation.then(async () => {
@@ -17,7 +17,8 @@ export class ViewTransitioner {
     return this.#lastOperation
   }
 
-  get viewTransitionsAvailable() {
+  // Typed locally: older TypeScript DOM libs lack Document#startViewTransition.
+  get viewTransitionsAvailable(): ((callback: () => unknown) => unknown) | undefined {
     return document.startViewTransition
   }
 }

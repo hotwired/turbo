@@ -1,22 +1,42 @@
 import { getVisitAction } from "../../util"
-import { FormSubmission, FormSubmissionState } from "./form_submission"
-import { expandURL } from "../url"
-import { Visit } from "./visit"
+import { FormSubmission, FormSubmissionState, type FormSubmissionDelegate } from "./form_submission"
+import { expandURL, type Locatable } from "../url"
+import { Visit, type VisitDelegate, type VisitOptions } from "./visit"
 import { PageSnapshot } from "./page_snapshot"
 import { ViewTransitioner } from "./view_transitioner"
+import type { Action } from "../types"
+import type { Adapter } from "../native/adapter"
+import type { History } from "./history"
+import type { PageView } from "./page_view"
+import type { FetchResponse } from "../../http/fetch_response"
 
-export class Navigator {
-  constructor(delegate) {
+export interface NavigatorDelegate {
+  readonly adapter: Adapter
+  readonly view: PageView
+  readonly history: History
+
+  allowsVisitingLocationWithAction(location: URL, action?: Action): boolean
+  visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void
+  visitStarted(visit: Visit): void
+  visitCompleted(visit: Visit): void
+}
+
+export class Navigator implements VisitDelegate, FormSubmissionDelegate {
+  declare readonly delegate: NavigatorDelegate
+  declare formSubmission?: FormSubmission
+  declare currentVisit?: Visit
+
+  constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
   }
 
-  proposeVisit(location, options = {}) {
+  proposeVisit(location: URL, options: Partial<VisitOptions> = {}): void {
     if (this.delegate.allowsVisitingLocationWithAction(location, options.action)) {
       this.delegate.visitProposedToLocation(location, options)
     }
   }
 
-  startVisit(locatable, restorationIdentifier, options = {}) {
+  startVisit(locatable: Locatable, restorationIdentifier?: string, options: Partial<VisitOptions> = {}): void {
     this.stop()
     this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
@@ -25,14 +45,14 @@ export class Navigator {
     this.currentVisit.start()
   }
 
-  submitForm(form, submitter) {
+  submitForm(form: HTMLFormElement, submitter?: HTMLElement): void {
     this.stop()
     this.formSubmission = new FormSubmission(this, form, submitter, true)
 
     this.formSubmission.start()
   }
 
-  stop() {
+  stop(): void {
     if (this.formSubmission) {
       this.formSubmission.stop()
       delete this.formSubmission
@@ -44,23 +64,23 @@ export class Navigator {
     }
   }
 
-  get adapter() {
+  get adapter(): Adapter {
     return this.delegate.adapter
   }
 
-  get view() {
+  get view(): PageView {
     return this.delegate.view
   }
 
-  get rootLocation() {
+  get rootLocation(): URL {
     return this.view.snapshot.rootLocation
   }
 
-  get history() {
+  get history(): History {
     return this.delegate.history
   }
 
-  get isFormSubmissionInFlight() {
+  get isFormSubmissionInFlight(): boolean {
     const state = this.formSubmission?.state
     const { requesting, waiting, receiving } = FormSubmissionState
     return state === requesting || state === waiting || state === receiving
@@ -68,14 +88,14 @@ export class Navigator {
 
   // Form submission delegate
 
-  formSubmissionStarted(formSubmission) {
+  formSubmissionStarted(formSubmission: FormSubmission): void {
     // Not all adapters implement formSubmissionStarted
     if (typeof this.adapter.formSubmissionStarted === "function") {
       this.adapter.formSubmissionStarted(formSubmission)
     }
   }
 
-  async formSubmissionSucceededWithResponse(formSubmission, fetchResponse) {
+  async formSubmissionSucceededWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse): Promise<void> {
     if (formSubmission == this.formSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
@@ -86,7 +106,7 @@ export class Navigator {
 
         const { statusCode, redirected } = fetchResponse
         const action = this.#getActionForFormSubmission(formSubmission, fetchResponse)
-        const visitOptions = {
+        const visitOptions: Partial<VisitOptions> = {
           action,
           shouldCacheSnapshot,
           response: { statusCode, responseHTML, redirected }
@@ -96,11 +116,11 @@ export class Navigator {
     }
   }
 
-  formSubmissionSucceededWithStreamResponse(_formSubmission, _fetchResponse) {
+  formSubmissionSucceededWithStreamResponse(_formSubmission: FormSubmission, _fetchResponse: FetchResponse): void {
     this.view.clearSnapshotCache()
   }
 
-  async formSubmissionFailedWithResponse(formSubmission, fetchResponse) {
+  async formSubmissionFailedWithResponse(formSubmission: FormSubmission, fetchResponse: FetchResponse): Promise<void> {
     const responseHTML = await fetchResponse.responseHTML
 
     if (responseHTML) {
@@ -123,11 +143,11 @@ export class Navigator {
     }
   }
 
-  formSubmissionErrored(formSubmission, error) {
+  formSubmissionErrored(_formSubmission: FormSubmission, error: Error): void {
     console.error(error)
   }
 
-  formSubmissionFinished(formSubmission) {
+  formSubmissionFinished(formSubmission: FormSubmission): void {
     // Not all adapters implement formSubmissionFinished
     if (typeof this.adapter.formSubmissionFinished === "function") {
       this.adapter.formSubmissionFinished(formSubmission)
@@ -136,7 +156,7 @@ export class Navigator {
 
   // Link prefetching
 
-  linkPrefetchingIsEnabledForLocation(location) {
+  linkPrefetchingIsEnabledForLocation(location: URL): boolean {
     // Not all adapters implement linkPrefetchingIsEnabledForLocation
     if (typeof this.adapter.linkPrefetchingIsEnabledForLocation === "function") {
       return this.adapter.linkPrefetchingIsEnabledForLocation(location)
@@ -147,42 +167,42 @@ export class Navigator {
 
   // Visit delegate
 
-  visitStarted(visit) {
+  visitStarted(visit: Visit): void {
     this.delegate.visitStarted(visit)
   }
 
-  visitCompleted(visit) {
+  visitCompleted(visit: Visit): void {
     this.delegate.visitCompleted(visit)
     delete this.currentVisit
   }
 
   // Same-page links are no longer handled with a Visit.
   // This method is still needed for Turbo Native adapters.
-  locationWithActionIsSamePage(location, action) {
+  locationWithActionIsSamePage(_location: URL, _action?: Action): boolean {
     return false
   }
 
   // Visits
 
-  get location() {
+  get location(): URL {
     return this.history.location
   }
 
-  get restorationIdentifier() {
+  get restorationIdentifier(): string {
     return this.history.restorationIdentifier
   }
 
-  #getActionForFormSubmission(formSubmission, fetchResponse) {
+  #getActionForFormSubmission(formSubmission: FormSubmission, fetchResponse: FetchResponse): Action {
     const { submitter, formElement } = formSubmission
     return getVisitAction(submitter, formElement) || this.#getDefaultAction(fetchResponse)
   }
 
-  #getDefaultAction(fetchResponse) {
+  #getDefaultAction(fetchResponse: FetchResponse): Action {
     const sameLocationRedirect = fetchResponse.redirected && fetchResponse.location.href === this.location?.href
     return sameLocationRedirect ? "replace" : "advance"
   }
 
-  #shouldRenderError(snapshot, fetchResponse) {
+  #shouldRenderError(snapshot: PageSnapshot, fetchResponse: FetchResponse): boolean {
     const currentSignature = this.view.snapshot.headSnapshot.trackedElementSignature
     const newSignature = snapshot.headSnapshot.trackedElementSignature
 

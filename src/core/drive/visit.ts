@@ -1,11 +1,60 @@
-import { FetchMethod, FetchRequest } from "../../http/fetch_request"
+import { FetchMethod, FetchRequest, type FetchRequestDelegate } from "../../http/fetch_request"
 import { getAnchor, locationIsVisitable } from "../url"
 import { PageSnapshot } from "./page_snapshot"
 import { getHistoryMethodForAction, removeTemporaryElementsFrom, uuid } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { ViewTransitioner } from "./view_transitioner"
+import type { FetchResponse } from "../../http/fetch_response"
+import type { Adapter } from "../native/adapter"
+import type { History, RestorationData, VisitDirection } from "./history"
 
-const defaultOptions = {
+import type { PageView } from "./page_view"
+import type { Action } from "../types"
+
+export interface VisitDelegate {
+  readonly adapter: Adapter
+  readonly history: History
+  readonly view: PageView
+
+  visitStarted(visit: Visit): void
+  visitCompleted(visit: Visit): void
+  locationWithActionIsSamePage(location: URL, action?: Action): boolean
+}
+
+export type TimingMetric = "visitStart" | "requestStart" | "requestEnd" | "visitEnd"
+
+export type TimingMetrics = Partial<{ [metric in TimingMetric]: number }>
+
+export type VisitState = "initialized" | "started" | "canceled" | "failed" | "completed"
+
+export type VisitResponse = {
+  statusCode: number
+  redirected: boolean
+  responseHTML?: string
+}
+
+export type RefreshOptions = { method?: string | null; scroll?: string | null }
+
+export type VisitOptions = {
+  action: Action
+  historyChanged: boolean
+  referrer?: URL
+  snapshot?: PageSnapshot
+  snapshotHTML?: string
+  response?: VisitResponse
+  visitCachedSnapshot(snapshot: PageSnapshot): void
+  willRender: boolean
+  updateHistory: boolean
+  restorationIdentifier?: string
+  shouldCacheSnapshot: boolean
+  frame?: string
+  acceptsStreamResponse: boolean
+  direction?: VisitDirection
+  refresh: RefreshOptions
+  scroll?: string
+}
+
+const defaultOptions: VisitOptions = {
   action: "advance",
   historyChanged: false,
   visitCachedSnapshot: () => {},
@@ -22,7 +71,7 @@ export const TimingMetric = {
   requestStart: "requestStart",
   requestEnd: "requestEnd",
   visitEnd: "visitEnd"
-}
+} as const
 
 export const VisitState = {
   initialized: "initialized",
@@ -30,25 +79,25 @@ export const VisitState = {
   canceled: "canceled",
   failed: "failed",
   completed: "completed"
-}
+} as const
 
 export const SystemStatusCode = {
   networkFailure: 0,
   timeoutFailure: -1,
   contentTypeMismatch: -2
-}
+} as const
 
 export const Direction = {
   advance: "forward",
   restore: "back",
   replace: "none"
-}
+} as const
 
-export class Visit {
-  #documentIdentifier
+export class Visit implements FetchRequestDelegate {
+  #documentIdentifier: string
 
   identifier = uuid() // Required by turbo-ios
-  timingMetrics = {}
+  timingMetrics: TimingMetrics = {}
 
   followedRedirect = false
   historyChanged = false
@@ -56,10 +105,29 @@ export class Visit {
   shouldCacheSnapshot = true
   acceptsStreamResponse = false
   snapshotCached = false
-  state = VisitState.initialized
+  state: VisitState = VisitState.initialized
   viewTransitioner = new ViewTransitioner()
 
-  constructor(delegate, location, restorationIdentifier, options = {}) {
+  declare readonly delegate: VisitDelegate
+  declare readonly location: URL
+  declare readonly restorationIdentifier: string
+  declare readonly action: Action
+  declare readonly referrer?: URL
+  declare readonly snapshot?: PageSnapshot
+  declare readonly snapshotHTML?: string
+  declare response?: VisitResponse
+  declare readonly willRender: boolean
+  declare readonly isPageRefresh: boolean
+  declare readonly visitCachedSnapshot: (snapshot: PageSnapshot) => void
+  declare readonly updateHistory: boolean
+  declare readonly direction: VisitDirection
+  declare readonly refresh: RefreshOptions
+  declare readonly scroll?: string
+  declare redirectedToLocation?: URL
+  declare request?: FetchRequest
+  declare frame?: number
+
+  constructor(delegate: VisitDelegate, location: URL, restorationIdentifier?: string, options: Partial<VisitOptions> = {}) {
     this.delegate = delegate
     this.location = location
     this.restorationIdentifier = restorationIdentifier || uuid()
@@ -113,23 +181,23 @@ export class Visit {
     this.scroll = scroll
   }
 
-  get adapter() {
+  get adapter(): Adapter {
     return this.delegate.adapter
   }
 
-  get view() {
+  get view(): PageView {
     return this.delegate.view
   }
 
-  get history() {
+  get history(): History {
     return this.delegate.history
   }
 
-  get restorationData() {
+  get restorationData(): RestorationData {
     return this.history.getRestorationDataForIdentifier(this.restorationIdentifier)
   }
 
-  start() {
+  start(): void {
     if (this.state == VisitState.initialized) {
       this.recordTimingMetric(TimingMetric.visitStart)
       this.state = VisitState.started
@@ -138,7 +206,7 @@ export class Visit {
     }
   }
 
-  cancel() {
+  cancel(): void {
     if (this.state == VisitState.started) {
       if (this.request) {
         this.request.cancel()
@@ -148,7 +216,7 @@ export class Visit {
     }
   }
 
-  complete() {
+  complete(): void {
     if (this.state == VisitState.started) {
       this.recordTimingMetric(TimingMetric.visitEnd)
       this.adapter.visitCompleted(this)
@@ -161,7 +229,7 @@ export class Visit {
     }
   }
 
-  fail() {
+  fail(): void {
     if (this.state == VisitState.started) {
       this.state = VisitState.failed
       this.adapter.visitFailed(this)
@@ -169,22 +237,22 @@ export class Visit {
     }
   }
 
-  changeHistory() {
+  changeHistory(): void {
     if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
-      const method = getHistoryMethodForAction(actionForHistory)
+      const method = getHistoryMethodForAction(actionForHistory)!
       this.history.update(method, this.#locationForHistory, this.restorationIdentifier, { documentIdentifier: this.#documentIdentifier })
       this.historyChanged = true
     }
   }
 
-  recordDocument() {
+  recordDocument(): void {
     if (this.willRender || this.history.entryDocumentIdentifier === this.#documentIdentifier) {
       this.history.adoptDocument(this.#documentIdentifier)
     }
   }
 
-  issueRequest() {
+  issueRequest(): void {
     if (this.hasPreloadedResponse()) {
       this.simulateRequest()
     } else if (this.shouldIssueRequest() && !this.request) {
@@ -193,7 +261,7 @@ export class Visit {
     }
   }
 
-  simulateRequest() {
+  simulateRequest(): void {
     if (this.response) {
       this.startRequest()
       this.recordResponse()
@@ -201,12 +269,12 @@ export class Visit {
     }
   }
 
-  startRequest() {
+  startRequest(): void {
     this.recordTimingMetric(TimingMetric.requestStart)
     this.adapter.visitRequestStarted(this)
   }
 
-  recordResponse(response = this.response) {
+  recordResponse(response: VisitResponse | undefined = this.response): void {
     this.response = response
     if (response) {
       const { statusCode } = response
@@ -218,12 +286,12 @@ export class Visit {
     }
   }
 
-  finishRequest() {
+  finishRequest(): void {
     this.recordTimingMetric(TimingMetric.requestEnd)
     this.adapter.visitRequestFinished(this)
   }
 
-  loadResponse() {
+  loadResponse(): void {
     if (this.response) {
       const { statusCode, responseHTML } = this.response
       this.render(async () => {
@@ -246,7 +314,7 @@ export class Visit {
     }
   }
 
-  getCachedSnapshot() {
+  getCachedSnapshot(): PageSnapshot | undefined {
     const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
 
     if (snapshot && (!getAnchor(this.location) || snapshot.hasAnchor(getAnchor(this.location)))) {
@@ -256,17 +324,17 @@ export class Visit {
     }
   }
 
-  getPreloadedSnapshot() {
+  getPreloadedSnapshot(): PageSnapshot | undefined {
     if (this.snapshotHTML) {
       return PageSnapshot.fromHTMLString(this.snapshotHTML)
     }
   }
 
-  hasCachedSnapshot() {
+  hasCachedSnapshot(): boolean {
     return this.getCachedSnapshot() != null
   }
 
-  loadCachedSnapshot() {
+  loadCachedSnapshot(): void {
     const snapshot = this.getCachedSnapshot()
     if (snapshot) {
       const isPreview = this.shouldIssueRequest()
@@ -288,7 +356,7 @@ export class Visit {
     }
   }
 
-  followRedirect() {
+  followRedirect(): void {
     if (this.redirectedToLocation && !this.followedRedirect && this.response?.redirected && !this.view.forceReloaded) {
       this.adapter.visitProposedToLocation(this.redirectedToLocation, {
         action: "replace",
@@ -302,24 +370,24 @@ export class Visit {
 
   // Fetch request delegate
 
-  prepareRequest(request) {
+  prepareRequest(request: FetchRequest): void {
     if (this.acceptsStreamResponse) {
       request.acceptResponseType(StreamMessage.contentType)
     }
   }
 
-  requestStarted() {
+  requestStarted(): void {
     this.startRequest()
   }
 
-  requestPreventedHandlingResponse(_request, _response) {}
+  requestPreventedHandlingResponse(_request: FetchRequest, _response: FetchResponse): void {}
 
-  async requestSucceededWithResponse(request, response) {
+  async requestSucceededWithResponse(request: FetchRequest, response: FetchResponse): Promise<void> {
     let responseHTML
     try {
       responseHTML = await response.responseHTML
     } catch (error) {
-      return this.#responseBodyErrored(request, error)
+      return this.#responseBodyErrored(request, error as Error)
     }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
@@ -333,12 +401,12 @@ export class Visit {
     }
   }
 
-  async requestFailedWithResponse(request, response) {
+  async requestFailedWithResponse(request: FetchRequest, response: FetchResponse): Promise<void> {
     let responseHTML
     try {
       responseHTML = await response.responseHTML
     } catch (error) {
-      return this.#responseBodyErrored(request, error)
+      return this.#responseBodyErrored(request, error as Error)
     }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
@@ -351,24 +419,24 @@ export class Visit {
     }
   }
 
-  requestErrored(_request, _error) {
+  requestErrored(_request: FetchRequest, _error: Error): void {
     this.recordResponse({
       statusCode: SystemStatusCode.networkFailure,
       redirected: false
     })
   }
 
-  requestFinished() {
+  requestFinished(): void {
     this.finishRequest()
   }
 
-  #responseBodyErrored(request, error) {
+  #responseBodyErrored(request: FetchRequest, error: Error): void {
     if (!request.abortSignal.aborted) this.requestErrored(request, error)
   }
 
   // Scrolling
 
-  performScroll() {
+  performScroll(): void {
     if (!this.scrolled && !this.view.forceReloaded && !this.view.shouldPreserveScrollPosition(this)) {
       if (this.action == "restore") {
         this.scrollToRestoredPosition() || this.scrollToAnchor() || this.view.scrollToTop()
@@ -380,7 +448,7 @@ export class Visit {
     }
   }
 
-  scrollToRestoredPosition() {
+  scrollToRestoredPosition(): true | undefined {
     const { scrollPosition } = this.restorationData
     if (scrollPosition) {
       this.view.scrollToPosition(scrollPosition)
@@ -388,7 +456,7 @@ export class Visit {
     }
   }
 
-  scrollToAnchor() {
+  scrollToAnchor(): true | undefined {
     const anchor = getAnchor(this.location)
     if (anchor != null) {
       this.view.scrollToAnchor(anchor)
@@ -398,17 +466,17 @@ export class Visit {
 
   // Instrumentation
 
-  recordTimingMetric(metric) {
+  recordTimingMetric(metric: TimingMetric): void {
     this.timingMetrics[metric] = new Date().getTime()
   }
 
-  getTimingMetrics() {
+  getTimingMetrics(): TimingMetrics {
     return { ...this.timingMetrics }
   }
 
   // Private
 
-  get #locationForHistory() {
+  get #locationForHistory(): URL {
     const { redirectedToLocation } = this
     if (redirectedToLocation && locationIsVisitable(redirectedToLocation, this.view.snapshot.rootLocation)) {
       return redirectedToLocation
@@ -417,11 +485,11 @@ export class Visit {
     }
   }
 
-  hasPreloadedResponse() {
+  hasPreloadedResponse(): boolean {
     return typeof this.response == "object"
   }
 
-  shouldIssueRequest() {
+  shouldIssueRequest(): boolean {
     if (this.action == "restore") {
       return !this.hasCachedSnapshot()
     } else {
@@ -429,7 +497,7 @@ export class Visit {
     }
   }
 
-  cacheSnapshot() {
+  cacheSnapshot(): void {
     if (!this.snapshotCached) {
       // Cache notifications prepare the live document. They cannot affect a supplied
       // snapshot and would instead mutate the page that remains visible.
@@ -447,24 +515,25 @@ export class Visit {
     }
   }
 
-  async render(callback) {
+  async render(callback: () => Promise<void>): Promise<void> {
     this.cancelRender()
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
+      // TODO(types): a setTimeout id can land here and is later passed to cancelAnimationFrame (likely upstream bug)
       this.frame =
-        document.visibilityState === "hidden" ? setTimeout(() => resolve(), 0) : requestAnimationFrame(() => resolve())
+        document.visibilityState === "hidden" ? (setTimeout(() => resolve(), 0) as unknown as number) : requestAnimationFrame(() => resolve())
     })
     await callback()
     delete this.frame
   }
 
-  async renderPageSnapshot(snapshot, isPreview) {
+  async renderPageSnapshot(snapshot: PageSnapshot, isPreview: boolean): Promise<void> {
     await this.viewTransitioner.renderChange(this.willRender && this.view.shouldTransitionTo(snapshot), async () => {
       await this.view.renderPage(snapshot, isPreview, this.willRender, this)
       this.performScroll()
     })
   }
 
-  cancelRender() {
+  cancelRender(): void {
     if (this.frame) {
       cancelAnimationFrame(this.frame)
       delete this.frame
@@ -472,6 +541,7 @@ export class Visit {
   }
 }
 
-function isSuccessful(statusCode) {
+function isSuccessful(statusCode: number): boolean {
+
   return statusCode >= 200 && statusCode < 300
 }

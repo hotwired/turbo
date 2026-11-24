@@ -1,9 +1,11 @@
 import { PageRenderer } from "./page_renderer"
 import { dispatch } from "../../util"
 import { morphElements, shouldRefreshFrameWithMorphing, closestFrameReloadableWithMorphing } from "../morphing"
+import type { FrameElement } from "../../elements/frame_element"
+import type { RenderMethod } from "../renderer"
 
 export class MorphingPageRenderer extends PageRenderer {
-  static renderElement(currentElement, newElement) {
+  static renderElement(currentElement: Element, newElement: Element): void {
     morphElements(currentElement, newElement, {
       callbacks: {
         beforeNodeMorphed: (node, newNode) => {
@@ -11,7 +13,7 @@ export class MorphingPageRenderer extends PageRenderer {
             shouldRefreshFrameWithMorphing(node, newNode) &&
               !closestFrameReloadableWithMorphing(node)
           ) {
-            node.delegate.refreshForMorph()
+            (node as FrameElement).delegate.refreshForMorph()
             return false
           }
           return true
@@ -22,15 +24,15 @@ export class MorphingPageRenderer extends PageRenderer {
     dispatch("turbo:morph", { detail: { currentElement, newElement } })
   }
 
-  async preservingPermanentElements(callback) {
+  async preservingPermanentElements(callback: () => void | Promise<void>): Promise<void> {
     return await callback()
   }
 
-  get renderMethod() {
+  get renderMethod(): RenderMethod {
     return "morph"
   }
 
-  get shouldAutofocus() {
+  get shouldAutofocus(): boolean {
     return false
   }
 }

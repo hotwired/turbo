@@ -3,27 +3,30 @@ import { Snapshot } from "../snapshot"
 import { expandURL } from "../url"
 import { HeadSnapshot } from "./head_snapshot"
 
-export class PageSnapshot extends Snapshot {
-  static fromHTMLString(html = "") {
+export class PageSnapshot extends Snapshot<HTMLBodyElement> {
+  declare readonly documentElement: HTMLElement
+  declare readonly headSnapshot: HeadSnapshot
+
+  static fromHTMLString(html = ""): PageSnapshot {
     return this.fromDocument(parseHTMLDocument(html))
   }
 
-  static fromElement(element) {
+  static fromElement(element: Element): PageSnapshot {
     return this.fromDocument(element.ownerDocument)
   }
 
-  static fromDocument({ documentElement, body, head }) {
-    return new this(documentElement, body, new HeadSnapshot(head))
+  static fromDocument({ documentElement, body, head }: Document): PageSnapshot {
+    return new this(documentElement, body as HTMLBodyElement, new HeadSnapshot(head))
   }
 
-  constructor(documentElement, body, headSnapshot) {
+  constructor(documentElement: HTMLElement, body: HTMLBodyElement, headSnapshot: HeadSnapshot) {
     super(body)
     this.documentElement = documentElement
     this.headSnapshot = headSnapshot
   }
 
-  clone() {
-    const clonedElement = this.element.cloneNode(true)
+  clone(): PageSnapshot {
+    const clonedElement = this.element.cloneNode(true) as HTMLBodyElement
 
     const selectElements = this.element.querySelectorAll("select")
     const clonedSelectElements = clonedElement.querySelectorAll("select")
@@ -34,7 +37,7 @@ export class PageSnapshot extends Snapshot {
       for (const option of source.selectedOptions) clone.options[option.index].selected = true
     }
 
-    for (const clonedPasswordInput of clonedElement.querySelectorAll('input[type="password"]')) {
+    for (const clonedPasswordInput of clonedElement.querySelectorAll<HTMLInputElement>('input[type="password"]')) {
       clonedPasswordInput.value = ""
     }
 
@@ -49,55 +52,55 @@ export class PageSnapshot extends Snapshot {
     return new PageSnapshot(this.documentElement, clonedElement, this.headSnapshot)
   }
 
-  get lang() {
+  get lang(): string | null {
     return this.documentElement.getAttribute("lang")
   }
 
-  get dir() {
+  get dir(): string | null {
     return this.documentElement.getAttribute("dir")
   }
 
-  get headElement() {
+  get headElement(): HTMLHeadElement {
     return this.headSnapshot.element
   }
 
-  get rootLocation() {
+  get rootLocation(): URL {
     const root = this.getSetting("root") ?? "/"
     return expandURL(root)
   }
 
-  get cacheControlValue() {
+  get cacheControlValue(): string | null {
     return this.getSetting("cache-control")
   }
 
-  get isPreviewable() {
+  get isPreviewable(): boolean {
     return this.cacheControlValue != "no-preview"
   }
 
-  get isCacheable() {
+  get isCacheable(): boolean {
     return this.cacheControlValue != "no-cache"
   }
 
-  get isVisitable() {
+  get isVisitable(): boolean {
     return this.getSetting("visit-control") != "reload"
   }
 
-  get prefersViewTransitions() {
+  get prefersViewTransitions(): boolean {
     const viewTransitionEnabled = this.getSetting("view-transition") === "true" || this.headSnapshot.getMetaValue("view-transition") === "same-origin"
     return viewTransitionEnabled && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }
 
-  get refreshMethod() {
+  get refreshMethod(): string | null {
     return this.getSetting("refresh-method")
   }
 
-  get refreshScroll() {
+  get refreshScroll(): string | null {
     return this.getSetting("refresh-scroll")
   }
 
   // Private
 
-  getSetting(name) {
+  getSetting(name: string): string | null {
     return this.headSnapshot.getMetaValue(`turbo-${name}`)
   }
 }

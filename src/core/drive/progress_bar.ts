@@ -5,7 +5,7 @@ export const ProgressBarID = "turbo-progress-bar"
 export class ProgressBar {
   static animationDuration = 300 /*ms*/
 
-  static get defaultCSS() {
+  static get defaultCSS(): string {
     return unindent`
       .turbo-progress-bar {
         position: fixed;
@@ -26,6 +26,9 @@ export class ProgressBar {
   hiding = false
   value = 0
   visible = false
+  declare readonly stylesheetElement: HTMLStyleElement
+  declare readonly progressElement: HTMLDivElement
+  declare trickleInterval?: number
 
   constructor() {
     this.stylesheetElement = this.createStylesheetElement()
@@ -34,7 +37,7 @@ export class ProgressBar {
     this.setValue(0)
   }
 
-  show() {
+  show(): void {
     if (!this.visible) {
       this.visible = true
       this.installProgressElement()
@@ -42,7 +45,7 @@ export class ProgressBar {
     }
   }
 
-  hide() {
+  hide(): void {
     if (this.visible && !this.hiding) {
       this.hiding = true
       this.fadeProgressElement(() => {
@@ -54,42 +57,42 @@ export class ProgressBar {
     }
   }
 
-  setValue(value) {
+  setValue(value: number): void {
     this.value = value
     this.refresh()
   }
 
   // Private
 
-  installStylesheetElement() {
+  installStylesheetElement(): void {
     document.head.insertBefore(this.stylesheetElement, document.head.firstChild)
   }
 
-  installProgressElement() {
+  installProgressElement(): void {
     this.progressElement.style.width = "0"
     this.progressElement.style.opacity = "1"
     document.documentElement.insertBefore(this.progressElement, document.body)
     this.refresh()
   }
 
-  fadeProgressElement(callback) {
+  fadeProgressElement(callback: () => void): void {
     this.progressElement.style.opacity = "0"
     setTimeout(callback, ProgressBar.animationDuration * 1.5)
   }
 
-  uninstallProgressElement() {
+  uninstallProgressElement(): void {
     if (this.progressElement.parentNode) {
       document.documentElement.removeChild(this.progressElement)
     }
   }
 
-  startTrickling() {
+  startTrickling(): void {
     if (!this.trickleInterval) {
       this.trickleInterval = window.setInterval(this.trickle, ProgressBar.animationDuration)
     }
   }
 
-  stopTrickling() {
+  stopTrickling(): void {
     window.clearInterval(this.trickleInterval)
     delete this.trickleInterval
   }
@@ -98,13 +101,13 @@ export class ProgressBar {
     this.setValue(this.value + Math.random() / 100)
   }
 
-  refresh() {
+  refresh(): void {
     requestAnimationFrame(() => {
       this.progressElement.style.width = `${10 + this.value * 90}%`
     })
   }
 
-  createStylesheetElement() {
+  createStylesheetElement(): HTMLStyleElement {
     const element = document.createElement("style")
     element.type = "text/css"
     element.textContent = ProgressBar.defaultCSS
@@ -115,7 +118,7 @@ export class ProgressBar {
     return element
   }
 
-  createProgressElement() {
+  createProgressElement(): HTMLDivElement {
     const element = document.createElement("div")
     element.className = "turbo-progress-bar"
     return element

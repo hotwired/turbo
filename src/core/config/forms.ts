@@ -28,8 +28,16 @@ const submitter: Record<"aria-disabled" | "disabled", SubmitterConfig> = {
   }
 }
 
+export type ConfirmMethod = (
+  message: string,
+  element: HTMLFormElement,
+  submitter?: HTMLElement
+) => boolean | Promise<boolean>
+
 class Config {
   declare mode: FormMode
+  declare confirm?: ConfirmMethod
+
   #submitter: SubmitterConfig | null = null
 
   constructor(config: { mode: FormMode; submitter: string | SubmitterConfig }) {
