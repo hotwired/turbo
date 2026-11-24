@@ -62,14 +62,14 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     return this.render(renderer)
   }
 
-  render(renderer: PageViewRenderer): Promise<void> {
+  override render(renderer: PageViewRenderer): Promise<void> {
     const initialRequest = this.#cacheRequestsByBody.get(renderer.currentElement)
     this.#cacheRequestsByRenderer.set(renderer, initialRequest)
 
     return super.render(renderer).finally(() => this.#releaseCacheRequest(renderer))
   }
 
-  async renderSnapshot(renderer: PageViewRenderer): Promise<void> {
+  override async renderSnapshot(renderer: PageViewRenderer): Promise<void> {
     let cacheRequest: CacheRequest | undefined
     if (renderer.willRender) {
       cacheRequest = this.#cacheRequestsByBody.get(renderer.currentElement)

@@ -1,31 +1,66 @@
-import { BrowserAdapter } from "./native/browser_adapter"
+import { BrowserAdapter, type BrowserAdapterSession } from "./native/browser_adapter"
 import { CacheObserver } from "../observers/cache_observer"
-import { FormSubmitObserver } from "../observers/form_submit_observer"
-import { FrameRedirector } from "./frames/frame_redirector"
-import { History } from "./drive/history"
-import { LinkPrefetchObserver } from "../observers/link_prefetch_observer"
-import { LinkClickObserver } from "../observers/link_click_observer"
-import { FormLinkClickObserver } from "../observers/form_link_click_observer"
-import { getAction, expandURL, locationIsVisitable } from "./url"
-import { Navigator } from "./drive/navigator"
-import { VisitState } from "./drive/visit"
-import { PageObserver } from "../observers/page_observer"
-import { ScrollObserver } from "../observers/scroll_observer"
+import { FormSubmitObserver, type FormSubmitObserverDelegate } from "../observers/form_submit_observer"
+import { FrameRedirector, type FrameRedirectorSession } from "./frames/frame_redirector"
+import { History, type HistoryDelegate, type VisitDirection } from "./drive/history"
+import { LinkPrefetchObserver, type LinkPrefetchObserverDelegate } from "../observers/link_prefetch_observer"
+import { LinkClickObserver, type LinkClickObserverDelegate } from "../observers/link_click_observer"
+import { FormLinkClickObserver, type FormLinkClickObserverDelegate } from "../observers/form_link_click_observer"
+import { getAction, expandURL, locationIsVisitable, type Locatable } from "./url"
+import { Navigator, type NavigatorDelegate } from "./drive/navigator"
+import { VisitState, type Visit, type VisitOptions, type TimingMetrics } from "./drive/visit"
+import { PageObserver, type PageObserverDelegate } from "../observers/page_observer"
+import { ScrollObserver, type ScrollObserverDelegate } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
 import { StreamMessageRenderer } from "./streams/stream_message_renderer"
-import { StreamObserver } from "../observers/stream_observer"
+import { StreamObserver, type StreamObserverDelegate } from "../observers/stream_observer"
 import { clearBusyState, dispatch, findClosestRecursively, getVisitAction, markAsBusy, debounce } from "../util"
-import { PageView } from "./drive/page_view"
+import { PageView, type PageViewDelegate } from "./drive/page_view"
 import { FrameElement } from "../elements/frame_element"
-import { Preloader } from "./drive/preloader"
+import { Preloader, type PreloaderDelegate } from "./drive/preloader"
 import { Cache } from "./cache"
 import { config } from "./config"
+import type { Adapter } from "./native/adapter"
+import type { PageSnapshot } from "./drive/page_snapshot"
+import type { ViewRenderOptions } from "./view"
+import type { RenderMethod } from "./renderer"
+import type { FetchResponse } from "../http/fetch_response"
+import type { LimitedSet } from "./drive/limited_set"
+import type { FormMode } from "./config/forms"
+import type { Action, Position, ReloadReason, StreamSource } from "./types"
 
-export class Session {
+export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
+export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
+export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
+export type TurboBeforeCacheEvent = CustomEvent<undefined>
+export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & ViewRenderOptions<HTMLBodyElement>>
+export type TurboRenderEvent = CustomEvent<{ renderMethod: RenderMethod }>
+export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingMetrics }>
+export type TurboFrameLoadEvent = CustomEvent<undefined>
+export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
+
+export type RefreshOptions = { method?: string | null; requestId?: string | null; scroll?: string | null }
+
+export class Session
+  implements
+    BrowserAdapterSession,
+    FormLinkClickObserverDelegate,
+    FormSubmitObserverDelegate,
+    FrameRedirectorSession,
+    HistoryDelegate,
+    LinkClickObserverDelegate,
+    LinkPrefetchObserverDelegate,
+    NavigatorDelegate,
+    PageObserverDelegate,
+    PageViewDelegate,
+    PreloaderDelegate,
+    ScrollObserverDelegate,
+    StreamObserverDelegate
+{
   navigator = new Navigator(this)
   history = new History(this)
-  view = new PageView(this, document.documentElement)
-  adapter = new BrowserAdapter(this)
+  view = new PageView(this, document.documentElement as HTMLBodyElement) // TODO(types): PageView wraps <html>, not <body>
+  adapter: Adapter = new BrowserAdapter(this)
 
   pageObserver = new PageObserver(this)
   cacheObserver = new CacheObserver()
@@ -43,14 +78,18 @@ export class Session {
   started = false
   #pageRefreshDebouncePeriod = 150
 
-  constructor(recentRequests) {
+  declare readonly recentRequests: LimitedSet<string>
+  declare readonly preloader: Preloader
+  declare debouncedRefresh: (url: string, options?: RefreshOptions | string) => void
+
+  constructor(recentRequests: LimitedSet<string>) {
     this.recentRequests = recentRequests
     this.preloader = new Preloader(this, this.view.snapshotCache)
     this.debouncedRefresh = this.refresh
     this.pageRefreshDebouncePeriod = this.pageRefreshDebouncePeriod
   }
 
-  start() {
+  start(): void {
     if (!this.started) {
       this.pageObserver.start()
       this.cacheObserver.start()
@@ -68,11 +107,11 @@ export class Session {
     }
   }
 
-  disable() {
+  disable(): void {
     this.enabled = false
   }
 
-  stop() {
+  stop(): void {
     if (this.started) {
       this.pageObserver.stop()
       this.cacheObserver.stop()
@@ -89,11 +128,11 @@ export class Session {
     }
   }
 
-  registerAdapter(adapter) {
+  registerAdapter(adapter: Adapter): void {
     this.adapter = adapter
   }
 
-  visit(location, options = {}) {
+  visit(location: Locatable, options: Partial<VisitOptions> = {}): void {
     const frameElement = options.frame ? document.getElementById(options.frame) : null
 
     if (frameElement instanceof FrameElement) {
@@ -106,7 +145,7 @@ export class Session {
     }
   }
 
-  refresh(url, options = {}) {
+  refresh(url: string, options: RefreshOptions | string = {}): void {
     options = typeof options === "string" ? { requestId: options } : options
 
     const { method, requestId, scroll } = options
@@ -117,23 +156,23 @@ export class Session {
     }
   }
 
-  connectStreamSource(source) {
+  connectStreamSource(source: StreamSource): void {
     this.streamObserver.connectStreamSource(source)
   }
 
-  disconnectStreamSource(source) {
+  disconnectStreamSource(source: StreamSource): void {
     this.streamObserver.disconnectStreamSource(source)
   }
 
-  renderStreamMessage(message) {
+  renderStreamMessage(message: StreamMessage | string): void {
     this.streamMessageRenderer.render(StreamMessage.wrap(message))
   }
 
-  clearCache() {
+  clearCache(): void {
     this.view.clearSnapshotCache()
   }
 
-  setProgressBarDelay(delay) {
+  setProgressBarDelay(delay: number): void {
     console.warn(
       "Please replace `session.setProgressBarDelay(delay)` with `session.progressBarDelay = delay`. The function is deprecated and will be removed in a future version of Turbo.`"
     )
@@ -141,56 +180,56 @@ export class Session {
     this.progressBarDelay = delay
   }
 
-  set progressBarDelay(delay) {
+  set progressBarDelay(delay: number) {
     config.drive.progressBarDelay = delay
   }
 
-  get progressBarDelay() {
+  get progressBarDelay(): number {
     return config.drive.progressBarDelay
   }
 
-  set drive(value) {
+  set drive(value: boolean) {
     config.drive.enabled = value
   }
 
-  get drive() {
+  get drive(): boolean {
     return config.drive.enabled
   }
 
-  set formMode(value) {
+  set formMode(value: FormMode) {
     config.forms.mode = value
   }
 
-  get formMode() {
+  get formMode(): FormMode {
     return config.forms.mode
   }
 
-  get location() {
+  get location(): URL {
     return this.history.location
   }
 
-  get restorationIdentifier() {
+  get restorationIdentifier(): string {
     return this.history.restorationIdentifier
   }
 
-  get pageRefreshDebouncePeriod() {
+  get pageRefreshDebouncePeriod(): number {
     return this.#pageRefreshDebouncePeriod
   }
 
-  set pageRefreshDebouncePeriod(value) {
+  set pageRefreshDebouncePeriod(value: number) {
     this.refresh = debounce(this.debouncedRefresh.bind(this), value)
     this.#pageRefreshDebouncePeriod = value
   }
 
   // Preloader delegate
 
-  shouldPreloadLink(element) {
+  shouldPreloadLink(element: HTMLAnchorElement): boolean {
     const isUnsafe = element.hasAttribute("data-turbo-method")
     const isStream = element.hasAttribute("data-turbo-stream")
     const frameTarget = element.getAttribute("data-turbo-frame")
     const frame = frameTarget == "_top" ?
       null :
-      document.getElementById(frameTarget) || findClosestRecursively(element, "turbo-frame:not([disabled])")
+      document.getElementById(frameTarget!) || findClosestRecursively(element, "turbo-frame:not([disabled])")
 
     if (isUnsafe || isStream || frame instanceof FrameElement) {
       return false
@@ -203,7 +242,12 @@ export class Session {
 
   // History delegate
 
-  historyPoppedToLocationWithRestorationIdentifierAndDirection(location, restorationIdentifier, direction, isSameDocument = false) {
+  historyPoppedToLocationWithRestorationIdentifierAndDirection(
+    location: URL,
+    restorationIdentifier: string,
+    direction: VisitDirection,
+    isSameDocument = false
+  ): void {
     // Pending visits must keep the normal cancellation and render ordering.
     if (isSameDocument && this.navigator.currentVisit?.state !== VisitState.started) {
       this.view.lastRenderedLocation = location
@@ -226,7 +270,7 @@ export class Session {
     }
   }
 
-  historyPoppedWithEmptyState(location) {
+  historyPoppedWithEmptyState(location: URL): void {
     if (this.history.entryDocumentIdentifier === this.history.renderedDocumentIdentifier) {
       this.view.lastRenderedLocation = location
     }
@@ -234,21 +278,21 @@ export class Session {
 
   // Scroll observer delegate
 
-  scrollPositionChanged(position) {
+  scrollPositionChanged(position: Position): void {
     this.history.updateRestorationData({ scrollPosition: position })
   }
 
   // Form click observer delegate
 
-  willSubmitFormLinkToLocation(link, location) {
+  willSubmitFormLinkToLocation(link: Element, location: URL): boolean {
     return this.elementIsNavigatable(link) && locationIsVisitable(location, this.snapshot.rootLocation)
   }
 
-  submittedFormLinkToLocation() {}
+  submittedFormLinkToLocation(): void {}
 
   // Link hover observer delegate
 
-  canPrefetchRequestToLocation(link, location) {
+  canPrefetchRequestToLocation(link: Element, location: URL): boolean {
     return (
       this.elementIsNavigatable(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
@@ -258,7 +302,7 @@ export class Session {
 
   // Link click observer delegate
 
-  willFollowLinkToLocation(link, location, event) {
+  willFollowLinkToLocation(link: Element, location: URL, event: MouseEvent): boolean {
     return (
       this.elementIsNavigatable(link) &&
       locationIsVisitable(location, this.snapshot.rootLocation) &&
@@ -266,7 +310,7 @@ export class Session {
     )
   }
 
-  followedLinkToLocation(link, location) {
+  followedLinkToLocation(link: Element, location: URL): void {
     const action = this.getActionForLink(link)
     const acceptsStreamResponse = link.hasAttribute("data-turbo-stream")
 
@@ -275,18 +319,18 @@ export class Session {
 
   // Navigator delegate
 
-  allowsVisitingLocationWithAction(location, action) {
+  allowsVisitingLocationWithAction(location: URL, _action?: Action): boolean {
     return this.applicationAllowsVisitingLocation(location)
   }
 
-  visitProposedToLocation(location, options) {
+  visitProposedToLocation(location: URL, options: Partial<VisitOptions>): void {
     extendURLWithDeprecatedProperties(location)
     this.adapter.visitProposedToLocation(location, options)
   }
 
   // Visit delegate
 
-  visitStarted(visit) {
+  visitStarted(visit: Visit): void {
     if (!visit.acceptsStreamResponse) {
       markAsBusy(document.documentElement)
       this.view.markVisitDirection(visit.direction)
@@ -295,7 +339,7 @@ export class Session {
     this.notifyApplicationAfterVisitingLocation(visit.location, visit.action)
   }
 
-  visitCompleted(visit) {
+  visitCompleted(visit: Visit): void {
     this.view.unmarkVisitDirection()
     clearBusyState(document.documentElement)
     this.notifyApplicationAfterPageLoad(visit.getTimingMetrics())
@@ -303,7 +347,7 @@ export class Session {
 
   // Form submit observer delegate
 
-  willSubmitForm(form, submitter) {
+  willSubmitForm(form: HTMLFormElement, submitter?: HTMLElement): boolean {
     const action = getAction(form, submitter)
 
     return (
@@ -312,38 +356,38 @@ export class Session {
     )
   }
 
-  formSubmitted(form, submitter) {
+  formSubmitted(form: HTMLFormElement, submitter?: HTMLElement): void {
     this.navigator.submitForm(form, submitter)
   }
 
   // Page observer delegate
 
-  pageBecameInteractive() {
+  pageBecameInteractive(): void {
     this.view.lastRenderedLocation = this.location
     this.notifyApplicationAfterPageLoad()
   }
 
-  pageLoaded() {
+  pageLoaded(): void {
     this.history.assumeControlOfScrollRestoration()
   }
 
-  pageWillUnload() {
+  pageWillUnload(): void {
     this.history.relinquishControlOfScrollRestoration()
   }
 
   // Stream observer delegate
 
-  receivedMessageFromStream(message) {
+  receivedMessageFromStream(message: StreamMessage): void {
     this.renderStreamMessage(message)
   }
 
   // Page view delegate
 
-  viewWillCacheSnapshot() {
+  viewWillCacheSnapshot(): void {
     this.notifyApplicationBeforeCachingSnapshot()
   }
 
-  allowsImmediateRender({ element }, options) {
+  allowsImmediateRender({ element }: PageSnapshot, options: ViewRenderOptions<HTMLBodyElement>): boolean {
     const event = this.notifyApplicationBeforeRender(element, options)
     const {
       defaultPrevented,
@@ -357,87 +401,87 @@ export class Session {
     return !defaultPrevented
   }
 
-  viewRenderedSnapshot(_snapshot, _isPreview, renderMethod) {
+  viewRenderedSnapshot(_snapshot: PageSnapshot, _isPreview: boolean, renderMethod: RenderMethod): void {
     this.view.lastRenderedLocation = this.history.location
     this.notifyApplicationAfterRender(renderMethod)
   }
 
-  preloadOnLoadLinksForView(element) {
+  preloadOnLoadLinksForView(element: Element): void {
     this.preloader.preloadOnLoadLinksForView(element)
   }
 
-  viewInvalidated(reason) {
+  viewInvalidated(reason: ReloadReason): void {
     this.adapter.pageInvalidated(reason)
   }
 
   // Frame element
 
-  frameLoaded(frame) {
+  frameLoaded(frame: FrameElement): void {
     this.notifyApplicationAfterFrameLoad(frame)
   }
 
-  frameRendered(fetchResponse, frame) {
+  frameRendered(fetchResponse: FetchResponse, frame: FrameElement): void {
     this.notifyApplicationAfterFrameRender(fetchResponse, frame)
   }
 
   // Application events
 
-  applicationAllowsFollowingLinkToLocation(link, location, ev) {
+  applicationAllowsFollowingLinkToLocation(link: Element, location: URL, ev: MouseEvent): boolean {
     const event = this.notifyApplicationAfterClickingLinkToLocation(link, location, ev)
     return !event.defaultPrevented
   }
 
-  applicationAllowsVisitingLocation(location) {
+  applicationAllowsVisitingLocation(location: URL): boolean {
     const event = this.notifyApplicationBeforeVisitingLocation(location)
     return !event.defaultPrevented
   }
 
-  notifyApplicationAfterClickingLinkToLocation(link, location, event) {
-    return dispatch("turbo:click", {
+  notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL, event: MouseEvent): TurboClickEvent {
+    return dispatch<TurboClickEvent>("turbo:click", {
       target: link,
       detail: { url: location.href, originalEvent: event },
       cancelable: true
     })
   }
 
-  notifyApplicationBeforeVisitingLocation(location) {
-    return dispatch("turbo:before-visit", {
+  notifyApplicationBeforeVisitingLocation(location: URL): TurboBeforeVisitEvent {
+    return dispatch<TurboBeforeVisitEvent>("turbo:before-visit", {
       detail: { url: location.href },
       cancelable: true
     })
   }
 
-  notifyApplicationAfterVisitingLocation(location, action) {
-    return dispatch("turbo:visit", { detail: { url: location.href, action } })
+  notifyApplicationAfterVisitingLocation(location: URL, action: Action): TurboVisitEvent {
+    return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
   }
 
-  notifyApplicationBeforeCachingSnapshot() {
-    return dispatch("turbo:before-cache")
+  notifyApplicationBeforeCachingSnapshot(): TurboBeforeCacheEvent {
+    return dispatch<TurboBeforeCacheEvent>("turbo:before-cache")
   }
 
-  notifyApplicationBeforeRender(newBody, options) {
-    return dispatch("turbo:before-render", {
+  notifyApplicationBeforeRender(newBody: HTMLBodyElement, options: ViewRenderOptions<HTMLBodyElement>): TurboBeforeRenderEvent {
+    return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
       detail: { newBody, ...options },
       cancelable: true
     })
   }
 
-  notifyApplicationAfterRender(renderMethod) {
-    return dispatch("turbo:render", { detail: { renderMethod } })
+  notifyApplicationAfterRender(renderMethod: RenderMethod): TurboRenderEvent {
+    return dispatch<TurboRenderEvent>("turbo:render", { detail: { renderMethod } })
   }
 
-  notifyApplicationAfterPageLoad(timing = {}) {
-    return dispatch("turbo:load", {
+  notifyApplicationAfterPageLoad(timing: TimingMetrics = {}): TurboLoadEvent {
+    return dispatch<TurboLoadEvent>("turbo:load", {
       detail: { url: this.location.href, timing }
     })
   }
 
-  notifyApplicationAfterFrameLoad(frame) {
-    return dispatch("turbo:frame-load", { target: frame })
+  notifyApplicationAfterFrameLoad(frame: FrameElement): TurboFrameLoadEvent {
+    return dispatch<TurboFrameLoadEvent>("turbo:frame-load", { target: frame })
   }
 
-  notifyApplicationAfterFrameRender(fetchResponse, frame) {
-    return dispatch("turbo:frame-render", {
+  notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement): TurboFrameRenderEvent {
+    return dispatch<TurboFrameRenderEvent>("turbo:frame-render", {
       detail: { fetchResponse },
       target: frame,
       cancelable: true
@@ -446,7 +490,7 @@ export class Session {
 
   // Helpers
 
-  submissionIsNavigatable(form, submitter) {
+  submissionIsNavigatable(form: HTMLFormElement, submitter?: HTMLElement): boolean {
     if (config.forms.mode == "off") {
       return false
     } else {
@@ -460,17 +504,17 @@ export class Session {
     }
   }
 
-  submitterIsNavigatable(submitter) {
+  submitterIsNavigatable(submitter?: HTMLElement): boolean {
     if (!submitter) return true
 
-    if (submitter.hasAttribute("form") && submitter.form instanceof HTMLFormElement) {
+    if (submitter.hasAttribute("form") && (submitter as HTMLButtonElement).form instanceof HTMLFormElement) {
       return submitter.getAttribute("data-turbo") != "false"
     }
 
     return this.elementIsNavigatable(submitter)
   }
 
-  elementIsNavigatable(element) {
+  elementIsNavigatable(element: Element): boolean {
     const container = findClosestRecursively(element, "[data-turbo]")
     const withinFrame = findClosestRecursively(element, "turbo-frame")
 
@@ -494,11 +538,11 @@ export class Session {
 
   // Private
 
-  getActionForLink(link) {
+  getActionForLink(link: Element): Action {
     return getVisitAction(link) || "advance"
   }
 
-  get snapshot() {
+  get snapshot(): PageSnapshot {
     return this.view.snapshot
   }
 }
@@ -514,13 +558,13 @@ export class Session {
 // older adapters which do not expect URL objects. We should
 // consider removing this support at some point in the future.
 
-function extendURLWithDeprecatedProperties(url) {
+function extendURLWithDeprecatedProperties(url: URL): void {
   Object.defineProperties(url, deprecatedLocationPropertyDescriptors)
 }
 
-const deprecatedLocationPropertyDescriptors = {
+const deprecatedLocationPropertyDescriptors: PropertyDescriptorMap = {
   absoluteURL: {
-    get() {
+    get(this: URL) {
       return this.toString()
     }
   }

@@ -4,9 +4,11 @@
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
   "main": "dist/turbo.es2017-umd.js",
+  "types": "dist/types/index.d.ts",
   "files": [
     "dist/*.js",
-    "dist/*.js.map"
+    "dist/*.js.map",
+    "dist/types/**/*.d.ts"
   ],
   "repository": {
     "type": "git",
@@ -55,8 +57,9 @@
   "scripts": {
     "clean": "rm -fr dist",
     "clean:win": "rmdir /s /q dist",
-    "build": "yarn install && rollup -c",
-    "build:win": "yarn install && rollup -c",
+    "clean:types": "node -e \"require('fs').rmSync('dist/types', { recursive: true, force: true })\"",
+    "build": "yarn install && rollup -c && yarn clean:types && tsc",
+    "build:win": "yarn install && rollup -c && yarn clean:types && tsc",
     "watch": "rollup -wc",
     "start": "node src/tests/server.mjs",
     "test": "yarn test:unit && yarn test:browser",

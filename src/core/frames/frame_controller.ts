@@ -522,7 +522,7 @@ export class FrameController
     const { frame, initialBody, initialLocation, previous } = context
 
     if (frame.ownerDocument.body === initialBody && session.location.href === initialLocation) {
-      const action = getVisitAction(submitter, formElement, frame)!
+      const action = getVisitAction(submitter, formElement, frame)
       const proposedVisit = frame.delegate.#createProposedVisit(frame, action)
 
       // A reentrant submission can start before the replaced one clears its busy state.
@@ -644,7 +644,7 @@ export class FrameController
       proposedVisit.shouldCacheSnapshot &&= pageVisit?.shouldCacheSnapshot !== false
 
       if (document.body === proposedVisit.liveSnapshot.element && !pageVisit?.historyChanged) {
-        const method = getHistoryMethodForAction(proposedVisit.action)!
+        const method = getHistoryMethodForAction(proposedVisit.action)
         session.history.update(method, proposedVisit.location!, proposedVisit.restorationIdentifier)
         proposedVisit.documentIdentifier = session.history.entryDocumentIdentifier
         proposedVisit.historyChanged = true
@@ -691,7 +691,7 @@ export class FrameController
       // TODO(types): PageSnapshot is used here to wrap a frame rather than a <body>.
       const frameSnapshot = new PageSnapshot(documentElement, this.element as unknown as HTMLBodyElement, headSnapshot).clone()
 
-      const advancedFrame = proposedVisit.advancedSnapshot!.element.querySelector(frameSelector)
+      const advancedFrame = proposedVisit.advancedSnapshot.element.querySelector(frameSelector)
       advancedFrame?.replaceWith(frameSnapshot.element)
     }
   }

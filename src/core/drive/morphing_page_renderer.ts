@@ -5,7 +5,7 @@ import type { FrameElement } from "../../elements/frame_element"
 import type { RenderMethod } from "../renderer"
 
 export class MorphingPageRenderer extends PageRenderer {
-  static renderElement(currentElement: Element, newElement: Element): void {
+  static override renderElement(currentElement: Element, newElement: Element): void {
     morphElements(currentElement, newElement, {
       callbacks: {
         beforeNodeMorphed: (node, newNode) => {
@@ -24,15 +24,15 @@ export class MorphingPageRenderer extends PageRenderer {
     dispatch("turbo:morph", { detail: { currentElement, newElement } })
   }
 
-  async preservingPermanentElements(callback: () => void | Promise<void>): Promise<void> {
+  override async preservingPermanentElements(callback: () => void | Promise<void>): Promise<void> {
     return await callback()
   }
 
-  get renderMethod(): RenderMethod {
+  override get renderMethod(): RenderMethod {
     return "morph"
   }
 
-  get shouldAutofocus(): boolean {
+  override get shouldAutofocus(): boolean {
     return false
   }
 }

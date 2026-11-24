@@ -7,7 +7,7 @@ import type { ReloadReason, StructuredReason } from "../types"
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   #reloadLocation: URL | undefined
 
-  static renderElement(_currentElement: Element, newElement: Element): void {
+  static override renderElement(_currentElement: Element, newElement: Element): void {
     if (document.body && newElement instanceof HTMLBodyElement) {
       document.body.replaceWith(newElement)
     } else {
@@ -26,11 +26,11 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     this.#reloadLocation = reloadLocation
   }
 
-  get shouldRender(): boolean {
+  override get shouldRender(): boolean {
     return this.newSnapshot.isVisitable && this.#hasCompatibleTrackedElements
   }
 
-  get reloadReason(): ReloadReason {
+  override get reloadReason(): ReloadReason {
     if (!this.newSnapshot.isVisitable) {
       return this.#getReloadReason("turbo_visit_control_is_reload")
     }
@@ -40,18 +40,18 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     }
   }
 
-  async prepareToRender(): Promise<void> {
+  override async prepareToRender(): Promise<void> {
     this.#setLanguage()
     await this.mergeHead()
   }
 
-  async render(): Promise<void> {
+  override async render(): Promise<void> {
     if (this.willRender) {
       await this.replaceBody()
     }
   }
 
-  finishRendering(): void {
+  override finishRendering(): void {
     super.finishRendering()
     if (!this.isPreview) {
       this.focusFirstAutofocusableElement()
@@ -66,7 +66,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
     return this.newSnapshot.headSnapshot
   }
 
-  get newElement(): HTMLBodyElement {
+  override get newElement(): HTMLBodyElement {
     return this.newSnapshot.element
   }
 

@@ -10,7 +10,7 @@ export interface FrameRendererDelegate {
 export class FrameRenderer extends Renderer<FrameElement> {
   declare readonly delegate: FrameRendererDelegate
 
-  static renderElement(currentElement: Element, newElement: Element): void {
+  static override renderElement(currentElement: Element, newElement: Element): void {
     const sourceRange = newElement.ownerDocument.createRange()
     sourceRange.selectNodeContents(newElement)
     currentElement.replaceChildren(sourceRange.extractContents())
@@ -32,11 +32,11 @@ export class FrameRenderer extends Renderer<FrameElement> {
     this.delegate = delegate
   }
 
-  get shouldRender(): boolean {
+  override get shouldRender(): boolean {
     return true
   }
 
-  async render(): Promise<void> {
+  override async render(): Promise<void> {
     await nextRepaint()
     this.preservingPermanentElements(() => {
       this.loadFrameElement()

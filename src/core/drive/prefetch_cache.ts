@@ -44,17 +44,17 @@ class PrefetchCache extends LRUCache<URL, FetchRequest, string> {
     this.#maxAges[toCacheKey(url)] = new Date(new Date().getTime() + ttl)
   }
 
-  clear(): void {
+  override clear(): void {
     super.clear()
     if (this.#prefetchTimeout) clearTimeout(this.#prefetchTimeout)
   }
 
-  evict(key: string): void {
+  override evict(key: string): void {
     super.evict(key)
     delete this.#maxAges[key]
   }
 
-  has(key: URL): boolean {
+  override has(key: URL): boolean {
     if (super.has(key)) {
       const maxAge: Date | undefined = this.#maxAges[toCacheKey(key)]
 

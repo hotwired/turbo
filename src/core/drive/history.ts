@@ -1,6 +1,7 @@
 import { uuid } from "../../util"
+import type { Position } from "../types"
 
-export type RestorationData = { scrollPosition?: { x: number; y: number } }
+export type RestorationData = { scrollPosition?: Position }
 
 export type RestorationDataMap = { [restorationIdentifier: string]: RestorationData }
 
@@ -202,4 +203,3 @@ export class History {
     return state?.turbo || this.#initialEntries.get((window as WindowWithNavigation).navigation?.currentEntry?.id)
   }
 }
-

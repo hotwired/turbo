@@ -14,7 +14,7 @@ export class SnapshotCache extends LRUCache<URL, PageSnapshot, string> {
     return this.entries
   }
 
-  clear(): void {
+  override clear(): void {
     this.generation++
     super.clear()
   }

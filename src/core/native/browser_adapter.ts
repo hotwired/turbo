@@ -149,7 +149,7 @@ export class BrowserAdapter implements Adapter {
   reload(reason: ReloadReason): void {
     dispatch("turbo:reload", { detail: reason })
 
-    const location = (reason?.context?.location as URL | string | undefined) || this.redirectedToLocation || this.location
+    const location = reason?.context?.location || this.redirectedToLocation || this.location
     window.location.href = location?.toString() || window.location.href
   }
 

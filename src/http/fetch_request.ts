@@ -4,9 +4,9 @@ import { dispatch } from "../util"
 import { fetch } from "./fetch"
 import type { FrameElement } from "../elements/frame_element"
 
-export type FetchMethodName = "get" | "post" | "put" | "patch" | "delete"
+export type FetchMethodName = (typeof FetchMethod)[keyof typeof FetchMethod]
 
-export type FetchEnctypeName = "application/x-www-form-urlencoded" | "multipart/form-data" | "text/plain"
+export type FetchEnctypeName = (typeof FetchEnctype)[keyof typeof FetchEnctype]
 
 export type FetchRequestBody = FormData | URLSearchParams
 

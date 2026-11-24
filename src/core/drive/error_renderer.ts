@@ -3,13 +3,13 @@ import { Renderer } from "../renderer"
 import type { PageSnapshot } from "./page_snapshot"
 
 export class ErrorRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
-  static renderElement(_currentElement: Element, newElement: Element): void {
+  static override renderElement(_currentElement: Element, newElement: Element): void {
     const { documentElement, body } = document
 
     documentElement.replaceChild(newElement, body)
   }
 
-  async render(): Promise<void> {
+  override async render(): Promise<void> {
     this.#setLanguage()
     this.replaceHeadAndBody()
     this.activateScriptElements()

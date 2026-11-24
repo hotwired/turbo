@@ -19,7 +19,7 @@ export interface FormSubmissionDelegate {
 
 export type FormSubmissionResult = { success: boolean; fetchResponse: FetchResponse } | { success: false; error: Error }
 
-export type FormSubmissionState = "initialized" | "requesting" | "waiting" | "receiving" | "stopping" | "stopped"
+export type FormSubmissionState = (typeof FormSubmissionState)[keyof typeof FormSubmissionState]
 
 export const FormSubmissionState = {
   initialized: "initialized",

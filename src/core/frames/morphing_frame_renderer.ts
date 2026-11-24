@@ -4,7 +4,7 @@ import { dispatch } from "../../util"
 import type { FrameElement } from "../../elements/frame_element"
 
 export class MorphingFrameRenderer extends FrameRenderer {
-  static renderElement(currentElement: Element, newElement: Element): void {
+  static override renderElement(currentElement: Element, newElement: Element): void {
     dispatch("turbo:before-frame-morph", {
       target: currentElement,
       detail: { currentElement, newElement }
@@ -26,7 +26,7 @@ export class MorphingFrameRenderer extends FrameRenderer {
     })
   }
 
-  async preservingPermanentElements(callback: () => void | Promise<void>): Promise<void> {
+  override async preservingPermanentElements(callback: () => void | Promise<void>): Promise<void> {
     return await callback()
   }
 }

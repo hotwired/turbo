@@ -21,11 +21,11 @@ export interface VisitDelegate {
   locationWithActionIsSamePage(location: URL, action?: Action): boolean
 }
 
-export type TimingMetric = "visitStart" | "requestStart" | "requestEnd" | "visitEnd"
+export type TimingMetric = (typeof TimingMetric)[keyof typeof TimingMetric]
 
 export type TimingMetrics = Partial<{ [metric in TimingMetric]: number }>
 
-export type VisitState = "initialized" | "started" | "canceled" | "failed" | "completed"
+export type VisitState = (typeof VisitState)[keyof typeof VisitState]
 
 export type VisitResponse = {
   statusCode: number
@@ -87,11 +87,11 @@ export const SystemStatusCode = {
   contentTypeMismatch: -2
 } as const
 
-export const Direction = {
+export const Direction: Readonly<Record<Action, VisitDirection>> = {
   advance: "forward",
   restore: "back",
   replace: "none"
-} as const
+}
 
 export class Visit implements FetchRequestDelegate {
   #documentIdentifier: string
@@ -240,7 +240,7 @@ export class Visit implements FetchRequestDelegate {
   changeHistory(): void {
     if (!this.historyChanged && this.updateHistory) {
       const actionForHistory = this.location.href === this.referrer?.href ? "replace" : this.action
-      const method = getHistoryMethodForAction(actionForHistory)!
+      const method = getHistoryMethodForAction(actionForHistory)
       this.history.update(method, this.#locationForHistory, this.restorationIdentifier, { documentIdentifier: this.#documentIdentifier })
       this.historyChanged = true
     }
@@ -387,7 +387,7 @@ export class Visit implements FetchRequestDelegate {
     try {
       responseHTML = await response.responseHTML
     } catch (error) {
-      return this.#responseBodyErrored(request, error as Error)
+      return this.#responseBodyErrored(request, error)
     }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
@@ -406,7 +406,7 @@ export class Visit implements FetchRequestDelegate {
     try {
       responseHTML = await response.responseHTML
     } catch (error) {
-      return this.#responseBodyErrored(request, error as Error)
+      return this.#responseBodyErrored(request, error)
     }
     const { redirected, statusCode } = response
     if (responseHTML == undefined) {
@@ -419,7 +419,7 @@ export class Visit implements FetchRequestDelegate {
     }
   }
 
-  requestErrored(_request: FetchRequest, _error: Error): void {
+  requestErrored(_request: FetchRequest, _error: unknown): void {
     this.recordResponse({
       statusCode: SystemStatusCode.networkFailure,
       redirected: false
@@ -430,7 +430,7 @@ export class Visit implements FetchRequestDelegate {
     this.finishRequest()
   }
 
-  #responseBodyErrored(request: FetchRequest, error: Error): void {
+  #responseBodyErrored(request: FetchRequest, error: unknown): void {
     if (!request.abortSignal.aborted) this.requestErrored(request, error)
   }
 

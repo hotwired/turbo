@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
     "strict": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "useDefineForClassFields": true,
     "isolatedModules": true,
-    "allowJs": true,
-    "checkJs": false,
-    "noEmit": true,
+    "allowJs": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "dist/types",
     "rootDir": "src",
     "skipLibCheck": true
   },

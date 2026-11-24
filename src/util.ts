@@ -1,4 +1,4 @@
-import { Action } from "./core/types"
+import type { Action } from "./core/types"
 
 export type DispatchOptions<T extends CustomEvent = CustomEvent> = {
   target?: EventTarget | null
@@ -165,7 +165,7 @@ export function waitForLoad(element: Element, timeoutInMilliseconds = 2000): Pro
   })
 }
 
-export function getHistoryMethodForAction(action: Action) {
+export function getHistoryMethodForAction(action: Action): History["pushState"] {
   switch (action) {
     case "replace":
       return history.replaceState
@@ -218,14 +218,14 @@ export function setMetaContent(name: string, content: string): HTMLMetaElement {
   return element
 }
 
-export function findClosestRecursively<E extends Element = Element>(
+export function findClosestRecursively(
   element: EventTarget | null | undefined,
   selector: string
-): E | null | undefined {
+): Element | null | undefined {
   if (element instanceof Element) {
     return (
-      element.closest<E>(selector) ||
-      findClosestRecursively<E>(element.assignedSlot || (element.getRootNode() as ShadowRoot)?.host, selector)
+      element.closest(selector) ||
+      findClosestRecursively(element.assignedSlot || (element.getRootNode() as ShadowRoot)?.host, selector)
     )
   }
 }
@@ -282,7 +282,7 @@ export function getLinkHrefString(link: Element): string {
 }
 
 export function findLinkFromClickTarget(target: EventTarget | null | undefined): HTMLAnchorElement | SVGAElement | null {
-  const link = findClosestRecursively<HTMLAnchorElement | SVGAElement>(target, "a[href], a[xlink\\:href]")
+  const link = findClosestRecursively(target, "a[href], a[xlink\\:href]") as HTMLAnchorElement | SVGAElement | null | undefined
 
   if (!link) return null
   if (getLinkHrefString(link).startsWith("#")) return null

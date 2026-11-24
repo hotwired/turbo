@@ -17,7 +17,7 @@ export type StreamSource = {
 
 export interface StructuredReason {
   reason: string
-  context?: { [key: string]: unknown }
+  context?: { location?: URL | string; statusCode?: number; [key: string]: unknown }
 }
 
 export type ReloadReason = StructuredReason | undefined

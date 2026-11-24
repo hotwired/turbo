@@ -6,6 +6,13 @@ import { fetch, recentRequests } from "../http/fetch"
 import { config } from "./config"
 import { MorphingPageRenderer } from "./drive/morphing_page_renderer"
 import { MorphingFrameRenderer } from "./frames/morphing_frame_renderer"
+import type { Adapter } from "./native/adapter"
+import type { VisitOptions } from "./drive/visit"
+import type { StreamMessage } from "./streams/stream_message"
+import type { FrameElement } from "../elements/frame_element"
+import type { ConfirmMethod, FormMode } from "./config/forms"
+import type { Locatable } from "./url"
+import type { StreamSource } from "./types"
 
 export { morphChildren, morphElements } from "./morphing"
 export { PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
@@ -21,7 +28,7 @@ export { session, cache, sessionNavigator as navigator }
  * This initialises any necessary observers such as those to monitor
  * link interactions.
  */
-export function start() {
+export function start(): void {
   session.start()
 }
 
@@ -30,7 +37,7 @@ export function start() {
  *
  * @param adapter Adapter to register
  */
-export function registerAdapter(adapter) {
+export function registerAdapter(adapter: Adapter): void {
   session.registerAdapter(adapter)
 }
 
@@ -51,7 +58,7 @@ export function registerAdapter(adapter) {
  * or "reset"). Defaults to resetting the scroll position, unless the visit is
  * a page refresh governed by the `turbo-refresh-scroll` meta tag.
  */
-export function visit(location, options) {
+export function visit(location: Locatable, options?: Partial<VisitOptions>): void {
   session.visit(location, options)
 }
 
@@ -60,7 +67,7 @@ export function visit(location, options) {
  *
  * @param source Stream source to connect
  */
-export function connectStreamSource(source) {
+export function connectStreamSource(source: StreamSource): void {
   session.connectStreamSource(source)
 }
 
@@ -69,7 +76,7 @@ export function connectStreamSource(source) {
  *
  * @param source Stream source to disconnect
  */
-export function disconnectStreamSource(source) {
+export function disconnectStreamSource(source: StreamSource): void {
   session.disconnectStreamSource(source)
 }
 
@@ -79,7 +86,7 @@ export function disconnectStreamSource(source) {
  *
  * @param message Message to render
  */
-export function renderStreamMessage(message) {
+export function renderStreamMessage(message: StreamMessage | string): void {
   session.renderStreamMessage(message)
 }
 
@@ -93,21 +100,21 @@ export function renderStreamMessage(message) {
  *
  * @param delay Time to delay in milliseconds
  */
-export function setProgressBarDelay(delay) {
+export function setProgressBarDelay(delay: number): void {
   console.warn(
     "Please replace `Turbo.setProgressBarDelay(delay)` with `Turbo.config.drive.progressBarDelay = delay`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
   )
   config.drive.progressBarDelay = delay
 }
 
-export function setConfirmMethod(confirmMethod) {
+export function setConfirmMethod(confirmMethod: ConfirmMethod): void {
   console.warn(
     "Please replace `Turbo.setConfirmMethod(confirmMethod)` with `Turbo.config.forms.confirm = confirmMethod`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
   )
   config.forms.confirm = confirmMethod
 }
 
-export function setFormMode(mode) {
+export function setFormMode(mode: FormMode): void {
   console.warn(
     "Please replace `Turbo.setFormMode(mode)` with `Turbo.config.forms.mode = mode`. The top-level function is deprecated and will be removed in a future version of Turbo.`"
   )
@@ -123,7 +130,7 @@ export function setFormMode(mode) {
  * @param currentBody HTMLBodyElement destination of morphing changes
  * @param newBody HTMLBodyElement source of morphing changes
  */
-export function morphBodyElements(currentBody, newBody) {
+export function morphBodyElements(currentBody: HTMLBodyElement, newBody: HTMLBodyElement): void {
   MorphingPageRenderer.renderElement(currentBody, newBody)
 }
 
@@ -136,6 +143,6 @@ export function morphBodyElements(currentBody, newBody) {
  * @param currentFrame FrameElement destination of morphing children changes
  * @param newFrame FrameElement source of morphing children changes
  */
-export function morphTurboFrameElements(currentFrame, newFrame) {
+export function morphTurboFrameElements(currentFrame: FrameElement, newFrame: FrameElement): void {
   MorphingFrameRenderer.renderElement(currentFrame, newFrame)
 }
