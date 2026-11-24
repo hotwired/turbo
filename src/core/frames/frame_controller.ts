@@ -32,7 +32,7 @@ import type { ViewRenderOptions } from "../view"
 import type { RenderMethod } from "../renderer"
 import type { Action } from "../types"
 
-type ProposedVisit = {
+export type ProposedVisit = {
   action: Action
   liveSnapshot: PageSnapshot
   snapshot: PageSnapshot
@@ -215,7 +215,7 @@ export class FrameController
   async loadResponse(
     fetchResponse: FetchResponse,
     requestURL?: URL,
-    { proposedVisit = null, shouldMorphFrame = false }: Partial<FetchRequestContext> = {}
+    { proposedVisit = null, shouldMorphFrame = false }: { proposedVisit?: ProposedVisit | null; shouldMorphFrame?: boolean } = {}
   ): Promise<void> {
     if (fetchResponse.redirected || (fetchResponse.succeeded && fetchResponse.isHTML)) {
       const responseURL = expandURL(fetchResponse.response.url)

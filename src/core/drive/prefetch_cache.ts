@@ -37,9 +37,10 @@ class PrefetchCache extends LRUCache<URL, FetchRequest, string> {
     }, this.prefetchDelay)
   }
 
-  // TODO(types): returns undefined, unlike LRUCache#put which returns the entry
+  // TODO(types): returns undefined, unlike LRUCache#put which returns the entry.
+  // Declared as FetchRequest so the emitted declarations stay valid for consumers.
   // @ts-expect-error -- see above
-  put(url: URL, request: FetchRequest, ttl = cacheTtl): void {
+  override put(url: URL, request: FetchRequest, ttl = cacheTtl): FetchRequest {
     super.put(url, request)
     this.#maxAges[toCacheKey(url)] = new Date(new Date().getTime() + ttl)
   }

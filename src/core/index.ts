@@ -7,15 +7,48 @@ import { config } from "./config"
 import { MorphingPageRenderer } from "./drive/morphing_page_renderer"
 import { MorphingFrameRenderer } from "./frames/morphing_frame_renderer"
 import type { Adapter } from "./native/adapter"
-import type { VisitOptions } from "./drive/visit"
+import type { VisitOptions as FullVisitOptions } from "./drive/visit"
 import type { StreamMessage } from "./streams/stream_message"
 import type { FrameElement } from "../elements/frame_element"
 import type { ConfirmMethod, FormMode } from "./config/forms"
 import type { Locatable } from "./url"
 import type { StreamSource } from "./types"
+import type { Cache } from "./cache"
+import type { Navigator } from "./drive/navigator"
 
 export { morphChildren, morphElements } from "./morphing"
 export { PageRenderer, PageSnapshot, FrameRenderer, fetch, config }
+
+// Types for the public API. Classes Turbo does not export at runtime are exported as types only.
+export type * from "./events"
+export type { StreamRender as Render } from "./events"
+export type { Action, ReloadReason, StreamSource, StructuredReason } from "./types"
+export type { Locatable } from "./url"
+export type { RenderMethod } from "./renderer"
+export type { ViewRenderOptions } from "./view"
+export type { Adapter } from "./native/adapter"
+export type { BrowserAdapter } from "./native/browser_adapter"
+export type { DriveConfig } from "./config/drive"
+export type { ConfirmMethod, FormMode, FormsConfig, Submitter, SubmitterConfig, SubmitterName } from "./config/forms"
+export type { FormSubmission, FormSubmissionOutcome } from "./drive/form_submission"
+export type { Cache, Navigator }
+export type { StreamRefreshOptions } from "./session"
+export type { History as TurboHistory } from "./drive/history"
+export type { MorphOptions } from "./morphing"
+export type { NavigatorDelegate } from "./drive/navigator"
+export type { PageView } from "./drive/page_view"
+export type { ProgressBar } from "./drive/progress_bar"
+export type { Session as TurboSession } from "./session"
+export type { SnapshotCache } from "./drive/snapshot_cache"
+export type { StreamMessage } from "./streams/stream_message"
+export type { TurboStreamAction, TurboStreamActions } from "./streams/stream_actions"
+export type { RefreshOptions, TimingMetric, Visit, VisitResponse, VisitState } from "./drive/visit"
+export type { RestorationData, VisitDirection } from "./drive/history"
+export type { ProposedVisit } from "./frames/frame_controller"
+/** Options accepted by `Turbo.visit` and `session.visit`. */
+export type VisitOptions = Partial<FullVisitOptions>
+
+export type TurboConfig = typeof config
 
 const session = new Session(recentRequests)
 
@@ -58,7 +91,7 @@ export function registerAdapter(adapter: Adapter): void {
  * or "reset"). Defaults to resetting the scroll position, unless the visit is
  * a page refresh governed by the `turbo-refresh-scroll` meta tag.
  */
-export function visit(location: Locatable, options?: Partial<VisitOptions>): void {
+export function visit(location: Locatable, options?: Partial<FullVisitOptions>): void {
   session.visit(location, options)
 }
 

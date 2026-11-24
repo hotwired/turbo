@@ -15,7 +15,7 @@ export class PageSnapshot extends Snapshot<HTMLBodyElement> {
     return this.fromDocument(element.ownerDocument)
   }
 
-  static fromDocument({ documentElement, body, head }: Document): PageSnapshot {
+  static fromDocument({ documentElement, body, head }: Pick<Document, "documentElement" | "body" | "head">): PageSnapshot {
     return new this(documentElement, body as HTMLBodyElement, new HeadSnapshot(head))
   }
 

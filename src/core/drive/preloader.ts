@@ -8,7 +8,7 @@ export interface PreloaderDelegate {
 }
 
 export class Preloader implements FetchRequestDelegate {
-  selector = "a[data-turbo-preload]"
+  readonly selector = "a[data-turbo-preload]"
   #requestGenerations = new WeakMap<FetchRequest, number>()
   declare readonly delegate: PreloaderDelegate
   declare readonly snapshotCache: SnapshotCache

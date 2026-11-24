@@ -70,6 +70,7 @@
     "lint": "eslint . --ext .js,.ts",
     "typecheck": "tsc --noEmit",
     "test:types": "tsc -p tsconfig.typetests.json",
+    "test:consumer": "tsc -p tsconfig.consumer.json && tsc -p tsconfig.consumer-floor.json && npx --yes -p typescript@5.0.4 tsc -p tsconfig.consumer-floor.json",
     "check:dist": "node scripts/check-dist.mjs"
   },
   "engines": {

@@ -3,13 +3,16 @@ import { cancelEvent } from "../../util"
 export type Submitter = HTMLButtonElement | HTMLInputElement
 
 export type SubmitterConfig = {
-  beforeSubmit(submitter: Submitter): void
-  afterSubmit(submitter: Submitter): void
+  beforeSubmit(submitter: HTMLElement): void
+  afterSubmit(submitter: HTMLElement): void
 }
 
 export type FormMode = "on" | "off" | "optin"
 
-const submitter: Record<"aria-disabled" | "disabled", SubmitterConfig> = {
+/** The built-in submitter configs, selected by name. */
+export type SubmitterName = "aria-disabled" | "disabled"
+
+const submitter: Record<SubmitterName, SubmitterConfig> = {
   "aria-disabled": {
     beforeSubmit: submitter => {
       submitter.setAttribute("aria-disabled", "true")
@@ -23,8 +26,8 @@ const submitter: Record<"aria-disabled" | "disabled", SubmitterConfig> = {
   },
 
   "disabled": {
-    beforeSubmit: submitter => submitter.disabled = true,
-    afterSubmit: submitter => submitter.disabled = false
+    beforeSubmit: submitter => (submitter as Submitter).disabled = true,
+    afterSubmit: submitter => (submitter as Submitter).disabled = false
   }
 }
 
@@ -34,27 +37,32 @@ export type ConfirmMethod = (
   submitter?: HTMLElement
 ) => boolean | Promise<boolean>
 
-class Config {
+export interface FormsConfig {
+  mode: FormMode
+  confirm?: ConfirmMethod
+  get submitter(): SubmitterConfig
+  set submitter(value: SubmitterName | SubmitterConfig)
+}
+
+class Config implements FormsConfig {
   declare mode: FormMode
   declare confirm?: ConfirmMethod
 
   #submitter: SubmitterConfig | null = null
 
-  constructor(config: { mode: FormMode; submitter: string | SubmitterConfig }) {
+  constructor(config: { mode: FormMode; submitter: SubmitterName | SubmitterConfig }) {
     Object.assign(this, config)
   }
 
-  get submitter(): SubmitterConfig | null {
-    return this.#submitter
+  // Always set by the constructor.
+  get submitter(): SubmitterConfig {
+    return this.#submitter!
   }
 
-  // A string names a built-in submitter config ("disabled" or "aria-disabled").
-  set submitter(value: string | SubmitterConfig | null) {
-    this.#submitter = submitter[value as keyof typeof submitter] || value
+  set submitter(value: SubmitterName | SubmitterConfig) {
+    this.#submitter = submitter[value as SubmitterName] || (value as SubmitterConfig)
   }
 }
-
-export type FormsConfig = Config
 
 export const forms: FormsConfig = new Config({
   mode: "on",

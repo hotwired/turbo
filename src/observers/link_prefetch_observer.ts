@@ -7,7 +7,7 @@ import {
 } from "../util"
 
 import { FetchMethod, FetchRequest, type FetchRequestDelegate } from "../http/fetch_request"
-import type { TurboBeforeFetchRequestEvent } from "../core/events"
+import type { TurboBeforeFetchRequestEvent, TurboVisitEvent } from "../core/events"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export interface LinkPrefetchObserverDelegate {
@@ -103,8 +103,7 @@ export class LinkPrefetchObserver implements FetchRequestDelegate {
     }
   }
 
-  // Only registered for "turbo:visit".
-  #cancelPendingFetchRequests = ((event: CustomEvent<{ url: string }>) => {
+  #cancelPendingFetchRequests = (event: TurboVisitEvent) => {
     const key = toCacheKey(expandURL(event.detail.url))
 
     for (const [fetchRequest, location] of this.#pendingFetchRequests) {
@@ -113,7 +112,7 @@ export class LinkPrefetchObserver implements FetchRequestDelegate {
         this.#pendingFetchRequests.delete(fetchRequest)
       }
     }
-  }) as EventListener
+  }
 
   #cancelRequestIfObsolete = (event: Event) => {
     if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
@@ -124,13 +123,12 @@ export class LinkPrefetchObserver implements FetchRequestDelegate {
     this.#prefetchedLink = null
   }
 
-  // Only registered for "turbo:before-fetch-request".
-  #tryToUsePrefetchedRequest = ((event: CustomEvent<PrefetchRequestDetail>) => {
+  #tryToUsePrefetchedRequest = (event: TurboBeforeFetchRequestEvent) => {
     if ((event.target as Element).tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
       this.#usePrefetchedRequest(event.detail)
       prefetchCache.clear()
     }
-  }) as EventListener
+  }
 
   // Fetch request delegate
 

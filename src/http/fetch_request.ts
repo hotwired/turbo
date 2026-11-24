@@ -10,6 +10,10 @@ export type FetchEnctypeName = (typeof FetchEnctype)[keyof typeof FetchEnctype]
 
 export type FetchRequestBody = FormData | URLSearchParams
 
+/**
+ * Request headers. Remove one with `delete`: a header set to `undefined` is
+ * sent as the string "undefined".
+ */
 export type FetchRequestHeaders = { [header: string]: string }
 
 export type FetchRequestTarget = HTMLFormElement | HTMLAnchorElement | FrameElement | Element | null
@@ -26,10 +30,14 @@ export interface FetchRequestDelegate {
   requestFinished(request: FetchRequest): void
 }
 
-export interface FetchRequestOptions extends RequestInit {
+/**
+ * The options Turbo passes to fetch. turbo:before-fetch-request listeners receive this object and
+ * may change it, so the body can be anything fetch accepts by the time the request is sent.
+ */
+export interface FetchRequestOptions extends Omit<RequestInit, "headers" | "body"> {
   method: string
   headers: FetchRequestHeaders
-  body: FetchRequestBody | null
+  body: BodyInit | null
 }
 
 export function fetchMethodFromString(method: string): FetchMethodName | undefined {
@@ -114,7 +122,8 @@ export class FetchRequest {
   }
 
   set method(value: string) {
-    const fetchBody = this.isSafe ? this.url.searchParams : this.fetchOptions.body || new FormData()
+    // Assumes no listener has replaced the body with something other than FormData or URLSearchParams.
+    const fetchBody = this.isSafe ? this.url.searchParams : (this.fetchOptions.body as FetchRequestBody | null) || new FormData()
     const fetchMethod = fetchMethodFromString(value) || FetchMethod.get
 
     this.url.search = ""
@@ -134,7 +143,7 @@ export class FetchRequest {
     this.fetchOptions.headers = value
   }
 
-  get body(): FetchRequestBody | null {
+  get body(): BodyInit | null {
     if (this.isSafe) {
       return this.url.searchParams
     } else {
@@ -142,7 +151,7 @@ export class FetchRequest {
     }
   }
 
-  set body(value: FetchRequestBody | null) {
+  set body(value: BodyInit | null) {
     this.fetchOptions.body = value
   }
 
@@ -155,7 +164,8 @@ export class FetchRequest {
   }
 
   get entries(): [string, FormDataEntryValue][] {
-    return this.body ? Array.from(this.body.entries()) : []
+    // Assumes the body is still FormData or URLSearchParams, as Turbo built it.
+    return this.body ? Array.from((this.body as FetchRequestBody).entries()) : []
   }
 
   cancel(): void {

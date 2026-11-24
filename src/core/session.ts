@@ -8,7 +8,13 @@ import { LinkClickObserver, type LinkClickObserverDelegate } from "../observers/
 import { FormLinkClickObserver, type FormLinkClickObserverDelegate } from "../observers/form_link_click_observer"
 import { getAction, expandURL, locationIsVisitable, type Locatable } from "./url"
 import { Navigator, type NavigatorDelegate } from "./drive/navigator"
-import { VisitState, type Visit, type VisitOptions, type TimingMetrics } from "./drive/visit"
+import {
+  VisitState,
+  type Visit,
+  type VisitOptions,
+  type TimingMetrics,
+  type RefreshOptions as VisitRefreshOptions
+} from "./drive/visit"
 import { PageObserver, type PageObserverDelegate } from "../observers/page_observer"
 import { ScrollObserver, type ScrollObserverDelegate } from "../observers/scroll_observer"
 import { StreamMessage } from "./streams/stream_message"
@@ -40,7 +46,8 @@ import type {
   TurboVisitEvent
 } from "./events"
 
-export type RefreshOptions = { method?: string | null; requestId?: string | null; scroll?: string | null }
+/** Options for `session.refresh`, as read from a <turbo-stream action="refresh"> element. */
+export type StreamRefreshOptions = { method?: string | null; requestId?: string | null; scroll?: string | null }
 
 export class Session
   implements
@@ -58,22 +65,22 @@ export class Session
     ScrollObserverDelegate,
     StreamObserverDelegate
 {
-  navigator = new Navigator(this)
-  history = new History(this)
-  view = new PageView(this, document.documentElement as HTMLBodyElement) // TODO(types): PageView wraps <html>, not <body>
+  readonly navigator = new Navigator(this)
+  readonly history = new History(this)
+  readonly view = new PageView(this, document.documentElement as HTMLBodyElement) // TODO(types): PageView wraps <html>, not <body>
   adapter: Adapter = new BrowserAdapter(this)
 
-  pageObserver = new PageObserver(this)
-  cacheObserver = new CacheObserver()
-  linkPrefetchObserver = new LinkPrefetchObserver(this, document)
-  linkClickObserver = new LinkClickObserver(this, window)
-  formSubmitObserver = new FormSubmitObserver(this, document)
-  scrollObserver = new ScrollObserver(this)
-  streamObserver = new StreamObserver(this)
-  formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
-  frameRedirector = new FrameRedirector(this, document.documentElement)
-  streamMessageRenderer = new StreamMessageRenderer()
-  cache = new Cache(this)
+  readonly pageObserver = new PageObserver(this)
+  readonly cacheObserver = new CacheObserver()
+  readonly linkPrefetchObserver = new LinkPrefetchObserver(this, document)
+  readonly linkClickObserver = new LinkClickObserver(this, window)
+  readonly formSubmitObserver = new FormSubmitObserver(this, document)
+  readonly scrollObserver = new ScrollObserver(this)
+  readonly streamObserver = new StreamObserver(this)
+  readonly formLinkClickObserver = new FormLinkClickObserver(this, document.documentElement)
+  readonly frameRedirector = new FrameRedirector(this, document.documentElement)
+  readonly streamMessageRenderer = new StreamMessageRenderer()
+  readonly cache = new Cache(this)
 
   enabled = true
   started = false
@@ -81,7 +88,7 @@ export class Session
 
   declare readonly recentRequests: LimitedSet<string>
   declare readonly preloader: Preloader
-  declare debouncedRefresh: (url: string, options?: RefreshOptions | string) => void
+  declare debouncedRefresh: (url: string, options?: StreamRefreshOptions | string) => void
 
   constructor(recentRequests: LimitedSet<string>) {
     this.recentRequests = recentRequests
@@ -146,14 +153,17 @@ export class Session
     }
   }
 
-  refresh(url: string, options: RefreshOptions | string = {}): void {
+  refresh(url: string, options: StreamRefreshOptions | string = {}): void {
     options = typeof options === "string" ? { requestId: options } : options
 
     const { method, requestId, scroll } = options
     const isRecentRequest = requestId && this.recentRequests.has(requestId)
     const isCurrentUrl = url === document.baseURI
     if (!isRecentRequest && !this.navigator.currentVisit && !this.navigator.isFormSubmissionInFlight && isCurrentUrl) {
-      this.visit(url, { action: "replace", shouldCacheSnapshot: false, refresh: { method, scroll } })
+      // TODO(types): attribute values from <turbo-stream action="refresh"> are passed through
+      // unvalidated, so method and scroll can be any string at runtime.
+
+      this.visit(url, { action: "replace", shouldCacheSnapshot: false, refresh: { method, scroll } as VisitRefreshOptions })
     }
   }
 

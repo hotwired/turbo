@@ -1,7 +1,7 @@
-import { drive } from "./drive"
-import { forms } from "./forms"
+import { drive, type DriveConfig } from "./drive"
+import { forms, type FormsConfig } from "./forms"
 
-export const config = {
+export const config: { drive: DriveConfig; forms: FormsConfig } = {
   drive,
   forms
 }

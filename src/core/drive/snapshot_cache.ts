@@ -10,7 +10,7 @@ export class SnapshotCache extends LRUCache<URL, PageSnapshot, string> {
     super(size, toCacheKey)
   }
 
-  get snapshots(): Partial<Record<string, PageSnapshot>> {
+  get snapshots(): Readonly<Partial<Record<string, PageSnapshot>>> {
     return this.entries
   }
 

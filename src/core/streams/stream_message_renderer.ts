@@ -1,6 +1,6 @@
 import { Bardo, type BardoDelegate } from "../bardo"
 import { getPermanentElementById, queryPermanentElementsAll, type PermanentElementMap } from "../snapshot"
-import { around, elementIsFocusable, nextRepaint, queryAutofocusableElement, uuid } from "../../util"
+import { around, elementIsFocusable, nextRepaint, queryAutofocusableElement, uuid, type FocusableElement } from "../../util"
 import type { StreamMessage } from "./stream_message"
 import type { StreamElement } from "../../elements/stream_element"
 
@@ -89,7 +89,7 @@ async function withPreservedFocus(callback: () => void): Promise<void> {
   }
 }
 
-function firstAutofocusableElementInStreams(nodeListOfStreamElements: NodeListOf<StreamElement>): HTMLElement | null {
+function firstAutofocusableElementInStreams(nodeListOfStreamElements: NodeListOf<StreamElement>): FocusableElement | null {
   for (const streamElement of nodeListOfStreamElements) {
     const elementWithAutofocus = queryAutofocusableElement(streamElement.templateElement.content)
 

@@ -1,11 +1,10 @@
 import { findLinkFromClickTarget } from "../../util"
+import type { TurboClickEvent } from "../events"
 
 export interface LinkInterceptorDelegate {
   shouldInterceptLinkClick(element: Element, url: string, originalEvent: MouseEvent): boolean
   linkClickIntercepted(element: Element, url: string, originalEvent: MouseEvent): void
 }
-
-type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
 
 export class LinkInterceptor {
   declare readonly delegate: LinkInterceptorDelegate
@@ -37,8 +36,7 @@ export class LinkInterceptor {
     }
   }
 
-  // Only registered for "turbo:click".
-  linkClicked = ((event: TurboClickEvent) => {
+  linkClicked = (event: TurboClickEvent) => {
     if (this.clickEvent && this.clickEventIsSignificant(event)) {
       const linkOrCustomElement = event.target as Element
       const actuallyClickedLink = (linkOrCustomElement.shadowRoot && !linkOrCustomElement.hasAttribute("data-turbo-frame"))
@@ -51,7 +49,7 @@ export class LinkInterceptor {
       }
     }
     delete this.clickEvent
-  }) as EventListener
+  }
 
   willVisit = (_event: Event) => {
     delete this.clickEvent

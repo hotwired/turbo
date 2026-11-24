@@ -18,7 +18,6 @@ export interface VisitDelegate {
 
   visitStarted(visit: Visit): void
   visitCompleted(visit: Visit): void
-  locationWithActionIsSamePage(location: URL, action?: Action): boolean
 }
 
 export type TimingMetric = (typeof TimingMetric)[keyof typeof TimingMetric]
@@ -33,7 +32,7 @@ export type VisitResponse = {
   responseHTML?: string
 }
 
-export type RefreshOptions = { method?: string | null; scroll?: string | null }
+export type RefreshOptions = { method?: "replace" | "morph" | null; scroll?: "reset" | "preserve" | null }
 
 export type VisitOptions = {
   action: Action
@@ -96,8 +95,8 @@ export const Direction: Readonly<Record<Action, VisitDirection>> = {
 export class Visit implements FetchRequestDelegate {
   #documentIdentifier: string
 
-  identifier = uuid() // Required by turbo-ios
-  timingMetrics: TimingMetrics = {}
+  readonly identifier = uuid() // Required by turbo-ios
+  readonly timingMetrics: TimingMetrics = {}
 
   followedRedirect = false
   historyChanged = false
@@ -106,7 +105,7 @@ export class Visit implements FetchRequestDelegate {
   acceptsStreamResponse = false
   snapshotCached = false
   state: VisitState = VisitState.initialized
-  viewTransitioner = new ViewTransitioner()
+  readonly viewTransitioner = new ViewTransitioner()
 
   declare readonly delegate: VisitDelegate
   declare readonly location: URL
@@ -542,6 +541,5 @@ export class Visit implements FetchRequestDelegate {
 }
 
 function isSuccessful(statusCode: number): boolean {
-
   return statusCode >= 200 && statusCode < 300
 }

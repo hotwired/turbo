@@ -2,7 +2,7 @@ import { Bardo, type BardoDelegate } from "./bardo"
 import type { Snapshot } from "./snapshot"
 import type { ReloadReason } from "./types"
 
-type ResolvingFunctions<T = unknown> = {
+export type ResolvingFunctions<T = unknown> = {
   resolve(value: T | PromiseLike<T>): void
   reject(reason?: unknown): void
 }

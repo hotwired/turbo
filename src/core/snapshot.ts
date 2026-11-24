@@ -1,4 +1,4 @@
-import { queryAutofocusableElement } from "../util"
+import { queryAutofocusableElement, type FocusableElement } from "../util"
 
 export type PermanentElementMap = Record<string, [Element, Element]>
 
@@ -40,7 +40,7 @@ export class Snapshot<E extends Element = Element> {
     return this.element.isConnected
   }
 
-  get firstAutofocusableElement(): HTMLElement | undefined {
+  get firstAutofocusableElement(): FocusableElement | undefined {
     return queryAutofocusableElement(this.element)
   }
 

@@ -111,7 +111,7 @@ export class FrameElement extends HTMLElement {
   /**
    * Sets the value of if the element is loading
    */
-  set loading(value: FrameLoadingStyle | string | null | undefined) {
+  set loading(value: FrameLoadingStyle | null | undefined) {
     if (value) {
       this.setAttribute("loading", value)
     } else {

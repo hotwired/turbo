@@ -248,13 +248,16 @@ export function elementIsStylesheet(element: Element): boolean {
     (element.localName === "link" && (element as HTMLLinkElement).relList.contains("stylesheet"))
 }
 
-export function elementIsFocusable(element: Element | null | undefined): element is HTMLElement {
+/** An HTML or SVG element, either of which can take focus. */
+export type FocusableElement = Element & HTMLOrSVGElement
+
+export function elementIsFocusable(element: Element | null | undefined): element is FocusableElement {
   const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
 
   return !!element && element.closest(inertDisabledOrHidden) == null && typeof (element as HTMLElement).focus == "function"
 }
 
-export function queryAutofocusableElement(elementOrDocumentFragment: ParentNode): HTMLElement | undefined {
+export function queryAutofocusableElement(elementOrDocumentFragment: ParentNode): FocusableElement | undefined {
   return Array.from(elementOrDocumentFragment.querySelectorAll("[autofocus]")).find(elementIsFocusable)
 }
 

@@ -21,10 +21,13 @@ export interface NavigatorDelegate {
   visitCompleted(visit: Visit): void
 }
 
+type MutableNavigator = { currentVisit?: Visit }
+
 export class Navigator implements VisitDelegate, FormSubmissionDelegate {
   declare readonly delegate: NavigatorDelegate
   declare formSubmission?: FormSubmission
-  declare currentVisit?: Visit
+  /** Read-only for consumers; Navigator writes it through MutableNavigator. */
+  declare readonly currentVisit?: Visit
 
   constructor(delegate: NavigatorDelegate) {
     this.delegate = delegate
@@ -38,11 +41,11 @@ export class Navigator implements VisitDelegate, FormSubmissionDelegate {
 
   startVisit(locatable: Locatable, restorationIdentifier?: string, options: Partial<VisitOptions> = {}): void {
     this.stop()
-    this.currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
+    ;(this as MutableNavigator).currentVisit = new Visit(this, expandURL(locatable), restorationIdentifier, {
       referrer: this.location,
       ...options
     })
-    this.currentVisit.start()
+    this.currentVisit!.start()
   }
 
   submitForm(form: HTMLFormElement, submitter?: HTMLElement): void {
@@ -60,7 +63,7 @@ export class Navigator implements VisitDelegate, FormSubmissionDelegate {
 
     if (this.currentVisit) {
       this.currentVisit.cancel()
-      delete this.currentVisit
+      delete (this as MutableNavigator).currentVisit
     }
   }
 
@@ -173,7 +176,7 @@ export class Navigator implements VisitDelegate, FormSubmissionDelegate {
 
   visitCompleted(visit: Visit): void {
     this.delegate.visitCompleted(visit)
-    delete this.currentVisit
+    delete (this as MutableNavigator).currentVisit
   }
 
   // Same-page links are no longer handled with a Visit.

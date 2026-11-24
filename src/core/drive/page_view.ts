@@ -28,7 +28,7 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
   #cacheRequestsByRenderer = new WeakMap<PageViewRenderer, CacheRequest | undefined>()
   #visitsByRenderer = new WeakMap<PageViewRenderer, Visit>()
 
-  snapshotCache = new SnapshotCache(10)
+  readonly snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 

@@ -1,17 +1,19 @@
 import { elementIsStylesheet } from "../../util"
 import { Snapshot } from "../snapshot"
 
-type ElementType = "script" | "stylesheet"
+type ElementTypeMap = { script: HTMLScriptElement; stylesheet: HTMLElement }
+
+export type ElementType = keyof ElementTypeMap
 
 type ElementDetails = { type?: ElementType; tracked: boolean; elements: Element[] }
 
 type ElementDetailMap = { [outerHTML: string]: ElementDetails }
 
 export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
-  detailsByOuterHTML: ElementDetailMap = this.children
+  readonly detailsByOuterHTML: ElementDetailMap = this.children
     .filter((element) => !elementIsNoscript(element))
     .map((element) => elementWithoutNonce(element))
-    .reduce((result, element) => {
+    .reduce<ElementDetailMap>((result, element) => {
       const { outerHTML } = element
       const details =
         outerHTML in result
@@ -28,7 +30,7 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
           elements: [...details.elements, element]
         }
       }
-    }, {} as ElementDetailMap)
+    }, {})
 
   get trackedElementSignature(): string {
     return Object.keys(this.detailsByOuterHTML)
@@ -37,23 +39,23 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
   }
 
   getScriptElementsNotInSnapshot(snapshot: HeadSnapshot): HTMLScriptElement[] {
-    return this.getElementsMatchingTypeNotInSnapshot<HTMLScriptElement>("script", snapshot)
+    return this.getElementsMatchingTypeNotInSnapshot("script", snapshot)
   }
 
   getStylesheetElementsNotInSnapshot(snapshot: HeadSnapshot): HTMLElement[] {
-    return this.getElementsMatchingTypeNotInSnapshot<HTMLElement>("stylesheet", snapshot)
+    return this.getElementsMatchingTypeNotInSnapshot("stylesheet", snapshot)
   }
 
-  getElementsMatchingTypeNotInSnapshot<T extends Element>(matchedType: ElementType, snapshot: HeadSnapshot): T[] {
+  getElementsMatchingTypeNotInSnapshot<K extends ElementType>(matchedType: K, snapshot: HeadSnapshot): ElementTypeMap[K][] {
     return Object.keys(this.detailsByOuterHTML)
       .filter((outerHTML) => !(outerHTML in snapshot.detailsByOuterHTML))
       .map((outerHTML) => this.detailsByOuterHTML[outerHTML])
       .filter(({ type }) => type == matchedType)
-      .map(({ elements: [element] }) => element) as T[]
+      .map(({ elements: [element] }) => element) as ElementTypeMap[K][]
   }
 
   get provisionalElements(): Element[] {
-    return Object.keys(this.detailsByOuterHTML).reduce((result, outerHTML) => {
+    return Object.keys(this.detailsByOuterHTML).reduce<Element[]>((result, outerHTML) => {
       const { type, tracked, elements } = this.detailsByOuterHTML[outerHTML]
       if (type == null && !tracked) {
         return [...result, ...elements]
@@ -62,7 +64,7 @@ export class HeadSnapshot extends Snapshot<HTMLHeadElement> {
       } else {
         return result
       }
-    }, [] as Element[])
+    }, [])
   }
 
   getMetaValue(name: string): string | null {

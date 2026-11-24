@@ -2,7 +2,7 @@ import type { FetchRequest, FetchRequestOptions } from "../http/fetch_request"
 import type { FetchResponse } from "../http/fetch_response"
 import type { FrameElement } from "../elements/frame_element"
 import type { StreamElement } from "../elements/stream_element"
-import type { FormSubmission } from "./drive/form_submission"
+import type { FormSubmission, FormSubmissionOutcome } from "./drive/form_submission"
 import type { TimingMetrics, VisitOptions } from "./drive/visit"
 import type { RenderMethod } from "./renderer"
 import type { ViewRenderOptions } from "./view"
@@ -14,10 +14,10 @@ export type StreamRender = (newElement: StreamElement) => void | Promise<void>
 
 export type VisitFallback = (location: URL | string | Response, options?: Partial<VisitOptions>) => Promise<void>
 
-// `success` is missing when the submission was aborted before a response arrived.
+/** The turbo:submit-end detail. The outcome is missing when the submission was aborted before a response arrived. */
 export type FormSubmissionResult = { formSubmission: FormSubmission } & (
-  | { success: true; error?: undefined; fetchResponse: FetchResponse }
-  | { success?: false; error?: Error; fetchResponse?: FetchResponse }
+  | FormSubmissionOutcome
+  | { success?: undefined; error?: undefined; fetchResponse?: undefined }
 )
 
 // Drive
@@ -53,14 +53,8 @@ export type TurboFrameMissingEvent = CustomEvent<{ response: Response; visit: Vi
 
 // Fetch
 
-/**
- * The fetch options a turbo:before-fetch-request listener may change before Turbo calls fetch.
- * Listeners may set any body fetch accepts, and must check a header before reading it.
- */
-export type TurboFetchOptions = Omit<FetchRequestOptions, "body" | "headers"> & {
-  body: BodyInit | null
-  headers: { [header: string]: string | undefined }
-}
+/** The fetch options a turbo:before-fetch-request listener may change before Turbo calls fetch. */
+export type TurboFetchOptions = FetchRequestOptions
 
 export type TurboBeforeFetchRequestEvent = CustomEvent<{
   fetchOptions: TurboFetchOptions
@@ -87,7 +81,7 @@ export type TurboBeforeMorphElementEvent = CustomEvent<{
 export type TurboMorphElementEvent = CustomEvent<{ currentElement: Element; newElement: Node }>
 export type MorphMutationType = "update" | "remove"
 export type TurboBeforeMorphAttributeEvent = CustomEvent<{ attributeName: string; mutationType: MorphMutationType }>
-export type TurboBeforeFrameMorphEvent = CustomEvent<{ currentElement: Element; newElement: Element }>
+export type TurboBeforeFrameMorphEvent = CustomEvent<{ currentElement: FrameElement; newElement: FrameElement }>
 
 /** Events that may be dispatched on an element (and bubble to the document). */
 export interface TurboElementEventMap {

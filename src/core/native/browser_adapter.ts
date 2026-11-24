@@ -15,7 +15,7 @@ export interface BrowserAdapterSession {
 }
 
 export class BrowserAdapter implements Adapter {
-  progressBar = new ProgressBar()
+  readonly progressBar = new ProgressBar()
   declare readonly session: BrowserAdapterSession
   declare location?: URL
   declare redirectedToLocation?: URL | null

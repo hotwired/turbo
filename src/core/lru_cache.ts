@@ -6,6 +6,9 @@ export class LRUCache<K, V, C extends PropertyKey = PropertyKey> {
   #toCacheKey: (key: K) => C
   declare size: number
 
+  constructor(size: number, toCacheKey: (key: K) => C)
+  /** Keys are used as cache keys as they are, so toCacheKey is only optional when K is already a C. */
+  constructor(...args: [K] extends [C] ? [size: number] : never)
   constructor(size: number, toCacheKey: (key: K) => C = identity as (key: K) => C) {
     this.size = size
     this.#toCacheKey = toCacheKey

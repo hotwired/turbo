@@ -1,11 +1,10 @@
-import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe, type FetchRequestDelegate, type FetchRequestBody, type FetchEnctypeName } from "../../http/fetch_request"
+import { FetchRequest, FetchMethod, fetchMethodFromString, fetchEnctypeFromString, isSafe, type FetchRequestDelegate, type FetchEnctypeName } from "../../http/fetch_request"
 import { expandURL } from "../url"
 import { clearBusyState, dispatch, getAttribute, getMetaContent, hasAttribute, markAsBusy } from "../../util"
 import { StreamMessage } from "../streams/stream_message"
 import { prefetchCache } from "./prefetch_cache"
 import { config } from "../config"
 import type { FetchResponse } from "../../http/fetch_response"
-import type { Submitter } from "../config/forms"
 
 export interface FormSubmissionDelegate {
   formSubmissionWillStart?(formSubmission: FormSubmission): void
@@ -17,7 +16,11 @@ export interface FormSubmissionDelegate {
   formSubmissionFinished(formSubmission: FormSubmission): void
 }
 
-export type FormSubmissionResult = { success: boolean; fetchResponse: FetchResponse } | { success: false; error: Error }
+/** How a form submission ended: with a response (successful or not) or with an error. */
+export type FormSubmissionOutcome =
+  | { success: true; fetchResponse: FetchResponse; error?: undefined }
+  | { success: false; fetchResponse: FetchResponse; error?: undefined }
+  | { success: false; error: Error; fetchResponse?: undefined }
 
 export type FormSubmissionState = (typeof FormSubmissionState)[keyof typeof FormSubmissionState]
 
@@ -44,7 +47,7 @@ export class FormSubmission implements FetchRequestDelegate {
   declare readonly submitter?: HTMLElement
   declare readonly fetchRequest: FetchRequest
   declare readonly mustRedirect: boolean
-  declare result?: FormSubmissionResult
+  declare result?: FormSubmissionOutcome
   declare originalSubmitText?: string
 
   static confirmMethod(message: string): Promise<boolean> {
@@ -80,7 +83,7 @@ export class FormSubmission implements FetchRequestDelegate {
     this.fetchRequest.url = expandURL(value)
   }
 
-  get body(): FetchRequestBody | null {
+  get body(): BodyInit | null {
     return this.fetchRequest.body
   }
 
@@ -147,7 +150,7 @@ export class FormSubmission implements FetchRequestDelegate {
     this.delegate.formSubmissionWillStart?.(this)
     this.state = FormSubmissionState.waiting
     if (!request.isSafe) prefetchCache.pause(request)
-    if (this.submitter) config.forms.submitter!.beforeSubmit(this.submitter as Submitter)
+    if (this.submitter) config.forms.submitter.beforeSubmit(this.submitter)
     this.setSubmitsWith()
     markAsBusy(this.formElement)
     dispatch("turbo:submit-start", {
@@ -198,7 +201,7 @@ export class FormSubmission implements FetchRequestDelegate {
   requestFinished(request: FetchRequest): void {
     this.state = FormSubmissionState.stopped
     prefetchCache.resume(request)
-    if (this.submitter) config.forms.submitter!.afterSubmit(this.submitter as Submitter)
+    if (this.submitter) config.forms.submitter.afterSubmit(this.submitter)
     this.resetSubmitterText()
     clearBusyState(this.formElement)
     dispatch("turbo:submit-end", {

@@ -15,6 +15,17 @@ export interface MorphOptions {
     beforeNodeMorphed?(currentElement: Element, newElement?: Node): boolean
   }
   morphStyle?: "innerHTML" | "outerHTML"
+  ignoreActive?: boolean
+  ignoreActiveValue?: boolean
+  restoreFocus?: boolean
+  head?: {
+    style?: "merge" | "append" | "morph" | "none"
+    block?: boolean
+    shouldPreserve?(element: Element): boolean
+    shouldReAppend?(element: Element): boolean
+    shouldRemove?(element: Element): boolean
+    afterHeadMorphed?(element: Element, changes: { added: Node[]; kept: Element[]; removed: Element[] }): void
+  }
 }
 
 /**
@@ -23,11 +34,11 @@ export interface MorphOptions {
  * turbo:before-morph-attribute, and turbo:morph-element events.
  *
  * @param currentElement Element destination of morphing changes
- * @param newElement Element source of morphing changes
+ * @param newElement Element or HTML string source of morphing changes
  */
 export function morphElements(
   currentElement: Element,
-  newElement: Element | DocumentFragment | NodeListOf<ChildNode> | ChildNode[],
+  newElement: Element | DocumentFragment | NodeListOf<ChildNode> | ChildNode[] | string,
   { callbacks, ...options }: MorphOptions = {}
 ): void {
   // TODO(types): idiomorph's types omit NodeList and DocumentFragment, which it accepts at runtime

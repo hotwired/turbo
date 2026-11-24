@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.consumer.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["DOM", "ES2015"]
+  }
+}

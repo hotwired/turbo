@@ -13,7 +13,7 @@ export type TurboHistoryState = {
   documentIdentifier?: string
 }
 
-type HistoryMethod = typeof history.pushState
+export type HistoryMethod = typeof history.pushState
 
 // The Navigation API is not in every TypeScript DOM lib yet.
 type WindowWithNavigation = Window & { navigation?: { currentEntry?: { id: string } | null } }
