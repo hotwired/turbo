@@ -3,17 +3,26 @@ export const PageStage = {
   loading: 1,
   interactive: 2,
   complete: 3
+} as const
+
+export type PageStage = (typeof PageStage)[keyof typeof PageStage]
+
+export interface PageObserverDelegate {
+  pageBecameInteractive(): void
+  pageLoaded(): void
+  pageWillUnload(): void
 }
 
 export class PageObserver {
-  stage = PageStage.initial
+  stage: PageStage = PageStage.initial
   started = false
+  declare readonly delegate: PageObserverDelegate
 
-  constructor(delegate) {
+  constructor(delegate: PageObserverDelegate) {
     this.delegate = delegate
   }
 
-  start() {
+  start(): void {
     if (!this.started) {
       if (this.stage == PageStage.initial) {
         this.stage = PageStage.loading
@@ -25,7 +34,7 @@ export class PageObserver {
     }
   }
 
-  stop() {
+  stop(): void {
     if (this.started) {
       document.removeEventListener("readystatechange", this.interpretReadyState, false)
       document.removeEventListener("DOMContentLoaded", this.interpretReadyState, false)
@@ -43,14 +52,14 @@ export class PageObserver {
     }
   }
 
-  pageIsInteractive() {
+  pageIsInteractive(): void {
     if (this.stage == PageStage.loading) {
       this.stage = PageStage.interactive
       this.delegate.pageBecameInteractive()
     }
   }
 
-  pageIsComplete() {
+  pageIsComplete(): void {
     this.pageIsInteractive()
     if (this.stage == PageStage.interactive) {
       this.stage = PageStage.complete
@@ -62,7 +71,7 @@ export class PageObserver {
     this.delegate.pageWillUnload()
   }
 
-  get readyState() {
+  get readyState(): DocumentReadyState {
     return document.readyState
   }
 }

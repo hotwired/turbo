@@ -1,4 +1,12 @@
-export function activateScriptElement(element) {
+import { Action } from "./core/types"
+
+export type DispatchOptions<T extends CustomEvent = CustomEvent> = {
+  target?: EventTarget | null
+  cancelable?: boolean
+  detail?: T["detail"]
+}
+
+export function activateScriptElement(element: HTMLScriptElement) {
   if (element.getAttribute("data-turbo-eval") == "false") {
     return element
   } else {
@@ -14,27 +22,30 @@ export function activateScriptElement(element) {
   }
 }
 
-function copyElementAttributes(destinationElement, sourceElement) {
+function copyElementAttributes(destinationElement: Element, sourceElement: Element) {
   for (const { name, value } of sourceElement.attributes) {
     destinationElement.setAttribute(name, value)
   }
 }
 
-export function createDocumentFragment(html) {
+export function createDocumentFragment(html: string): DocumentFragment {
   const template = document.createElement("template")
   template.innerHTML = html
   return template.content
 }
 
-export function dispatch(eventName, { target, cancelable, detail } = {}) {
-  const event = new CustomEvent(eventName, {
+export function dispatch<T extends CustomEvent = CustomEvent>(
+  eventName: string,
+  { target, cancelable, detail }: DispatchOptions<T> = {}
+): T {
+  const event = new CustomEvent<T["detail"]>(eventName, {
     cancelable,
     bubbles: true,
     composed: true,
     detail
-  })
+  }) as T
 
-  if (target && target.isConnected) {
+  if (target && (target as Element).isConnected) {
     target.dispatchEvent(event)
   } else {
     document.documentElement.dispatchEvent(event)
@@ -43,12 +54,12 @@ export function dispatch(eventName, { target, cancelable, detail } = {}) {
   return event
 }
 
-export function cancelEvent(event) {
+export function cancelEvent(event: Event): void {
   event.preventDefault()
   event.stopImmediatePropagation()
 }
 
-export function nextRepaint() {
+export function nextRepaint(): Promise<void> {
   if (document.visibilityState === "hidden") {
     return nextEventLoopTick()
   } else {
@@ -57,42 +68,42 @@ export function nextRepaint() {
 }
 
 export function nextAnimationFrame() {
-  return new Promise((resolve) => requestAnimationFrame(() => resolve()))
+  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 }
 
 export function nextEventLoopTick() {
-  return new Promise((resolve) => setTimeout(() => resolve(), 0))
+  return new Promise<void>((resolve) => setTimeout(() => resolve(), 0))
 }
 
-export function nextMicrotask() {
+export function nextMicrotask(): Promise<void> {
   return Promise.resolve()
 }
 
-export function removeTemporaryElementsFrom(root) {
+export function removeTemporaryElementsFrom(root: ParentNode): void {
   for (const element of root.querySelectorAll("[data-turbo-temporary]")) {
     element.remove()
   }
 }
 
-export function parseHTMLDocument(html = "") {
+export function parseHTMLDocument(html = ""): Document {
   return new DOMParser().parseFromString(html, "text/html")
 }
 
-export function unindent(strings, ...values) {
+export function unindent(strings: TemplateStringsArray, ...values: unknown[]): string {
   const lines = interpolate(strings, values).replace(/^\n/, "").split("\n")
   const match = lines[0].match(/^\s+/)
   const indent = match ? match[0].length : 0
   return lines.map((line) => line.slice(indent)).join("\n")
 }
 
-function interpolate(strings, values) {
+function interpolate(strings: TemplateStringsArray, values: unknown[]): string {
   return strings.reduce((result, string, i) => {
     const value = values[i] == undefined ? "" : values[i]
     return result + string + value
   }, "")
 }
 
-export function uuid() {
+export function uuid(): string {
   return Array.from({ length: 36 })
     .map((_, i) => {
       if (i == 8 || i == 13 || i == 18 || i == 23) {
@@ -108,7 +119,7 @@ export function uuid() {
     .join("")
 }
 
-export function getAttribute(attributeName, ...elements) {
+export function getAttribute(attributeName: string, ...elements: (Element | null | undefined)[]): string | null {
   for (const value of elements.map((element) => element?.getAttribute(attributeName))) {
     if (typeof value == "string") return value
   }
@@ -116,11 +127,12 @@ export function getAttribute(attributeName, ...elements) {
   return null
 }
 
-export function hasAttribute(attributeName, ...elements) {
+export function hasAttribute(attributeName: string, ...elements: (Element | null | undefined)[]): boolean {
   return elements.some((element) => element && element.hasAttribute(attributeName))
+
 }
 
-export function markAsBusy(...elements) {
+export function markAsBusy(...elements: Element[]) {
   for (const element of elements) {
     if (element.localName == "turbo-frame") {
       element.setAttribute("busy", "")
@@ -129,7 +141,7 @@ export function markAsBusy(...elements) {
   }
 }
 
-export function clearBusyState(...elements) {
+export function clearBusyState(...elements: Element[]) {
   for (const element of elements) {
     if (element.localName == "turbo-frame") {
       element.removeAttribute("busy")
@@ -139,7 +151,7 @@ export function clearBusyState(...elements) {
   }
 }
 
-export function waitForLoad(element, timeoutInMilliseconds = 2000) {
+export function waitForLoad(element: Element, timeoutInMilliseconds = 2000): Promise<void> {
   return new Promise((resolve) => {
     const onComplete = () => {
       element.removeEventListener("error", onComplete)
@@ -153,7 +165,7 @@ export function waitForLoad(element, timeoutInMilliseconds = 2000) {
   })
 }
 
-export function getHistoryMethodForAction(action) {
+export function getHistoryMethodForAction(action: Action) {
   switch (action) {
     case "replace":
       return history.replaceState
@@ -163,26 +175,26 @@ export function getHistoryMethodForAction(action) {
   }
 }
 
-export function isAction(action) {
+export function isAction(action: unknown): action is Action {
   return action == "advance" || action == "replace" || action == "restore"
 }
 
-export function getVisitAction(...elements) {
+export function getVisitAction(...elements: (Element | null | undefined)[]): Action | null {
   const action = getAttribute("data-turbo-action", ...elements)
 
   return isAction(action) ? action : null
 }
 
-function getMetaElement(name) {
-  return document.querySelector(`meta[name="${name}"]`)
+function getMetaElement(name: string): HTMLMetaElement | null {
+  return document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
 }
 
-export function getMetaContent(name) {
+export function getMetaContent(name: string) {
   const element = getMetaElement(name)
   return element && element.content
 }
 
-export function getCspNonce() {
+export function getCspNonce(): string | undefined {
   const element = getMetaElement("csp-nonce")
 
   if (element) {
@@ -191,7 +203,7 @@ export function getCspNonce() {
   }
 }
 
-export function setMetaContent(name, content) {
+export function setMetaContent(name: string, content: string): HTMLMetaElement {
   let element = getMetaElement(name)
 
   if (!element) {
@@ -206,30 +218,34 @@ export function setMetaContent(name, content) {
   return element
 }
 
-export function findClosestRecursively(element, selector) {
+export function findClosestRecursively<E extends Element = Element>(
+  element: EventTarget | null | undefined,
+  selector: string
+): E | null | undefined {
   if (element instanceof Element) {
     return (
-      element.closest(selector) || findClosestRecursively(element.assignedSlot || element.getRootNode()?.host, selector)
+      element.closest<E>(selector) ||
+      findClosestRecursively<E>(element.assignedSlot || (element.getRootNode() as ShadowRoot)?.host, selector)
     )
   }
 }
 
-export function elementIsStylesheet(element) {
+export function elementIsStylesheet(element: Element): boolean {
   return element.localName === "style" ||
-    (element.localName === "link" && element.relList.contains("stylesheet"))
+    (element.localName === "link" && (element as HTMLLinkElement).relList.contains("stylesheet"))
 }
 
-export function elementIsFocusable(element) {
+export function elementIsFocusable(element: Element | null | undefined): element is HTMLElement {
   const inertDisabledOrHidden = "[inert], :disabled, [hidden], details:not([open]), dialog:not([open])"
 
-  return !!element && element.closest(inertDisabledOrHidden) == null && typeof element.focus == "function"
+  return !!element && element.closest(inertDisabledOrHidden) == null && typeof (element as HTMLElement).focus == "function"
 }
 
-export function queryAutofocusableElement(elementOrDocumentFragment) {
+export function queryAutofocusableElement(elementOrDocumentFragment: ParentNode): HTMLElement | undefined {
   return Array.from(elementOrDocumentFragment.querySelectorAll("[autofocus]")).find(elementIsFocusable)
 }
 
-export async function around(callback, reader) {
+export async function around<T>(callback: () => void, reader: () => T): Promise<[T, T]> {
   const before = reader()
 
   callback()
@@ -241,7 +257,7 @@ export async function around(callback, reader) {
   return [before, after]
 }
 
-export function doesNotTargetIFrame(name) {
+export function doesNotTargetIFrame(name: string | null | undefined): boolean {
   if (name === "_blank") {
     return false
   } else if (name) {
@@ -261,12 +277,12 @@ export function doesNotTargetIFrame(name) {
  * SVGAElement exposes href as SVGAnimatedString which does not implement String methods.
  * getAttribute() will return the proper value of the attribute in both cases.
  */
-export function getLinkHrefString(link) {
+export function getLinkHrefString(link: Element): string {
   return link.getAttribute("href") ?? link.getAttribute("xlink:href") ?? ""
 }
 
-export function findLinkFromClickTarget(target) {
-  const link = findClosestRecursively(target, "a[href], a[xlink\\:href]")
+export function findLinkFromClickTarget(target: EventTarget | null): HTMLAnchorElement | SVGAElement | null {
+  const link = findClosestRecursively<HTMLAnchorElement | SVGAElement>(target, "a[href], a[xlink\\:href]")
 
   if (!link) return null
   if (getLinkHrefString(link).startsWith("#")) return null
@@ -278,12 +294,16 @@ export function findLinkFromClickTarget(target) {
   return link
 }
 
-export function debounce(fn, delay) {
-  let timeoutId = null
+export function debounce<A extends unknown[]>(
+  this: unknown,
+  fn: (...args: A) => void,
+  delay: number
+): (...args: A) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
 
-  return (...args) => {
+  return (...args: A) => {
     const callback = () => fn.apply(this, args)
-    clearTimeout(timeoutId)
+    clearTimeout(timeoutId!)
     timeoutId = setTimeout(callback, delay)
   }
 }

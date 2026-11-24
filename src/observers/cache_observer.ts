@@ -3,21 +3,21 @@ import { removeTemporaryElementsFrom } from "../util"
 export class CacheObserver {
   started = false
 
-  start() {
+  start(): void {
     if (!this.started) {
       this.started = true
       addEventListener("turbo:before-cache", this.removeTemporaryElements, false)
     }
   }
 
-  stop() {
+  stop(): void {
     if (this.started) {
       this.started = false
       removeEventListener("turbo:before-cache", this.removeTemporaryElements, false)
     }
   }
 
-  removeTemporaryElements = (_event) => {
+  removeTemporaryElements = (_event: Event) => {
     removeTemporaryElementsFrom(document)
   }
 }

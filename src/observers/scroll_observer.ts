@@ -1,11 +1,18 @@
+import type { Position } from "../core/types"
+
+export interface ScrollObserverDelegate {
+  scrollPositionChanged(position: Position): void
+}
+
 export class ScrollObserver {
   started = false
+  declare readonly delegate: ScrollObserverDelegate
 
-  constructor(delegate) {
+  constructor(delegate: ScrollObserverDelegate) {
     this.delegate = delegate
   }
 
-  start() {
+  start(): void {
     if (!this.started) {
       addEventListener("scroll", this.onScroll, false)
       this.onScroll()
@@ -13,7 +20,7 @@ export class ScrollObserver {
     }
   }
 
-  stop() {
+  stop(): void {
     if (this.started) {
       removeEventListener("scroll", this.onScroll, false)
       this.started = false
@@ -26,7 +33,7 @@ export class ScrollObserver {
 
   // Private
 
-  updatePosition(position) {
+  updatePosition(position: Position): void {
     this.delegate.scrollPositionChanged(position)
   }
 }

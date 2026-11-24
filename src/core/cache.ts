@@ -1,7 +1,10 @@
 import { setMetaContent } from "../util"
+import type { Session } from "./session"
 
 export class Cache {
-  constructor(session) {
+  declare readonly session: Session
+
+  constructor(session: Session) {
     this.session = session
   }
 
@@ -21,7 +24,7 @@ export class Cache {
     this.#setCacheControl("no-preview")
   }
 
-  #setCacheControl(value) {
+  #setCacheControl(value: string) {
     setMetaContent("turbo-cache-control", value)
   }
 }

@@ -6,20 +6,33 @@ import {
   getLinkHrefString
 } from "../util"
 
-import { FetchMethod, FetchRequest } from "../http/fetch_request"
+import {
+  FetchMethod,
+  FetchRequest,
+  type FetchRequestDelegate,
+  type TurboBeforeFetchRequestEvent
+} from "../http/fetch_request"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
-export class LinkPrefetchObserver {
-  started = false
-  #prefetchedLink = null
-  #pendingFetchRequests = new Map()
+export interface LinkPrefetchObserverDelegate {
+  canPrefetchRequestToLocation(link: HTMLAnchorElement, location: URL): boolean
+}
 
-  constructor(delegate, eventTarget) {
+type PrefetchRequestDetail = TurboBeforeFetchRequestEvent["detail"] & { fetchRequest?: FetchRequest }
+
+export class LinkPrefetchObserver implements FetchRequestDelegate {
+  started = false
+  #prefetchedLink: HTMLAnchorElement | null = null
+  #pendingFetchRequests = new Map<FetchRequest, URL>()
+  declare readonly delegate: LinkPrefetchObserverDelegate
+  declare readonly eventTarget: Document
+
+  constructor(delegate: LinkPrefetchObserverDelegate, eventTarget: Document) {
     this.delegate = delegate
     this.eventTarget = eventTarget
   }
 
-  start() {
+  start(): void {
     if (this.started) return
 
     if (this.eventTarget.readyState === "loading") {
@@ -29,17 +42,17 @@ export class LinkPrefetchObserver {
     }
   }
 
-  stop() {
+  stop(): void {
     if (!this.started) return
 
     this.eventTarget.removeEventListener("mouseenter", this.#tryToPrefetchRequest, {
       capture: true,
       passive: true
-    })
+    } as EventListenerOptions)
     this.eventTarget.removeEventListener("mouseleave", this.#cancelRequestIfObsolete, {
       capture: true,
       passive: true
-    })
+    } as EventListenerOptions)
 
     this.eventTarget.removeEventListener("turbo:before-fetch-request", this.#tryToUsePrefetchedRequest, true)
     this.eventTarget.removeEventListener("turbo:visit", this.#cancelPendingFetchRequests, true)
@@ -66,10 +79,10 @@ export class LinkPrefetchObserver {
     this.started = true
   }
 
-  #tryToPrefetchRequest = (event) => {
+  #tryToPrefetchRequest = (event: Event) => {
     if (getMetaContent("turbo-prefetch") === "false") return
 
-    const target = event.target
+    const target = event.target as HTMLAnchorElement
     const isLink = target.matches && target.matches("a[href]:not([download])")
 
     if (isLink && this.#isPrefetchable(target)) {
@@ -94,7 +107,8 @@ export class LinkPrefetchObserver {
     }
   }
 
-  #cancelPendingFetchRequests = (event) => {
+  // Only registered for "turbo:visit".
+  #cancelPendingFetchRequests = ((event: CustomEvent<{ url: string }>) => {
     const key = toCacheKey(expandURL(event.detail.url))
 
     for (const [fetchRequest, location] of this.#pendingFetchRequests) {
@@ -103,9 +117,9 @@ export class LinkPrefetchObserver {
         this.#pendingFetchRequests.delete(fetchRequest)
       }
     }
-  }
+  }) as EventListener
 
-  #cancelRequestIfObsolete = (event) => {
+  #cancelRequestIfObsolete = (event: Event) => {
     if (event.target === this.#prefetchedLink) this.#cancelPrefetchRequest()
   }
 
@@ -114,19 +128,20 @@ export class LinkPrefetchObserver {
     this.#prefetchedLink = null
   }
 
-  #tryToUsePrefetchedRequest = (event) => {
-    if (event.target.tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
+  // Only registered for "turbo:before-fetch-request".
+  #tryToUsePrefetchedRequest = ((event: CustomEvent<PrefetchRequestDetail>) => {
+    if ((event.target as Element).tagName !== "FORM" && event.detail.fetchOptions.method === "GET") {
       this.#usePrefetchedRequest(event.detail)
       prefetchCache.clear()
     }
-  }
+  }) as EventListener
 
   // Fetch request delegate
 
-  prepareRequest(request) {
+  prepareRequest(request: FetchRequest): void {
     this.#trackPendingFetchRequest(request)
 
-    const link = request.target
+    const link = request.target as HTMLAnchorElement
 
     request.headers["X-Sec-Purpose"] = "prefetch"
 
@@ -142,25 +157,25 @@ export class LinkPrefetchObserver {
     }
   }
 
-  requestSucceededWithResponse() {}
+  requestSucceededWithResponse(): void {}
 
-  requestStarted(fetchRequest) {}
+  requestStarted(_fetchRequest: FetchRequest): void {}
 
-  requestErrored(fetchRequest) {}
+  requestErrored(_fetchRequest: FetchRequest): void {}
 
-  requestFinished(fetchRequest) {
+  requestFinished(fetchRequest: FetchRequest): void {
     this.#pendingFetchRequests.delete(fetchRequest)
   }
 
-  requestPreventedHandlingResponse(fetchRequest, fetchResponse) {}
+  requestPreventedHandlingResponse(_fetchRequest: FetchRequest, _fetchResponse: unknown): void {}
 
-  requestFailedWithResponse(fetchRequest, fetchResponse) {}
+  requestFailedWithResponse(_fetchRequest: FetchRequest, _fetchResponse: unknown): void {}
 
-  get #cacheTtl() {
+  get #cacheTtl(): number {
     return Number(getMetaContent("turbo-prefetch-cache-time")) || cacheTtl
   }
 
-  #trackPendingFetchRequest(fetchRequest) {
+  #trackPendingFetchRequest(fetchRequest: FetchRequest): void {
     const key = toCacheKey(fetchRequest.url)
 
     for (const [pendingFetchRequest, location] of this.#pendingFetchRequests) {
@@ -173,7 +188,7 @@ export class LinkPrefetchObserver {
     this.#pendingFetchRequests.set(fetchRequest, fetchRequest.url)
   }
 
-  #usePrefetchedRequest(detail) {
+  #usePrefetchedRequest(detail: PrefetchRequestDetail): void {
     const cached = prefetchCache.get(detail.url)
 
     if (cached && !cached.abortSignal.aborted) {
@@ -183,7 +198,7 @@ export class LinkPrefetchObserver {
     }
   }
 
-  #isPrefetchable(link) {
+  #isPrefetchable(link: HTMLAnchorElement): boolean {
     const href = link.getAttribute("href")
 
     if (!href) return false
@@ -198,7 +213,7 @@ export class LinkPrefetchObserver {
   }
 }
 
-const unfetchableLink = (link) => {
+const unfetchableLink = (link: HTMLAnchorElement) => {
   const target = link.getAttribute("target")
 
   return (
@@ -208,11 +223,11 @@ const unfetchableLink = (link) => {
   )
 }
 
-const linkToTheSamePage = (link) => {
+const linkToTheSamePage = (link: HTMLAnchorElement) => {
   return (link.pathname + link.search === document.location.pathname + document.location.search) || getLinkHrefString(link).startsWith("#")
 }
 
-const linkOptsOut = (link) => {
+const linkOptsOut = (link: HTMLAnchorElement) => {
   if (link.getAttribute("data-turbo-prefetch") === "false") return true
   if (link.getAttribute("data-turbo") === "false") return true
 
@@ -222,7 +237,7 @@ const linkOptsOut = (link) => {
   return false
 }
 
-const nonSafeLink = (link) => {
+const nonSafeLink = (link: HTMLAnchorElement) => {
   const turboMethod = link.getAttribute("data-turbo-method")
   if (turboMethod && turboMethod.toLowerCase() !== "get") return true
 
@@ -233,11 +248,11 @@ const nonSafeLink = (link) => {
   return false
 }
 
-const isUJS = (link) => {
+const isUJS = (link: HTMLAnchorElement) => {
   return link.hasAttribute("data-remote") || link.hasAttribute("data-behavior") || link.hasAttribute("data-confirm") || link.hasAttribute("data-method")
 }
 
-const eventPrevented = (link) => {
+const eventPrevented = (link: HTMLAnchorElement) => {
   const event = dispatch("turbo:before-prefetch", { target: link, cancelable: true })
   return event.defaultPrevented
 }

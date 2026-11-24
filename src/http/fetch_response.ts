@@ -1,7 +1,9 @@
 import { expandURL } from "../core/url"
 
 export class FetchResponse {
-  constructor(response) {
+  declare readonly response: Response
+
+  constructor(response: Response) {
     this.response = response
   }
 
@@ -25,12 +27,13 @@ export class FetchResponse {
     return this.response.redirected
   }
 
-  get location() {
+  get location(): URL {
     return expandURL(this.response.url)
   }
 
-  get isHTML() {
+  get isHTML(): RegExpMatchArray | "" | null {
     return this.contentType && this.contentType.match(/^(?:text\/([^\s;,]+\b)?html|application\/xhtml\+xml)\b/)
+
   }
 
   get statusCode() {
@@ -41,11 +44,11 @@ export class FetchResponse {
     return this.header("Content-Type")
   }
 
-  get responseText() {
+  get responseText(): Promise<string> {
     return this.response.clone().text()
   }
 
-  get responseHTML() {
+  get responseHTML(): Promise<string | undefined> {
     if (this.isHTML) {
       return this.response.clone().text()
     } else {
@@ -53,7 +56,7 @@ export class FetchResponse {
     }
   }
 
-  header(name) {
+  header(name: string): string | null {
     return this.response.headers.get(name)
   }
 }

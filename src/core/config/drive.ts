@@ -1,4 +1,11 @@
-export const drive = {
+export type DriveConfig = {
+  enabled: boolean
+  progressBarDelay: number
+  prefetchDelay: number
+  unvisitableExtensions: Set<string>
+}
+
+export const drive: DriveConfig = {
   enabled: true,
   progressBarDelay: 500,
   prefetchDelay: 100,

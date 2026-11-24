@@ -1,40 +1,50 @@
-import { LinkClickObserver } from "./link_click_observer"
+import { LinkClickObserver, type LinkClickObserverDelegate } from "./link_click_observer"
 import { getVisitAction } from "../util"
 
-export class FormLinkClickObserver {
-  constructor(delegate, element) {
+export type FormLink = HTMLAnchorElement | SVGAElement
+
+export interface FormLinkClickObserverDelegate {
+  willSubmitFormLinkToLocation(link: FormLink, location: URL, event: MouseEvent): boolean
+  submittedFormLinkToLocation(link: FormLink, location: URL, form: HTMLFormElement): void
+}
+
+export class FormLinkClickObserver implements LinkClickObserverDelegate {
+  declare readonly delegate: FormLinkClickObserverDelegate
+  declare readonly linkInterceptor: LinkClickObserver
+
+  constructor(delegate: FormLinkClickObserverDelegate, element: EventTarget) {
     this.delegate = delegate
     this.linkInterceptor = new LinkClickObserver(this, element)
   }
 
-  start() {
+  start(): void {
     this.linkInterceptor.start()
   }
 
-  stop() {
+  stop(): void {
     this.linkInterceptor.stop()
   }
 
   // Link hover observer delegate
 
-  canPrefetchRequestToLocation(link, location) {
+  canPrefetchRequestToLocation(_link: Element, _location: URL): boolean {
     return false
   }
 
-  prefetchAndCacheRequestToLocation(link, location) {
+  prefetchAndCacheRequestToLocation(_link: Element, _location: URL): void {
     return
   }
 
   // Link click observer delegate
 
-  willFollowLinkToLocation(link, location, originalEvent) {
+  willFollowLinkToLocation(link: FormLink, location: URL, originalEvent: MouseEvent): boolean {
     return (
       this.delegate.willSubmitFormLinkToLocation(link, location, originalEvent) &&
       (link.hasAttribute("data-turbo-method") || link.hasAttribute("data-turbo-stream"))
     )
   }
 
-  followedLinkToLocation(link, location) {
+  followedLinkToLocation(link: FormLink, location: URL): void {
     const form = document.createElement("form")
 
     const type = "hidden"
