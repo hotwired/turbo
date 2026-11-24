@@ -14,21 +14,6 @@ export type FetchRequestHeaders = { [header: string]: string }
 
 export type FetchRequestTarget = HTMLFormElement | HTMLAnchorElement | FrameElement | Element | null
 
-export type TurboBeforeFetchRequestEvent = CustomEvent<{
-  fetchOptions: FetchRequestOptions
-  url: URL
-  resume: (value?: unknown) => void
-}>
-
-export type TurboBeforeFetchResponseEvent = CustomEvent<{
-  fetchResponse: FetchResponse
-}>
-
-export type TurboFetchRequestErrorEvent = CustomEvent<{
-  request: FetchRequest
-  error: Error
-}>
-
 export interface FetchRequestDelegate {
   referrer?: URL
 
@@ -210,7 +195,7 @@ export class FetchRequest {
 
   async receive(response: Response): Promise<FetchResponse> {
     const fetchResponse = new FetchResponse(response)
-    const event = dispatch<TurboBeforeFetchResponseEvent>("turbo:before-fetch-response", {
+    const event = dispatch("turbo:before-fetch-response", {
       cancelable: true,
       detail: { fetchResponse },
       target: this.target
@@ -249,8 +234,7 @@ export class FetchRequest {
 
   async #allowRequestToBeIntercepted(fetchOptions: FetchRequestOptions) {
     const requestInterception = new Promise((resolve) => (this.#resolveRequestPromise = resolve))
-    // `fetchRequest` is an undocumented hook: a listener may hand over a request to adopt.
-    const event = dispatch<CustomEvent<TurboBeforeFetchRequestEvent["detail"] & { fetchRequest?: FetchRequest }>>("turbo:before-fetch-request", {
+    const event = dispatch("turbo:before-fetch-request", {
       cancelable: true,
       detail: {
         fetchOptions,
@@ -266,7 +250,7 @@ export class FetchRequest {
   }
 
   #willDelegateErrorHandling(error: Error) {
-    const event = dispatch<TurboFetchRequestErrorEvent>("turbo:fetch-request-error", {
+    const event = dispatch("turbo:fetch-request-error", {
       target: this.target,
       cancelable: true,
       detail: { request: this, error: error }

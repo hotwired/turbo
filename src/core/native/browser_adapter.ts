@@ -5,7 +5,7 @@ import { locationIsVisitable } from "../url"
 import type { Adapter } from "./adapter"
 import type { FormSubmission } from "../drive/form_submission"
 import type { Navigator } from "../drive/navigator"
-import type { ReloadReason } from "../types"
+import type { ReloadReason, StructuredReason } from "../types"
 
 export type { ReloadReason } from "../types"
 
@@ -147,7 +147,8 @@ export class BrowserAdapter implements Adapter {
   }
 
   reload(reason: ReloadReason): void {
-    dispatch("turbo:reload", { detail: reason })
+    // CustomEvent delivers an undefined detail as null.
+    dispatch("turbo:reload", { detail: reason as StructuredReason | null })
 
     const location = reason?.context?.location || this.redirectedToLocation || this.location
     window.location.href = location?.toString() || window.location.href

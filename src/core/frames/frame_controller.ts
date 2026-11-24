@@ -26,7 +26,8 @@ import { session } from "../index"
 import { StreamMessage } from "../streams/stream_message"
 import { PageSnapshot } from "../drive/page_snapshot"
 import { TurboFrameMissingError } from "../errors"
-import { VisitState, type Visit, type VisitOptions, type VisitResponse } from "../drive/visit"
+import { VisitState, type Visit, type VisitResponse } from "../drive/visit"
+import type { VisitFallback } from "../events"
 import type { ViewRenderOptions } from "../view"
 import type { RenderMethod } from "../renderer"
 import type { Action } from "../types"
@@ -62,13 +63,6 @@ type FormSubmissionContext = {
 }
 
 type LoadSourceURLOptions = { shouldMorphFrame?: boolean; isMorphRefresh?: boolean }
-
-export type TurboFrameMissingEvent = CustomEvent<{
-  response: Response
-  visit: (url: URL | string | Response, options?: Partial<VisitOptions>) => Promise<void>
-}>
-
-export type TurboBeforeFrameRenderEvent = CustomEvent<{ newFrame: FrameElement } & ViewRenderOptions<FrameElement>>
 
 export class FrameController
   implements
@@ -426,7 +420,7 @@ export class FrameController
   // View delegate
 
   allowsImmediateRender({ element: newFrame }: Snapshot<FrameElement>, options: ViewRenderOptions<FrameElement>): boolean {
-    const event = dispatch<TurboBeforeFrameRenderEvent>("turbo:before-frame-render", {
+    const event = dispatch("turbo:before-frame-render", {
       target: this.element,
       detail: { newFrame, ...options },
       cancelable: true
@@ -763,7 +757,7 @@ export class FrameController
     this.element.setAttribute("complete", "")
 
     const response = fetchResponse.response
-    const visit = async (url: URL | string | Response, options?: Partial<VisitOptions>) => {
+    const visit: VisitFallback = async (url, options) => {
       if (url instanceof Response) {
         this.#visitResponse(url)
       } else {
@@ -771,7 +765,7 @@ export class FrameController
       }
     }
 
-    const event = dispatch<TurboFrameMissingEvent>("turbo:frame-missing", {
+    const event = dispatch("turbo:frame-missing", {
       target: this.element,
       detail: { response, visit },
       cancelable: true

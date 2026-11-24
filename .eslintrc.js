@@ -28,8 +28,14 @@ module.exports = {
       }
     },
     {
+      // Type-level tests declare values only to inspect their types.
+      files: ["src/tests/types/**/*.ts"],
+      rules: {
+        "@typescript-eslint/no-unused-vars": "off"
+      }
+    },
+    {
       files: ["src/tests/unit/**/*_tests.js"],
-
       globals: {
         teardown: "readonly"
       }

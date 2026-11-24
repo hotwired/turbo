@@ -28,16 +28,17 @@ import type { FetchResponse } from "../http/fetch_response"
 import type { LimitedSet } from "./drive/limited_set"
 import type { FormMode } from "./config/forms"
 import type { Action, Position, ReloadReason, StreamSource } from "./types"
-
-export type TurboClickEvent = CustomEvent<{ url: string; originalEvent: MouseEvent }>
-export type TurboBeforeVisitEvent = CustomEvent<{ url: string }>
-export type TurboVisitEvent = CustomEvent<{ url: string; action: Action }>
-export type TurboBeforeCacheEvent = CustomEvent<undefined>
-export type TurboBeforeRenderEvent = CustomEvent<{ newBody: HTMLBodyElement } & ViewRenderOptions<HTMLBodyElement>>
-export type TurboRenderEvent = CustomEvent<{ renderMethod: RenderMethod }>
-export type TurboLoadEvent = CustomEvent<{ url: string; timing: TimingMetrics }>
-export type TurboFrameLoadEvent = CustomEvent<undefined>
-export type TurboFrameRenderEvent = CustomEvent<{ fetchResponse: FetchResponse }>
+import type {
+  TurboBeforeCacheEvent,
+  TurboBeforeRenderEvent,
+  TurboBeforeVisitEvent,
+  TurboClickEvent,
+  TurboFrameLoadEvent,
+  TurboFrameRenderEvent,
+  TurboLoadEvent,
+  TurboRenderEvent,
+  TurboVisitEvent
+} from "./events"
 
 export type RefreshOptions = { method?: string | null; requestId?: string | null; scroll?: string | null }
 
@@ -437,7 +438,7 @@ export class Session
   }
 
   notifyApplicationAfterClickingLinkToLocation(link: Element, location: URL, event: MouseEvent): TurboClickEvent {
-    return dispatch<TurboClickEvent>("turbo:click", {
+    return dispatch("turbo:click", {
       target: link,
       detail: { url: location.href, originalEvent: event },
       cancelable: true
@@ -445,43 +446,43 @@ export class Session
   }
 
   notifyApplicationBeforeVisitingLocation(location: URL): TurboBeforeVisitEvent {
-    return dispatch<TurboBeforeVisitEvent>("turbo:before-visit", {
+    return dispatch("turbo:before-visit", {
       detail: { url: location.href },
       cancelable: true
     })
   }
 
   notifyApplicationAfterVisitingLocation(location: URL, action: Action): TurboVisitEvent {
-    return dispatch<TurboVisitEvent>("turbo:visit", { detail: { url: location.href, action } })
+    return dispatch("turbo:visit", { detail: { url: location.href, action } })
   }
 
   notifyApplicationBeforeCachingSnapshot(): TurboBeforeCacheEvent {
-    return dispatch<TurboBeforeCacheEvent>("turbo:before-cache")
+    return dispatch("turbo:before-cache")
   }
 
   notifyApplicationBeforeRender(newBody: HTMLBodyElement, options: ViewRenderOptions<HTMLBodyElement>): TurboBeforeRenderEvent {
-    return dispatch<TurboBeforeRenderEvent>("turbo:before-render", {
+    return dispatch("turbo:before-render", {
       detail: { newBody, ...options },
       cancelable: true
     })
   }
 
   notifyApplicationAfterRender(renderMethod: RenderMethod): TurboRenderEvent {
-    return dispatch<TurboRenderEvent>("turbo:render", { detail: { renderMethod } })
+    return dispatch("turbo:render", { detail: { renderMethod } })
   }
 
   notifyApplicationAfterPageLoad(timing: TimingMetrics = {}): TurboLoadEvent {
-    return dispatch<TurboLoadEvent>("turbo:load", {
+    return dispatch("turbo:load", {
       detail: { url: this.location.href, timing }
     })
   }
 
   notifyApplicationAfterFrameLoad(frame: FrameElement): TurboFrameLoadEvent {
-    return dispatch<TurboFrameLoadEvent>("turbo:frame-load", { target: frame })
+    return dispatch("turbo:frame-load", { target: frame })
   }
 
   notifyApplicationAfterFrameRender(fetchResponse: FetchResponse, frame: FrameElement): TurboFrameRenderEvent {
-    return dispatch<TurboFrameRenderEvent>("turbo:frame-render", {
+    return dispatch("turbo:frame-render", {
       detail: { fetchResponse },
       target: frame,
       cancelable: true

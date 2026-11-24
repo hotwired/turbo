@@ -62,13 +62,14 @@
     "build:win": "yarn install && rollup -c && yarn clean:types && tsc",
     "watch": "rollup -wc",
     "start": "node src/tests/server.mjs",
-    "test": "yarn test:unit && yarn test:browser",
+    "test": "yarn test:types && yarn test:unit && yarn test:browser",
     "test:browser": "playwright test",
     "test:unit": "NODE_OPTIONS=--inspect web-test-runner",
     "test:unit:win": "SET NODE_OPTIONS=--inspect & web-test-runner",
     "release": "yarn build && yarn publish",
     "lint": "eslint . --ext .js,.ts",
     "typecheck": "tsc --noEmit",
+    "test:types": "tsc -p tsconfig.typetests.json",
     "check:dist": "node scripts/check-dist.mjs"
   },
   "engines": {

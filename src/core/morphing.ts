@@ -3,6 +3,7 @@ import { Idiomorph, type ConfigCallbacks as IdiomorphCallbacks } from "idiomorph
 import { FrameElement } from "../elements/frame_element"
 import { dispatch } from "../util"
 import { urlsAreEqual } from "./url"
+import type { MorphMutationType } from "./events"
 
 /**
  * Options for morphing elements. Declared here rather than re-exported from
@@ -10,8 +11,8 @@ import { urlsAreEqual } from "./url"
  */
 export interface MorphOptions {
   callbacks?: {
-    // Also called with no newElement when a node is about to be removed.
-    beforeNodeMorphed?(currentElement: Element, newElement: Element): boolean
+    /** Also called with no newElement when a node is about to be removed. */
+    beforeNodeMorphed?(currentElement: Element, newElement?: Node): boolean
   }
   morphStyle?: "innerHTML" | "outerHTML"
 }
@@ -52,13 +53,13 @@ export function morphChildren(currentElement: Element, newElement: Element | Doc
   })
 }
 
-export function shouldRefreshFrameWithMorphing(currentFrame: Element | null, newFrame?: Element | null) {
+export function shouldRefreshFrameWithMorphing(currentFrame: Element | null, newFrame?: Node | null) {
   return currentFrame instanceof FrameElement &&
     currentFrame.shouldReloadWithMorph && (!newFrame || areFramesCompatibleForRefreshing(currentFrame, newFrame)) &&
     !currentFrame.closest("[data-turbo-permanent]")
 }
 
-function areFramesCompatibleForRefreshing(currentFrame: FrameElement, newFrame: Element): boolean {
+function areFramesCompatibleForRefreshing(currentFrame: FrameElement, newFrame: Node): boolean {
   // newFrame cannot yet be an instance of FrameElement because custom
   // elements don't get initialized until they're attached to the DOM, so
   // test its Element#nodeName instead
@@ -71,7 +72,7 @@ export function closestFrameReloadableWithMorphing(node: Element): FrameElement 
 }
 
 class DefaultIdiomorphCallbacks {
-  #beforeNodeMorphed: (currentElement: Element, newElement: Element) => boolean
+  #beforeNodeMorphed: (currentElement: Element, newElement?: Node) => boolean
 
   constructor({ beforeNodeMorphed }: NonNullable<MorphOptions["callbacks"]> = {}) {
     this.#beforeNodeMorphed = beforeNodeMorphed || (() => true)
@@ -84,8 +85,7 @@ class DefaultIdiomorphCallbacks {
   // Returns undefined for non-element nodes; idiomorph only treats `false` as a veto.
   beforeNodeMorphed = (currentElement: Node, newElement?: Node): boolean | undefined => {
     if (currentElement instanceof Element) {
-      // TODO(types): newElement is undefined when called from beforeNodeRemoved
-      if (!currentElement.hasAttribute("data-turbo-permanent") && this.#beforeNodeMorphed(currentElement, newElement as Element)) {
+      if (!currentElement.hasAttribute("data-turbo-permanent") && this.#beforeNodeMorphed(currentElement, newElement)) {
         const event = dispatch("turbo:before-morph-element", {
           cancelable: true,
           target: currentElement,
@@ -99,7 +99,7 @@ class DefaultIdiomorphCallbacks {
     }
   }
 
-  beforeAttributeUpdated = (attributeName: string, target: Element, mutationType: "update" | "remove"): boolean => {
+  beforeAttributeUpdated = (attributeName: string, target: Element, mutationType: MorphMutationType): boolean => {
     const event = dispatch("turbo:before-morph-attribute", {
       cancelable: true,
       target,

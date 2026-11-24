@@ -17,6 +17,7 @@ jobs:
     - run: yarn run playwright install --with-deps
     - run: yarn build
     - run: yarn check:dist
+    - run: yarn test:types
 
     - name: Set Chrome Version
       run: |

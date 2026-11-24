@@ -6,19 +6,15 @@ import {
   getLinkHrefString
 } from "../util"
 
-import {
-  FetchMethod,
-  FetchRequest,
-  type FetchRequestDelegate,
-  type TurboBeforeFetchRequestEvent
-} from "../http/fetch_request"
+import { FetchMethod, FetchRequest, type FetchRequestDelegate } from "../http/fetch_request"
+import type { TurboBeforeFetchRequestEvent } from "../core/events"
 import { prefetchCache, cacheTtl } from "../core/drive/prefetch_cache"
 
 export interface LinkPrefetchObserverDelegate {
   canPrefetchRequestToLocation(link: HTMLAnchorElement, location: URL): boolean
 }
 
-type PrefetchRequestDetail = TurboBeforeFetchRequestEvent["detail"] & { fetchRequest?: FetchRequest }
+type PrefetchRequestDetail = TurboBeforeFetchRequestEvent["detail"]
 
 export class LinkPrefetchObserver implements FetchRequestDelegate {
   started = false

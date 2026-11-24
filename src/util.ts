@@ -1,10 +1,18 @@
 import type { Action } from "./core/types"
+import type { TurboEventMap, TurboEventName } from "./core/events"
 
-export type DispatchOptions<T extends CustomEvent = CustomEvent> = {
+type BaseDispatchOptions = {
   target?: EventTarget | null
   cancelable?: boolean
-  detail?: T["detail"]
 }
+
+/** `detail` is required unless the event's detail type admits `null` (the runtime default). */
+export type DispatchOptions<T extends CustomEvent = CustomEvent<unknown>> = BaseDispatchOptions &
+  (null extends T["detail"] ? { detail?: T["detail"] } : { detail: T["detail"] })
+
+type DispatchArgs<T extends CustomEvent> = null extends T["detail"]
+  ? [options?: DispatchOptions<T>]
+  : [options: DispatchOptions<T>]
 
 export function activateScriptElement(element: HTMLScriptElement) {
   if (element.getAttribute("data-turbo-eval") == "false") {
@@ -34,9 +42,14 @@ export function createDocumentFragment(html: string): DocumentFragment {
   return template.content
 }
 
-export function dispatch<T extends CustomEvent = CustomEvent>(
+export function dispatch<K extends TurboEventName>(eventName: K, ...args: DispatchArgs<TurboEventMap[K]>): TurboEventMap[K]
+export function dispatch<N extends string>(
+  eventName: N & (N extends TurboEventName ? never : unknown),
+  options?: DispatchOptions
+): CustomEvent<unknown>
+export function dispatch<T extends CustomEvent>(
   eventName: string,
-  { target, cancelable, detail }: DispatchOptions<T> = {}
+  { target, cancelable, detail }: BaseDispatchOptions & { detail?: T["detail"] } = {}
 ): T {
   const event = new CustomEvent<T["detail"]>(eventName, {
     cancelable,
