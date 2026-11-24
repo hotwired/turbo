@@ -15,7 +15,21 @@ module.exports = {
       }
     },
     {
+      files: ["**/*.ts"],
+      parser: "@typescript-eslint/parser",
+      plugins: ["@typescript-eslint"],
+      rules: {
+        // TypeScript checks undefined names and unused bindings itself.
+        "no-undef": "off",
+        "no-unused-vars": "off",
+        "no-dupe-class-members": "off",
+        "no-redeclare": "off",
+        "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "_*", caughtErrors: "none" }]
+      }
+    },
+    {
       files: ["src/tests/unit/**/*_tests.js"],
+
       globals: {
         teardown: "readonly"
       }

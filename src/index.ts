@@ -12,3 +12,9 @@ export { StreamActions }
 export * from "./core"
 export * from "./elements"
 export * from "./http"
+
+declare global {
+  interface Window {
+    Turbo: typeof Turbo & { StreamActions: typeof StreamActions }
+  }
+}
