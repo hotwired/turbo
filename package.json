@@ -4,9 +4,11 @@
   "description": "The speed of a single-page web application without having to write any JavaScript",
   "module": "dist/turbo.es2017-esm.js",
   "main": "dist/turbo.es2017-umd.js",
+  "types": "dist/types/index.d.ts",
   "files": [
     "dist/*.js",
-    "dist/*.js.map"
+    "dist/*.js.map",
+    "dist/types/**/*.d.ts"
   ],
   "repository": {
     "type": "git",
@@ -36,30 +38,40 @@
     "@open-wc/testing": "^3.1.7",
     "@playwright/test": "~1.51.1",
     "@rollup/plugin-node-resolve": "13.1.3",
+    "@typescript-eslint/eslint-plugin": "~8.55.0",
+    "@typescript-eslint/parser": "~8.55.0",
     "@web/dev-server-esbuild": "^0.3.3",
     "@web/test-runner": "^0.15.0",
     "@web/test-runner-playwright": "^0.9.0",
     "arg": "^5.0.1",
     "body-parser": "^1.20.1",
-    "eslint": "^8.13.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^8.57.1",
     "express": "^4.18.2",
     "idiomorph": "~0.8.0",
     "multer": "^2.0.2",
-    "rollup": "^2.35.1"
+    "rollup": "^2.35.1",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "typescript": "~5.9.3"
   },
   "scripts": {
     "clean": "rm -fr dist",
     "clean:win": "rmdir /s /q dist",
-    "build": "yarn install && rollup -c",
-    "build:win": "yarn install && rollup -c",
+    "clean:types": "node -e \"require('fs').rmSync('dist/types', { recursive: true, force: true })\"",
+    "build": "yarn install && rollup -c && yarn clean:types && tsc",
+    "build:win": "yarn install && rollup -c && yarn clean:types && tsc",
     "watch": "rollup -wc",
     "start": "node src/tests/server.mjs",
-    "test": "yarn test:unit && yarn test:browser",
+    "test": "yarn test:types && yarn test:unit && yarn test:browser",
     "test:browser": "playwright test",
     "test:unit": "NODE_OPTIONS=--inspect web-test-runner",
     "test:unit:win": "SET NODE_OPTIONS=--inspect & web-test-runner",
     "release": "yarn build && yarn publish",
-    "lint": "eslint . --ext .js"
+    "lint": "eslint . --ext .js,.ts",
+    "typecheck": "tsc --noEmit",
+    "test:types": "tsc -p tsconfig.typetests.json",
+    "test:consumer": "tsc -p tsconfig.consumer.json && tsc -p tsconfig.consumer-floor.json && npx --yes -p typescript@5.0.4 tsc -p tsconfig.consumer-floor.json",
+    "check:dist": "node scripts/check-dist.mjs"
   },
   "engines": {
     "node": ">= 18"
